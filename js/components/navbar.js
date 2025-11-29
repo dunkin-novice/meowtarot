@@ -2,11 +2,12 @@ export function renderNavbar(container, onLangToggle) {
   if (!container) return;
   container.innerHTML = `
     <div class="site-header">
-      <a href="/" class="logo-text" data-logo>MEOWTAROT</a>
+      <a href="index.html" class="logo-text" data-logo>MEOWTAROT</a>
       <nav class="nav-actions">
-        <a href="#daily-fortune" class="nav-link" data-section="daily-fortune" data-i18n="navDaily"></a>
-        <a href="#ask-question" class="nav-link" data-section="ask-question" data-i18n="navQuestion"></a>
-        <a href="#tarot-meanings" class="nav-link" data-section="tarot-meanings" data-i18n="navMeanings"></a>
+        <a href="index.html" class="nav-link" data-page="home" data-i18n="navHome"></a>
+        <a href="daily.html" class="nav-link" data-page="daily" data-i18n="navDaily"></a>
+        <a href="question.html" class="nav-link" data-page="question" data-i18n="navQuestion"></a>
+        <a href="meanings.html" class="nav-link" data-page="meanings" data-i18n="navMeanings"></a>
         <div class="language-toggle" aria-label="Language toggle">
           <button class="lang-btn" data-lang="en">EN</button>
           <span class="divider">|</span>

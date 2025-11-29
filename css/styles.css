@@ -115,6 +115,12 @@ header {
   margin: 0 0 24px;
 }
 
+.intro {
+  color: #dfe4ff;
+  max-width: 640px;
+  margin: 0 0 18px;
+}
+
 .eyebrow {
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -151,6 +157,14 @@ header {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
+}
+
+.cta-row {
+  display: inline-flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
 }
 
 .pill-link {
