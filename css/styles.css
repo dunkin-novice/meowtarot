@@ -269,6 +269,28 @@ button,
   align-items: center;
 }
 
+.daily-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.daily-section .section-heading {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 12px;
+}
+
+.daily-section .board {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.daily-section .card-grid {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .section-block.alt {
   background: rgba(255, 255, 255, 0.02);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -348,7 +370,7 @@ button,
   height: 180px;
   border-radius: 14px;
   transform-style: preserve-3d;
-  transition: transform 0.4s ease, box-shadow 0.2s ease, outline 0.2s ease;
+  transition: transform 0.4s ease, box-shadow 0.2s ease, outline 0.2s ease, opacity 0.3s ease;
   cursor: pointer;
 }
 
@@ -402,15 +424,18 @@ button,
   box-shadow: 0 20px 44px rgba(134, 119, 255, 0.5);
 }
 
-.card-grid.shuffling .card {
-  animation: shuffle 0.6s ease;
+.card-grid.is-animating {
+  pointer-events: none;
 }
 
-@keyframes shuffle {
-  0% { transform: translateY(0) rotate(0deg); }
-  30% { transform: translateY(-6px) rotate(-2deg); }
-  60% { transform: translateY(8px) rotate(2deg); }
-  100% { transform: translateY(0) rotate(0deg); }
+.card.is-shuffling-out {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.card.is-shuffling-in {
+  opacity: 0;
+  transform: scale(0.85);
 }
 
 .continue-row {
