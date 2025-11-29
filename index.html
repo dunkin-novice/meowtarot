@@ -3,93 +3,100 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MeowTarot | Tarot Readings with a Cat Oracle Vibe</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet">
+  <title>MeowTarot | Past • Present • Future</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="logo">
-      <span class="cat-icon" aria-hidden="true">🐾</span>
-      <span class="wordmark">MeowTarot</span>
-    </div>
-    <nav class="nav-actions">
-      <a href="#daily" class="nav-link" data-i18n="ctaDaily"></a>
-      <a href="#question" class="nav-link" data-i18n="ctaAsk"></a>
-      <a href="#meaning" class="nav-link" data-i18n="ctaMeaning"></a>
-      <div class="language-toggle" aria-label="Language toggle">
-        <button class="lang-btn" data-lang="en">EN</button>
-        <span class="divider">|</span>
-        <button class="lang-btn" data-lang="th">TH</button>
-      </div>
-    </nav>
-  </header>
+  <header id="site-header"></header>
 
   <main>
-    <section class="hero" id="top">
-      <div class="hero-text">
+    <section id="hero" class="hero">
+      <div class="hero-copy">
         <p class="eyebrow" data-i18n="languageLabel"></p>
-        <h1>MeowTarot</h1>
+        <h1 class="brand-title">MeowTarot</h1>
         <p class="tagline" data-i18n="heroTagline"></p>
-        <div class="cta-group">
-          <h2 class="cta-title" data-i18n="fortuneTeller"></h2>
-          <div class="cta-buttons">
-            <a href="#daily" class="primary" data-i18n="ctaDaily"></a>
-            <a href="#question" class="ghost" data-i18n="ctaAsk"></a>
-            <a href="#meaning" class="ghost" data-i18n="ctaMeaning"></a>
+        <div class="fortune-pill">
+          <div class="pill-heading">
+            <span class="pill-dot"></span>
+            <span data-i18n="fortuneTeller"></span>
+          </div>
+          <div class="pill-links">
+            <a href="#daily-fortune" class="pill-link" data-section="daily-fortune" data-i18n="navDaily"></a>
+            <a href="#ask-question" class="pill-link" data-section="ask-question" data-i18n="navQuestion"></a>
+            <a href="#tarot-meanings" class="pill-link" data-section="tarot-meanings" data-i18n="navMeanings"></a>
           </div>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="deck-card">
-          <div class="cat-moon">😺🌙</div>
-          <button id="startReading" class="primary large" data-i18n="start"></button>
+      <div class="hero-card">
+        <div class="card-shell">
+          <div class="card-back card-back-hero" aria-hidden="true"></div>
+          <button class="primary large" data-start="daily" data-i18n="start"></button>
         </div>
       </div>
     </section>
 
-    <section class="info-section" id="daily">
-      <div class="section-content">
-        <h3 data-i18n="dailyFortune"></h3>
-        <p data-i18n="dailyFortuneDesc"></p>
+    <section id="daily-fortune" class="section-block">
+      <div class="section-heading">
+        <p class="eyebrow" data-i18n="navDaily"></p>
+        <h2 data-i18n="dailyTitle"></h2>
+        <p data-i18n="dailyDesc"></p>
+        <button class="ghost" data-start="daily" data-i18n="start"></button>
       </div>
-    </section>
-
-    <section class="info-section" id="question">
-      <div class="section-content">
-        <h3 data-i18n="askQuestion"></h3>
-        <p data-i18n="askQuestionDesc"></p>
-      </div>
-    </section>
-
-    <section class="info-section" id="meaning">
-      <div class="section-content">
-        <h3 data-i18n="tarotMeaning"></h3>
-        <p data-i18n="tarotMeaningDesc"></p>
-        <div class="sample-meanings" id="meaningList"></div>
-      </div>
-    </section>
-
-    <section class="reading-flow" id="reading">
-      <div class="shuffle-row">
-        <div class="instruction" data-i18n="instruction"></div>
-        <div class="controls">
-          <button id="shuffleBtn" class="ghost" data-i18n="shuffle"></button>
+      <div class="board" id="daily-board">
+        <div class="board-inner">
+          <div class="board-overlay" id="board-overlay">
+            <div class="overlay-icon">😺🌙</div>
+            <button class="primary" data-start="daily" data-i18n="start"></button>
+          </div>
+          <div class="board-controls">
+            <div>
+              <p class="instruction" data-i18n="instruction"></p>
+              <p class="sub-instruction" id="context-copy"></p>
+            </div>
+            <div class="controls">
+              <button id="shuffleBtn" class="ghost" data-i18n="shuffle"></button>
+            </div>
+          </div>
+          <div class="card-grid" id="cardGrid"></div>
+          <div class="continue-row">
+            <div class="hint-wrap">
+              <span id="hintText" class="hint" data-i18n="selectThreeHint"></span>
+              <span id="selectedCount" class="count">0/3</span>
+            </div>
+            <button id="continueBtn" class="primary" disabled data-i18n="continue"></button>
+          </div>
         </div>
       </div>
-      <div class="card-grid" id="cardGrid"></div>
-      <div class="continue-row">
-        <span id="hintText" class="hint" data-i18n="selectThreeHint"></span>
-        <button id="continueBtn" class="primary" disabled data-i18n="continue"></button>
+    </section>
+
+    <section id="ask-question" class="section-block alt">
+      <div class="section-heading">
+        <p class="eyebrow" data-i18n="navQuestion"></p>
+        <h2 data-i18n="questionTitle"></h2>
+        <p data-i18n="questionDesc"></p>
+        <button class="primary" data-start="question" data-i18n="startQuestion"></button>
       </div>
     </section>
 
-    <section class="results" id="results">
+    <section id="tarot-meanings" class="section-block">
+      <div class="section-heading">
+        <p class="eyebrow" data-i18n="navMeanings"></p>
+        <h2 data-i18n="meaningTitle"></h2>
+        <p data-i18n="meaningDesc"></p>
+      </div>
+      <div class="meaning-grid" id="meaningList"></div>
+    </section>
+
+    <section id="results" class="results">
       <div class="results-header">
-        <h3 data-i18n="yourReading"></h3>
-        <p class="sub" data-i18n="readingSubtitle"></p>
+        <div>
+          <p class="eyebrow" data-i18n="yourReading"></p>
+          <h3 data-i18n="readingSubtitle"></h3>
+        </div>
+        <button id="newReadingBtn" class="ghost" data-i18n="newReading"></button>
       </div>
       <div class="results-grid" id="resultsGrid"></div>
       <div class="summary">
@@ -97,7 +104,6 @@
         <div id="summaryContent"></div>
       </div>
       <div class="result-actions">
-        <button id="newReadingBtn" class="ghost" data-i18n="newReading"></button>
         <div class="share-group">
           <button id="shareBtn" class="ghost" data-i18n="share"></button>
           <button id="saveBtn" class="primary" data-i18n="save"></button>
@@ -106,11 +112,9 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>MeowTarot · meowtarot.com</p>
-  </footer>
+  <footer id="site-footer"></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="js/app.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
