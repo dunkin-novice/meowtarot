@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeowTarot | Tarot Readings with a Cat Oracle Vibe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo">
+      <span class="cat-icon" aria-hidden="true">🐾</span>
+      <span class="wordmark">MeowTarot</span>
+    </div>
+    <nav class="nav-actions">
+      <a href="#daily" class="nav-link" data-i18n="ctaDaily"></a>
+      <a href="#question" class="nav-link" data-i18n="ctaAsk"></a>
+      <a href="#meaning" class="nav-link" data-i18n="ctaMeaning"></a>
+      <div class="language-toggle" aria-label="Language toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <span class="divider">|</span>
+        <button class="lang-btn" data-lang="th">TH</button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-text">
+        <p class="eyebrow" data-i18n="languageLabel"></p>
+        <h1>MeowTarot</h1>
+        <p class="tagline" data-i18n="heroTagline"></p>
+        <div class="cta-group">
+          <h2 class="cta-title" data-i18n="fortuneTeller"></h2>
+          <div class="cta-buttons">
+            <a href="#daily" class="primary" data-i18n="ctaDaily"></a>
+            <a href="#question" class="ghost" data-i18n="ctaAsk"></a>
+            <a href="#meaning" class="ghost" data-i18n="ctaMeaning"></a>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="deck-card">
+          <div class="cat-moon">😺🌙</div>
+          <button id="startReading" class="primary large" data-i18n="start"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="info-section" id="daily">
+      <div class="section-content">
+        <h3 data-i18n="dailyFortune"></h3>
+        <p data-i18n="dailyFortuneDesc"></p>
+      </div>
+    </section>
+
+    <section class="info-section" id="question">
+      <div class="section-content">
+        <h3 data-i18n="askQuestion"></h3>
+        <p data-i18n="askQuestionDesc"></p>
+      </div>
+    </section>
+
+    <section class="info-section" id="meaning">
+      <div class="section-content">
+        <h3 data-i18n="tarotMeaning"></h3>
+        <p data-i18n="tarotMeaningDesc"></p>
+        <div class="sample-meanings" id="meaningList"></div>
+      </div>
+    </section>
+
+    <section class="reading-flow" id="reading">
+      <div class="shuffle-row">
+        <div class="instruction" data-i18n="instruction"></div>
+        <div class="controls">
+          <button id="shuffleBtn" class="ghost" data-i18n="shuffle"></button>
+        </div>
+      </div>
+      <div class="card-grid" id="cardGrid"></div>
+      <div class="continue-row">
+        <span id="hintText" class="hint" data-i18n="selectThreeHint"></span>
+        <button id="continueBtn" class="primary" disabled data-i18n="continue"></button>
+      </div>
+    </section>
+
+    <section class="results" id="results">
+      <div class="results-header">
+        <h3 data-i18n="yourReading"></h3>
+        <p class="sub" data-i18n="readingSubtitle"></p>
+      </div>
+      <div class="results-grid" id="resultsGrid"></div>
+      <div class="summary">
+        <h4 data-i18n="summaryTitle"></h4>
+        <div id="summaryContent"></div>
+      </div>
+      <div class="result-actions">
+        <button id="newReadingBtn" class="ghost" data-i18n="newReading"></button>
+        <div class="share-group">
+          <button id="shareBtn" class="ghost" data-i18n="share"></button>
+          <button id="saveBtn" class="primary" data-i18n="save"></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>MeowTarot · meowtarot.com</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
