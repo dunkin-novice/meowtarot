@@ -1,0 +1,124 @@
+import { initShell, translations } from './common.js';
+import { tarotCards } from './data.js';
+
+const params = new URLSearchParams(window.location.search);
+const initialLang = params.get('lang') || 'en';
+const initialContext = params.get('context') || 'daily';
+const cardIds = (params.get('cards') || '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter(Boolean);
+
+const state = {
+  currentLang: initialLang,
+  context: initialContext,
+  selectedIds: cardIds,
+};
+
+const resultsGrid = document.getElementById('resultsGrid');
+const summaryContent = document.getElementById('summaryContent');
+const resultsSection = document.querySelector('.results');
+const newReadingBtn = document.getElementById('newReadingBtn');
+const shareBtn = document.getElementById('shareBtn');
+const saveBtn = document.getElementById('saveBtn');
+const contextCopy = document.getElementById('context-copy');
+const readingTitle = document.getElementById('readingTitle');
+
+function getSelectedCards() {
+  return state.selectedIds
+    .slice(0, 3)
+    .map((id) => tarotCards.find((c) => c.id === id))
+    .filter(Boolean);
+}
+
+function buildSummary(cards) {
+  const dict = translations[state.currentLang];
+  const names = cards.map((c) => (state.currentLang === 'en' ? c.name_en : c.name_th));
+  return [
+    dict.summaryPast.replace('{card}', names[0]),
+    dict.summaryPresent.replace('{card}', names[1]),
+    dict.summaryFuture.replace('{card}', names[2]),
+    dict.summaryAdvice,
+  ];
+}
+
+function renderResults() {
+  if (!resultsGrid || state.selectedIds.length !== 3) return;
+  const dict = translations[state.currentLang];
+  const labels = [dict.past, dict.present, dict.future];
+  const selectedCards = getSelectedCards();
+  resultsGrid.innerHTML = '';
+
+  selectedCards.forEach((card, idx) => {
+    const name = state.currentLang === 'en' ? card.name_en : card.name_th;
+    const meaning = state.currentLang === 'en' ? card.meaning_en : card.meaning_th;
+    const cardEl = document.createElement('div');
+    cardEl.className = 'result-card';
+    cardEl.innerHTML = `
+      <div class="label">${labels[idx]}</div>
+      <h5>${name}</h5>
+      <p>${meaning}</p>
+    `;
+    resultsGrid.appendChild(cardEl);
+  });
+
+  if (summaryContent) {
+    summaryContent.innerHTML = '';
+    buildSummary(selectedCards).forEach((line) => {
+      const p = document.createElement('p');
+      p.textContent = line;
+      summaryContent.appendChild(p);
+    });
+  }
+}
+
+function handleShare() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'MeowTarot', text: translations[state.currentLang].yourReading, url }).catch(() => copyLink(url));
+  } else {
+    copyLink(url);
+  }
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(() => alert(translations[state.currentLang].shareFallback));
+}
+
+function saveImage() {
+  if (!resultsSection) return;
+  html2canvas(resultsSection, { backgroundColor: '#0b102b', scale: 2 }).then((canvas) => {
+    const link = document.createElement('a');
+    link.download = `meowtarot-reading-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+function updateContextCopy(dict = translations[state.currentLang]) {
+  if (!contextCopy) return;
+  contextCopy.textContent = dict[state.context === 'question' ? 'contextQuestion' : 'contextDaily'];
+}
+
+function handleTranslations(dict) {
+  updateContextCopy(dict);
+  renderResults();
+  if (readingTitle) {
+    readingTitle.textContent = state.context === 'question' ? dict.questionTitle : dict.dailyTitle;
+  }
+}
+
+function init() {
+  initShell(state, handleTranslations, 'reading');
+
+  newReadingBtn?.addEventListener('click', () => {
+    const target = state.context === 'question' ? 'question.html' : 'daily.html';
+    window.location.href = target;
+  });
+  shareBtn?.addEventListener('click', handleShare);
+  saveBtn?.addEventListener('click', saveImage);
+
+  renderResults();
+}
+
+document.addEventListener('DOMContentLoaded', init);
