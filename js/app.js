@@ -7,12 +7,21 @@ const state = {
   selectedIds: [],
   spreadCards: [],
   isShuffling: false,
+  reading: [],
 };
 
 const cardGrid = document.getElementById('cardGrid');
 const continueBtn = document.getElementById('continueBtn');
 const hintText = document.getElementById('hintText');
 const shuffleBtn = document.getElementById('shuffleBtn');
+
+const newReadingBtn = document.getElementById('newReadingBtn');
+const shareBtn = document.getElementById('shareBtn');
+const saveBtn = document.getElementById('saveBtn');
+const summaryContent = document.getElementById('summaryContent');
+const resultsSection = document.getElementById('results');
+const resultsGrid = document.getElementById('resultsGrid');
+
 const overlay = document.getElementById('board-overlay');
 const selectedCount = document.getElementById('selectedCount');
 const contextCopy = document.getElementById('context-copy');
@@ -30,17 +39,31 @@ function shuffleArray(arr) {
 function prepareSpread(context = state.context) {
   state.context = context;
   state.selectedIds = [];
+  state.reading = [];
+
   const sourceCards = meowTarotCards.length ? meowTarotCards : [];
   state.spreadCards = shuffleArray(sourceCards).slice(0, 15);
+
   if (overlay) overlay.classList.add('is-hidden');
+
   renderGrid();
   updateContinueState();
   updateContextCopy();
+
+  if (cardGrid) {
+    cardGrid.classList.add('shuffling');
+    setTimeout(() => cardGrid.classList.remove('shuffling'), 600);
+  }
+
+  if (resultsSection) {
+    resultsSection.classList.remove('show');
+  }
 }
 
 function renderGrid(options = {}) {
   const { entering = false } = options;
   if (!cardGrid) return;
+
   cardGrid.innerHTML = '';
   state.spreadCards.forEach((card) => {
     const cardEl = document.createElement('div');
@@ -85,16 +108,11 @@ function updateContinueState() {
   }
 }
 
-function updateContextCopy(dict = translations[state.currentLang]) {
-  if (!contextCopy) return;
-  contextCopy.textContent = dict[state.context === 'question' ? 'contextQuestion' : 'contextDaily'];
-}
-
 function shuffleWithAnimation(context = state.context) {
   if (!cardGrid || state.isShuffling || !meowTarotCards.length) return;
 
   state.isShuffling = true;
-  shuffleBtn.disabled = true;
+  if (shuffleBtn) shuffleBtn.disabled = true;
   state.selectedIds = [];
   updateContinueState();
 
@@ -116,6 +134,10 @@ function shuffleWithAnimation(context = state.context) {
     renderGrid({ entering: true });
     updateContextCopy();
 
+    if (resultsSection) {
+      resultsSection.classList.remove('show');
+    }
+
     requestAnimationFrame(() => {
       const newCards = cardGrid.querySelectorAll('.card');
       newCards.forEach((card, index) => {
@@ -132,27 +154,108 @@ function shuffleWithAnimation(context = state.context) {
           card.style.transitionDelay = '';
         });
         cardGrid.classList.remove('is-animating');
-        shuffleBtn.disabled = false;
+        if (shuffleBtn) shuffleBtn.disabled = false;
         state.isShuffling = false;
       }, totalInDuration);
     });
   }, outDuration);
 }
 
-function handleTranslations(dict) {
-  updateContextCopy(dict);
-  updateContinueState();
-  if (readingTitle) {
-    readingTitle.textContent = state.context === 'question' ? dict.questionTitle : dict.dailyTitle;
+function buildSummary(cards) {
+  const dict = translations[state.currentLang];
+  const names = cards.map((c) => (
+    state.currentLang === 'en'
+      ? c.name_en || c.card_name_en || c.name || c.id
+      : c.name_th || c.alias_th || c.name || c.id
+  ));
+
+  const lines = [];
+  if (dict.summaryPast && names[0]) lines.push(dict.summaryPast.replace('{card}', names[0]));
+  if (dict.summaryPresent && names[1]) lines.push(dict.summaryPresent.replace('{card}', names[1]));
+  if (dict.summaryFuture && names[2]) lines.push(dict.summaryFuture.replace('{card}', names[2]));
+  if (dict.summaryAdvice) lines.push(dict.summaryAdvice);
+  return lines;
+}
+
+function renderResults() {
+  if (!resultsGrid || state.selectedIds.length !== 3) return;
+  const dict = translations[state.currentLang];
+  const labels = [dict.past, dict.present, dict.future];
+  resultsGrid.innerHTML = '';
+
+  const sourceCards = meowTarotCards.length ? meowTarotCards : [];
+  const selectedCards = state.selectedIds.slice(0, 3)
+    .map((id) => sourceCards.find((c) => String(c.id) === String(id)))
+    .filter(Boolean);
+
+  if (selectedCards.length !== 3) return;
+
+  state.reading = selectedCards;
+
+  selectedCards.forEach((card, idx) => {
+    const name = state.currentLang === 'en'
+      ? card.name_en || card.card_name_en || card.name || card.id
+      : card.name_th || card.alias_th || card.name || card.id;
+    const meaning = state.currentLang === 'en'
+      ? card.meaning_en || card.tarot_imply_en || card.standalone_present_en || ''
+      : card.meaning_th || card.tarot_imply_th || card.standalone_present_th || '';
+
+    const cardEl = document.createElement('div');
+    cardEl.className = 'result-card';
+    cardEl.innerHTML = `
+      <div class="label">${labels[idx]}</div>
+      <h5>${name}</h5>
+      <p>${meaning}</p>
+    `;
+    resultsGrid.appendChild(cardEl);
+  });
+
+  if (summaryContent) {
+    summaryContent.innerHTML = '';
+    buildSummary(selectedCards).forEach((line) => {
+      const p = document.createElement('p');
+      p.textContent = line;
+      summaryContent.appendChild(p);
+    });
+  }
+
+  if (resultsSection) {
+    resultsSection.classList.add('show');
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
   }
 }
 
-function handleContinue() {
-  if (state.selectedIds.length === 3) {
-    const cardsParam = state.selectedIds.join(',');
-    const lang = state.currentLang;
-    const context = state.context;
-    window.location.href = `reading.html?context=${encodeURIComponent(context)}&lang=${encodeURIComponent(lang)}&cards=${encodeURIComponent(cardsParam)}`;
+function saveImage() {
+  if (!resultsSection || typeof html2canvas === 'undefined') return;
+  html2canvas(resultsSection, { backgroundColor: '#0b102b', scale: 2 }).then((canvas) => {
+    const link = document.createElement('a');
+    link.download = `meowtarot-reading-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+function handleShare() {
+  if (!resultsSection) return;
+
+  const dict = translations[state.currentLang] || {};
+  const shareText = dict.shareMessage || 'Check out my MeowTarot reading!';
+  const shareUrl = window.location.href;
+
+  if (navigator.share) {
+    navigator.share({
+      title: document.title,
+      text: shareText,
+      url: shareUrl,
+    }).catch(() => {
+      // ignore cancel / failure
+    });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(`${shareText} ${shareUrl}`).catch(() => {});
+    alert(dict.shareCopied || 'Link copied to clipboard');
+  } else {
+    // very old browsers
+    alert(shareUrl);
   }
 }
 
@@ -166,12 +269,34 @@ function attachStartButtons() {
   });
 }
 
+function updateContextCopy(dict = translations[state.currentLang]) {
+  if (!contextCopy) return;
+  contextCopy.textContent = dict[state.context === 'question' ? 'contextQuestion' : 'contextDaily'];
+}
+
+function handleTranslations(dict) {
+  updateContextCopy(dict);
+  updateContinueState();
+  if (state.reading.length === 3) renderResults();
+  if (readingTitle) {
+    readingTitle.textContent = state.context === 'question' ? dict.questionTitle : dict.dailyTitle;
+  }
+}
+
 function init() {
   initShell(state, handleTranslations, document.body.dataset.page);
   attachStartButtons();
 
   shuffleBtn?.addEventListener('click', () => shuffleWithAnimation(state.context));
-  continueBtn?.addEventListener('click', handleContinue);
+  continueBtn?.addEventListener('click', () => {
+    if (state.selectedIds.length === 3) renderResults();
+  });
+  newReadingBtn?.addEventListener('click', () => {
+    prepareSpread(state.context);
+    cardGrid?.scrollIntoView({ behavior: 'smooth' });
+  });
+  shareBtn?.addEventListener('click', handleShare);
+  saveBtn?.addEventListener('click', saveImage);
 
   loadTarotData()
     .then(() => {
