@@ -1,5 +1,5 @@
 import { initShell, translations } from './common.js';
-import { tarotCards } from './data.js';
+import { loadTarotData, meowTarotCards } from './data.js';
 
 const params = new URLSearchParams(window.location.search);
 const initialLang = params.get('lang') || 'en';
@@ -24,39 +24,59 @@ const saveBtn = document.getElementById('saveBtn');
 const contextCopy = document.getElementById('context-copy');
 const readingTitle = document.getElementById('readingTitle');
 
+function getCardName(card) {
+  return state.currentLang === 'th' ? card.alias_th : card.card_name_en;
+}
+
+function getCardArchetype(card) {
+  return state.currentLang === 'th' ? card.archetype_th : card.archetype_en;
+}
+
+function getStandaloneByPosition(card, position) {
+  const lang = state.currentLang;
+  if (position === 0) {
+    return lang === 'th' ? card.standalone_past_th : card.standalone_past_en;
+  }
+  if (position === 1) {
+    return lang === 'th' ? card.standalone_present_th : card.standalone_present_en;
+  }
+  return lang === 'th' ? card.standalone_future_th : card.standalone_future_en;
+}
+
+function getReadingSummary(card) {
+  return state.currentLang === 'th' ? card.reading_summary_preview_th : card.reading_summary_preview_en;
+}
+
 function getSelectedCards() {
   return state.selectedIds
     .slice(0, 3)
-    .map((id) => tarotCards.find((c) => c.id === id))
+    .map((id) => meowTarotCards.find((c) => c.id === id))
     .filter(Boolean);
 }
 
 function buildSummary(cards) {
-  const dict = translations[state.currentLang];
-  const names = cards.map((c) => (state.currentLang === 'en' ? c.name_en : c.name_th));
-  return [
-    dict.summaryPast.replace('{card}', names[0]),
-    dict.summaryPresent.replace('{card}', names[1]),
-    dict.summaryFuture.replace('{card}', names[2]),
-    dict.summaryAdvice,
-  ];
+  const list = cards.length ? cards : meowTarotCards.filter((c) => c.id === 'the-fool');
+  return list.map((card) => getReadingSummary(card));
 }
 
 function renderResults() {
-  if (!resultsGrid || state.selectedIds.length !== 3) return;
+  if (!resultsGrid || state.selectedIds.length !== 3 || !meowTarotCards.length) return;
   const dict = translations[state.currentLang];
   const labels = [dict.past, dict.present, dict.future];
   const selectedCards = getSelectedCards();
+  if (!selectedCards.length) return;
   resultsGrid.innerHTML = '';
 
   selectedCards.forEach((card, idx) => {
-    const name = state.currentLang === 'en' ? card.name_en : card.name_th;
-    const meaning = state.currentLang === 'en' ? card.meaning_en : card.meaning_th;
+    const name = getCardName(card);
+    const archetype = getCardArchetype(card);
+    const meaning = getStandaloneByPosition(card, idx);
     const cardEl = document.createElement('div');
     cardEl.className = 'result-card';
     cardEl.innerHTML = `
       <div class="label">${labels[idx]}</div>
-      <h5>${name}</h5>
+      <h5>${card.icon_emoji ? `${card.icon_emoji} ` : ''}${name}</h5>
+      <p class="archetype">${archetype}</p>
       <p>${meaning}</p>
     `;
     resultsGrid.appendChild(cardEl);
@@ -118,7 +138,13 @@ function init() {
   shareBtn?.addEventListener('click', handleShare);
   saveBtn?.addEventListener('click', saveImage);
 
-  renderResults();
+  loadTarotData()
+    .then(() => {
+      renderResults();
+    })
+    .catch(() => {
+      renderResults();
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
