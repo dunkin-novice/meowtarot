@@ -1,5 +1,5 @@
 import { translations, initShell } from './common.js';
-import { tarotCards } from './data.js';
+import { loadTarotData, meowTarotCards } from './data.js';
 
 const state = {
   currentLang: 'en',
@@ -30,7 +30,8 @@ function shuffleArray(arr) {
 function prepareSpread(context = state.context) {
   state.context = context;
   state.selectedIds = [];
-  state.spreadCards = shuffleArray(tarotCards).slice(0, 15);
+  const sourceCards = meowTarotCards.length ? meowTarotCards : [];
+  state.spreadCards = shuffleArray(sourceCards).slice(0, 15);
   if (overlay) overlay.classList.add('is-hidden');
   renderGrid();
   updateContinueState();
@@ -90,7 +91,7 @@ function updateContextCopy(dict = translations[state.currentLang]) {
 }
 
 function shuffleWithAnimation(context = state.context) {
-  if (!cardGrid || state.isShuffling) return;
+  if (!cardGrid || state.isShuffling || !meowTarotCards.length) return;
 
   state.isShuffling = true;
   shuffleBtn.disabled = true;
@@ -109,7 +110,8 @@ function shuffleWithAnimation(context = state.context) {
 
   setTimeout(() => {
     state.context = context;
-    state.spreadCards = shuffleArray(tarotCards).slice(0, 15);
+    const sourceCards = meowTarotCards.length ? meowTarotCards : [];
+    state.spreadCards = shuffleArray(sourceCards).slice(0, 15);
     if (overlay) overlay.classList.add('is-hidden');
     renderGrid({ entering: true });
     updateContextCopy();
@@ -171,7 +173,13 @@ function init() {
   shuffleBtn?.addEventListener('click', () => shuffleWithAnimation(state.context));
   continueBtn?.addEventListener('click', handleContinue);
 
-  prepareSpread(state.context);
+  loadTarotData()
+    .then(() => {
+      prepareSpread(state.context);
+    })
+    .catch(() => {
+      prepareSpread(state.context);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
