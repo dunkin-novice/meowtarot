@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeowTarot | Your Reading</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-page="reading">
+  <header id="site-header"></header>
+
+  <main>
+    <section class="section-block results show">
+      <div class="results-header">
+        <div>
+          <p class="eyebrow" data-i18n="yourReading"></p>
+          <h1 id="readingTitle"></h1>
+          <p data-i18n="readingSubtitle"></p>
+          <p class="sub-instruction" id="context-copy"></p>
+        </div>
+        <div class="result-actions">
+          <button id="newReadingBtn" class="ghost" data-i18n="newReading"></button>
+          <div class="share-group">
+            <button id="shareBtn" class="ghost" data-i18n="share"></button>
+            <button id="saveBtn" class="primary" data-i18n="save"></button>
+          </div>
+        </div>
+      </div>
+      <div class="results-grid" id="resultsGrid"></div>
+      <div class="summary">
+        <h4 data-i18n="summaryTitle"></h4>
+        <div id="summaryContent"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script type="module" src="js/reading.js"></script>
+</body>
+</html>

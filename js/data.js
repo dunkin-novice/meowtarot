@@ -1,3 +1,7 @@
+// Dynamic deck used by the app
+export let meowTarotCards = [];
+
+// Static fallback deck + backwards-compat for old imports
 export const tarotCards = [
   { id: 'MAJ_00', name_en: 'The Fool', name_th: 'ไพ่คนโง่', meaning_en: 'New beginnings, spontaneity, a leap of faith.', meaning_th: 'การเริ่มต้นใหม่ ความกล้า การก้าวกระโดดด้วยศรัทธา' },
   { id: 'MAJ_01', name_en: 'The Magician', name_th: 'ไพ่จอมเวท', meaning_en: 'Manifestation, skill, resourcefulness.', meaning_th: 'พลังสร้างสรรค์ ความสามารถ และทรัพยากรครบถ้วน' },
@@ -22,3 +26,18 @@ export const tarotCards = [
   { id: 'MAJ_20', name_en: 'Judgement', name_th: 'ไพ่การตื่นรู้', meaning_en: 'Awakening, evaluation, calling.', meaning_th: 'การตื่นรู้ การทบทวน เสียงเรียกภายใน' },
   { id: 'MAJ_21', name_en: 'The World', name_th: 'ไพ่โลก', meaning_en: 'Completion, integration, wholeness.', meaning_th: 'ความสมบูรณ์ การเชื่อมโยงทั้งหมด ความสำเร็จ' },
 ];
+
+// Load full deck from JSON, fall back to static tarotCards if anything fails
+export function loadTarotData() {
+  return fetch('data/cards.json')
+    .then((res) => res.json())
+    .then((data) => {
+      meowTarotCards = data.cards && data.cards.length ? data.cards : tarotCards;
+      return meowTarotCards;
+    })
+    .catch((err) => {
+      console.error('Failed to load tarot data', err);
+      meowTarotCards = tarotCards;
+      return meowTarotCards;
+    });
+}
