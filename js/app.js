@@ -177,6 +177,31 @@ function buildSummary(cards) {
   return lines;
 }
 
+function getCardName(card, lang = state.currentLang) {
+  return lang === 'en'
+    ? card.name_en || card.card_name_en || card.name || card.id
+    : card.name_th || card.alias_th || card.name || card.id;
+}
+
+function getStandaloneMeaning(card, position, lang = state.currentLang) {
+  const suffix = lang === 'en' ? '_en' : '_th';
+  const key = `standalone_${position}${suffix}`;
+  if (card[key]) return card[key];
+
+  const implyKey = lang === 'en' ? 'tarot_imply_en' : 'tarot_imply_th';
+  return card[implyKey] || '';
+}
+
+function getReadingSummary(cards, lang = state.currentLang) {
+  const target = cards[1] || cards[0];
+  if (target) {
+    const summaryKey = lang === 'en' ? 'reading_summary_preview_en' : 'reading_summary_preview_th';
+    if (target[summaryKey]) return target[summaryKey];
+  }
+
+  return buildSummary(cards).join(' ');
+}
+
 function renderResults() {
   if (!resultsGrid || state.selectedIds.length !== 3) return;
   const dict = translations[state.currentLang];
@@ -192,31 +217,31 @@ function renderResults() {
 
   state.reading = selectedCards;
 
+  const positions = ['past', 'present', 'future'];
+
   selectedCards.forEach((card, idx) => {
-    const name = state.currentLang === 'en'
-      ? card.name_en || card.card_name_en || card.name || card.id
-      : card.name_th || card.alias_th || card.name || card.id;
-    const meaning = state.currentLang === 'en'
-      ? card.meaning_en || card.tarot_imply_en || card.standalone_present_en || ''
-      : card.meaning_th || card.tarot_imply_th || card.standalone_present_th || '';
+    const name = getCardName(card);
+    const meaning = getStandaloneMeaning(card, positions[idx]);
+    const icon = card.icon_emoji || '🜚';
 
     const cardEl = document.createElement('div');
     cardEl.className = 'result-card';
     cardEl.innerHTML = `
       <div class="label">${labels[idx]}</div>
-      <h5>${name}</h5>
+      <h5>${icon} ${name}</h5>
       <p>${meaning}</p>
     `;
     resultsGrid.appendChild(cardEl);
   });
 
   if (summaryContent) {
+    const summaryText = getReadingSummary(selectedCards);
     summaryContent.innerHTML = '';
-    buildSummary(selectedCards).forEach((line) => {
+    if (summaryText) {
       const p = document.createElement('p');
-      p.textContent = line;
+      p.textContent = summaryText;
       summaryContent.appendChild(p);
-    });
+    }
   }
 
   if (resultsSection) {
