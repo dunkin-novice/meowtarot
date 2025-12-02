@@ -1,27 +1,21 @@
 import { translations, initShell } from './common.js';
-import { tarotCards } from './data.js';
+import { loadTarotData, meowTarotCards } from './data.js';
 
 const state = {
   currentLang: 'en',
   context: document.body.dataset.context || 'daily',
   selectedIds: [],
-  reading: [],
   spreadCards: [],
+  isShuffling: false,
 };
 
 const cardGrid = document.getElementById('cardGrid');
 const continueBtn = document.getElementById('continueBtn');
 const hintText = document.getElementById('hintText');
 const shuffleBtn = document.getElementById('shuffleBtn');
-const newReadingBtn = document.getElementById('newReadingBtn');
-const shareBtn = document.getElementById('shareBtn');
-const saveBtn = document.getElementById('saveBtn');
-const summaryContent = document.getElementById('summaryContent');
-const resultsSection = document.getElementById('results');
 const overlay = document.getElementById('board-overlay');
 const selectedCount = document.getElementById('selectedCount');
 const contextCopy = document.getElementById('context-copy');
-const resultsGrid = document.getElementById('resultsGrid');
 const readingTitle = document.querySelector('[data-reading-title]');
 
 function shuffleArray(arr) {
@@ -36,25 +30,21 @@ function shuffleArray(arr) {
 function prepareSpread(context = state.context) {
   state.context = context;
   state.selectedIds = [];
-  state.reading = [];
-  state.spreadCards = shuffleArray(tarotCards).slice(0, 15);
+  const sourceCards = meowTarotCards.length ? meowTarotCards : [];
+  state.spreadCards = shuffleArray(sourceCards).slice(0, 15);
   if (overlay) overlay.classList.add('is-hidden');
   renderGrid();
   updateContinueState();
-  if (cardGrid) {
-    cardGrid.classList.add('shuffling');
-    setTimeout(() => cardGrid.classList.remove('shuffling'), 600);
-  }
   updateContextCopy();
-  if (resultsSection) resultsSection.classList.remove('show');
 }
 
-function renderGrid() {
+function renderGrid(options = {}) {
+  const { entering = false } = options;
   if (!cardGrid) return;
   cardGrid.innerHTML = '';
   state.spreadCards.forEach((card) => {
     const cardEl = document.createElement('div');
-    cardEl.className = 'card';
+    cardEl.className = `card${entering ? ' is-shuffling-in' : ''}`;
     cardEl.dataset.id = card.id;
 
     const back = document.createElement('div');
@@ -95,74 +85,75 @@ function updateContinueState() {
   }
 }
 
-function buildSummary(cards) {
-  const dict = translations[state.currentLang];
-  const names = cards.map((c) => (state.currentLang === 'en' ? c.name_en : c.name_th));
-  return [
-    dict.summaryPast.replace('{card}', names[0]),
-    dict.summaryPresent.replace('{card}', names[1]),
-    dict.summaryFuture.replace('{card}', names[2]),
-    dict.summaryAdvice,
-  ];
+function updateContextCopy(dict = translations[state.currentLang]) {
+  if (!contextCopy) return;
+  contextCopy.textContent = dict[state.context === 'question' ? 'contextQuestion' : 'contextDaily'];
 }
 
-function renderResults() {
-  if (!resultsGrid || state.selectedIds.length !== 3) return;
-  const dict = translations[state.currentLang];
-  const labels = [dict.past, dict.present, dict.future];
-  resultsGrid.innerHTML = '';
-  const selectedCards = state.selectedIds.slice(0, 3).map((id) => tarotCards.find((c) => c.id === id));
-  state.reading = selectedCards;
+function shuffleWithAnimation(context = state.context) {
+  if (!cardGrid || state.isShuffling || !meowTarotCards.length) return;
 
-  selectedCards.forEach((card, idx) => {
-    const name = state.currentLang === 'en' ? card.name_en : card.name_th;
-    const meaning = state.currentLang === 'en' ? card.meaning_en : card.meaning_th;
-    const cardEl = document.createElement('div');
-    cardEl.className = 'result-card';
-    cardEl.innerHTML = `
-      <div class="label">${labels[idx]}</div>
-      <h5>${name}</h5>
-      <p>${meaning}</p>
-    `;
-    resultsGrid.appendChild(cardEl);
+  state.isShuffling = true;
+  shuffleBtn.disabled = true;
+  state.selectedIds = [];
+  updateContinueState();
+
+  const cards = cardGrid.querySelectorAll('.card');
+  cardGrid.classList.add('is-animating');
+  cards.forEach((card) => {
+    card.classList.remove('selected');
+    card.classList.add('is-shuffling-out');
   });
 
-  if (summaryContent) {
-    summaryContent.innerHTML = '';
-    buildSummary(selectedCards).forEach((line) => {
-      const p = document.createElement('p');
-      p.textContent = line;
-      summaryContent.appendChild(p);
+  const outDuration = 280;
+  const inDuration = 320;
+
+  setTimeout(() => {
+    state.context = context;
+    const sourceCards = meowTarotCards.length ? meowTarotCards : [];
+    state.spreadCards = shuffleArray(sourceCards).slice(0, 15);
+    if (overlay) overlay.classList.add('is-hidden');
+    renderGrid({ entering: true });
+    updateContextCopy();
+
+    requestAnimationFrame(() => {
+      const newCards = cardGrid.querySelectorAll('.card');
+      newCards.forEach((card, index) => {
+        card.style.transitionDelay = `${index * 12}ms`;
+      });
+
+      requestAnimationFrame(() => {
+        newCards.forEach((card) => card.classList.remove('is-shuffling-in'));
+      });
+
+      const totalInDuration = inDuration + newCards.length * 12;
+      setTimeout(() => {
+        newCards.forEach((card) => {
+          card.style.transitionDelay = '';
+        });
+        cardGrid.classList.remove('is-animating');
+        shuffleBtn.disabled = false;
+        state.isShuffling = false;
+      }, totalInDuration);
     });
-  }
-
-  if (resultsSection) {
-    resultsSection.classList.add('show');
-    resultsSection.scrollIntoView({ behavior: 'smooth' });
-  }
+  }, outDuration);
 }
 
-function handleShare() {
-  const url = window.location.href;
-  if (navigator.share) {
-    navigator.share({ title: 'MeowTarot', text: translations[state.currentLang].yourReading, url }).catch(() => copyLink(url));
-  } else {
-    copyLink(url);
+function handleTranslations(dict) {
+  updateContextCopy(dict);
+  updateContinueState();
+  if (readingTitle) {
+    readingTitle.textContent = state.context === 'question' ? dict.questionTitle : dict.dailyTitle;
   }
 }
 
-function copyLink(url) {
-  navigator.clipboard.writeText(url).then(() => alert(translations[state.currentLang].shareFallback));
-}
-
-function saveImage() {
-  if (!resultsSection) return;
-  html2canvas(resultsSection, { backgroundColor: '#0b102b', scale: 2 }).then((canvas) => {
-    const link = document.createElement('a');
-    link.download = `meowtarot-reading-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  });
+function handleContinue() {
+  if (state.selectedIds.length === 3) {
+    const cardsParam = state.selectedIds.join(',');
+    const lang = state.currentLang;
+    const context = state.context;
+    window.location.href = `reading.html?context=${encodeURIComponent(context)}&lang=${encodeURIComponent(lang)}&cards=${encodeURIComponent(cardsParam)}`;
+  }
 }
 
 function attachStartButtons() {
@@ -175,36 +166,20 @@ function attachStartButtons() {
   });
 }
 
-function updateContextCopy(dict = translations[state.currentLang]) {
-  if (!contextCopy) return;
-  contextCopy.textContent = dict[state.context === 'question' ? 'contextQuestion' : 'contextDaily'];
-}
-
-function handleTranslations(dict) {
-  updateContextCopy(dict);
-  updateContinueState();
-  if (state.reading.length === 3) renderResults();
-  if (readingTitle) {
-    readingTitle.textContent = state.context === 'question' ? dict.questionTitle : dict.dailyTitle;
-  }
-}
-
 function init() {
   initShell(state, handleTranslations, document.body.dataset.page);
   attachStartButtons();
 
-  shuffleBtn?.addEventListener('click', () => prepareSpread(state.context));
-  continueBtn?.addEventListener('click', () => {
-    if (state.selectedIds.length === 3) renderResults();
-  });
-  newReadingBtn?.addEventListener('click', () => {
-    prepareSpread(state.context);
-    cardGrid?.scrollIntoView({ behavior: 'smooth' });
-  });
-  shareBtn?.addEventListener('click', handleShare);
-  saveBtn?.addEventListener('click', saveImage);
+  shuffleBtn?.addEventListener('click', () => shuffleWithAnimation(state.context));
+  continueBtn?.addEventListener('click', handleContinue);
 
-  prepareSpread(state.context);
+  loadTarotData()
+    .then(() => {
+      prepareSpread(state.context);
+    })
+    .catch(() => {
+      prepareSpread(state.context);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
