@@ -42,7 +42,7 @@ function prepareSpread(context = state.context) {
   state.reading = [];
 
   const sourceCards = meowTarotCards.length ? meowTarotCards : [];
-  state.spreadCards = shuffleArray(sourceCards).slice(0, 15);
+  state.spreadCards = shuffleArray(sourceCards).slice(0, 6);
 
   if (overlay) overlay.classList.add('is-hidden');
 
@@ -129,7 +129,7 @@ function shuffleWithAnimation(context = state.context) {
   setTimeout(() => {
     state.context = context;
     const sourceCards = meowTarotCards.length ? meowTarotCards : [];
-    state.spreadCards = shuffleArray(sourceCards).slice(0, 15);
+    state.spreadCards = shuffleArray(sourceCards).slice(0, 6);
     if (overlay) overlay.classList.add('is-hidden');
     renderGrid({ entering: true });
     updateContextCopy();
@@ -314,7 +314,12 @@ function init() {
 
   shuffleBtn?.addEventListener('click', () => shuffleWithAnimation(state.context));
   continueBtn?.addEventListener('click', () => {
-    if (state.selectedIds.length === 3) renderResults();
+    if (state.selectedIds.length === 3) {
+      const cardsParam = encodeURIComponent(state.selectedIds.join(','));
+      const contextParam = encodeURIComponent(state.context);
+      const langParam = encodeURIComponent(state.currentLang);
+      window.location.href = `reading.html?context=${contextParam}&lang=${langParam}&cards=${cardsParam}`;
+    }
   });
   newReadingBtn?.addEventListener('click', () => {
     prepareSpread(state.context);
