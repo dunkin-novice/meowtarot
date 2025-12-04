@@ -360,6 +360,7 @@ button,
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  justify-content: center;
   gap: 12px;
   margin: 18px 0;
   min-height: 240px;
@@ -367,11 +368,18 @@ button,
 
 .card {
   position: relative;
-  height: 180px;
+  width: 100%;
+  aspect-ratio: 2 / 3;
   border-radius: 14px;
   transform-style: preserve-3d;
   transition: transform 0.4s ease, box-shadow 0.2s ease, outline 0.2s ease, opacity 0.3s ease;
   cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .card .face {
