@@ -27,6 +27,23 @@ const selectedCount = document.getElementById('selectedCount');
 const contextCopy = document.getElementById('context-copy');
 const readingTitle = document.querySelector('[data-reading-title]');
 
+function getUprightCards() {
+  return meowTarotCards.filter((card) => card.orientation === 'upright');
+}
+
+function findCardForReading(id) {
+  const uprightCards = getUprightCards();
+  const idStr = String(id || '');
+  const direct = uprightCards.find((card) => String(card.id) === idStr);
+  if (direct) return direct;
+
+  const baseId = idStr.endsWith('-reversed') ? idStr.replace(/-reversed$/, '') : idStr;
+  const baseMatch = uprightCards.find((card) => String(card.id) === baseId);
+  if (baseMatch) return baseMatch;
+
+  return meowTarotCards.find((card) => String(card.id) === idStr) || null;
+}
+
 function shuffleArray(arr) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i -= 1) {
@@ -41,7 +58,7 @@ function prepareSpread(context = state.context) {
   state.selectedIds = [];
   state.reading = [];
 
-  const uprightCards = meowTarotCards.filter((card) => card.orientation === 'upright');
+  const uprightCards = getUprightCards();
   const sourceCards = uprightCards.length ? uprightCards : meowTarotCards;
   state.spreadCards = shuffleArray(sourceCards).slice(0, 6);
 
@@ -129,7 +146,8 @@ function shuffleWithAnimation(context = state.context) {
 
   setTimeout(() => {
     state.context = context;
-    const sourceCards = meowTarotCards.length ? meowTarotCards : [];
+    const uprightCards = getUprightCards();
+    const sourceCards = uprightCards.length ? uprightCards : meowTarotCards;
     state.spreadCards = shuffleArray(sourceCards).slice(0, 6);
     if (overlay) overlay.classList.add('is-hidden');
     renderGrid({ entering: true });
@@ -209,9 +227,8 @@ function renderResults() {
   const labels = [dict.past, dict.present, dict.future];
   resultsGrid.innerHTML = '';
 
-  const sourceCards = meowTarotCards.length ? meowTarotCards : [];
   const selectedCards = state.selectedIds.slice(0, 3)
-    .map((id) => sourceCards.find((c) => String(c.id) === String(id)))
+    .map((id) => findCardForReading(id))
     .filter(Boolean);
 
   if (selectedCards.length !== 3) return;
