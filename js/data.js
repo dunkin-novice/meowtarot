@@ -1,6 +1,18 @@
 // Dynamic deck used by the app
 export let meowTarotCards = [];
 
+function normalizeCards(cards) {
+  return (cards || []).map((card) => {
+    const orientation = card.orientation || 'upright';
+    return {
+      ...card,
+      orientation,
+      orientation_label_th: card.orientation_label_th
+        || (orientation === 'reversed' ? 'ไพ่กลับหัว' : 'ไพ่ปกติ'),
+    };
+  });
+}
+
 // Static fallback deck + backwards-compat for old imports
 export const tarotCards = [
   { id: 'MAJ_00', name_en: 'The Fool', name_th: 'ไพ่คนโง่', meaning_en: 'New beginnings, spontaneity, a leap of faith.', meaning_th: 'การเริ่มต้นใหม่ ความกล้า การก้าวกระโดดด้วยศรัทธา' },
@@ -32,12 +44,12 @@ export function loadTarotData() {
   return fetch('data/cards.json')
     .then((res) => res.json())
     .then((data) => {
-      meowTarotCards = data.cards && data.cards.length ? data.cards : tarotCards;
+      meowTarotCards = normalizeCards(data.cards && data.cards.length ? data.cards : tarotCards);
       return meowTarotCards;
     })
     .catch((err) => {
       console.error('Failed to load tarot data', err);
-      meowTarotCards = tarotCards;
+      meowTarotCards = normalizeCards(tarotCards);
       return meowTarotCards;
     });
 }

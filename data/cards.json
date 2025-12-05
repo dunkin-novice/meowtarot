@@ -66,7 +66,9 @@
       "icon_emoji": "🎒",
       "seo_slug_en": "the-fool-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Fool (คนโง่) ฉบับ MeowTarot: การเริ่มต้นใหม่ ความไร้เดียงสา และการก้าวกระโดดสู่โอกาสที่ไร้ขอบเขต",
-      "meta_description_en": "The Fool Tarot meaning by MeowTarot: Leap into new beginnings, embrace innocence, and explore limitless opportunities."
+      "meta_description_en": "The Fool Tarot meaning by MeowTarot: Leap into new beginnings, embrace innocence, and explore limitless opportunities.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-magician",
@@ -134,7 +136,9 @@
       "icon_emoji": "🪄",
       "seo_slug_en": "the-magician-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Magician (นักมายากล) ฉบับ MeowTarot: พลังแห่งการสร้างสรรค์ ความเชี่ยวชาญ และการเปลี่ยนฝันให้เป็นจริง อ่านคำทำนายไพ่ทาโรต์แมว",
-      "meta_description_en": "The Magician Tarot meaning by MeowTarot: Unlock your manifestation power and skill. Discover how to turn your dreams into reality with this powerful card."
+      "meta_description_en": "The Magician Tarot meaning by MeowTarot: Unlock your manifestation power and skill. Discover how to turn your dreams into reality with this powerful card.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-high-priestess",
@@ -202,7 +206,9 @@
       "icon_emoji": "🌙",
       "seo_slug_en": "the-high-priestess-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The High Priestess (สตรีนักบวช) ฉบับ MeowTarot: การฟังเสียงหัวใจ สัญชาตญาณแม่นยำ และความลับที่รอการเปิดเผย",
-      "meta_description_en": "The High Priestess Tarot meaning by MeowTarot: Tap into your intuition and subconscious. Discover secrets and spiritual wisdom hidden within this card."
+      "meta_description_en": "The High Priestess Tarot meaning by MeowTarot: Tap into your intuition and subconscious. Discover secrets and spiritual wisdom hidden within this card.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-empress",
@@ -270,7 +276,9 @@
       "icon_emoji": "👑",
       "seo_slug_en": "the-empress-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Empress (จักรพรรดินี) ฉบับ MeowTarot: สัญลักษณ์แห่งความรัก ความอุดมสมบูรณ์ และเสน่ห์ดึงดูดใจ ทำนายดวงความรักและการเงิน",
-      "meta_description_en": "The Empress Tarot meaning by MeowTarot: Discover the power of abundance, love, and creativity. Learn what this nurturing card reveals about your life."
+      "meta_description_en": "The Empress Tarot meaning by MeowTarot: Discover the power of abundance, love, and creativity. Learn what this nurturing card reveals about your life.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-emperor",
@@ -338,7 +346,9 @@
       "icon_emoji": "🤴",
       "seo_slug_en": "the-emperor-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Emperor (จักรพรรดิ) ฉบับ MeowTarot: ความเป็นผู้นำ อำนาจ และความมั่นคง ทำนายดวงการงานและความรัก",
-      "meta_description_en": "The Emperor Tarot meaning by MeowTarot: embody leadership, authority, and structure. Find out what this powerful card says about your stability and success."
+      "meta_description_en": "The Emperor Tarot meaning by MeowTarot: embody leadership, authority, and structure. Find out what this powerful card says about your stability and success.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-hierophant",
@@ -406,7 +416,9 @@
       "icon_emoji": "📜",
       "seo_slug_en": "the-hierophant-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Hierophant (สังฆราช) ฉบับ MeowTarot: ครูผู้สอน ประเพณี และคำแนะนำที่ชาญฉลาด ค้นหาคำตอบของชีวิตผ่านภูมิปัญญา",
-      "meta_description_en": "The Hierophant Tarot meaning by MeowTarot: Discover wisdom, tradition, and mentorship. Learn what this spiritual card advises for your path."
+      "meta_description_en": "The Hierophant Tarot meaning by MeowTarot: Discover wisdom, tradition, and mentorship. Learn what this spiritual card advises for your path.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-lovers",
@@ -474,7 +486,9 @@
       "icon_emoji": "💕",
       "seo_slug_en": "the-lovers-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Lovers (คนรัก) ฉบับ MeowTarot: ทางเลือกของหัวใจ ความรักที่ลงตัว และการค้นหาคู่แท้ อ่านคำทำนายไพ่ทาโรต์แมวเหมียว",
-      "meta_description_en": "The Lovers Tarot meaning by MeowTarot: Explore choices of the heart, soulmates, and perfect unions. See what this romantic card reveals for you."
+      "meta_description_en": "The Lovers Tarot meaning by MeowTarot: Explore choices of the heart, soulmates, and perfect unions. See what this romantic card reveals for you.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-chariot",
@@ -542,7 +556,9 @@
       "icon_emoji": "🛡️",
       "seo_slug_en": "the-chariot-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Chariot (รถศึก) ฉบับ MeowTarot: ชัยชนะ การควบคุม และความมุ่งมั่นสู่ความสำเร็จ ทำนายดวงการงานและการเดินทาง",
-      "meta_description_en": "The Chariot Tarot meaning by MeowTarot: Master your will and drive towards victory. Discover what this powerful card says about success and travel."
+      "meta_description_en": "The Chariot Tarot meaning by MeowTarot: Master your will and drive towards victory. Discover what this powerful card says about success and travel.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "strength",
@@ -610,7 +626,9 @@
       "icon_emoji": "🦁",
       "seo_slug_en": "strength-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Strength (พละกำลัง) ฉบับ MeowTarot: พลังแห่งความอ่อนโยน ความอดทน และชัยชนะเหนือใจตนเอง ทำนายความรักและการงาน",
-      "meta_description_en": "Strength Tarot meaning by MeowTarot: Master your inner beast with compassion and patience. Learn how soft power leads to true victory."
+      "meta_description_en": "Strength Tarot meaning by MeowTarot: Master your inner beast with compassion and patience. Learn how soft power leads to true victory.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-hermit",
@@ -678,7 +696,9 @@
       "icon_emoji": "🏮",
       "seo_slug_en": "the-hermit-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Hermit (ฤๅษี) ฉบับ MeowTarot: การค้นหาตัวเอง ความสันโดษ และปัญญาภายใน ทำนายความรักเมื่อต้องอยู่ลำพัง",
-      "meta_description_en": "The Hermit Tarot meaning by MeowTarot: Embrace solitude and soul-searching. Discover inner wisdom and what this card means for your love and life."
+      "meta_description_en": "The Hermit Tarot meaning by MeowTarot: Embrace solitude and soul-searching. Discover inner wisdom and what this card means for your love and life.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "wheel-of-fortune",
@@ -746,7 +766,9 @@
       "icon_emoji": "🎡",
       "seo_slug_en": "wheel-of-fortune-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Wheel of Fortune (กงล้อแห่งโชคชะตา) ฉบับ MeowTarot: จุดเปลี่ยนของชีวิต โชคลาภ และพรหมลิขิต เช็กดวงของคุณที่นี่",
-      "meta_description_en": "Wheel of Fortune Tarot meaning by MeowTarot: Embrace destiny, luck, and major life changes. See what the wheel has spinning for you today."
+      "meta_description_en": "Wheel of Fortune Tarot meaning by MeowTarot: Embrace destiny, luck, and major life changes. See what the wheel has spinning for you today.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "justice",
@@ -814,7 +836,9 @@
       "icon_emoji": "⚖️",
       "seo_slug_en": "justice-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Justice (ยุติธรรม) ฉบับ MeowTarot: กฎแห่งกรรม ความจริง และความสมดุล ทำนายดวงคดีความและการตัดสินใจ",
-      "meta_description_en": "Justice Tarot meaning by MeowTarot: Explore karma, fairness, and truth. Find out how to restore balance and make the right decisions."
+      "meta_description_en": "Justice Tarot meaning by MeowTarot: Explore karma, fairness, and truth. Find out how to restore balance and make the right decisions.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-hanged-man",
@@ -882,7 +906,9 @@
       "icon_emoji": "🙃",
       "seo_slug_en": "the-hanged-man-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Hanged Man (คนถูกแขวนคอ) ฉบับ MeowTarot: การเปลี่ยนมุมมอง การเสียสละ และปัญญาที่เกิดจากการหยุดพัก",
-      "meta_description_en": "The Hanged Man Tarot meaning by MeowTarot: Discover the power of surrender and new perspectives. See why pausing now leads to wisdom later."
+      "meta_description_en": "The Hanged Man Tarot meaning by MeowTarot: Discover the power of surrender and new perspectives. See why pausing now leads to wisdom later.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "death",
@@ -950,7 +976,9 @@
       "icon_emoji": "💀",
       "seo_slug_en": "death-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Death (ความตาย) ฉบับ MeowTarot: ไม่ใช่เรื่องน่ากลัว แต่คือการเปลี่ยนแปลง การเริ่มต้นใหม่ และการทิ้งสิ่งเก่า",
-      "meta_description_en": "Death Tarot meaning by MeowTarot: It's not the end, but a transformation. Embrace rebirth, letting go, and new beginnings."
+      "meta_description_en": "Death Tarot meaning by MeowTarot: It's not the end, but a transformation. Embrace rebirth, letting go, and new beginnings.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "temperance",
@@ -1018,7 +1046,9 @@
       "icon_emoji": "⚗️",
       "seo_slug_en": "temperance-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Temperance (ความพอประมาณ) ฉบับ MeowTarot: ศิลปะแห่งความสมดุล การเยียวยา และความรักที่ลงตัว",
-      "meta_description_en": "Temperance Tarot meaning by MeowTarot: Master the art of balance and patience. Discover how healing and harmony can transform your life."
+      "meta_description_en": "Temperance Tarot meaning by MeowTarot: Master the art of balance and patience. Discover how healing and harmony can transform your life.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-devil",
@@ -1086,7 +1116,9 @@
       "icon_emoji": "😈",
       "seo_slug_en": "the-devil-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Devil (ปีศาจ) ฉบับ MeowTarot: การยึดติด กิเลส และด้านมืดของจิตใจ เรียนรู้วิธีปลดปล่อยตัวเองสู่อิสรภาพ",
-      "meta_description_en": "The Devil Tarot meaning by MeowTarot: Face your shadow self and addictions. Discover how to break free from toxic cycles and materialism."
+      "meta_description_en": "The Devil Tarot meaning by MeowTarot: Face your shadow self and addictions. Discover how to break free from toxic cycles and materialism.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-tower",
@@ -1154,7 +1186,9 @@
       "icon_emoji": "⚡",
       "seo_slug_en": "the-tower-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Tower (หอคอย) ฉบับ MeowTarot: การเปลี่ยนแปลงฉับพลัน วิกฤต และการตื่นรู้ รับมือกับความวุ่นวายอย่างไรให้รอด",
-      "meta_description_en": "The Tower Tarot meaning by MeowTarot: Navigate sudden change, crisis, and revelation. Find out how to rebuild stronger after the storm."
+      "meta_description_en": "The Tower Tarot meaning by MeowTarot: Navigate sudden change, crisis, and revelation. Find out how to rebuild stronger after the storm.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "the-star",
@@ -1222,7 +1256,9 @@
       "icon_emoji": "🌟",
       "seo_slug_en": "the-star-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Star (ดวงดาว) ฉบับ MeowTarot: แสงแห่งความหวัง การเยียวยา และความฝันที่เป็นจริง อ่านคำทำนายไพ่ทาโรต์แมว",
-      "meta_description_en": "The Star Tarot meaning by MeowTarot: Find hope, healing, and inspiration. Discover how this card guides you to your dreams and renewed faith."
+      "meta_description_en": "The Star Tarot meaning by MeowTarot: Find hope, healing, and inspiration. Discover how this card guides you to your dreams and renewed faith.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "The Moon",
@@ -1290,7 +1326,9 @@
       "seo_slug_en": "the-moon-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Moon (พระจันทร์) ฉบับ MeowTarot: สัญชาตญาณ ภาพลวงตา และความกลัวในจิตใจ ค้นหาความจริงที่ซ่อนอยู่",
       "meta_description_en": "The Moon Tarot meaning by MeowTarot: Navigate illusions, fear, and the subconscious. Trust your intuition to find the truth in the dark.",
-      "id": "the-moon"
+      "id": "the-moon",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "The Sun",
@@ -1358,7 +1396,9 @@
       "seo_slug_en": "the-sun-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The Sun (ดวงอาทิตย์) ฉบับ MeowTarot: ความสุข ความสำเร็จ และพลังชีวิต ไพ่ที่ดีที่สุดในสำรับ!",
       "meta_description_en": "The Sun Tarot meaning by MeowTarot: The best card in the deck! Discover happiness, success, and vitality awaiting you.",
-      "id": "the-sun"
+      "id": "the-sun",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "Judgement",
@@ -1426,7 +1466,9 @@
       "seo_slug_en": "judgement-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Judgement (พิพากษา) ฉบับ MeowTarot: การตื่นรู้ โอกาสที่สอง และการเริ่มต้นใหม่ เช็กดวงชะตาของคุณ",
       "meta_description_en": "Judgement Tarot meaning by MeowTarot: A wake-up call for rebirth and second chances. Discover your inner calling and liberation.",
-      "id": "judgement"
+      "id": "judgement",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "The World",
@@ -1494,7 +1536,9 @@
       "seo_slug_en": "the-world-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ The World (โลก) ฉบับ MeowTarot: ความสมบูรณ์แบบ ความสำเร็จสูงสุด และการเดินทางรอบโลก เช็กดวงชะตาที่นี่",
       "meta_description_en": "The World Tarot meaning by MeowTarot: Experience ultimate completion, success, and travel. See what this fulfilling card predicts for your journey.",
-      "id": "the-world"
+      "id": "the-world",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "Ace of Wands",
@@ -1562,7 +1606,9 @@
       "seo_slug_en": "ace-of-wands-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Ace of Wands (เอซไม้เท้า) ฉบับ MeowTarot: การเริ่มต้นใหม่ แรงบันดาลใจ และโอกาสทองที่ห้ามพลาด",
       "meta_description_en": "Ace of Wands Tarot meaning by MeowTarot: Discover new beginnings, passion, and creative sparks. See what this fiery card predicts for you.",
-      "id": "ace-of-wands"
+      "id": "ace-of-wands",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "two-of-wands",
@@ -1630,7 +1676,9 @@
       "icon_emoji": "🌏",
       "seo_slug_en": "two-of-wands-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Two of Wands (สองไม้เท้า) ฉบับ MeowTarot: การวางแผนอนาคต วิสัยทัศน์ไกล และการตัดสินใจเพื่อก้าวสู่โลกกว้าง",
-      "meta_description_en": "Two of Wands Tarot meaning by MeowTarot: Unlock your future potential. Discover how planning, vision, and decisions lead to success."
+      "meta_description_en": "Two of Wands Tarot meaning by MeowTarot: Unlock your future potential. Discover how planning, vision, and decisions lead to success.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "three-of-wands",
@@ -1698,7 +1746,9 @@
       "icon_emoji": "🔭",
       "seo_slug_en": "three-of-wands-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Three of Wands (สามไม้เท้า) ฉบับ MeowTarot: การขยายตัว การรอคอยความสำเร็จ และโอกาสจากต่างแดน",
-      "meta_description_en": "Three of Wands Tarot meaning by MeowTarot: Explore expansion, foresight, and overseas opportunities. See what rewards are coming your way."
+      "meta_description_en": "Three of Wands Tarot meaning by MeowTarot: Explore expansion, foresight, and overseas opportunities. See what rewards are coming your way.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "four-of-wands",
@@ -1766,7 +1816,9 @@
       "icon_emoji": "🥂",
       "seo_slug_en": "four-of-wands-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Four of Wands (สี่ไม้เท้า) ฉบับ MeowTarot: การเฉลิมฉลอง ความสุขในครอบครัว และความสำเร็จที่มั่นคง",
-      "meta_description_en": "Four of Wands Tarot meaning by MeowTarot: Unlock joy, celebration, and homecoming. Discover what this happy card says about your stability."
+      "meta_description_en": "Four of Wands Tarot meaning by MeowTarot: Unlock joy, celebration, and homecoming. Discover what this happy card says about your stability.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "five-of-wands",
@@ -1834,7 +1886,9 @@
       "icon_emoji": "🤼",
       "seo_slug_en": "five-of-wands-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Five of Wands (ห้าไม้เท้า) ฉบับ MeowTarot: การแข่งขัน ความขัดแย้ง และความวุ่นวาย แต่ก็นำมาซึ่งการเติบโต",
-      "meta_description_en": "Five of Wands Tarot meaning by MeowTarot: Embrace competition and conflict. Learn how challenges and chaos can sharpen your skills."
+      "meta_description_en": "Five of Wands Tarot meaning by MeowTarot: Embrace competition and conflict. Learn how challenges and chaos can sharpen your skills.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "six-of-wands",
@@ -1902,7 +1956,9 @@
       "icon_emoji": "🏆",
       "seo_slug_en": "six-of-wands-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Six of Wands (หกไม้เท้า) ฉบับ MeowTarot: ชัยชนะ ชื่อเสียง และการได้รับการยอมรับ เตรียมรับข่าวดีและความสำเร็จ",
-      "meta_description_en": "Six of Wands Tarot meaning by MeowTarot: Victory, fame, and public recognition. Prepare for success and applause."
+      "meta_description_en": "Six of Wands Tarot meaning by MeowTarot: Victory, fame, and public recognition. Prepare for success and applause.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "ace-of-cups",
@@ -1970,7 +2026,9 @@
       "icon_emoji": "🏆",
       "seo_slug_en": "ace-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Ace of Cups (เอซถ้วย) ฉบับ MeowTarot: การเริ่มต้นใหม่ของความรัก อารมณ์ที่เปี่ยมล้น และโอกาสทางใจ",
-      "meta_description_en": "Ace of Cups Tarot meaning by MeowTarot: Embrace new love, emotional beginnings, and creativity. See what this overflowing card brings."
+      "meta_description_en": "Ace of Cups Tarot meaning by MeowTarot: Embrace new love, emotional beginnings, and creativity. See what this overflowing card brings.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "two-of-cups",
@@ -2038,7 +2096,9 @@
       "icon_emoji": "💞",
       "seo_slug_en": "two-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Two of Cups (สองถ้วย) ฉบับ MeowTarot: เนื้อคู่ ความรักที่สมหวัง และการเชื่อมต่อทางใจที่ลึกซึ้ง",
-      "meta_description_en": "Two of Cups Tarot meaning by MeowTarot: Discover soulmates, mutual attraction, and perfect partnerships. See what this romantic card reveals."
+      "meta_description_en": "Two of Cups Tarot meaning by MeowTarot: Discover soulmates, mutual attraction, and perfect partnerships. See what this romantic card reveals.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "three-of-cups",
@@ -2106,7 +2166,9 @@
       "icon_emoji": "🍻",
       "seo_slug_en": "three-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Three of Cups (สามถ้วย) ฉบับ MeowTarot: การเฉลิมฉลอง มิตรภาพ และความสุขจากการรวมตัว อ่านคำทำนายไพ่ทาโรต์แมว",
-      "meta_description_en": "Three of Cups Tarot meaning by MeowTarot: Celebrate friendship, community, and joy. Discover what this social card reveals for you."
+      "meta_description_en": "Three of Cups Tarot meaning by MeowTarot: Celebrate friendship, community, and joy. Discover what this social card reveals for you.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "four-of-cups",
@@ -2174,7 +2236,9 @@
       "icon_emoji": "😒",
       "seo_slug_en": "four-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Four of Cups (สี่ถ้วย) ฉบับ MeowTarot: ความเบื่อหน่าย การมองข้ามโอกาส และวิธีค้นหาแรงบันดาลใจใหม่ๆ",
-      "meta_description_en": "Four of Cups Tarot meaning by MeowTarot: Overcome boredom and apathy. Don't miss the new opportunities waiting right in front of you."
+      "meta_description_en": "Four of Cups Tarot meaning by MeowTarot: Overcome boredom and apathy. Don't miss the new opportunities waiting right in front of you.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "five-of-cups",
@@ -2242,7 +2306,9 @@
       "icon_emoji": "🥀",
       "seo_slug_en": "five-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Five of Cups (ห้าถ้วย) ฉบับ MeowTarot: ความผิดหวัง การสูญเสีย และวิธีค้นหาความหวังที่ยังเหลืออยู่",
-      "meta_description_en": "Five of Cups Tarot meaning by MeowTarot: Overcome grief, loss, and disappointment. Discover the hope and opportunities you might be missing."
+      "meta_description_en": "Five of Cups Tarot meaning by MeowTarot: Overcome grief, loss, and disappointment. Discover the hope and opportunities you might be missing.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "Six of Cups",
@@ -2310,7 +2376,9 @@
       "seo_slug_en": "six-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Six of Cups (หกถ้วย) ฉบับ MeowTarot: ความทรงจำวันวาน รักเก่ารีเทิร์น และความสุขแบบเด็กๆ",
       "meta_description_en": "Six of Cups Tarot meaning by MeowTarot: Explore nostalgia, childhood memories, and returning love. Reconnect with your inner child.",
-      "id": "six-of-cups"
+      "id": "six-of-cups",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "Seven of Cups",
@@ -2378,7 +2446,9 @@
       "seo_slug_en": "seven-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Seven of Cups (เจ็ดถ้วย) ฉบับ MeowTarot: ทางเลือกมากมาย ภาพลวงตา และการตัดสินใจ เลือกอย่างไรไม่ให้โดนหลอก",
       "meta_description_en": "Seven of Cups Tarot meaning by MeowTarot: Navigate through illusions, choices, and fantasies. Learn how to distinguish dreams from reality.",
-      "id": "seven-of-cups"
+      "id": "seven-of-cups",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "Eight of Cups",
@@ -2446,7 +2516,9 @@
       "seo_slug_en": "eight-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Eight of Cups (แปดถ้วย) ฉบับ MeowTarot: การเดินจากไปเพื่อค้นหาความหมายใหม่ การละทิ้งสิ่งที่เคยรัก",
       "meta_description_en": "Eight of Cups Tarot meaning by MeowTarot: Walking away from the unfulfilling. Discover the courage to seek deeper meaning and leave the past behind.",
-      "id": "eight-of-cups"
+      "id": "eight-of-cups",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "Nine of Cups",
@@ -2514,7 +2586,9 @@
       "seo_slug_en": "nine-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Nine of Cups (เก้าถ้วย) ฉบับ MeowTarot: ไพ่แห่งความสมหวัง ความสุข และความพึงพอใจ เช็กดวงของคุณที่นี่",
       "meta_description_en": "Nine of Cups Tarot meaning by MeowTarot: The wish card! Discover happiness, satisfaction, and dreams coming true.",
-      "id": "nine-of-cups"
+      "id": "nine-of-cups",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "card_name_en": "Ten of Cups",
@@ -2582,7 +2656,9 @@
       "seo_slug_en": "ten-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Ten of Cups (สิบถ้วย) ฉบับ MeowTarot: ความสุขสมบูรณ์ ครอบครัวอบอุ่น และชีวิตที่ลงตัวที่สุด",
       "meta_description_en": "Ten of Cups Tarot meaning by MeowTarot: Ultimate happiness and family harmony. Discover what this fulfilling card predicts for your relationships.",
-      "id": "ten-of-cups"
+      "id": "ten-of-cups",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "ace-of-swords",
@@ -2650,7 +2726,9 @@
       "icon_emoji": "🗡️",
       "seo_slug_en": "ace-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Ace of Swords (เอซดาบ) ฉบับ MeowTarot: ความชัดเจนทางความคิด ไอเดียใหม่ และชัยชนะด้วยปัญญา",
-      "meta_description_en": "Ace of Swords Tarot meaning by MeowTarot: Mental breakthrough, clarity, and truth. Seize the new idea and cut through confusion."
+      "meta_description_en": "Ace of Swords Tarot meaning by MeowTarot: Mental breakthrough, clarity, and truth. Seize the new idea and cut through confusion.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "two-of-swords",
@@ -2718,7 +2796,9 @@
       "icon_emoji": "⚔️",
       "seo_slug_en": "two-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Two of Swords (สองดาบ) ฉบับ MeowTarot: ทางเลือกที่ยากลำบาก ความลังเล และการปิดกั้นตัวเอง",
-      "meta_description_en": "Two of Swords Tarot meaning by MeowTarot: Struggling with a difficult choice? Discover how to overcome indecision and find balance."
+      "meta_description_en": "Two of Swords Tarot meaning by MeowTarot: Struggling with a difficult choice? Discover how to overcome indecision and find balance.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "three-of-swords",
@@ -2786,7 +2866,9 @@
       "icon_emoji": "💔",
       "seo_slug_en": "three-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Three of Swords (สามดาบ) ฉบับ MeowTarot: อกหัก ผิดหวัง และความเจ็บปวด วิธีรับมือและเยียวยาใจ",
-      "meta_description_en": "Three of Swords Tarot meaning by MeowTarot: Dealing with heartbreak, betrayal, and sorrow. Learn how to heal and move forward."
+      "meta_description_en": "Three of Swords Tarot meaning by MeowTarot: Dealing with heartbreak, betrayal, and sorrow. Learn how to heal and move forward.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "four-of-swords",
@@ -2854,7 +2936,9 @@
       "icon_emoji": "🛌",
       "seo_slug_en": "four-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Four of Swords (สี่ดาบ) ฉบับ MeowTarot: การพักผ่อน การฟื้นฟูจิตใจ และการสงบศึกกับตัวเอง",
-      "meta_description_en": "Four of Swords Tarot meaning by MeowTarot: Time to rest and recharge. Discover healing, meditation, and the power of doing nothing."
+      "meta_description_en": "Four of Swords Tarot meaning by MeowTarot: Time to rest and recharge. Discover healing, meditation, and the power of doing nothing.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "five-of-swords",
@@ -2922,7 +3006,9 @@
       "icon_emoji": "😏",
       "seo_slug_en": "five-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ Five of Swords (ห้าดาบ) ฉบับ MeowTarot: ชัยชนะที่ไม่คุ้มเสีย ความขัดแย้ง และการยอมถอยเพื่อรักษาใจ",
-      "meta_description_en": "Five of Swords Tarot meaning by MeowTarot: Hollow victory, conflict, and walking away. Learn when to fight and when to retreat."
+      "meta_description_en": "Five of Swords Tarot meaning by MeowTarot: Hollow victory, conflict, and walking away. Learn when to fight and when to retreat.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "six-of-pentacles",
@@ -2990,7 +3076,9 @@
       "icon_emoji": "⚖️",
       "seo_slug_en": "six-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ 6 เหรียญ (Six of Pentacles) คือการให้และการรับอย่างสมดุล เรียนรู้วิธีจัดการความสัมพันธ์และการเงินด้วยความเอื้อเฟื้อกับ MeowTarot",
-      "meta_description_en": "Explore the Six of Pentacles tarot meaning. Discover the balance of giving and receiving, generosity, and financial harmony with MeowTarot."
+      "meta_description_en": "Explore the Six of Pentacles tarot meaning. Discover the balance of giving and receiving, generosity, and financial harmony with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "seven-of-pentacles",
@@ -3058,7 +3146,9 @@
       "icon_emoji": "🌱",
       "seo_slug_en": "seven-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ 7 เหรียญ (Seven of Pentacles) คือความอดทนและการรอคอยความสำเร็จ เรียนรู้วิธีประเมินผลงานและการลงทุนระยะยาวกับ MeowTarot",
-      "meta_description_en": "Explore the Seven of Pentacles tarot meaning. Discover the themes of patience, long-term investment, and assessing the fruits of your labor with MeowTarot."
+      "meta_description_en": "Explore the Seven of Pentacles tarot meaning. Discover the themes of patience, long-term investment, and assessing the fruits of your labor with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "eight-of-pentacles",
@@ -3126,7 +3216,9 @@
       "icon_emoji": "🔨",
       "seo_slug_en": "eight-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ 8 เหรียญ (Eight of Pentacles) คือความขยันและการฝึกฝนฝีมือ ค้นพบพลังแห่งความสม่ำเสมอและการมุ่งสู่ความเป็นเลิศกับ MeowTarot",
-      "meta_description_en": "Explore the Eight of Pentacles tarot meaning. Learn about the importance of diligence, craftsmanship, and mastering your skills with MeowTarot."
+      "meta_description_en": "Explore the Eight of Pentacles tarot meaning. Learn about the importance of diligence, craftsmanship, and mastering your skills with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "nine-of-pentacles",
@@ -3194,7 +3286,9 @@
       "icon_emoji": "🍇",
       "seo_slug_en": "nine-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ 9 เหรียญ (Nine of Pentacles) คือความสำเร็จที่สร้างด้วยตัวเองและชีวิตที่หรูหรา ค้นพบวิธีมีความสุขกับอิสรภาพทางการเงินกับ MeowTarot",
-      "meta_description_en": "Explore the Nine of Pentacles tarot meaning. Discover the themes of financial independence, self-reliance, and enjoying the fruits of your labor with MeowTarot."
+      "meta_description_en": "Explore the Nine of Pentacles tarot meaning. Discover the themes of financial independence, self-reliance, and enjoying the fruits of your labor with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "ten-of-pentacles",
@@ -3262,7 +3356,9 @@
       "icon_emoji": "🏰",
       "seo_slug_en": "ten-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ 10 เหรียญ (Ten of Pentacles) คือความมั่งคั่งที่ยั่งยืนและมรดกตกทอด ค้นพบวิธีสร้างรากฐานที่มั่นคงเพื่อครอบครัวและอนาคตกับ MeowTarot",
-      "meta_description_en": "Explore the Ten of Pentacles tarot meaning. Discover themes of lasting legacy, family wealth, generational abundance, and retirement with MeowTarot."
+      "meta_description_en": "Explore the Ten of Pentacles tarot meaning. Discover themes of lasting legacy, family wealth, generational abundance, and retirement with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "page-of-cups",
@@ -3330,7 +3426,9 @@
       "icon_emoji": "🐠",
       "seo_slug_en": "page-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่เด็กถ้วย (Page of Cups) คือข่าวดีเรื่องความรักและจินตนาการ ค้นพบความสดใสของเด็กน้อยในใจและสัญชาตญาณกับ MeowTarot",
-      "meta_description_en": "Explore the Page of Cups tarot meaning. Discover messages of love, intuitive sparks, and creative beginnings with MeowTarot."
+      "meta_description_en": "Explore the Page of Cups tarot meaning. Discover messages of love, intuitive sparks, and creative beginnings with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "knight-of-cups",
@@ -3398,7 +3496,9 @@
       "icon_emoji": "🌹",
       "seo_slug_en": "knight-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่อัศวินถ้วย (Knight of Cups) คือความโรแมนติกและข้อเสนอแห่งความรัก ค้นพบวิธีตามหาหัวใจและใช้เสน่ห์ของคุณกับ MeowTarot",
-      "meta_description_en": "Explore the Knight of Cups tarot meaning. Discover themes of romance, emotional offers, following your heart, and creative inspiration with MeowTarot."
+      "meta_description_en": "Explore the Knight of Cups tarot meaning. Discover themes of romance, emotional offers, following your heart, and creative inspiration with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "queen-of-cups",
@@ -3466,7 +3566,9 @@
       "icon_emoji": "🌊",
       "seo_slug_en": "queen-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ราชินีถ้วย (Queen of Cups) คือผู้เยียวยาและสัญชาตญาณที่แม่นยำ ค้นพบพลังแห่งความอ่อนโยนและความเข้าใจอารมณ์กับ MeowTarot",
-      "meta_description_en": "Explore the Queen of Cups tarot meaning. Discover themes of intuition, emotional healing, compassion, and the power of empathy with MeowTarot."
+      "meta_description_en": "Explore the Queen of Cups tarot meaning. Discover themes of intuition, emotional healing, compassion, and the power of empathy with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "king-of-cups",
@@ -3534,7 +3636,9 @@
       "icon_emoji": "🧘‍♂️",
       "seo_slug_en": "king-of-cups-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ราชาถ้วย (King of Cups) คือความมั่นคงทางอารมณ์และการควบคุมใจ ค้นพบวิธีเป็นนายเหนืออารมณ์และผู้นำที่ชาญฉลาดกับ MeowTarot",
-      "meta_description_en": "Explore the King of Cups tarot meaning. Discover themes of emotional balance, wisdom, diplomacy, and mastering your feelings with MeowTarot."
+      "meta_description_en": "Explore the King of Cups tarot meaning. Discover themes of emotional balance, wisdom, diplomacy, and mastering your feelings with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "page-of-swords",
@@ -3602,7 +3706,9 @@
       "icon_emoji": "👀",
       "seo_slug_en": "page-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่เด็กดาบ (Page of Swords) คือความอยากรู้และข่าวสารใหม่ๆ ค้นพบวิธีใช้ไหวพริบและการสังเกตเพื่อค้นหาความจริงกับ MeowTarot",
-      "meta_description_en": "Explore the Page of Swords tarot meaning. Discover themes of curiosity, mental vigilance, seeking the truth, and receiving news with MeowTarot."
+      "meta_description_en": "Explore the Page of Swords tarot meaning. Discover themes of curiosity, mental vigilance, seeking the truth, and receiving news with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "knight-of-swords",
@@ -3670,7 +3776,9 @@
       "icon_emoji": "⚔️",
       "seo_slug_en": "knight-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่อัศวินดาบ (Knight of Swords) คือความมุ่งมั่นและการตัดสินใจที่รวดเร็ว ค้นพบวิธีเปลี่ยนความคิดให้เป็นการกระทำที่เฉียบคมกับ MeowTarot",
-      "meta_description_en": "Explore the Knight of Swords tarot meaning. Discover themes of ambition, swift action, determination, and mental agility with MeowTarot."
+      "meta_description_en": "Explore the Knight of Swords tarot meaning. Discover themes of ambition, swift action, determination, and mental agility with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "queen-of-swords",
@@ -3738,7 +3846,9 @@
       "icon_emoji": "🗡️",
       "seo_slug_en": "queen-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ราชินีดาบ (Queen of Swords) คือความชัดเจนและการพูดความจริง ค้นพบวิธีสร้างขอบเขตและการใช้เหตุผลนำทางชีวิตกับ MeowTarot",
-      "meta_description_en": "Explore the Queen of Swords tarot meaning. Discover themes of clarity, honesty, independence, and setting healthy boundaries with MeowTarot."
+      "meta_description_en": "Explore the Queen of Swords tarot meaning. Discover themes of clarity, honesty, independence, and setting healthy boundaries with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "king-of-swords",
@@ -3806,7 +3916,9 @@
       "icon_emoji": "⚖️",
       "seo_slug_en": "king-of-swords-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ราชาดาบ (King of Swords) คืออำนาจทางปัญญาและความยุติธรรม ค้นพบวิธีใช้ตรรกะและความเป็นผู้นำเพื่อความสำเร็จกับ MeowTarot",
-      "meta_description_en": "Explore the King of Swords tarot meaning. Discover themes of intellectual authority, objective truth, logic, and ethical leadership with MeowTarot."
+      "meta_description_en": "Explore the King of Swords tarot meaning. Discover themes of intellectual authority, objective truth, logic, and ethical leadership with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "page-of-pentacles",
@@ -3874,7 +3986,9 @@
       "icon_emoji": "🎓",
       "seo_slug_en": "page-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่เด็กเหรียญ (Page of Pentacles) คือการเริ่มต้นเรียนรู้และโอกาสทางการงานใหม่ๆ ค้นพบวิธีสร้างรากฐานความสำเร็จด้วยความขยันกับ MeowTarot",
-      "meta_description_en": "Explore the Page of Pentacles tarot meaning. Discover themes of new study, career opportunities, diligence, and practical beginnings with MeowTarot."
+      "meta_description_en": "Explore the Page of Pentacles tarot meaning. Discover themes of new study, career opportunities, diligence, and practical beginnings with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "knight-of-pentacles",
@@ -3942,7 +4056,9 @@
       "icon_emoji": "🚜",
       "seo_slug_en": "knight-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่อัศวินเหรียญ (Knight of Pentacles) คือความรับผิดชอบและความอดทน ค้นพบพลังแห่งการทำงานหนักและความสม่ำเสมอกับ MeowTarot",
-      "meta_description_en": "Explore the Knight of Pentacles tarot meaning. Discover themes of hard work, reliability, routine, and steady progress with MeowTarot."
+      "meta_description_en": "Explore the Knight of Pentacles tarot meaning. Discover themes of hard work, reliability, routine, and steady progress with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "queen-of-pentacles",
@@ -4010,7 +4126,9 @@
       "icon_emoji": "🐇",
       "seo_slug_en": "queen-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ราชินีเหรียญ (Queen of Pentacles) คือความมั่งคั่งที่อบอุ่นและการดูแลเอาใจใส่ ค้นพบวิธีสร้างความมั่นคงในชีวิตและบ้านที่แสนสุขกับ MeowTarot",
-      "meta_description_en": "Explore the Queen of Pentacles tarot meaning. Discover themes of nurturing abundance, domestic security, practical care, and financial wellbeing with MeowTarot."
+      "meta_description_en": "Explore the Queen of Pentacles tarot meaning. Discover themes of nurturing abundance, domestic security, practical care, and financial wellbeing with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
     },
     {
       "id": "king-of-pentacles",
@@ -4078,7 +4196,359 @@
       "icon_emoji": "👑",
       "seo_slug_en": "king-of-pentacles-tarot-meaning",
       "meta_description_th": "ความหมายไพ่ราชาเหรียญ (King of Pentacles) คือจุดสูงสุดของความมั่งคั่งและความสำเร็จทางธุรกิจ ค้นพบพลังแห่งความเป็นผู้นำและการบริหารกับ MeowTarot",
-      "meta_description_en": "Explore the King of Pentacles tarot meaning. Discover themes of ultimate wealth, business success, financial stability, and reliable leadership with MeowTarot."
+      "meta_description_en": "Explore the King of Pentacles tarot meaning. Discover themes of ultimate wealth, business success, financial stability, and reliable leadership with MeowTarot.",
+      "orientation": "upright",
+      "orientation_label_th": "ไพ่ปกติ"
+    },
+    {
+      "id": "the-fool-reversed",
+      "card_name_en": "The Fool",
+      "alias_th": "คนโง่",
+      "archetype_en": "The Cosmic Wanderer",
+      "archetype_th": "นักท่องจักรวาลผู้เริงร่า",
+      "orientation": "reversed",
+      "tarot_imply_th": "ความประมาท, การไม่ระวังตัว, ความลังเลใจ, การเริ่มต้นที่ผิดพลาด, ความเขลา",
+      "tarot_imply_en": "Recklessness, Hesitation, Naivety, Poor Judgment, Stagnation",
+      "standalone_past_th": "คุณอาจเคยตัดสินใจทำอะไรลงไปโดยไม่คิดหน้าคิดหลัง เหมือนแมวที่กระโดดใส่กระจกเพราะนึกว่าเป็นทางออก ความผิดพลาดในอดีตที่เกิดจากความใจร้อนหรือความไร้เดียงสาอาจยังทิ้งรอยแผลเล็กๆ ให้คุณเข็ดขยาดอยู่",
+      "standalone_past_en": "You may have acted impulsively without thinking things through, like a cat jumping at a window thinking it was an open door. Past mistakes born from impatience or naivety might still be causing you to hesitate today.",
+      "standalone_present_th": "ระวังหน่อยเจ้าเหมียว! ตอนนี้คุณอาจกำลังทำอะไรเสี่ยงๆ โดยไม่มีตาข่ายรองรับ หรือในทางกลับกัน คุณอาจกำลังกลัวจนไม่กล้าขยับตัวออกจากมุมมืด พลังงานตอนนี้คือความไม่สมดุล—ไม่บ้าบิ่นเกินไป ก็ขี้ขลาดเกินเหตุ",
+      "standalone_present_en": "Watch out, kitty! You might be taking unnecessary risks without a safety net, or conversely, you are paralyzed by fear and hiding in a dark corner. The energy now is unbalanced—either too reckless or excessively timid.",
+      "standalone_future_th": "ถ้ายังก้าวเดินโดยไม่ดูตาม้าตาเรือ คุณอาจจะสะดุดขาตัวเองล้มหัวทิ่มได้ แต่ถ้าคุณมัวแต่รอความสมบูรณ์แบบ คุณก็จะไม่ได้ออกเดินทางเสียที อนาคตเตือนให้ระวัง 'ก้าวพลาด' แต่ก็อย่าหยุดเดิน เพียงแค่ต้องใส่ใจรายละเอียดมากขึ้น",
+      "standalone_future_en": "If you keep walking blindly, you might trip over your own paws. However, waiting for perfection will leave you stuck at the starting line. The future warns against missteps but encourages movement—just with more awareness and caution.",
+      "reading_summary_preview_th": "บทเรียนจากความใจร้อนในอดีตกำลังส่งผลให้ปัจจุบันคุณขาดความมั่นใจ หรือไม่ก็กำลังจะทำพลาดซ้ำเดิมเพราะความประมาท การเดินทางครั้งนี้ต้องใช้สติมากกว่าแค่ความกล้า มิฉะนั้นอาจเจ็บตัวฟรี",
+      "reading_summary_preview_en": "Lessons from past impulsiveness are shaking your confidence now, or you risk repeating the same mistake through carelessness. This journey requires mindfulness, not just bravery, to avoid unnecessary trouble.",
+      "love_past_th": "ความรักที่ผ่านมาอาจเริ่มเร็วและจบเร็ว หรือคุณอาจทุ่มเทให้กับคนที่ไม่พร้อมจะรับผิดชอบใจใคร",
+      "love_past_en": "Past relationships may have started and ended too quickly, or you invested in someone who was too immature to handle your heart.",
+      "love_present_th": "ระวังคนเจ้าชู้ไก่แจ้ที่เข้ามาแค่เล่นๆ หรือตัวคุณเองที่กำลังทำตัวเป็นเด็กไม่รู้จักโตในความสัมพันธ์ เรียกร้องแต่ไม่ยอมให้",
+      "love_present_en": "Beware of flighty lovers who are just playing games, or check if you are being the childish one—demanding attention without giving commitment.",
+      "love_future_th": "หากไม่ปรับตัว ความสัมพันธ์อาจสะดุดเพราะความเอาแต่ใจ หรือการมองข้ามความรู้สึกของอีกฝ่าย",
+      "love_future_en": "Without adjustment, relationships may stumble due to selfishness or ignoring your partner's feelings.",
+      "career_past_th": "เคยลาออกโดยไม่มีงานรองรับ หรือรับปากทำงานชิ้นใหญ่เกินตัวจนทำไม่ไหว",
+      "career_past_en": "You might have quit a job without a backup plan or promised to deliver on a project that was way beyond your capacity.",
+      "career_present_th": "งานกำลังสะดุดเพราะความไม่รอบคอบ มีโอกาสถูกตำหนิเรื่องความสะเพร่า อย่าเพิ่งเริ่มโปรเจกต์ใหม่ถ้าของเก่ายังไม่เคลียร์",
+      "career_present_en": "Work is stalling due to carelessness; expect criticism for oversight. Do not start a new project until the current mess is cleared.",
+      "career_future_th": "ระวังสัญญาลวง หรือข้อเสนอที่ดูดีเกินจริง (Too good to be true) อย่าเพิ่งเซ็นอะไรถ้ายังไม่ได้อ่านทุกตัวอักษร",
+      "career_future_en": "Beware of false promises or offers that seem too good to be true. Do not sign anything until you have read every single letter.",
+      "finance_past_th": "เงินรั่วไหลไปกับของไร้สาระ หรือการลงทุนตามกระแสที่ไม่ได้กำไรกลับคืน",
+      "finance_past_en": "Money leaked away on frivolous things or trend-following investments that yielded no return.",
+      "finance_present_th": "กระเป๋ารั่ว! งดช้อปปิ้งของเล่นชิ้นใหม่เดี๋ยวนี้ ตรวจสอบบิลและค่าใช้จ่ายให้ดี อาจมีอะไรตกหล่น",
+      "finance_present_en": "Wallet leak! Stop buying new toys immediately. Double-check your bills and expenses; something might be amiss.",
+      "finance_future_th": "มีความเสี่ยงที่จะเสียเงินก้อนเพราะความไว้ใจคนผิด หรือความประมาทเลินเล่อของตัวเอง",
+      "finance_future_en": "There is a risk of losing a lump sum due to trusting the wrong person or your own negligence.",
+      "action_prompt_th": "หยุดก่อน! ตรวจเช็คความปลอดภัยและรายละเอียดอีกครั้ง อย่าเพิ่งกระโจนลงไป",
+      "action_prompt_en": "Stop! Check the safety details once more. Do not leap just yet.",
+      "reflection_question_th": "คุณกำลังหนีปัญหาหรือกำลังวิ่งเข้าหาโอกาสกันแน่?",
+      "reflection_question_en": "Are you running away from a problem or running towards an opportunity?",
+      "affirmation_th": "ฉันก้าวเดินด้วยสติและความรอบคอบ",
+      "affirmation_en": "I move forward with mindfulness and caution.",
+      "yes_no_bias": "No",
+      "timing_hint": "Not yet, wait for clarity",
+      "decision_support": "Delay",
+      "hook_th": "ระวังตกเหวเพราะมัวแต่มองผีเสื้อนะเจ้าเหมียว!",
+      "hook_en": "Watch out for the cliff while chasing butterflies, kitty!",
+      "ritual_2min_th": "ยืนเท้าเปล่าบนพื้นดินหรือพื้นหญ้า หลับตาแล้วจินตนาการว่ามีรากไม้งอกออกจากเท้าคุณยึดติดกับโลก เพื่อดึงสติกลับมาอยู่กับเนื้อกับตัว",
+      "ritual_2min_en": "Stand barefoot on the ground or grass. Close your eyes and imagine roots growing from your feet into the earth to ground yourself and bring your awareness back to the present.",
+      "journal_prompt_3lines_th": "เขียนเรื่องที่คุณกำลังรู้สึกลังเลว่าจะทำดีไหม\nเขียนความเสี่ยงที่เลวร้ายที่สุดที่อาจเกิดขึ้น\nแล้วเขียนแผนรับมือถ้ามันเกิดขึ้นจริง",
+      "journal_prompt_3lines_en": "Write down something you are hesitating to do.\nList the worst-case risks.\nThen write a plan for how you would handle them.",
+      "breath_pattern": "5-5",
+      "astrology_sign": "",
+      "planet": "Uranus",
+      "element": "Air",
+      "numerology_value": "0",
+      "keywords_light": "Calculated risk, Second chance, Wisdom from failure, Caution, Preparation",
+      "keywords_shadow": "Recklessness, Negligence, Stupidity, Hesitation, Apathy",
+      "image_alt_en": "A clumsy kitten tripping over its own paws near a cliff edge, with a spilled bag of treats, symbolizing recklessness or lack of awareness.",
+      "illustration_prompt_en": "A clumsy kitten tripping over a stone at a cliff edge, belongings spilling from a knapsack, upside down perspective, chaotic but cute, tarot card style, art nouveau gold details, muted colors --ar 2:3",
+      "color_palette": [
+        "#8B0000",
+        "#708090",
+        "#DAA520"
+      ],
+      "icon_emoji": "⚠️",
+      "seo_slug_en": "the-fool-reversed-tarot-meaning",
+      "meta_description_th": "ความหมายไพ่ The Fool กลับหัว: เตือนเรื่องความประมาท การตัดสินใจผิดพลาด หรือความกลัวที่ฉุดรั้งคุณไว้ อ่านคำทำนายแบบ Meow Tarot",
+      "meta_description_en": "The Fool Reversed tarot meaning: A warning against recklessness, poor judgment, or fear holding you back. Discover the shadow side with Meow Tarot.",
+      "orientation_label_th": "ไพ่กลับหัว"
+    },
+    {
+      "id": "the-magician-reversed",
+      "card_name_en": "The Magician",
+      "alias_th": "นักมายากล",
+      "archetype_en": "The Manifestor",
+      "archetype_th": "ผู้สร้างความเป็นจริง",
+      "orientation": "reversed",
+      "tarot_imply_th": "เล่ห์เหลี่ยม, ความสามารถที่ถูกปิดกั้น, การหลอกลวง, ขาดความมั่นใจ, ดีแต่พูด",
+      "tarot_imply_en": "Manipulation, Wasted Talent, Creative Block, Trickery, Illusions",
+      "standalone_past_th": "ในอดีตคุณอาจเคยใช้ความเฉลียวฉลาดในทางที่ผิด หรือมัวแต่ลังเลสงสัยในความสามารถของตัวเองจนปล่อยให้โอกาสหลุดลอยไป เหมือนแมวที่มีของเล่นกองอยู่ตรงหน้าแต่กลับเมินเฉยเพราะมัวแต่มองหาสิ่งที่ไกลตัว",
+      "standalone_past_en": "In the past, you may have misused your cleverness or hesitated due to self-doubt, letting opportunities slip away. Like a cat ignoring the toys right in front of it while staring longingly at something out of reach.",
+      "standalone_present_th": "ระวัง! คุณอาจกำลังเล่นกลลวงตาหลอกคนอื่น หรือแย่กว่านั้นคือ 'หลอกตัวเอง' ว่าทำไม่ได้ ทั้งที่มีเครื่องมือครบมือ หรือคุณอาจกำลังฟุ้งซ่าน จับจด ทำหลายอย่างแต่ไม่สำเร็จเป็นชิ้นเป็นอันสักอย่าง",
+      "standalone_present_en": "Beware! You might be casting illusions to fool others, or worse, fooling yourself into thinking you are incapable despite having all the tools. Alternatively, you are scattered—chasing too many mice at once and catching none.",
+      "standalone_future_th": "หากยังใช้เล่ห์เหลี่ยมนำหน้าความจริงใจ หรือยังไม่ยอมงัดศักยภาพออกมาใช้ อนาคตอาจเต็มไปด้วยสัญญาปากเปล่าที่ว่างเปล่า หรือความล้มเหลวที่เกิดจากการไม่ลงมือทำอย่างจริงจัง",
+      "standalone_future_en": "If manipulation continues to lead over integrity, or if you refuse to unlock your potential, the future holds empty promises and failures born from a lack of genuine action.",
+      "reading_summary_preview_th": "ร่องรอยของการใช้ทางลัดหรือความไม่มั่นใจในอดีตกำลังส่งผลให้ปัจจุบันคุณติดอยู่ในวังวนของความสับสนและการหลอกตัวเอง หากไม่รีบดึงสติและใช้ความสามารถที่มีอย่างซื่อตรง อนาคตจะเป็นเพียงภาพลวงตาที่จับต้องไม่ได้",
+      "reading_summary_preview_en": "Traces of past shortcuts or insecurity are trapping you in a present cycle of confusion and self-deception. If you don't realign with integrity and use your actual skills, your future will remain an intangible illusion.",
+      "love_past_th": "อาจเคยมีความไม่จริงใจ หรือการใช้คารมคมคายเพื่อหว่านล้อมให้คนหลงใหลโดยไม่ได้คิดจิงจัง",
+      "love_past_en": "There may have been insincerity or the use of smooth talking to charm someone without serious intent.",
+      "love_present_th": "ระวังการสื่อสารที่คลุมเครือ หรือคนที่เข้ามาด้วยภาพลักษณ์ดูดีแต่เนื้อในกลวงเปล่า อย่าเพิ่งเชื่อในสิ่งที่ตาเห็นทั้งหมด",
+      "love_present_en": "Beware of vague communication or someone who appears perfect but lacks substance. Do not believe everything you see right now.",
+      "love_future_th": "ความสัมพันธ์อาจสะดุดเพราะการโกหกเล็กๆ น้อยๆ ที่สะสมกัน หรือความรู้สึกว่าอีกฝ่าย 'ไม่ตรงปก'",
+      "love_future_en": "Relationships may stumble due to accumulated little white lies or the feeling that a partner is not who they claimed to be.",
+      "career_past_th": "เคยมีอาการ Imposter Syndrome (คิดว่าตัวเองไม่เก่งจริง) จนไม่กล้ารับงานใหญ่ หรือใช้ทางลัดที่ไม่ถูกต้อง",
+      "career_past_en": "You may have suffered from Imposter Syndrome, refusing big tasks, or took unethical shortcuts to get ahead.",
+      "career_present_th": "คุณมีของดีแต่ไม่ยอมปล่อยของ! หรือกำลังถูกมองว่า 'ดีแต่พูด' (All talk, no action) ถึงเวลาพิสูจน์ด้วยผลงานไม่ใช่คำคุย",
+      "career_present_en": "You have the talent but are sitting on it! Or you are risking a reputation of being 'all talk, no action.' It's time to prove your worth with results, not words.",
+      "career_future_th": "หากไม่โฟกัส โปรเจกต์ที่วางไว้อาจพังครืนเพราะขาดการวางรากฐานที่ดี หรือถูกจับได้ว่าทำงานผักชีโรยหน้า",
+      "career_future_en": "Without focus, projects may collapse due to poor foundations, or superficial work will be exposed.",
+      "finance_past_th": "เคยสูญเสียเงินเพราะเชื่อคนง่าย หรือการลงทุนในสิ่งที่ดูดีแต่ไม่มีมูลค่าจริง",
+      "finance_past_en": "Lost money due to gullibility or investing in glossy schemes with no real value.",
+      "finance_present_th": "ระวังเล่ห์เหลี่ยมทางการค้า หรือการใช้จ่ายเงินไปกับภาพลักษณ์ภายนอกจนลืมดูบัญชีคงเหลือจริงๆ",
+      "finance_present_en": "Be wary of commercial trickery or spending too much on maintaining an image while ignoring your actual bank balance.",
+      "finance_future_th": "ความเสี่ยงที่จะถูกหลอกลวงทางการเงินสูง หรือแผนการหาเงินที่วางไว้อาจไม่เป็นไปตามเป้าเพราะขาดทักษะจริง",
+      "finance_future_en": "High risk of financial deception, or income plans falling flat because the necessary skills weren't actually applied.",
+      "action_prompt_th": "เลิกหลอกตัวเองว่า 'ยังไม่พร้อม' เลิกฟุ้งซ่านแล้วเลือกหยิบเครื่องมือมาใช้ทีละชิ้น เดี๋ยวนี้!",
+      "action_prompt_en": "Stop fooling yourself that you are 'not ready.' Stop scattering your energy and pick up one tool to use right now!",
+      "reflection_question_th": "คุณกำลังใช้ความฉลาดของคุณเพื่อแก้ปัญหา หรือเพื่อหลีกเลี่ยงปัญหากันแน่?",
+      "reflection_question_en": "Are you using your intelligence to solve problems or to avoid them?",
+      "affirmation_th": "ฉันซื่อสัตย์ต่อความสามารถของตนเอง และใช้มันในทางที่ถูกต้อง",
+      "affirmation_en": "I am honest about my abilities and use them for the highest good.",
+      "yes_no_bias": "Reframe",
+      "timing_hint": "Delays caused by lack of focus",
+      "decision_support": "Delay",
+      "hook_th": "มีของดีอยู่กับตัว แต่ทำไมทำเหมือนหาไม่เจอซะงั้นเจ้าเหมียว?",
+      "hook_en": "You have the magic in your paws, so why are you acting like you can't find it?",
+      "ritual_2min_th": "วางโทรศัพท์และสิ่งรบกวนทั้งหมด หลับตา นึกภาพว่าคุณกำลัง 'เก็บ' พลังงานที่กระจัดกระจายกลับเข้ามาในตัวทีละส่วน เหมือนม้วนไหมพรมกลับเข้ากลุ่ม",
+      "ritual_2min_en": "Put away all distractions. Close your eyes and visualize yourself 'pulling' your scattered energy back into your body, like winding yarn back into a neat ball.",
+      "journal_prompt_3lines_th": "เรื่องโกหก (หรือข้ออ้าง) ที่คุณบอกตัวเองบ่อยที่สุดในช่วงนี้คืออะไร?\nคุณกลัวอะไรถ้ายอมแสดงฝีมือจริงๆ?\nเขียน 1 สิ่งที่ต้อง 'เลิกทำ' เพื่อให้ชีวิตเดินหน้า",
+      "journal_prompt_3lines_en": "What is the lie (or excuse) you tell yourself most often lately?\nWhat do you fear might happen if you truly showed your skills?\nWrite down one thing you must 'stop doing' to move forward.",
+      "breath_pattern": "4-4",
+      "astrology_sign": "",
+      "planet": "Mercury",
+      "element": "Air",
+      "numerology_value": "1",
+      "keywords_light": "Honesty, Focus, True Potential, Clarity, Mastery",
+      "keywords_shadow": "Deception, Confusion, Laziness, Manipulation, Unfinished projects",
+      "image_alt_en": "A chaotic scene where a cat magician has knocked over the cup, dropped the wand, and tangled itself in the sword's belt, looking guilty or confused.",
+      "illustration_prompt_en": "A clumsy tabby cat magician dropping a magic wand, spilling a golden cup, sword tangled in a red tablecloth, pentacle rolling away on the floor, chaotic magical sparks, dark mystical background, tarot style, art nouveau --ar 2:3",
+      "color_palette": [
+        "#4A0404",
+        "#808080",
+        "#CDAA00"
+      ],
+      "icon_emoji": "🎭",
+      "seo_slug_en": "the-magician-reversed-tarot-meaning",
+      "meta_description_th": "ความหมายไพ่ The Magician กลับหัว: ระวังการหลอกลวง พลังที่ถูกปิดกั้น หรือการไม่มั่นใจในตัวเอง ค้นพบวิธีปลดล็อคพลังด้านเงาฉบับ Meow Tarot",
+      "meta_description_en": "The Magician Reversed tarot meaning: Warning of manipulation, wasted talent, and creative blocks. Learn how to realign your energy with Meow Tarot.",
+      "orientation_label_th": "ไพ่กลับหัว"
+    },
+    {
+      "id": "the-high-priestess-reversed",
+      "card_name_en": "The High Priestess",
+      "alias_th": "สตรีนักบวช",
+      "archetype_en": "The Oracle",
+      "archetype_th": "นักพยากรณ์",
+      "orientation": "reversed",
+      "tarot_imply_th": "การปิดกั้นสัญชาตญาณ, ความลับรั่วไหล, ความสับสนทางอารมณ์, มองโลกแค่เปลือกนอก, การปลีกตัวที่มากเกินไป",
+      "tarot_imply_en": "Blocked Intuition, Leaked Secrets, Emotional Confusion, Superficiality, Isolation",
+      "standalone_past_th": "ในอดีตคุณอาจเคยเพิกเฉยต่อ 'เสียงเตือน' หรือลางสังหรณ์ของตัวเองจนเกิดปัญหา หรืออาจเลือกที่จะเก็บตัวเงียบขังตัวเองไว้ในโลกส่วนตัวจนตัดขาดจากความจริงภายนอกมากเกินไป",
+      "standalone_past_en": "In the past, you may have ignored your own 'warning bells' or intuition, leading to trouble. Alternatively, you might have retreated too far into your own private world, cutting yourself off from reality.",
+      "standalone_present_th": "สัญญาณวิทยุจากภายในกำลังขาดๆ หายๆ เจ้าเหมียว! ตอนนี้คุณอาจกำลังสับสนระหว่าง 'ความกลัว' กับ 'สัญชาตญาณ' หรือพยายามใช้เหตุผลตรรกะมากเกินไปจนมองข้ามความรู้สึกที่แท้จริงที่กำลังร้องบอกคุณอยู่",
+      "standalone_present_en": "Your inner radio signal is glitching, kitty! You might be confusing 'fear' with 'intuition' right now, or trying so hard to be logical that you are overlooking the genuine feelings screaming for your attention.",
+      "standalone_future_th": "หากยังปิดหูไม่ฟังเสียงหัวใจ คุณอาจเดินหลงทางเข้าไปในดงหนามของข้อมูลลวง หรือความลับที่คุณพยายามซ่อนไว้ใตพรมอาจถูกลมพัดเปิดเผยออกมาในเวลาที่คุณไม่พร้อม",
+      "standalone_future_en": "If you keep ignoring your heart's voice, you risk wandering into a thicket of misinformation. Or, the secrets you've swept under the rug might be exposed by a sudden gust of wind when you least expect it.",
+      "reading_summary_preview_th": "การเมินเฉยต่อความรู้สึกในอดีตทำให้ปัจจุบันคุณขาดความมั่นใจในการตัดสินใจและรู้สึกสับสน หากไม่รีบกลับมาจูนคลื่นภายในให้ตรง อนาคตอาจมีความเสี่ยงเรื่องความลับหรือการถูกชักจูงได้ง่าย",
+      "reading_summary_preview_en": "Ignoring your feelings in the past has left you currently lacking decision-making confidence and feeling confused. If you don't retune your inner frequency soon, the future risks exposure of secrets or being easily misled.",
+      "love_past_th": "เคยปฏิเสธสัญญาณเตือน (Red Flags) ที่ชัดเจน หรือมีความสัมพันธ์ที่เต็มไปด้วยความลับและความอึดอัด",
+      "love_past_en": "You may have ignored glaring red flags or stayed in a relationship filled with secrets and unease.",
+      "love_present_th": "ระวังอารมณ์แปรปรวนที่ทำให้คนรักเข้าหน้าไม่ติด หรือคุณกำลังสงสัยในตัวอีกฝ่ายมากเกินเหตุจนกลายเป็นความระแวง",
+      "love_present_en": "Beware of mood swings making you unapproachable, or suspecting your partner so much that it turns into paranoia.",
+      "love_future_th": "ความลับที่ซ่อนไว้อาจแดงขึ้นมา หรือความเย็นชาจะสร้างกำแพงหนาระหว่างกัน",
+      "love_future_en": "Hidden secrets may come to light, or emotional coldness will build a thick wall between you.",
+      "career_past_th": "เคยถูกนินทาลับหลังหรือพลาดโอกาสเพราะไม่ได้รับข้อมูลที่ครบถ้วน",
+      "career_past_en": "You were gossiped about behind your back or missed opportunities due to a lack of complete information.",
+      "career_present_th": "บรรยากาศในที่ทำงานดูไม่น่าไว้ใจ มีคลื่นใต้น้ำ หรือคุณรู้สึกว่าตัวเองไม่มีสมาธิในการทำงานเหมือนแมวง่วงนอน",
+      "career_present_en": "The workplace atmosphere feels untrustworthy, with undercurrents of tension, or you feel unable to focus, like a drowsy cat.",
+      "career_future_th": "ระวังการตัดสินใจผิดพลาดเพราะข้อมูลไม่พอ หรือถูกปิดบังความจริงบางอย่างที่สำคัญ",
+      "career_future_en": "Risk of making poor decisions due to insufficient data, or important truths being withheld from you.",
+      "finance_past_th": "เคยวู่วามใช้เงินตามอารมณ์ชั่ววูบ หรือถูกหลอกเพราะไม่เช็ครายละเอียด",
+      "finance_past_en": "You may have spent impulsively based on fleeting emotions or were deceived because you didn't check the details.",
+      "finance_present_th": "อย่าเพิ่งเชื่อคำโฆษณาชวนเชื่อหรือข่าววงในที่ไม่มีมูล ตรวจสอบบัญชีให้ดีว่ามีอะไรผิดปกติหรือไม่",
+      "finance_present_en": "Don't trust hype or baseless insider tips right now. Double-check your accounts for any irregularities.",
+      "finance_future_th": "ความไม่รอบคอบอาจนำไปสู่ความสูญเสีย หรือมีรายจ่ายที่เกิดจากความผิดพลาดที่ซ่อนอยู่",
+      "finance_future_en": "Carelessness could lead to loss, or expenses arising from hidden errors.",
+      "action_prompt_th": "หยุดวิ่งไล่ตามเสียงรบกวนภายนอก กลับมานั่งนิ่งๆ แล้วยอมรับความจริงที่คุณกำลังหนีอยู่",
+      "action_prompt_en": "Stop chasing external noise. Sit still and accept the truth you are running away from.",
+      "reflection_question_th": "ทำไมคุณถึงไม่กล้าเชื่อความรู้สึกของตัวเองในตอนนี้?",
+      "reflection_question_en": "Why are you afraid to trust your own feelings right now?",
+      "affirmation_th": "ฉันเปิดใจรับฟังความจริง แม้ว่ามันจะไม่ใช่สิ่งที่ฉันอยากได้ยินก็ตาม",
+      "affirmation_en": "I open my heart to the truth, even if it is not what I want to hear.",
+      "yes_no_bias": "No",
+      "timing_hint": "Delays, information is hidden",
+      "decision_support": "Delay",
+      "hook_th": "ทำไมถึงปิดหูเมื่อหัวใจกำลังตะโกนล่ะเจ้าเหมียว?",
+      "hook_en": "Why cover your ears when your heart is screaming, kitty?",
+      "ritual_2min_th": "ดื่มน้ำเปล่า 1 แก้วช้าๆ จินตนาการว่าน้ำกำลังชำระล้างความขุ่นมัวในความคิด พยายามแยกแยะว่าเรื่องไหนคือ 'ข้อเท็จจริง' และเรื่องไหนคือ 'ความกังวล' ที่ปรุงแต่งขึ้น",
+      "ritual_2min_en": "Drink a glass of water slowly. Visualize the water washing away mental cloudiness. Try to distinguish between 'facts' and cooked-up 'anxieties'.",
+      "journal_prompt_3lines_th": "เรื่องอะไรที่คุณ 'รู้สึก' ว่ามันผิดปกติแต่หาหลักฐานไม่ได้?\nเขียนความกลัวที่ทำให้คุณไม่กล้าเชื่อสัญชาตญาณตัวเอง\nความลับที่อึดอัดที่สุดในใจตอนนี้คืออะไร?",
+      "journal_prompt_3lines_en": "What do you 'feel' is wrong but have no proof of?\nWrite down the fear that stops you from trusting your intuition.\nWhat is the most uncomfortable secret in your heart right now?",
+      "breath_pattern": "4-4",
+      "astrology_sign": "",
+      "planet": "Moon",
+      "element": "Water",
+      "numerology_value": "2",
+      "keywords_light": "Self-reflection, Reconnection, Truth-seeking, Mindfulness, Awareness",
+      "keywords_shadow": "Ignorance, Superficiality, Hidden enemies, Paranoia, Blocked psychic ability",
+      "image_alt_en": "A mysterious cat with a veil slipping off, looking anxious and turning away from a scrying pool that shows a distorted reflection, symbolizing blocked intuition.",
+      "illustration_prompt_en": "A mystical black cat with a slipping veil turning away from a scrying pool showing ripples and distorted reflections, dark cloudy night sky, spilled pomegranates, tarot card style, art nouveau, muted silver and deep indigo tones --ar 2:3",
+      "color_palette": [
+        "#2F2F2F",
+        "#483D8B",
+        "#A9A9A9"
+      ],
+      "icon_emoji": "🌫️",
+      "seo_slug_en": "the-high-priestess-reversed-tarot-meaning",
+      "meta_description_th": "ความหมายไพ่ The High Priestess กลับหัว: เมื่อสัญชาตญาณถูกปิดกั้น ความลับรั่วไหล หรืออารมณ์แปรปรวน ค้นพบวิธีจูนสัญญาณใจใหม่กับ Meow Tarot",
+      "meta_description_en": "The High Priestess Reversed tarot meaning: Blocked intuition, leaked secrets, and emotional confusion. Find out how to reconnect with your inner voice.",
+      "orientation_label_th": "ไพ่กลับหัว"
+    },
+    {
+      "id": "the-empress-reversed",
+      "card_name_en": "The Empress",
+      "alias_th": "จักรพรรดินี",
+      "archetype_en": "The Nurturer",
+      "archetype_th": "ผู้โอบอุ้มชีวิต",
+      "orientation": "reversed",
+      "tarot_imply_th": "การตามใจตัวเองจนเสียคน, ความรักที่น่าอึดอัด, ภาวะไอเดียตีบตัน, ความไม่ดูแลตัวเอง, ปัญหาครอบครัว",
+      "tarot_imply_en": "Over-indulgence, Smothering, Creative Block, Neglect, Dependence",
+      "standalone_past_th": "คุณอาจเคยทุ่มเทดูแลคนอื่นจนลืมดูแลตัวเอง เหมือนแม่แมวที่ให้นมลูกจนตัวผอมโซ หรือในทางกลับกัน คุณอาจเคยเสพติดความสบายจนกลายเป็นความขี้เกียจ ไม่ยอมลุกขึ้นมาทำอะไรเป็นชิ้นเป็นอัน",
+      "standalone_past_en": "You may have exhausted yourself caring for others, like a mother cat nursing kittens until she is thin. Conversely, you might have become addicted to comfort, letting laziness prevent you from achieving anything substantial.",
+      "standalone_present_th": "ระวังความเป็น 'ดราม่าควีน' เข้าครอบงำ! ตอนนี้คุณอาจกำลังรู้สึกเรียกร้องความสนใจมากเกินไป หรือรู้สึกว่าตัวเองไม่สวย ไม่เก่ง ไม่ได้รับความรัก พลังสร้างสรรค์ที่เคยไหลลื่นกำลังติดขัดเหมือนก๊อกน้ำประปาที่สนิมเกรอะ",
+      "standalone_present_en": "Beware of the inner 'drama queen'! You might be demanding too much attention or feeling unattractive and unloved. Your creative flow, once smooth, is currently blocked like a rusty faucet.",
+      "standalone_future_th": "หากยังปล่อยตัวให้จมอยู่กับความฟุ้งเฟ้อหรือความน้อยใจ อนาคตอาจเต็มไปด้วยความแห้งแล้งทางจิตใจ หรือปัญหาการเงินที่เกิดจากการใช้จ่ายเพื่อถมช่องว่างในใจ",
+      "standalone_future_en": "If you continue to wallow in over-indulgence or self-pity, the future may bring emotional barrenness or financial issues stemming from 'retail therapy' meant to fill an inner void.",
+      "reading_summary_preview_th": "การขาดสมดุลในการให้และรับความรักในอดีต กำลังส่งผลให้ปัจจุบันคุณรู้สึกขาดแคลนหรือเรียกร้องมากเกินไป หากไม่หันกลับมารักตัวเองอย่างถูกวิธี อนาคตอาจต้องเผชิญกับความสัมพันธ์ที่น่าอึดอัดหรือสภาวะถังแตก",
+      "reading_summary_preview_en": "An imbalance in giving and receiving love in the past is making you feel needy or demanding now. If you don't learn to nurture yourself correctly, you face a future of suffocating relationships or financial strain.",
+      "love_past_th": "เคยเจอความรักที่ 'เยอะ' เกินไปจนหายใจไม่ออก หรือคุณเองที่เป็นฝ่ายเกาะติดแฟนแจ",
+      "love_past_en": "You experienced love that was 'too much,' suffocating you, or perhaps you were the clingy one.",
+      "love_present_th": "ระวังการทำตัวเป็นเจ้าข้าวเจ้าของ หรือเรียกร้องให้อีกฝ่ายเอาใจตลอดเวลาจนเขารำคาญ",
+      "love_present_en": "Beware of being possessive or demanding constant pampering until your partner gets annoyed.",
+      "love_future_th": "ความสัมพันธ์อาจจืดจางเพราะความไม่ดูแลตัวเอง หรือความเบื่อหน่ายในนิสัยเอาแต่ใจ",
+      "love_future_en": "Relationships may fade due to lack of self-care or weariness from demanding behavior.",
+      "career_past_th": "เคยทำงานแบบเช้าชามเย็นชาม ขาดแรงบันดาลใจ หรือรอให้คนอื่นมาป้อนงานให้",
+      "career_past_en": "You worked without passion, lacking inspiration, or waited for others to spoon-feed you tasks.",
+      "career_present_th": "รู้สึกหมดไฟ (Burnout) คิดงานไม่ออก สมองตื้อไปหมด หรือกำลังทำงานในสภาพแวดล้อมที่ไม่เห็นคุณค่า",
+      "career_present_en": "Feeling burned out, creative block, brain fog, or working in an environment that doesn't value you.",
+      "career_future_th": "ผลงานอาจออกมาล่าช้าหรือไม่สมบูรณ์เพราะความเฉื่อยชา ระวังจะเสียเครดิต",
+      "career_future_en": "Work may be delayed or incomplete due to inertia; be careful of losing credibility.",
+      "finance_past_th": "เงินหมดไปกับของฟุ่มเฟือย เสื้อผ้า เครื่องสำอาง ที่ซื้อมาแล้วไม่ได้ใช้",
+      "finance_past_en": "Money was wasted on frivolous items, clothes, or cosmetics that were bought but never used.",
+      "finance_present_th": "กระเป๋าแบนแฟนทิ้ง! ช่วงนี้ต้องเพลาๆ เรื่องช้อปปิ้งบำบัดลงบ้าง การเงินเริ่มตึงมือ",
+      "finance_present_en": "Empty wallet! It's time to cut back on 'retail therapy'; finances are getting tight.",
+      "finance_future_th": "อาจมีปัญหาหนี้สินจากการใช้จ่ายเกินตัว หรือต้องเสียเงินก้อนไปกับการซ่อมแซมบ้าน/สุขภาพ",
+      "finance_future_en": "Debt issues may arise from overspending, or lump sums might be needed for home repairs or health.",
+      "action_prompt_th": "หยุดรอให้ใครมาป้อนข้าวป้อนน้ำ! ลุกขึ้นมาแต่งตัวสวยๆ แล้วออกไปจัดการธุระด้วยตัวเองเดี๋ยวนี้",
+      "action_prompt_en": "Stop waiting to be spoon-fed! Get up, dress up, and handle your business yourself right now.",
+      "reflection_question_th": "คุณกำลังใช้ความรักเป็นข้ออ้างในการควบคุมคนอื่น หรือทำร้ายตัวเองอยู่หรือเปล่า?",
+      "reflection_question_en": "Are you using love as an excuse to control others or to harm yourself?",
+      "affirmation_th": "ฉันสร้างความสุขได้ด้วยตัวเอง โดยไม่ต้องรอคอยจากผู้อื่น",
+      "affirmation_en": "I create my own happiness without waiting for others to provide it.",
+      "yes_no_bias": "No",
+      "timing_hint": "Delayed due to lack of effort",
+      "decision_support": "Decline",
+      "hook_th": "ราชินีก็มีวันที่มงกุฎเบี้ยวได้... อย่าปล่อยให้ความดราม่าทำลายวันดีๆ ของคุณ",
+      "hook_en": "Even a queen has bad hair days... don't let drama ruin your day.",
+      "ritual_2min_th": "เคลียร์ตู้เสื้อผ้าหรือโต๊ะเครื่องแป้ง ทิ้งของหมดอายุหรือของที่ไม่ใช้แล้ว เพื่อเปิดทางให้พลังงานใหม่ๆ ไหลเข้ามาแทนที่ความรก",
+      "ritual_2min_en": "Declutter your wardrobe or vanity table. Throw away expired or unused items to let new energy flow in and replace the mess.",
+      "journal_prompt_3lines_th": "สิ่งที่คุณ 'ยัดเยียด' ให้คนอื่นในนามของความหวังดีคืออะไร?\nเขียน 3 สิ่งที่คุณละเลยที่จะดูแลตัวเองในช่วงนี้\nความฟุ่มเฟือยเรื่องใดที่คุณควรตัดออก?",
+      "journal_prompt_3lines_en": "What do you 'force' onto others in the name of good intentions?\nList 3 ways you have neglected yourself recently.\nWhat luxury or excess should you cut out?",
+      "breath_pattern": "4-6",
+      "astrology_sign": "",
+      "planet": "Venus",
+      "element": "Earth",
+      "numerology_value": "3",
+      "keywords_light": "Self-love, Healing, Independence, Inner beauty, Simplify",
+      "keywords_shadow": "Laziness, Vanity, Stagnation, Infertility, Poverty mindset",
+      "image_alt_en": "A Persian cat looking disheveled and grumpy on a torn velvet cushion, surrounded by wilted flowers and overturned bowls of milk.",
+      "illustration_prompt_en": "A grumpy Persian cat with messy fur sitting on a torn red velvet cushion, surrounded by wilted roses and spilled milk, overcast gray sky, gothic garden setting, tarot card style, muted colors --ar 2:3",
+      "color_palette": [
+        "#800020",
+        "#708090",
+        "#556B2F"
+      ],
+      "icon_emoji": "🥀",
+      "seo_slug_en": "the-empress-reversed-tarot-meaning",
+      "meta_description_th": "ความหมายไพ่ The Empress กลับหัว: ระวังความรักที่น่าอึดอัด การเสพติดความสบาย หรือปัญหาการเงินจากการใช้จ่ายฟุ่มเฟือย Meow Tarot เตือนคุณแล้วนะ",
+      "meta_description_en": "The Empress Reversed tarot meaning: Warning of smothering love, creative blocks, and over-indulgence. Learn how to restore balance with Meow Tarot.",
+      "orientation_label_th": "ไพ่กลับหัว"
+    },
+    {
+      "id": "the-emperor-reversed",
+      "card_name_en": "The Emperor",
+      "alias_th": "จักรพรรดิ",
+      "archetype_en": "The Ruler",
+      "archetype_th": "ผู้นำ",
+      "orientation": "reversed",
+      "tarot_imply_th": "การใช้อำนาจในทางที่ผิด, ความดื้อรั้น, ขาดวินัย, พ่อเผด็จการ, ความโกลาหล",
+      "tarot_imply_en": "Tyranny, Rigidity, Chaos, Domination, Lack of Discipline",
+      "standalone_past_th": "คุณอาจเติบโตมาภายใต้แรงกดดันจากผู้ที่มีอำนาจเหนือกว่า หรือเคยต้องอยู่ในกฎระเบียบที่ตึงเครียดจนแทบหายใจไม่ออก ประสบการณ์นั้นอาจทำให้คุณกลายเป็นคนต่อต้านสังคม หรือไม่ก็กลายเป็นคนที่เข้มงวดกับตัวเองจนเกินพอดี",
+      "standalone_past_en": "You may have grown up under the pressure of a dominant figure or lived under suffocatingly strict rules. That experience might have turned you into a rebel, or conversely, someone overly rigid with yourself.",
+      "standalone_present_th": "ระวังการเป็น 'จักรพรรดิผู้เกรี้ยวกราด' หรือแมวพาลที่ขู่ฟ่อใส่ทุกคนที่ไม่เห็นด้วย ตอนนี้คุณอาจกำลังพยายามควบคุมทุกอย่างมากเกินไปจนคนรอบข้างอึดอัด หรือในทางกลับกัน ชีวิตคุณกำลังไร้ระเบียบวินัยจนอาณาจักรเริ่มสั่นคลอน",
+      "standalone_present_en": "Beware of becoming the 'Tyrant Emperor' or a grumpy cat hissing at anyone who disagrees. You might be trying to control everything to the point of suffocating others, or conversely, your life lacks the discipline needed to keep your kingdom from shaking.",
+      "standalone_future_th": "หากยังดื้อรั้นยึดติดกับความคิดเดิมๆ หรือใช้อำนาจแบบเผด็จการ บัลลังก์ของคุณอาจพังทลายลงได้ หรือคุณอาจสูญเสียการควบคุมในสถานการณ์สำคัญ กลายเป็นผู้นำที่ไม่มีใครยอมรับ",
+      "standalone_future_en": "If you stubbornly cling to old ways or rule like a dictator, your throne may crumble. You risk losing control over critical situations, becoming a leader no one respects.",
+      "reading_summary_preview_th": "ผลพวงจากการถูกกดดันหรือการขาดวินัยในอดีต กำลังทำให้ปัจจุบันคุณมีปัญหากับการจัดการอำนาจ (ไม่ตึงไปก็หย่อนไป) หากไม่ปรับสมดุล อนาคตอาจต้องเผชิญกับความล้มเหลวในการปกครองชีวิตตนเอง",
+      "reading_summary_preview_en": "Consequences of past suppression or lack of discipline are causing current struggles with authority (either too rigid or too loose). Without rebalancing, you face a future failure in governing your own life.",
+      "love_past_th": "เคยเจอความสัมพันธ์ที่มีการบงการชีวิต (Control Freak) หรือคุณต้องรับบทพ่อแม่ดูแลแฟนที่ไม่ยอมโต",
+      "love_past_en": "You experienced a controlling relationship or had to parent a partner who refused to grow up.",
+      "love_present_th": "ระวังความสัมพันธ์ที่อึดอัดเพราะฝ่ายหนึ่งพยายามเป็นเจ้าชีวิตอีกฝ่าย หรือปัญหา 'Ego' ที่ไม่มีใครยอมใคร",
+      "love_present_en": "Beware of a suffocating relationship where one tries to own the other, or an 'Ego' battle where neither side yields.",
+      "love_future_th": "ความดื้อรั้นอาจทำให้รักพัง หรือต้องทนอยู่กับคนที่ไม่ให้เกียรติกัน",
+      "love_future_en": "Stubbornness may destroy the romance, or you might end up tolerating a partner who disrespects you.",
+      "career_past_th": "เคยทำงานกับเจ้านายที่ไร้เหตุผล บ้าอำนาจ หรือองค์กรที่มีระบบบริหารจัดการที่เละเทะ",
+      "career_past_en": "You worked with an irrational, power-hungry boss or in an organization with chaotic management.",
+      "career_present_th": "การบริหารงานกำลังมีปัญหา อาจเพราะคุณจุกจิกเกินไป (Micromanage) หรือขาดความเป็นผู้นำจนลูกน้องไม่ฟัง",
+      "career_present_en": "Management is struggling, possibly because you are micromanaging or lacking the leadership presence to command respect.",
+      "career_future_th": "ระวังการถูกเลื่อยขาเก้าอี้ หรือโปรเจกต์ล่มเพราะโครงสร้างพื้นฐานไม่แข็งแรงพอ",
+      "career_future_en": "Beware of being dethroned or a project collapsing due to weak structural foundations.",
+      "finance_past_th": "เคยขาดวินัยทางการเงินอย่างรุนแรง หรือในทางกลับกันคือขี้เหนียวจนไม่กล้าใช้เงินหาความสุข",
+      "finance_past_en": "You lacked financial discipline entirely, or conversely, were so stingy you couldn't enjoy your wealth.",
+      "finance_present_th": "เงินรั่วไหลเพราะขาดการทำบัญชีที่ดี หรือคุณกำลังหน้ามืดตามัวใช้เงินแก้ปัญหาแบบผิดๆ",
+      "finance_present_en": "Money is leaking due to poor accounting, or you are blindly throwing money at problems incorrectly.",
+      "finance_future_th": "ความไม่มั่นคงทางการเงินรออยู่ หากไม่รีบสร้างกฎระเบียบในการใช้จ่ายใหม่เดี๋ยวนี้",
+      "finance_future_en": "Financial instability awaits if you do not establish new spending rules immediately.",
+      "action_prompt_th": "ลดทิฐิลงบ้าง! หยุดสั่งการแล้วเริ่มรับฟัง หรือถ้ารู้ตัวว่าเละเทะ ก็รีบจัดระเบียบชีวิตเดี๋ยวนี้",
+      "action_prompt_en": "Lower your ego! Stop commanding and start listening. Or if you are in chaos, impose order now.",
+      "reflection_question_th": "คุณกำลังพยายามควบคุมสิ่งที่ควบคุมไม่ได้อยู่หรือเปล่า?",
+      "reflection_question_en": "Are you trying to control something that is uncontrollable?",
+      "affirmation_th": "ฉันเป็นผู้นำที่อ่อนโยนแต่เข้มแข็ง และฉันปล่อยวางสิ่งที่ควบคุมไม่ได้",
+      "affirmation_en": "I am a gentle but strong leader, and I release what I cannot control.",
+      "yes_no_bias": "Reframe",
+      "timing_hint": "Delays due to power struggles",
+      "decision_support": "Delegate",
+      "hook_th": "อย่าเป็นแมวบ้าอำนาจที่ไม่มีใครอยากเล่นด้วยสิ...",
+      "hook_en": "Don't be a power-hungry cat that no one wants to play with...",
+      "ritual_2min_th": "กำมือแน่นๆ ให้รู้สึกถึงความเกร็ง แล้วค่อยๆ แบมือออกช้าๆ หายใจออกยาวๆ จินตนาการว่าคุณกำลังปลดปล่อยความอยากควบคุมทุกอย่างออกไปจากมือ",
+      "ritual_2min_en": "Clench your fists tight to feel the tension, then slowly open them while exhaling deeply. Imagine releasing your need to control everything from your hands.",
+      "journal_prompt_3lines_th": "มีเรื่องอะไรที่คุณกำลัง 'ดื้อ' หัวชนฝา?\nใครที่คุณกำลังพยายามเปลี่ยนนิสัยเขา (ซึ่งมันเป็นไปไม่ได้)?\nส่วนไหนของชีวิตที่คุณปล่อยปละละเลยจนรก?",
+      "journal_prompt_3lines_en": "What are you being stubbornly rigid about?\nWho are you trying to change (which is impossible)?\nWhat part of your life have you neglected until it became messy?",
+      "breath_pattern": "4-6",
+      "astrology_sign": "Aries",
+      "planet": "Mars",
+      "element": "Fire",
+      "numerology_value": "4",
+      "keywords_light": "Flexibility, Benevolence, Delegation, Listening, Breaking old habits",
+      "keywords_shadow": "Tyrant, Rigid, Chaos, Powerless, Stubbornness",
+      "image_alt_en": "A stone throne crumbling apart, with a Maine Coon cat looking frustrated or wearing a tilted crown, amidst a stormy background.",
+      "illustration_prompt_en": "A Maine Coon cat sitting on a cracked stone throne that is tilting dangerously, wearing a crooked crown, stormy grey sky with lightning, chaotic atmosphere, tarot card style, art nouveau, dark red and grey tones --ar 2:3",
+      "color_palette": [
+        "#8B0000",
+        "#2F4F4F",
+        "#A9A9A9"
+      ],
+      "icon_emoji": "🌪️",
+      "seo_slug_en": "the-emperor-reversed-tarot-meaning",
+      "meta_description_th": "ความหมายไพ่ The Emperor กลับหัว: ระวังอำนาจเผด็จการ ความดื้อรั้น หรือชีวิตที่ขาดวินัยจนวุ่นวาย อ่านคำทำนายเตือนใจฉบับ Meow Tarot",
+      "meta_description_en": "The Emperor Reversed tarot meaning: A warning against tyranny, rigidity, or lack of discipline. Discover how to reclaim true stability with Meow Tarot.",
+      "orientation_label_th": "ไพ่กลับหัว"
     }
   ]
 }
