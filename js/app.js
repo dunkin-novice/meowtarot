@@ -41,7 +41,8 @@ function prepareSpread(context = state.context) {
   state.selectedIds = [];
   state.reading = [];
 
-  const sourceCards = meowTarotCards.length ? meowTarotCards : [];
+  const uprightCards = meowTarotCards.filter((card) => card.orientation === 'upright');
+  const sourceCards = uprightCards.length ? uprightCards : meowTarotCards;
   state.spreadCards = shuffleArray(sourceCards).slice(0, 6);
 
   if (overlay) overlay.classList.add('is-hidden');
