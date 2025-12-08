@@ -28,6 +28,23 @@ function getCardName(card) {
   return state.currentLang === 'th' ? card.alias_th : card.card_name_en;
 }
 
+function getFoolCard() {
+  return meowTarotCards.find((card) => card.id === 'the-fool' && card.orientation === 'upright')
+    || meowTarotCards.find((card) => card.id === 'the-fool');
+}
+
+function findUprightCard(id) {
+  const direct = meowTarotCards.find((card) => card.id === id);
+  if (direct && direct.orientation === 'upright') return direct;
+
+  const baseId = id.endsWith('-reversed') ? id.replace(/-reversed$/, '') : id;
+  const upright = meowTarotCards.find((card) => card.id === baseId && card.orientation === 'upright');
+  if (upright) return upright;
+
+  if (direct) return direct;
+  return getFoolCard();
+}
+
 function getCardArchetype(card) {
   return state.currentLang === 'th' ? card.archetype_th : card.archetype_en;
 }
@@ -50,7 +67,7 @@ function getReadingSummary(card) {
 function getSelectedCards() {
   return state.selectedIds
     .slice(0, 3)
-    .map((id) => meowTarotCards.find((c) => c.id === id))
+    .map((id) => findUprightCard(id) || getFoolCard())
     .filter(Boolean);
 }
 
