@@ -27,21 +27,20 @@ const selectedCount = document.getElementById('selectedCount');
 const contextCopy = document.getElementById('context-copy');
 const readingTitle = document.querySelector('[data-reading-title]');
 
-function getUprightCards() {
-  return meowTarotCards.filter((card) => card.orientation === 'upright');
+function getDrawableCards() {
+  return meowTarotCards.length ? meowTarotCards : [];
 }
 
 function findCardForReading(id) {
-  const uprightCards = getUprightCards();
   const idStr = String(id || '');
-  const direct = uprightCards.find((card) => String(card.id) === idStr);
+  const direct = meowTarotCards.find((card) => String(card.id) === idStr);
   if (direct) return direct;
 
   const baseId = idStr.endsWith('-reversed') ? idStr.replace(/-reversed$/, '') : idStr;
-  const baseMatch = uprightCards.find((card) => String(card.id) === baseId);
+  const baseMatch = meowTarotCards.find((card) => String(card.id) === baseId);
   if (baseMatch) return baseMatch;
 
-  return meowTarotCards.find((card) => String(card.id) === idStr) || null;
+  return null;
 }
 
 function shuffleArray(arr) {
@@ -58,8 +57,7 @@ function prepareSpread(context = state.context) {
   state.selectedIds = [];
   state.reading = [];
 
-  const uprightCards = getUprightCards();
-  const sourceCards = uprightCards.length ? uprightCards : meowTarotCards;
+  const sourceCards = getDrawableCards();
   state.spreadCards = shuffleArray(sourceCards).slice(0, 6);
 
   if (overlay) overlay.classList.add('is-hidden');
@@ -146,8 +144,7 @@ function shuffleWithAnimation(context = state.context) {
 
   setTimeout(() => {
     state.context = context;
-    const uprightCards = getUprightCards();
-    const sourceCards = uprightCards.length ? uprightCards : meowTarotCards;
+    const sourceCards = getDrawableCards();
     state.spreadCards = shuffleArray(sourceCards).slice(0, 6);
     if (overlay) overlay.classList.add('is-hidden');
     renderGrid({ entering: true });
