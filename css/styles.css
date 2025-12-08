@@ -45,6 +45,11 @@ header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.primary-nav {
+  position: relative;
+  gap: 12px;
+}
+
 .logo-text {
   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 600;
@@ -61,6 +66,25 @@ header {
   font-size: 14px;
 }
 
+.nav-panel {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .nav-link {
   padding: 10px 12px;
   border-radius: 12px;
@@ -71,6 +95,89 @@ header {
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--lavender);
+}
+
+.mobile-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.mobile-menu-toggle .bar {
+  width: 18px;
+  height: 2px;
+  background: #f8f9ff;
+  border-radius: 2px;
+  display: block;
+}
+
+body.nav-open {
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    padding: 14px 20px;
+  }
+
+  .nav-panel {
+    position: absolute;
+    inset: calc(100% + 4px) 12px auto 12px;
+    background: rgba(5, 9, 26, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 0.25s ease, opacity 0.25s ease;
+  }
+
+  .nav-panel.is-open {
+    max-height: 420px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .nav-link {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .nav-meta {
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 8px;
+  }
+
+  .language-toggle {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
 }
 
 .language-toggle {
@@ -267,6 +374,87 @@ button,
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 28px;
   align-items: center;
+}
+
+.tarot-hero {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 0.9fr);
+  gap: 32px;
+  align-items: center;
+  padding: 56px 32px 40px;
+}
+
+.tarot-board-wrapper {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hero-board .board-inner {
+  padding: 24px;
+}
+
+.hero-content {
+  max-width: 520px;
+  justify-self: end;
+}
+
+.hero-copy {
+  color: #dfe4ff;
+  margin: 0 0 12px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.hero-link {
+  color: var(--lavender);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  align-self: center;
+}
+
+@media (max-width: 1024px) {
+  .tarot-hero {
+    grid-template-columns: 1fr;
+    padding: 48px 24px 32px;
+  }
+
+  .hero-content {
+    justify-self: center;
+    text-align: center;
+  }
+
+  .tarot-board-wrapper {
+    order: -1;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .tarot-hero {
+    padding: 36px 18px;
+  }
+
+  .hero-board .board-inner {
+    padding: 16px;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
 }
 
 .daily-section {
