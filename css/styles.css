@@ -857,11 +857,43 @@ button,
   background: rgba(255, 255, 255, 0.02);
 }
 
-.board-actions {
+.card-board.card-board--three {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-items: center;
+  gap: 10px;
+  padding: 12px;
+}
+
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+
+.selection-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.board-actions {
+  display: flex;
   gap: 10px;
   margin-top: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.board-actions button {
+  flex: 1 1 220px;
 }
 
 .action-row {
@@ -874,6 +906,7 @@ button,
 .card-slot {
   width: 96px;
   height: 146px;
+  aspect-ratio: 2 / 3;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
@@ -882,6 +915,11 @@ button,
   opacity: 0;
   transform: translateY(10px);
   transition: transform 0.2s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+}
+
+.card-board.card-board--three .card-slot {
+  width: 82px;
+  height: auto;
 }
 
 .card-slot.card-visible {
@@ -931,6 +969,23 @@ button,
   font-weight: 700;
   font-size: 14px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 640px) {
+  .card-board.card-board--three {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .card-board.card-board--three .card-slot {
+    width: 70px;
+  }
+}
+
+@media (min-width: 900px) {
+  .card-board.card-board--three .card-slot {
+    width: 96px;
+  }
 }
 
 .overall-cta-wrapper {
