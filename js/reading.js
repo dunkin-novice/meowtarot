@@ -119,44 +119,22 @@ function buildActionBlock(card, dict, labels = {}, heading) {
 
   const panel = document.createElement('div');
   panel.className = 'panel';
+
   const headingText = state.mode === 'question' ? dict.guidanceHeading : heading;
   if (headingText) {
-    const h = document.createElement('h4');
+    const h = document.createElement('h3');
     h.textContent = headingText;
     panel.appendChild(h);
   }
 
-  if (state.mode === 'question') {
-    const parts = [];
-    if (action) parts.push(action.trim());
-    if (reflection) parts.push(reflection.trim());
-    const combined = parts.join(' ');
+  const parts = [];
+  if (action) parts.push(action.trim());
+  if (reflection) parts.push(reflection.trim());
+  const combined = parts.join(' ');
 
-    if (combined) {
-      const p = document.createElement('p');
-      p.textContent = combined;
-      panel.appendChild(p);
-    }
-
-    if (affirmation) {
-      const pAffirm = document.createElement('p');
-      pAffirm.innerHTML = `<em>"${affirmation.trim()}"</em>`;
-      panel.appendChild(pAffirm);
-    }
-
-    return panel;
-  }
-
-  const suggestionLabel = labels.suggestionLabel || dict.suggestion || dict.actionToday;
-
-  if (action || reflection) {
+  if (combined) {
     const p = document.createElement('p');
-    const parts = [];
-    if (action) parts.push(action.trim());
-    if (reflection) parts.push(reflection.trim());
-    const combined = parts.join(' ');
-
-    p.innerHTML = `<strong>${suggestionLabel}:</strong> ${combined}`;
+    p.textContent = combined;
     panel.appendChild(p);
   }
 
@@ -249,9 +227,6 @@ function renderThreeCards(cards, dict, topic) {
     const implyNode = renderImplyLine(card);
     if (implyNode) panel.appendChild(implyNode);
 
-    const summary = getText(card, `reading_summary_${position}`) || getText(card, 'reading_summary_preview');
-    if (summary && state.mode !== 'question') appendSection(panel, dict.summaryTitle, summary, 'lede');
-
     if (topic === 'love') {
       const loveText = getText(card, `love_${position}`) || getText(card, `standalone_${position}`);
       appendSection(panel, dict.topicLove, loveText);
@@ -262,7 +237,7 @@ function renderThreeCards(cards, dict, topic) {
       const financeText = getText(card, `finance_${position}`) || getText(card, `standalone_${position}`);
       appendSection(panel, dict.topicFinance, financeText);
     } else {
-      const story = getText(card, `standalone_${position}`) || getText(card, 'tarot_imply');
+      const story = getText(card, `standalone_${position}`);
       if (story) {
         const p = document.createElement('p');
         p.textContent = story;
@@ -275,6 +250,27 @@ function renderThreeCards(cards, dict, topic) {
 
   const presentCard = cards[1];
   if (!presentCard) return;
+
+  const summaries = cards
+    .slice(0, 3)
+    .map((card, idx) => getText(card, `reading_summary_${positions[idx]}`))
+    .filter(Boolean);
+  const combinedSummary = summaries.join(' ');
+
+  if (combinedSummary) {
+    const wrap = document.createElement('div');
+    wrap.className = 'panel';
+
+    const h = document.createElement('h3');
+    h.textContent = dict.readingSummaryTitle || (state.currentLang === 'th' ? 'ดวงชะตาของคุณ' : 'Your Fortune');
+    wrap.appendChild(h);
+
+    const p = document.createElement('p');
+    p.textContent = combinedSummary;
+    wrap.appendChild(p);
+
+    readingContent.appendChild(wrap);
+  }
 
   if (topic === 'love') {
     const extras = [];
@@ -309,7 +305,8 @@ function renderThreeCards(cards, dict, topic) {
       wrap.appendChild(p);
       readingContent.appendChild(wrap);
     }
-    const actions = buildActionBlock(presentCard, dict);
+    const suggestionHeading = dict.suggestionTitle || (state.currentLang === 'th' ? 'คำแนะนำจากไพ่' : 'Suggestion for You');
+    const actions = buildActionBlock(presentCard, dict, {}, suggestionHeading);
     if (actions) readingContent.appendChild(actions);
   }
 }
