@@ -21,15 +21,7 @@
       <h1 data-i18n="questionTitle"></h1>
       <p class="lede" data-i18n="questionLead"></p>
 
-      <div class="spread-toggle" id="spread-toggle">
-        <button
-          type="button"
-          data-spread="quick"
-          class="chip chip-active"
-          data-i18n="spreadQuick"
-        ></button>
-        <button type="button" data-spread="story" class="chip" data-i18n="spreadStory"></button>
-      </div>
+      <p class="chip chip-active" data-i18n="questionSpreadNote"></p>
 
       <div class="topic-chips" id="topic-toggle">
         <button type="button" data-topic="love" class="chip chip-active" data-i18n="topicLove"></button>
@@ -37,9 +29,12 @@
         <button type="button" data-topic="finance" class="chip" data-i18n="topicFinance"></button>
       </div>
 
-      <div id="question-card-board" class="card-board" hidden></div>
-      <div class="board-actions">
+      <div class="board-toolbar" id="question-toolbar" hidden>
         <button id="question-reset" type="button" class="ghost" data-i18n="shuffleCards"></button>
+        <span class="selection-counter" id="question-counter">0/3</span>
+      </div>
+      <div id="question-card-board" class="card-board card-board--three" hidden></div>
+      <div class="board-actions">
         <button id="question-continue" type="button" class="primary" data-i18n="continue" disabled></button>
       </div>
     </section>

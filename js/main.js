@@ -3,15 +3,12 @@ import { loadTarotData } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
-const QUESTION_QUICK_BOARD_COUNT = 6;
 const OVERALL_SELECTION_COUNT = 3;
-const QUESTION_QUICK_SELECTION = 1;
 const STORAGE_KEY = 'meowtarot_selection';
 
 const state = {
   currentLang: 'en',
   cards: [],
-  questionSpread: 'quick',
   questionTopic: 'love',
 };
 
@@ -49,7 +46,8 @@ function animateBoard(boardEl) {
   });
 }
 
-function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange) {
+function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, options = {}) {
+  const { replaceOnSingle = false } = options;
   let cards = [];
   let selected = [];
   const render = () => {
@@ -81,8 +79,11 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange) {
       slot.className = 'card-slot';
       slot.appendChild(Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' }));
       slot.onclick = () => {
-        if (selected.includes(i)) {
+        const isSelected = selected.includes(i);
+        if (isSelected) {
           selected = selected.filter((idx) => idx !== i);
+        } else if (selectionGoal === 1 && replaceOnSingle) {
+          selected = [i];
         } else if (selected.length < selectionGoal) {
           selected.push(i);
         }
@@ -109,21 +110,26 @@ function renderDaily() {
   const board = document.getElementById('daily-board');
   const actions = document.getElementById('daily-actions');
   const shuffleBtn = document.getElementById('daily-shuffle');
+  const toolbar = document.getElementById('daily-toolbar');
+  const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  if (!startBtn || !board || !actions || !shuffleBtn || !continueBtn) return;
+  if (!startBtn || !board || !actions || !shuffleBtn || !continueBtn || !toolbar || !counter) return;
 
   let boardApi = null;
   let latestSelection = [];
 
   const updateContinue = (cards) => {
     latestSelection = cards;
+    counter.textContent = `${cards.length}/1`;
     continueBtn.disabled = cards.length !== 1;
   };
 
   const renderBoard = () => {
     board.hidden = false;
     actions.hidden = false;
-    boardApi = setupBoard(board, DAILY_BOARD_COUNT, 1, updateContinue);
+    toolbar.hidden = false;
+    boardApi = setupBoard(board, DAILY_BOARD_COUNT, 1, updateContinue, { replaceOnSingle: true });
+    updateContinue([]);
   };
 
   startBtn.onclick = () => {
@@ -145,21 +151,26 @@ function renderOverall() {
   const board = document.getElementById('overall-card-board');
   const actions = document.getElementById('overall-actions');
   const shuffleBtn = document.getElementById('overall-shuffle');
+  const toolbar = document.getElementById('overall-toolbar');
+  const counter = document.getElementById('overall-counter');
   const continueBtn = document.getElementById('overall-continue');
-  if (!startBtn || !board || !actions || !shuffleBtn || !continueBtn) return;
+  if (!startBtn || !board || !actions || !shuffleBtn || !continueBtn || !toolbar || !counter) return;
 
   let boardApi = null;
   let latestSelection = [];
 
   const updateContinue = (cards) => {
     latestSelection = cards;
+    counter.textContent = `${cards.length}/${OVERALL_SELECTION_COUNT}`;
     continueBtn.disabled = cards.length !== OVERALL_SELECTION_COUNT;
   };
 
   const renderBoard = () => {
     board.hidden = false;
+    toolbar.hidden = false;
     actions.hidden = false;
     boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue);
+    updateContinue([]);
   };
 
   startBtn.onclick = renderBoard;
@@ -172,11 +183,12 @@ function renderOverall() {
 
 function renderQuestion() {
   const board = document.getElementById('question-card-board');
-  const spreadToggle = document.getElementById('spread-toggle');
   const topicToggle = document.getElementById('topic-toggle');
   const shuffleBtn = document.getElementById('question-reset');
   const continueBtn = document.getElementById('question-continue');
-  if (!board || !spreadToggle || !topicToggle || !shuffleBtn || !continueBtn) return;
+  const counter = document.getElementById('question-counter');
+  const toolbar = document.getElementById('question-toolbar');
+  if (!board || !topicToggle || !shuffleBtn || !continueBtn || !counter || !toolbar) return;
 
   let boardApi = null;
   let latestSelection = [];
@@ -188,25 +200,16 @@ function renderQuestion() {
 
   const updateContinue = (cards) => {
     latestSelection = cards;
-    const goal = state.questionSpread === 'quick' ? QUESTION_QUICK_SELECTION : OVERALL_SELECTION_COUNT;
-    continueBtn.disabled = cards.length !== goal;
+    continueBtn.disabled = cards.length !== OVERALL_SELECTION_COUNT;
+    counter.textContent = `${cards.length}/${OVERALL_SELECTION_COUNT}`;
   };
 
   const renderBoard = () => {
-    const selectionGoal = state.questionSpread === 'quick' ? QUESTION_QUICK_SELECTION : OVERALL_SELECTION_COUNT;
-    const boardCount = state.questionSpread === 'quick' ? QUESTION_QUICK_BOARD_COUNT : BOARD_CARD_COUNT;
     board.hidden = false;
-    boardApi = setupBoard(board, boardCount, selectionGoal, updateContinue);
+    toolbar.hidden = false;
+    boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue);
+    updateContinue([]);
   };
-
-  spreadToggle.querySelectorAll('[data-spread]').forEach((btn) => {
-    btn.onclick = () => {
-      setActive(spreadToggle, btn);
-      state.questionSpread = btn.dataset.spread;
-      updateContinue([]);
-      renderBoard();
-    };
-  });
 
   topicToggle.querySelectorAll('[data-topic]').forEach((btn) => {
     btn.onclick = () => {
@@ -217,11 +220,10 @@ function renderQuestion() {
 
   shuffleBtn.onclick = () => boardApi?.render();
   continueBtn.onclick = () => {
-    const goal = state.questionSpread === 'quick' ? QUESTION_QUICK_SELECTION : OVERALL_SELECTION_COUNT;
-    if (latestSelection.length !== goal) return;
+    if (latestSelection.length !== OVERALL_SELECTION_COUNT) return;
     saveSelectionAndGo({
       mode: 'question',
-      spread: state.questionSpread,
+      spread: 'story',
       topic: state.questionTopic,
       cards: latestSelection.map((c) => c.id),
     });

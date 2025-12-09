@@ -4,16 +4,30 @@ import { loadTarotData, meowTarotCards } from './data.js';
 const params = new URLSearchParams(window.location.search);
 const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
 
-const state = {
-  currentLang: params.get('lang') || 'en',
-  mode: params.get('mode') || storageSelection?.mode || 'daily',
-  spread: params.get('spread') || storageSelection?.spread || 'quick',
-  topic: params.get('topic') || storageSelection?.topic || 'generic',
-  selectedIds: (params.get('cards') || storageSelection?.cards || [])
+function parseSelectedIds() {
+  const paramCards = params.get('cards');
+  const storedCards = storageSelection?.cards;
+  const combined = paramCards || (Array.isArray(storedCards) ? storedCards.join(',') : storedCards);
+  if (!combined) return [];
+  return combined
     .toString()
     .split(',')
     .map((id) => id.trim())
-    .filter(Boolean),
+    .filter(Boolean);
+}
+
+const initialMode = params.get('mode') || storageSelection?.mode || 'daily';
+const defaultSpread =
+  params.get('spread')
+  || storageSelection?.spread
+  || (initialMode === 'daily' ? 'quick' : 'story');
+
+const state = {
+  currentLang: params.get('lang') || 'en',
+  mode: initialMode,
+  spread: defaultSpread,
+  topic: params.get('topic') || storageSelection?.topic || 'generic',
+  selectedIds: parseSelectedIds(),
 };
 
 const readingContent = document.getElementById('reading-content');
@@ -233,7 +247,8 @@ function renderReading(dict) {
   if (!readingContent) return;
   const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
   if (!cards.length) {
-    readingContent.innerHTML = `<p>${dict?.instruction || ''}</p>`;
+    const message = dict?.missingSelection || 'No cards found. Please draw cards first.';
+    readingContent.innerHTML = `<div class="panel"><p class="lede">${message}</p></div>`;
     return;
   }
 
