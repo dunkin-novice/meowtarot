@@ -27,7 +27,9 @@ export const translations = {
     dailyRedraw: 'Draw for today',
     todayReminder: 'One card per device per day. Your card will stay pinned here.',
     overallTitle: 'Overall Reading',
+    overallShortDesc: 'Pull 3 cards for your broader life story.',
     overallDesc: 'Draw three cards for a past / present / future storyline.',
+    overallStartCta: 'Start 3-card reading',
     questionTitle: 'Ask a Question',
     questionDesc: 'Think of a question, pick a topic, then draw either one or three cards.',
     meaningTitle: 'Tarot Cards Meaning',
@@ -80,6 +82,7 @@ export const translations = {
     colorsTitle: 'Colors of the day',
     powerColor: 'Power color',
     drainingColor: 'Draining color',
+    overallReadingLabel: 'Overall reading',
   },
   th: {
     navHome: 'หน้าหลัก',
@@ -105,7 +108,9 @@ export const translations = {
     dailyRedraw: 'ดึงไพ่สำหรับวันนี้',
     todayReminder: 'หนึ่งใบต่อวันต่ออุปกรณ์ ไพ่ของคุณจะถูกบันทึกไว้ตรงนี้',
     overallTitle: 'ดูดวงภาพรวม',
+    overallShortDesc: 'หยิบไพ่ 3 ใบ เล่าเรื่องภาพรวมชีวิตของคุณ',
     overallDesc: 'ดึงไพ่ 3 ใบดูเรื่องราวอดีต / ปัจจุบัน / อนาคต',
+    overallStartCta: 'เริ่มดูดวง 3 ใบ',
     questionTitle: 'ถามคำถาม',
     questionDesc: 'คิดคำถาม เลือกหัวข้อ จากนั้นเลือกดู 1 หรือ 3 ใบได้ในหน้าเดียว',
     meaningTitle: 'ความหมายไพ่ทาโรต์',
@@ -158,6 +163,7 @@ export const translations = {
     colorsTitle: 'สีประจำวัน',
     powerColor: 'สีเสริมพลัง',
     drainingColor: 'สีที่ควรเลี่ยง',
+    overallReadingLabel: 'ภาพรวมคำทำนาย',
   },
 };
 

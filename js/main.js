@@ -1,24 +1,32 @@
 import { initShell, translations } from './common.js';
 import { loadTarotData } from './data.js';
 
+const BOARD_CARD_COUNT = 12;
+const OVERALL_SELECTION_COUNT = 3;
+
 const state = {
   currentLang: 'en',
   cards: [],
   dailyCard: null,
   overallCards: [],
+  overallBoard: [],
   questionCards: [],
   questionMode: 'quick',
   questionTopic: 'any',
 };
 
-function getPool(size = 6) {
+function getDrawableCards(size = 6) {
   if (!state.cards.length) return [];
-  if (size >= state.cards.length) return [...state.cards];
-  return state.cards.slice(0, size);
+  const pool = [...state.cards];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(size, pool.length));
 }
 
 function pickRandomCards(count = 1, size = 6) {
-  const pool = getPool(size);
+  const pool = getDrawableCards(size);
   const copy = [...pool];
   const selected = [];
   while (copy.length && selected.length < count) {
@@ -196,58 +204,113 @@ function renderDailyCard(dict) {
 }
 
 function renderOverall(dict) {
-  const drawBtn = document.getElementById('overall-draw');
-  const container = document.getElementById('overall-cards');
-  const summary = document.getElementById('overall-summary');
-  if (!drawBtn || !container || !summary) return;
+  const startBtn = document.getElementById('overallStartBtn');
+  const board = document.getElementById('overall-card-board');
+  const result = document.getElementById('overall-result');
+  if (!startBtn || !board || !result) return;
 
-  drawBtn.onclick = () => {
-    state.overallCards = pickRandomCards(3, 12);
-    renderOverallCards(dict);
+  const selectedIndices = [];
+
+  const renderBoard = () => {
+    board.innerHTML = '';
+    result.innerHTML = '';
+    board.hidden = false;
+    selectedIndices.length = 0;
+
+    state.overallBoard = getDrawableCards(BOARD_CARD_COUNT);
+
+    for (let i = 0; i < BOARD_CARD_COUNT; i += 1) {
+      const slot = document.createElement('button');
+      slot.type = 'button';
+      slot.className = 'card-slot';
+      slot.appendChild(Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' }));
+
+      slot.onclick = () => {
+        if (selectedIndices.includes(i)) return;
+        if (selectedIndices.length >= OVERALL_SELECTION_COUNT) return;
+        selectedIndices.push(i);
+        slot.classList.add('is-selected');
+        const badge = document.createElement('span');
+        badge.className = 'selection-badge';
+        badge.textContent = `${selectedIndices.length}`;
+        slot.appendChild(badge);
+
+        if (selectedIndices.length === OVERALL_SELECTION_COUNT) {
+          board.querySelectorAll('button').forEach((btn) => {
+            btn.disabled = true;
+          });
+          setTimeout(() => {
+            board.hidden = true;
+            drawOverallThreeCards(selectedIndices, dict);
+          }, 450);
+        }
+      };
+
+      board.appendChild(slot);
+    }
   };
 
-  renderOverallCards(dict);
+  startBtn.onclick = () => {
+    renderBoard();
+  };
 }
 
-function renderOverallCards(dict) {
-  const container = document.getElementById('overall-cards');
-  const summary = document.getElementById('overall-summary');
-  if (!container || !summary) return;
-  container.innerHTML = '';
-  summary.innerHTML = '';
+function drawOverallThreeCards(selectedIndices, dict) {
+  const cards = (selectedIndices || []).map((idx) => state.overallBoard[idx]).filter(Boolean);
+  state.overallCards = cards;
+  renderOverallCards(dict, cards);
+}
+
+function renderOverallCards(dict, cards = state.overallCards) {
+  const result = document.getElementById('overall-result');
+  if (!result) return;
+  result.innerHTML = '';
+
+  if (!cards || cards.length !== OVERALL_SELECTION_COUNT) return;
 
   const positions = ['past', 'present', 'future'];
-  const cards = state.overallCards;
-  if (!cards || !cards.length) return;
+  const listWrap = document.createElement('div');
+  listWrap.className = 'multi-card-result';
 
   cards.forEach((card, idx) => {
+    const position = positions[idx];
     const panel = document.createElement('div');
     panel.className = 'panel';
     const heading = document.createElement('h3');
-    heading.textContent = `${dict[positions[idx]] || positions[idx]} • ${getName(card)}`;
-    const orientation = getOrientationLabel(card);
-    const summaryText = getText(card, `reading_summary_${positions[idx]}`) || getText(card, 'reading_summary_preview');
-    const body = getText(card, `standalone_${positions[idx]}`);
+    heading.textContent = `${dict[position] || position} • ${getName(card)}`;
     panel.appendChild(heading);
+
+    const orientation = getOrientationLabel(card);
     if (orientation) {
       const badge = document.createElement('p');
       badge.className = 'eyebrow';
       badge.textContent = orientation;
       panel.appendChild(badge);
     }
+
+    const summaryText =
+      getText(card, `reading_summary_${position}`) || getText(card, 'reading_summary_preview');
     if (summaryText) {
       const p = document.createElement('p');
       p.className = 'lede';
       p.textContent = summaryText;
       panel.appendChild(p);
     }
+
+    const body =
+      getText(card, `standalone_${position}`)
+      || getText(card, 'tarot_imply')
+      || getText(card, 'tarot_imply_present');
     if (body) {
       const p = document.createElement('p');
       p.textContent = body;
       panel.appendChild(p);
     }
-    container.appendChild(panel);
+
+    listWrap.appendChild(panel);
   });
+
+  result.appendChild(listWrap);
 
   const presentCard = cards[1];
   const storyline = getText(presentCard, 'reading_summary_preview');
@@ -255,11 +318,11 @@ function renderOverallCards(dict) {
     const box = document.createElement('div');
     box.className = 'panel';
     const h = document.createElement('h4');
-    h.textContent = dict.summaryTitle;
+    h.textContent = dict.overallReadingLabel || dict.summaryTitle;
     const p = document.createElement('p');
     p.textContent = storyline;
     box.append(h, p);
-    summary.appendChild(box);
+    result.appendChild(box);
   }
 }
 
