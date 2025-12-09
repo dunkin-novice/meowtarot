@@ -765,7 +765,7 @@ button,
   font-size: 18px;
 }
 
-.result-card .keywords {
+.keywords {
   margin: 4px 0 8px;
   color: var(--muted);
   font-size: 14px;
