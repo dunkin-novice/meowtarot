@@ -384,6 +384,14 @@ button,
   padding: 56px 32px 40px;
 }
 
+.tarot-hero--single {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 32px 40px;
+}
+
 .tarot-board-wrapper {
   width: 100%;
   max-width: 860px;
@@ -391,6 +399,7 @@ button,
   display: flex;
   flex-direction: column;
   gap: 10px;
+  align-items: center;
 }
 
 .hero-board .board-inner {
@@ -526,12 +535,17 @@ button,
 
 .board-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
   gap: 16px;
   flex-wrap: wrap;
   position: relative;
   z-index: 1;
+}
+
+.board-message {
+  text-align: center;
+  flex: 1;
 }
 
 .instruction {
@@ -543,6 +557,10 @@ button,
 .sub-instruction {
   margin: 4px 0 0;
   color: #dfe4ff;
+}
+
+.board-controls .controls {
+  margin-left: auto;
 }
 
 .card-grid {
@@ -636,10 +654,11 @@ button,
 
 .continue-row {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  text-align: center;
 }
 
 .hint {
@@ -701,6 +720,12 @@ button,
 .result-card h5 {
   margin: 8px 0 6px;
   font-size: 18px;
+}
+
+.result-card .keywords {
+  margin: 4px 0 8px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .summary {
