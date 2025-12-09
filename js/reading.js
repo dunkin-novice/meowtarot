@@ -89,6 +89,16 @@ function renderListSection(label, text) {
   return p;
 }
 
+function renderImplyLine(card) {
+  const imply = getText(card, 'tarot_imply');
+  if (!imply) return null;
+
+  const p = document.createElement('p');
+  p.className = 'keywords';
+  p.textContent = imply;
+  return p;
+}
+
 function appendSection(panel, title, text, className) {
   if (!text) return;
   const heading = document.createElement('h4');
@@ -166,6 +176,9 @@ function renderSingleCard(card, dict, topic) {
   panel.className = 'panel';
   panel.appendChild(buildCardHeader(card, dict));
 
+  const implyNode = renderImplyLine(card);
+  if (implyNode) panel.appendChild(implyNode);
+
   const summary = getText(card, 'reading_summary_present') || getText(card, 'reading_summary_preview');
   if (summary) {
     const p = document.createElement('p');
@@ -232,6 +245,9 @@ function renderThreeCards(cards, dict, topic) {
         : `${dict[position]} • ${name}`;
     header.textContent = headerText;
     panel.appendChild(header);
+
+    const implyNode = renderImplyLine(card);
+    if (implyNode) panel.appendChild(implyNode);
 
     const summary = getText(card, `reading_summary_${position}`) || getText(card, 'reading_summary_preview');
     if (summary && state.mode !== 'question') appendSection(panel, dict.summaryTitle, summary, 'lede');
