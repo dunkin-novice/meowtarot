@@ -3,6 +3,8 @@ import { loadTarotData } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const OVERALL_SELECTION_COUNT = 3;
+const QUESTION_QUICK_BOARD_COUNT = 6;
+const QUESTION_QUICK_SELECTION = 1;
 
 const state = {
   currentLang: 'en',
@@ -11,8 +13,9 @@ const state = {
   overallCards: [],
   overallBoard: [],
   questionCards: [],
-  questionMode: 'quick',
-  questionTopic: 'any',
+  questionBoard: [],
+  questionSpread: 'quick',
+  questionTopic: 'generic',
 };
 
 function getDrawableCards(size = 6) {
@@ -326,116 +329,293 @@ function renderOverallCards(dict, cards = state.overallCards) {
   }
 }
 
-function renderQuestion(dict) {
-  const drawBtn = document.getElementById('question-draw');
-  const spreadToggle = document.getElementById('spread-toggle');
-  const topicToggle = document.getElementById('topic-toggle');
-  if (!drawBtn || !spreadToggle || !topicToggle) return;
-
-  spreadToggle.querySelectorAll('.chip').forEach((btn) => {
-    btn.onclick = () => {
-      spreadToggle.querySelectorAll('.chip').forEach((c) => c.classList.remove('active'));
-      btn.classList.add('active');
-      state.questionMode = btn.dataset.mode;
-      drawBtn.textContent = dict[state.questionMode === 'quick' ? 'drawAnswer' : 'drawStory'];
-    };
-  });
-
-  topicToggle.querySelectorAll('.chip').forEach((btn) => {
-    btn.onclick = () => {
-      topicToggle.querySelectorAll('.chip').forEach((c) => c.classList.remove('active'));
-      btn.classList.add('active');
-      state.questionTopic = btn.dataset.topic;
-    };
-  });
-
-  drawBtn.onclick = () => {
-    if (state.questionMode === 'quick') {
-      state.questionCards = pickRandomCards(1, 12);
-    } else {
-      state.questionCards = pickRandomCards(3, 12);
-    }
-    renderQuestionResult(dict);
-  };
-}
-
-function renderQuestionResult(dict) {
-  const holder = document.getElementById('question-result');
-  if (!holder) return;
-  holder.innerHTML = '';
-  const cards = state.questionCards;
-  if (!cards.length) return;
-
-  if (state.questionMode === 'quick') {
-    const card = cards[0];
-    const panel = document.createElement('div');
-    panel.className = 'panel';
-    const header = buildCardHeader(card, dict);
-    panel.appendChild(header);
-    const content = buildTopicContent(card, dict, 'present');
-    content.forEach((node) => node && panel.appendChild(node));
-    holder.appendChild(panel);
-  } else {
-    const positions = ['past', 'present', 'future'];
-    cards.forEach((card, idx) => {
-      const panel = document.createElement('div');
-      panel.className = 'panel';
-      const header = document.createElement('h3');
-      header.textContent = `${dict[positions[idx]]} • ${getName(card)}`;
-      panel.appendChild(header);
-      const sections = buildTopicContent(card, dict, positions[idx]);
-      sections.forEach((node) => node && panel.appendChild(node));
-      holder.appendChild(panel);
-    });
-  }
-}
-
-function buildTopicContent(card, dict, position) {
-  const topic = state.questionTopic;
-  const nodes = [];
-  const suffix = position === 'present' ? '' : `_${position}`;
-
-  const topicKey = (base) => `${base}${suffix}`;
-
-  if (topic === 'love') {
-    const main = getText(card, topicKey('love_present')) || getText(card, topicKey('love'));
-    if (main) nodes.push(renderListSection(dict.topicLove, main));
-    const single = getText(card, 'love_reading_single');
-    const couple = getText(card, 'love_reading_couple');
-    if (single) nodes.push(renderListSection(dict.loveSingles, single));
-    if (couple) nodes.push(renderListSection(dict.loveCouples, couple));
-  } else if (topic === 'career') {
-    const main = getText(card, topicKey('career'));
-    if (main) nodes.push(renderListSection(dict.topicCareer, main));
-  } else if (topic === 'finance') {
-    const main = getText(card, topicKey('finance'));
-    if (main) nodes.push(renderListSection(dict.topicFinance, main));
-    const secondary = getText(card, topicKey('career'));
-    if (secondary) nodes.push(renderListSection(dict.careerToday, secondary));
-  } else {
-    const summary =
-      getText(card, `reading_summary_${position}`)
-      || getText(card, `standalone_${position}`)
-      || getText(card, 'reading_summary_preview');
-    if (summary) nodes.push(renderListSection(dict.summaryTitle, summary));
-  }
-
-  const action = getText(card, 'action_prompt');
-  const reflection = getText(card, 'reflection_question');
-  const affirmation = getText(card, 'affirmation');
-  if (action) nodes.push(renderListSection(dict.actionToday, action));
-  if (reflection) nodes.push(renderListSection(dict.reflectionToday, reflection));
-  if (affirmation) nodes.push(renderListSection(dict.affirmation, affirmation));
+function buildMetaRow(card, dict, overrides = {}) {
+  if (!card) return null;
+  const yesNoLabel = overrides.metaYesNo || dict.metaYesNo;
+  const decisionLabel = overrides.metaDecision || dict.metaDecision;
+  const timingLabel = overrides.metaTiming || dict.metaTiming;
 
   const meta = document.createElement('div');
   meta.className = 'meta-row';
-  const yesNo = renderBadge(dict.metaYesNo, card.yes_no_bias);
-  const decision = renderBadge(dict.metaDecision, card.decision_support);
-  const timing = renderBadge(dict.metaTiming, card.timing_hint);
-  [yesNo, decision, timing].forEach((node) => node && meta.appendChild(node));
-  if (meta.children.length) nodes.push(meta);
 
-  return nodes;
+  const yesNo = renderBadge(yesNoLabel, card.yes_no_bias);
+  const decision = renderBadge(decisionLabel, card.decision_support);
+  const timing = renderBadge(timingLabel, card.timing_hint);
+
+  [yesNo, decision, timing].forEach((node) => node && meta.appendChild(node));
+
+  return meta.children.length ? meta : null;
+}
+
+function appendText(panel, text, className) {
+  if (!text) return;
+  const p = document.createElement('p');
+  if (className) p.className = className;
+  p.textContent = text;
+  panel.appendChild(p);
+}
+
+function appendSection(panel, title, text, className) {
+  if (!text) return;
+  const heading = document.createElement('h4');
+  heading.textContent = title;
+  const body = document.createElement('p');
+  if (className) body.className = className;
+  body.textContent = text;
+  panel.append(heading, body);
+}
+
+function buildActionBlock(card, dict, labels = {}, heading) {
+  if (!card) return null;
+  const action = getText(card, 'action_prompt');
+  const reflection = getText(card, 'reflection_question');
+  const affirmation = getText(card, 'affirmation');
+
+  if (!action && !reflection && !affirmation) return null;
+
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  if (heading) {
+    const h = document.createElement('h4');
+    h.textContent = heading;
+    panel.appendChild(h);
+  }
+
+  const rows = [
+    [labels.actionLabel || dict.actionToday, action],
+    [labels.reflectionLabel || dict.reflectionToday, reflection],
+    [labels.affirmationLabel || dict.affirmation, affirmation],
+  ];
+
+  rows.forEach(([label, text]) => {
+    if (text) panel.appendChild(renderListSection(label, text));
+  });
+
+  return panel;
+}
+
+function renderQuestionResult(cards, spreadType, topic, dict) {
+  const holder = document.getElementById('question-result');
+  if (!holder) return;
+  holder.innerHTML = '';
+  if (!cards?.length) return;
+
+  const normalizedTopic = topic === 'other' ? 'generic' : topic;
+
+  const metaOverrides =
+    normalizedTopic === 'love'
+      ? {
+        metaYesNo: dict.loveMetaYesNo,
+        metaDecision: dict.loveMetaDecision,
+        metaTiming: dict.loveMetaTiming,
+      }
+      : {};
+
+  if (spreadType === 'quick') {
+    const card = cards[0];
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.appendChild(buildCardHeader(card, dict));
+
+    if (normalizedTopic === 'love') {
+      const summary = getText(card, 'reading_summary_present');
+      appendText(panel, summary, 'lede');
+      const main = getText(card, 'love_present') || getText(card, 'standalone_present');
+      if (main) panel.appendChild(renderListSection(dict.topicLove, main));
+      const single = getText(card, 'love_reading_single');
+      const couple = getText(card, 'love_reading_couple');
+      if (single) panel.appendChild(renderListSection(dict.loveSingles, single));
+      if (couple) panel.appendChild(renderListSection(dict.loveCouples, couple));
+    } else if (normalizedTopic === 'career') {
+      const main = getText(card, 'career_present');
+      const overlay = getText(card, 'reading_summary_present');
+      appendText(panel, overlay, 'lede');
+      if (main) panel.appendChild(renderListSection(dict.topicCareer, main));
+    } else if (normalizedTopic === 'finance') {
+      const main = getText(card, 'finance_present');
+      const overlay = getText(card, 'reading_summary_present');
+      appendText(panel, overlay, 'lede');
+      if (main) panel.appendChild(renderListSection(dict.topicFinance, main));
+      const crossover = getText(card, 'career_present');
+      if (crossover) panel.appendChild(renderListSection(dict.careerToday, crossover));
+    } else {
+      const summary = getText(card, 'reading_summary_present');
+      appendText(panel, summary, 'lede');
+      appendText(panel, getText(card, 'standalone_present'));
+    }
+
+    const metaRow = buildMetaRow(card, dict, metaOverrides);
+    if (metaRow) panel.appendChild(metaRow);
+    holder.appendChild(panel);
+
+    const actionHeading =
+      normalizedTopic === 'love'
+        ? dict.loveActionHeading
+        : normalizedTopic === 'career'
+          ? dict.careerActionHeading
+          : normalizedTopic === 'finance'
+            ? dict.financeActionHeading
+            : '';
+    const actionBlock = buildActionBlock(card, dict, {}, actionHeading || null);
+    if (actionBlock) holder.appendChild(actionBlock);
+    return;
+  }
+
+  const positions = ['past', 'present', 'future'];
+  cards.forEach((card, idx) => {
+    const position = positions[idx];
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    const header = document.createElement('h3');
+    header.textContent = `${dict[position]} • ${getName(card)}`;
+    panel.appendChild(header);
+
+    if (normalizedTopic === 'love') {
+      appendText(panel, getText(card, `reading_summary_${position}`), 'lede');
+      const loveText = getText(card, `love_${position}`) || getText(card, `standalone_${position}`);
+      appendSection(panel, dict.topicLove, loveText);
+    } else if (normalizedTopic === 'career') {
+      appendText(panel, getText(card, `reading_summary_${position}`), 'lede');
+      const careerText = getText(card, `career_${position}`) || getText(card, `standalone_${position}`);
+      appendSection(panel, dict.topicCareer, careerText);
+    } else if (normalizedTopic === 'finance') {
+      appendText(panel, getText(card, `reading_summary_${position}`), 'lede');
+      const financeText = getText(card, `finance_${position}`) || getText(card, `standalone_${position}`);
+      appendSection(panel, dict.topicFinance, financeText);
+    } else {
+      appendText(panel, getText(card, `reading_summary_${position}`), 'lede');
+      appendText(panel, getText(card, `standalone_${position}`));
+    }
+
+    if (position === 'present') {
+      const metaRow = buildMetaRow(card, dict, metaOverrides);
+      if (metaRow) panel.appendChild(metaRow);
+    }
+
+    holder.appendChild(panel);
+  });
+
+  const presentCard = cards[1];
+
+  if (normalizedTopic === 'love') {
+    const extras = [];
+    const single = getText(presentCard, 'love_reading_single');
+    const couple = getText(presentCard, 'love_reading_couple');
+    if (single) extras.push(renderListSection(dict.loveSingles, single));
+    if (couple) extras.push(renderListSection(dict.loveCouples, couple));
+    if (extras.length) {
+      const wrap = document.createElement('div');
+      wrap.className = 'panel';
+      extras.forEach((node) => node && wrap.appendChild(node));
+      holder.appendChild(wrap);
+    }
+    const loveActions = buildActionBlock(presentCard, dict, {}, dict.loveActionHeading);
+    if (loveActions) holder.appendChild(loveActions);
+    return;
+  }
+
+  if (normalizedTopic === 'career') {
+    const actions = buildActionBlock(presentCard, dict, {}, dict.careerActionHeading);
+    if (actions) holder.appendChild(actions);
+  } else if (normalizedTopic === 'finance') {
+    const actions = buildActionBlock(presentCard, dict, {}, dict.financeActionHeading);
+    if (actions) holder.appendChild(actions);
+  } else {
+    const storyline = getText(presentCard, 'reading_summary_preview');
+    if (storyline) {
+      const wrap = document.createElement('div');
+      wrap.className = 'panel';
+      appendSection(wrap, dict.overallReadingLabel || dict.summaryTitle, storyline);
+      holder.appendChild(wrap);
+    }
+    const actions = buildActionBlock(presentCard, dict);
+    if (actions) holder.appendChild(actions);
+  }
+}
+
+function renderQuestion(dict) {
+  const board = document.getElementById('question-card-board');
+  const spreadToggle = document.getElementById('spread-toggle');
+  const topicToggle = document.getElementById('topic-toggle');
+  const result = document.getElementById('question-result');
+  const resetBtn = document.getElementById('question-reset');
+  if (!board || !spreadToggle || !topicToggle || !result || !resetBtn) return;
+
+  const selectedIndices = [];
+
+  const setActive = (container, btn) => {
+    container.querySelectorAll('.chip').forEach((chip) => {
+      chip.classList.remove('active', 'chip-active');
+    });
+    btn.classList.add('active', 'chip-active');
+  };
+
+  const renderBoard = () => {
+    result.innerHTML = '';
+    board.innerHTML = '';
+    board.hidden = false;
+    selectedIndices.length = 0;
+
+    const selectionGoal = state.questionSpread === 'quick' ? QUESTION_QUICK_SELECTION : OVERALL_SELECTION_COUNT;
+    const boardCount = state.questionSpread === 'quick' ? QUESTION_QUICK_BOARD_COUNT : BOARD_CARD_COUNT;
+
+    state.questionBoard = getDrawableCards(boardCount);
+
+    for (let i = 0; i < boardCount; i += 1) {
+      const slot = document.createElement('button');
+      slot.type = 'button';
+      slot.className = 'card-slot';
+      slot.appendChild(Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' }));
+
+      slot.onclick = () => {
+        if (selectedIndices.includes(i)) return;
+        if (selectedIndices.length >= selectionGoal) return;
+        selectedIndices.push(i);
+        slot.classList.add('is-selected');
+        const badge = document.createElement('span');
+        badge.className = 'selection-badge';
+        badge.textContent = `${selectedIndices.length}`;
+        slot.appendChild(badge);
+
+        if (selectedIndices.length === selectionGoal) {
+          board.querySelectorAll('button').forEach((btn) => {
+            btn.disabled = true;
+          });
+          setTimeout(() => {
+            board.hidden = true;
+            state.questionCards = selectedIndices
+              .map((idx) => state.questionBoard[idx])
+              .filter(Boolean);
+            renderQuestionResult(state.questionCards, state.questionSpread, state.questionTopic, dict);
+          }, 450);
+        }
+      };
+
+      board.appendChild(slot);
+    }
+  };
+
+  spreadToggle.querySelectorAll('[data-spread]').forEach((btn) => {
+    btn.onclick = () => {
+      setActive(spreadToggle, btn);
+      state.questionSpread = btn.dataset.spread;
+      renderBoard();
+    };
+  });
+
+  topicToggle.querySelectorAll('[data-topic]').forEach((btn) => {
+    btn.onclick = () => {
+      setActive(topicToggle, btn);
+      state.questionTopic = btn.dataset.topic;
+      result.innerHTML = '';
+    };
+  });
+
+  resetBtn.onclick = () => {
+    renderBoard();
+  };
+
+  renderBoard();
 }
 
 function renderPage(dict) {

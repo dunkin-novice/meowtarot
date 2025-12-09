@@ -6,7 +6,10 @@
   <title>MeowTarot | Ask a Question</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body data-page="question">
@@ -14,29 +17,40 @@
 
   <main class="page-shell">
     <section class="section-block">
-      <p class="eyebrow" data-i18n="questionTitle"></p>
-      <h1 data-i18n="questionDesc"></h1>
+      <p class="eyebrow" data-i18n="questionDesc"></p>
+      <h1 data-i18n="questionTitle"></h1>
+      <p class="lede" data-i18n="questionLead"></p>
       <label class="input-label" for="question-text" data-i18n="questionHint"></label>
       <textarea id="question-text" rows="3" class="input"></textarea>
 
-      <div class="chip-row" id="spread-toggle">
-        <button class="chip active" data-mode="quick" data-i18n="quickAnswer"></button>
-        <button class="chip" data-mode="story" data-i18n="storyMode"></button>
+      <div class="spread-toggle" id="spread-toggle">
+        <button
+          type="button"
+          data-spread="quick"
+          class="chip chip-active"
+          data-i18n="spreadQuick"
+        ></button>
+        <button type="button" data-spread="story" class="chip" data-i18n="spreadStory"></button>
       </div>
 
-      <div class="chip-row" id="topic-toggle">
-        <button class="chip active" data-topic="any" data-i18n="topicAny"></button>
-        <button class="chip" data-topic="love" data-i18n="topicLove"></button>
-        <button class="chip" data-topic="career" data-i18n="topicCareer"></button>
-        <button class="chip" data-topic="finance" data-i18n="topicFinance"></button>
-        <button class="chip" data-topic="other" data-i18n="topicOther"></button>
+      <div class="topic-chips" id="topic-toggle">
+        <button
+          type="button"
+          data-topic="generic"
+          class="chip chip-active"
+          data-i18n="topicGeneric"
+        ></button>
+        <button type="button" data-topic="love" class="chip" data-i18n="topicLove"></button>
+        <button type="button" data-topic="career" class="chip" data-i18n="topicCareer"></button>
+        <button type="button" data-topic="finance" class="chip" data-i18n="topicFinance"></button>
+        <button type="button" data-topic="other" class="chip" data-i18n="topicOther"></button>
       </div>
 
-      <div class="card-board" id="question-board">
-        <button class="primary large" id="question-draw" data-i18n="drawAnswer"></button>
+      <div id="question-card-board" class="card-board" hidden></div>
+      <div class="question-actions">
+        <button id="question-reset" type="button" class="ghost" data-i18n="newReading"></button>
       </div>
-
-      <div id="question-result" class="card-result"></div>
+      <div id="question-result"></div>
     </section>
   </main>
 
