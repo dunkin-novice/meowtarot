@@ -109,10 +109,32 @@ function buildActionBlock(card, dict, labels = {}, heading) {
 
   const panel = document.createElement('div');
   panel.className = 'panel';
-  if (heading) {
+  const headingText = state.mode === 'question' ? dict.guidanceHeading : heading;
+  if (headingText) {
     const h = document.createElement('h4');
-    h.textContent = heading;
+    h.textContent = headingText;
     panel.appendChild(h);
+  }
+
+  if (state.mode === 'question') {
+    const parts = [];
+    if (action) parts.push(action.trim());
+    if (reflection) parts.push(reflection.trim());
+    const combined = parts.join(' ');
+
+    if (combined) {
+      const p = document.createElement('p');
+      p.textContent = combined;
+      panel.appendChild(p);
+    }
+
+    if (affirmation) {
+      const pAffirm = document.createElement('p');
+      pAffirm.innerHTML = `<em>"${affirmation.trim()}"</em>`;
+      panel.appendChild(pAffirm);
+    }
+
+    return panel;
   }
 
   const suggestionLabel = labels.suggestionLabel || dict.suggestion || dict.actionToday;
@@ -200,11 +222,19 @@ function renderThreeCards(cards, dict, topic) {
     const panel = document.createElement('div');
     panel.className = 'panel';
     const header = document.createElement('h3');
-    header.textContent = `${dict[position]} • ${getName(card)}`;
+    const name = getName(card, state.currentLang);
+    const orientation = getOrientationLabel(card, state.currentLang);
+    const headerText =
+      state.mode === 'question'
+        ? orientation
+          ? `${dict[position]} • ${name} • ${orientation}`
+          : `${dict[position]} • ${name}`
+        : `${dict[position]} • ${name}`;
+    header.textContent = headerText;
     panel.appendChild(header);
 
     const summary = getText(card, `reading_summary_${position}`) || getText(card, 'reading_summary_preview');
-    if (summary) appendSection(panel, dict.summaryTitle, summary, 'lede');
+    if (summary && state.mode !== 'question') appendSection(panel, dict.summaryTitle, summary, 'lede');
 
     if (topic === 'love') {
       const loveText = getText(card, `love_${position}`) || getText(card, `standalone_${position}`);

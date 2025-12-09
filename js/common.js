@@ -91,6 +91,7 @@ export const translations = {
     loveActionHeading: 'What to do about this love situation',
     careerActionHeading: 'Career guidance',
     financeActionHeading: 'Financial guidance',
+    guidanceHeading: 'Guidance',
   },
   th: {
     navHome: 'หน้าหลัก',
@@ -180,6 +181,7 @@ export const translations = {
     loveActionHeading: 'แนวทางดูแลเรื่องความรักนี้',
     careerActionHeading: 'คำแนะนำด้านการงาน',
     financeActionHeading: 'คำแนะนำด้านการเงิน',
+    guidanceHeading: 'คำแนะนำ',
   },
 };
 
