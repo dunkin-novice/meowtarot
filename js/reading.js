@@ -22,6 +22,8 @@ const defaultSpread =
   || storageSelection?.spread
   || (initialMode === 'daily' ? 'quick' : 'story');
 
+let dataLoaded = false;
+
 const state = {
   currentLang: params.get('lang') || 'en',
   mode: initialMode,
@@ -312,7 +314,6 @@ function updateContextCopy(dict = translations[state.currentLang]) {
 
 function handleTranslations(dict) {
   updateContextCopy(dict);
-  renderReading(dict);
   if (readingTitle) {
     if (state.mode === 'overall') {
       readingTitle.textContent = dict.overallTitle;
@@ -321,6 +322,10 @@ function handleTranslations(dict) {
     } else {
       readingTitle.textContent = dict.dailyTitle;
     }
+  }
+
+  if (dataLoaded) {
+    renderReading(dict);
   }
 }
 
@@ -336,9 +341,11 @@ function init() {
 
   loadTarotData()
     .then(() => {
+      dataLoaded = true;
       renderReading(translations[state.currentLang] || translations.en);
     })
     .catch(() => {
+      dataLoaded = true;
       renderReading(translations[state.currentLang] || translations.en);
     });
 }
