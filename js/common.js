@@ -155,6 +155,13 @@ export const translations = {
   },
 };
 
+const LANG_STORAGE_KEY = 'meowtarot_lang';
+
+function getSavedLang(defaultLang = 'en') {
+  const stored = localStorage.getItem(LANG_STORAGE_KEY);
+  return stored || defaultLang;
+}
+
 export function applyTranslations(currentLang = 'en', afterApply) {
   const dict = translations[currentLang] || translations.en;
   document.documentElement.lang = currentLang;
@@ -163,14 +170,21 @@ export function applyTranslations(currentLang = 'en', afterApply) {
     if (dict[key]) node.textContent = dict[key];
   });
   document.querySelectorAll('.lang-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    const isActive = btn.dataset.lang === currentLang;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive);
+    btn.setAttribute('aria-selected', isActive);
   });
   afterApply?.(dict);
 }
 
 export function initShell(state, afterApply, activePage) {
+  const savedLang = getSavedLang(state.currentLang || 'en');
+  state.currentLang = savedLang;
+
   renderNavbar(document.getElementById('site-header'), (lang) => {
     state.currentLang = lang;
+    localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
     applyTranslations(state.currentLang, afterApply);
   });
   renderFooter(document.getElementById('site-footer'));
