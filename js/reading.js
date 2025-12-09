@@ -60,8 +60,15 @@ function getStandaloneByPosition(card, position) {
   return lang === 'th' ? card.standalone_future_th : card.standalone_future_en;
 }
 
-function getReadingSummary(card) {
-  return state.currentLang === 'th' ? card.reading_summary_preview_th : card.reading_summary_preview_en;
+function getReadingSummary(card, position) {
+  const suffix = state.currentLang === 'th' ? '_th' : '_en';
+  const positionKey = `reading_summary_${position}${suffix}`;
+  if (card[positionKey]) return card[positionKey];
+
+  const previewKey = `reading_summary_preview${suffix}`;
+  if (card[previewKey]) return card[previewKey];
+
+  return '';
 }
 
 function getOrientationLabel(card) {
@@ -84,7 +91,20 @@ function getSelectedCards() {
 
 function buildSummary(cards) {
   const list = cards.length ? cards : meowTarotCards.filter((c) => c.id === 'the-fool');
-  return list.map((card) => getReadingSummary(card));
+  const dict = translations[state.currentLang];
+  const positions = ['past', 'present', 'future'];
+
+  return list
+    .map((card, idx) => {
+      const summary = getReadingSummary(card, positions[idx] || 'present');
+      if (summary) return summary;
+
+      const templateKey = idx === 0 ? 'summaryPast' : idx === 1 ? 'summaryPresent' : 'summaryFuture';
+      const name = getCardName(card);
+      if (dict?.[templateKey] && name) return dict[templateKey].replace('{card}', name);
+      return '';
+    })
+    .filter(Boolean);
 }
 
 function renderResults() {

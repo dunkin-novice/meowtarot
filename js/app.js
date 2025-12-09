@@ -209,11 +209,20 @@ function getStandaloneMeaning(card, position, lang = state.currentLang) {
 }
 
 function getReadingSummary(cards, lang = state.currentLang) {
-  const target = cards[1] || cards[0];
-  if (target) {
-    const summaryKey = lang === 'en' ? 'reading_summary_preview_en' : 'reading_summary_preview_th';
-    if (target[summaryKey]) return target[summaryKey];
-  }
+  const suffix = lang === 'en' ? '_en' : '_th';
+  const positions = ['past', 'present', 'future'];
+
+  const summaries = cards
+    .map((card, idx) => {
+      const positionKey = `reading_summary_${positions[idx]}${suffix}`;
+      if (card[positionKey]) return card[positionKey];
+
+      const previewKey = `reading_summary_preview${suffix}`;
+      return card[previewKey] || '';
+    })
+    .filter(Boolean);
+
+  if (summaries.length) return summaries.join(' ');
 
   return buildSummary(cards).join(' ');
 }
