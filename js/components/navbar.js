@@ -12,7 +12,7 @@ export function renderNavbar(container, onLangToggle) {
         <div class="nav-links nav-actions">
           <a href="index.html" class="nav-link" data-page="home" data-i18n="navHome"></a>
           <a href="daily.html" class="nav-link" data-page="daily" data-i18n="navDaily"></a>
-          <a href="reading.html" class="nav-link" data-page="overall" data-i18n="navOverall"></a>
+          <a href="overall.html" class="nav-link" data-page="overall" data-i18n="navOverall"></a>
           <a href="question.html" class="nav-link" data-page="question" data-i18n="navQuestion"></a>
           <a href="meanings.html" class="nav-link" data-page="meanings" data-i18n="navMeanings"></a>
         </div>
