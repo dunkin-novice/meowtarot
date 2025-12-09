@@ -9,7 +9,7 @@ export function normalizeId(value = '') {
     .replace(/^-+|-+$/g, '');
 }
 
-function normalizeCards(cards) {
+export function normalizeCards(cards) {
   return (cards || []).map((card, idx) => {
     const orientation = card.orientation || 'upright';
     const rawId =
@@ -65,17 +65,29 @@ export const tarotCards = [
   { id: 'MAJ_21', name_en: 'The World', name_th: 'ไพ่โลก', meaning_en: 'Completion, integration, wholeness.', meaning_th: 'ความสมบูรณ์ การเชื่อมโยงทั้งหมด ความสำเร็จ' },
 ];
 
+// Provide a normalized fallback immediately so the board can always surface IDs.
+meowTarotCards = normalizeCards(tarotCards);
+if (typeof window !== 'undefined') {
+  window.meowTarotCards = meowTarotCards;
+}
+
 // Load full deck from JSON, fall back to static tarotCards if anything fails
 export function loadTarotData() {
   return fetch('data/cards.json')
     .then((res) => res.json())
     .then((data) => {
       meowTarotCards = normalizeCards(data.cards && data.cards.length ? data.cards : tarotCards);
+      if (typeof window !== 'undefined') {
+        window.meowTarotCards = meowTarotCards;
+      }
       return meowTarotCards;
     })
     .catch((err) => {
       console.error('Failed to load tarot data', err);
       meowTarotCards = normalizeCards(tarotCards);
+      if (typeof window !== 'undefined') {
+        window.meowTarotCards = meowTarotCards;
+      }
       return meowTarotCards;
     });
 }

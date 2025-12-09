@@ -1,5 +1,6 @@
 import { initShell, translations } from './common.js';
 import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
+import { findCardById } from './reading-helpers.js';
 
 const params = new URLSearchParams(window.location.search);
 const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
@@ -57,29 +58,8 @@ function getOrientationLabel(card, lang = state.currentLang) {
   return reversed ? 'Reversed' : 'Upright';
 }
 
-function matchesCardId(card, candidateId) {
-  if (!card) return false;
-  const candidate = String(candidateId || '');
-  const normalizedCandidate = normalizeId(candidate);
-
-  const idsToCheck = [card.id, card.legacy_id]
-    .map((val) => (val == null ? '' : String(val)))
-    .filter(Boolean);
-
-  return idsToCheck.some((val) => {
-    const normalizedVal = normalizeId(val);
-    return val === candidate || normalizedVal === normalizedCandidate;
-  });
-}
-
 function findCard(id) {
-  const idStr = String(id || '');
-  const baseId = idStr.endsWith('-reversed') ? idStr.replace(/-reversed$/, '') : idStr;
-  return (
-    meowTarotCards.find((card) => matchesCardId(card, idStr))
-    || meowTarotCards.find((card) => matchesCardId(card, baseId))
-    || null
-  );
+  return findCardById(meowTarotCards, id, normalizeId);
 }
 
 function buildCardHeader(card) {
