@@ -1,6 +1,8 @@
 import { translations, initShell } from './common.js';
 import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
 
+const STORAGE_KEY = 'meowtarot_selection';
+
 const state = {
   currentLang: 'en',
   context: document.body.dataset.context || 'daily',
@@ -135,6 +137,16 @@ function updateContinueState() {
   } else {
     continueBtn.disabled = true;
     hintText.textContent = dict.selectThreeHint;
+  }
+
+  if (typeof sessionStorage !== 'undefined') {
+    const payload = {
+      mode: state.context === 'question' ? 'question' : 'daily',
+      spread: state.context === 'question' ? 'story' : 'quick',
+      topic: 'generic',
+      cards: state.selectedIds,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }
 }
 
