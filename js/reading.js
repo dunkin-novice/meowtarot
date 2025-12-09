@@ -46,9 +46,16 @@ function getText(card, keyBase, lang = state.currentLang) {
 }
 
 function getName(card, lang = state.currentLang) {
-  return lang === 'en'
-    ? card.card_name_en || card.name_en || card.name || card.id
-    : card.alias_th || card.name_th || card.name || card.id;
+  if (!card) return '';
+
+  if (lang === 'en') {
+    return card.card_name_en || card.name_en || card.name || card.id;
+  }
+
+  const thaiName = card.alias_th || card.name_th || card.name || card.card_name_en || card.id;
+  const englishName = card.card_name_en || card.name_en || '';
+
+  return englishName ? `${thaiName} (${englishName})` : thaiName;
 }
 
 function getOrientationLabel(card, lang = state.currentLang) {
@@ -108,15 +115,24 @@ function buildActionBlock(card, dict, labels = {}, heading) {
     panel.appendChild(h);
   }
 
-  const rows = [
-    [labels.actionLabel || dict.actionToday, action],
-    [labels.reflectionLabel || dict.reflectionToday, reflection],
-    [labels.affirmationLabel || dict.affirmation, affirmation],
-  ];
+  const suggestionLabel = labels.suggestionLabel || dict.suggestion || dict.actionToday;
 
-  rows.forEach(([label, text]) => {
-    if (text) panel.appendChild(renderListSection(label, text));
-  });
+  if (action || reflection) {
+    const p = document.createElement('p');
+    const parts = [];
+    if (action) parts.push(action.trim());
+    if (reflection) parts.push(reflection.trim());
+    const combined = parts.join(' ');
+
+    p.innerHTML = `<strong>${suggestionLabel}:</strong> ${combined}`;
+    panel.appendChild(p);
+  }
+
+  if (affirmation) {
+    const pAffirm = document.createElement('p');
+    pAffirm.innerHTML = `<em>"${affirmation.trim()}"</em>`;
+    panel.appendChild(pAffirm);
+  }
 
   return panel;
 }
@@ -153,7 +169,11 @@ function renderSingleCard(card, dict, topic) {
     if (crossover) panel.appendChild(renderListSection(dict.careerToday, crossover));
   } else {
     const body = getText(card, 'standalone_present') || getText(card, 'tarot_imply_present');
-    if (body) panel.appendChild(renderListSection(dict.summaryTitle, body));
+    if (body) {
+      const p = document.createElement('p');
+      p.textContent = body;
+      panel.appendChild(p);
+    }
   }
 
   readingContent.appendChild(panel);
@@ -197,7 +217,11 @@ function renderThreeCards(cards, dict, topic) {
       appendSection(panel, dict.topicFinance, financeText);
     } else {
       const story = getText(card, `standalone_${position}`) || getText(card, 'tarot_imply');
-      if (story) appendSection(panel, dict.summaryTitle, story);
+      if (story) {
+        const p = document.createElement('p');
+        p.textContent = story;
+        panel.appendChild(p);
+      }
     }
 
     readingContent.appendChild(panel);
@@ -234,7 +258,9 @@ function renderThreeCards(cards, dict, topic) {
     if (storyline) {
       const wrap = document.createElement('div');
       wrap.className = 'panel';
-      appendSection(wrap, dict.overallReadingLabel || dict.summaryTitle, storyline);
+      const p = document.createElement('p');
+      p.textContent = storyline;
+      wrap.appendChild(p);
       readingContent.appendChild(wrap);
     }
     const actions = buildActionBlock(presentCard, dict);
