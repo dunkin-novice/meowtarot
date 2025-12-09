@@ -17,10 +17,14 @@
       <p class="eyebrow" data-i18n="dailyTitle"></p>
       <h1 data-i18n="dailyDesc"></h1>
       <p class="sub-instruction" data-i18n="todayReminder"></p>
-      <div class="card-board" id="daily-board">
-        <button class="primary large" id="daily-draw" data-i18n="dailyDraw"></button>
+      <div class="cta-wrapper">
+        <button class="primary large" id="daily-start" data-i18n="dailyDraw"></button>
       </div>
-      <div id="daily-card" class="card-result"></div>
+      <div class="card-board" id="daily-board" hidden></div>
+      <div class="board-actions" id="daily-actions" hidden>
+        <button class="ghost" type="button" id="daily-shuffle" data-i18n="shuffleCards"></button>
+        <button class="primary" type="button" id="daily-continue" data-i18n="continue" disabled></button>
+      </div>
     </section>
   </main>
 
