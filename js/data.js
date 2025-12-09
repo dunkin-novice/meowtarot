@@ -1,11 +1,37 @@
 // Dynamic deck used by the app
 export let meowTarotCards = [];
 
+export function normalizeId(value = '') {
+  return value
+    .toString()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function normalizeCards(cards) {
-  return (cards || []).map((card) => {
+  return (cards || []).map((card, idx) => {
     const orientation = card.orientation || 'upright';
+    const rawId =
+      card.id
+      || card.seo_slug_en
+      || card.card_name_en
+      || card.name_en
+      || card.name_th
+      || card.name
+      || card.alias_th;
+
+    const withOrientation =
+      orientation === 'reversed' && rawId && !rawId.toLowerCase().includes('reversed')
+        ? `${rawId}-reversed`
+        : rawId;
+
+    const normalizedId = normalizeId(withOrientation) || `card-${idx + 1}`;
+
     return {
       ...card,
+      id: normalizedId,
+      legacy_id: withOrientation || rawId || null,
       orientation,
       orientation_label_th: card.orientation_label_th
         || (orientation === 'reversed' ? 'ไพ่กลับหัว' : 'ไพ่ปกติ'),
