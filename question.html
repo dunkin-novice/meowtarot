@@ -20,8 +20,6 @@
       <p class="eyebrow" data-i18n="questionDesc"></p>
       <h1 data-i18n="questionTitle"></h1>
       <p class="lede" data-i18n="questionLead"></p>
-      <label class="input-label" for="question-text" data-i18n="questionHint"></label>
-      <textarea id="question-text" rows="3" class="input"></textarea>
 
       <div class="spread-toggle" id="spread-toggle">
         <button
@@ -34,23 +32,16 @@
       </div>
 
       <div class="topic-chips" id="topic-toggle">
-        <button
-          type="button"
-          data-topic="generic"
-          class="chip chip-active"
-          data-i18n="topicGeneric"
-        ></button>
-        <button type="button" data-topic="love" class="chip" data-i18n="topicLove"></button>
+        <button type="button" data-topic="love" class="chip chip-active" data-i18n="topicLove"></button>
         <button type="button" data-topic="career" class="chip" data-i18n="topicCareer"></button>
         <button type="button" data-topic="finance" class="chip" data-i18n="topicFinance"></button>
-        <button type="button" data-topic="other" class="chip" data-i18n="topicOther"></button>
       </div>
 
       <div id="question-card-board" class="card-board" hidden></div>
-      <div class="question-actions">
-        <button id="question-reset" type="button" class="ghost" data-i18n="newReading"></button>
+      <div class="board-actions">
+        <button id="question-reset" type="button" class="ghost" data-i18n="shuffleCards"></button>
+        <button id="question-continue" type="button" class="primary" data-i18n="continue" disabled></button>
       </div>
-      <div id="question-result"></div>
     </section>
   </main>
 
