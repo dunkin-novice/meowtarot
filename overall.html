@@ -15,12 +15,19 @@
   <main class="page-shell">
     <section class="section-block">
       <p class="eyebrow" data-i18n="overallTitle"></p>
-      <h1 data-i18n="overallDesc"></h1>
-      <div class="card-board" id="overall-board">
-        <button class="primary large" id="overall-draw" data-i18n="drawStory"></button>
-      </div>
-      <div id="overall-cards" class="multi-card-result"></div>
-      <div id="overall-summary" class="summary-block"></div>
+      <h1 data-i18n="overallShortDesc"></h1>
+
+      <section id="overall-flow">
+        <div class="overall-cta-wrapper">
+          <button id="overallStartBtn" class="btn btn-primary" data-i18n="overallStartCta">
+            Start 3-card reading
+          </button>
+        </div>
+
+        <div id="overall-card-board" class="card-board" hidden></div>
+
+        <div id="overall-result"></div>
+      </section>
     </section>
   </main>
 
