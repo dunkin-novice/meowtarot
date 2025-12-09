@@ -46,8 +46,7 @@ function animateBoard(boardEl) {
   });
 }
 
-function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, options = {}) {
-  const { replaceOnSingle = false } = options;
+function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange) {
   let cards = [];
   let selected = [];
   const render = () => {
@@ -70,6 +69,15 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, option
         badge.textContent = `${order + 1}`;
         slot.appendChild(badge);
       });
+      if (selectionGoal > 1 && selected.length >= selectionGoal) {
+        slots.forEach((slot, idx) => {
+          if (!selected.includes(idx)) slot.disabled = true;
+        });
+      } else {
+        slots.forEach((slot) => {
+          slot.disabled = false;
+        });
+      }
       onSelectionChange(selected.map((idx) => cards[idx]).filter(Boolean));
     };
 
@@ -79,10 +87,9 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, option
       slot.className = 'card-slot';
       slot.appendChild(Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' }));
       slot.onclick = () => {
-        const isSelected = selected.includes(i);
-        if (isSelected) {
+        if (selected.includes(i)) {
           selected = selected.filter((idx) => idx !== i);
-        } else if (selectionGoal === 1 && replaceOnSingle) {
+        } else if (selectionGoal === 1) {
           selected = [i];
         } else if (selected.length < selectionGoal) {
           selected.push(i);
@@ -128,7 +135,7 @@ function renderDaily() {
     board.hidden = false;
     actions.hidden = false;
     toolbar.hidden = false;
-    boardApi = setupBoard(board, DAILY_BOARD_COUNT, 1, updateContinue, { replaceOnSingle: true });
+    boardApi = setupBoard(board, DAILY_BOARD_COUNT, 1, updateContinue);
     updateContinue([]);
   };
 

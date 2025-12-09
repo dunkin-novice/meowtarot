@@ -994,6 +994,12 @@ button,
   margin-bottom: 16px;
 }
 
+.cta-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
 #overall-result {
   display: flex;
   flex-direction: column;
