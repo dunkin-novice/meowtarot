@@ -12,23 +12,17 @@
 <body data-page="home">
   <header id="site-header"></header>
 
-  <main>
-    <section id="hero" class="hero">
+  <main class="page-shell">
+    <section class="hero hero--stacked">
       <div class="hero-copy">
         <p class="eyebrow" data-i18n="languageLabel"></p>
         <h1 class="brand-title">MeowTarot</h1>
         <p class="tagline" data-i18n="heroTagline"></p>
         <p class="intro" data-i18n="landingIntro"></p>
-        <div class="fortune-pill">
-          <div class="pill-heading">
-            <span class="pill-dot"></span>
-            <span data-i18n="fortuneTeller"></span>
-          </div>
-          <div class="pill-links">
-            <a href="daily.html" class="pill-link" data-i18n="navDaily"></a>
-            <a href="question.html" class="pill-link" data-i18n="navQuestion"></a>
-            <a href="meanings.html" class="pill-link" data-i18n="navMeanings"></a>
-          </div>
+        <div class="cta-row">
+          <a class="primary" href="daily.html" data-i18n="ctaDaily"></a>
+          <a class="ghost" href="reading.html" data-i18n="ctaOverall"></a>
+          <a class="ghost" href="question.html" data-i18n="ctaQuestion"></a>
         </div>
       </div>
       <div class="hero-card">
@@ -38,10 +32,28 @@
         </div>
       </div>
     </section>
+
+    <section class="feature-grid">
+      <article class="feature-card">
+        <h3 data-i18n="dailyTitle"></h3>
+        <p data-i18n="dailyDesc"></p>
+        <a class="pill-link" href="daily.html" data-i18n="ctaDaily"></a>
+      </article>
+      <article class="feature-card">
+        <h3 data-i18n="overallTitle"></h3>
+        <p data-i18n="overallDesc"></p>
+        <a class="pill-link" href="reading.html" data-i18n="ctaOverall"></a>
+      </article>
+      <article class="feature-card">
+        <h3 data-i18n="questionTitle"></h3>
+        <p data-i18n="questionDesc"></p>
+        <a class="pill-link" href="question.html" data-i18n="ctaQuestion"></a>
+      </article>
+    </section>
   </main>
 
   <footer id="site-footer"></footer>
 
-  <script type="module" src="js/landing.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

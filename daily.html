@@ -3,51 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MeowTarot | Daily Fortune</title>
+  <title>MeowTarot | Daily Reading</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body data-context="daily" data-page="daily">
+<body data-page="daily">
   <header id="site-header"></header>
 
-  <main>
-    <section class="tarot-hero tarot-hero--single" id="daily-hero">
-      <div class="tarot-board-wrapper">
-        <div class="board hero-board" id="daily-board">
-          <div class="board-inner">
-            <div class="board-overlay" id="board-overlay">
-              <div class="overlay-icon">😺🌙</div>
-              <button class="primary" data-start="daily" data-i18n="start"></button>
-            </div>
-            <div class="board-controls">
-              <div class="board-message">
-                <p class="instruction" data-i18n="instruction"></p>
-                <p class="sub-instruction" id="context-copy"></p>
-              </div>
-              <div class="controls">
-                <button id="shuffleBtn" class="ghost" data-i18n="shuffle"></button>
-              </div>
-            </div>
-            <div class="card-grid" id="cardGrid"></div>
-            <div class="continue-row">
-              <div class="hint-wrap">
-                <span id="hintText" class="hint" data-i18n="selectThreeHint"></span>
-                <span id="selectedCount" class="count">0/3</span>
-              </div>
-              <button id="continueBtn" class="primary" disabled data-i18n="continue"></button>
-            </div>
-          </div>
-        </div>
-        <a class="hero-link" href="question.html" data-i18n="navQuestion"></a>
+  <main class="page-shell">
+    <section class="section-block">
+      <p class="eyebrow" data-i18n="dailyTitle"></p>
+      <h1 data-i18n="dailyDesc"></h1>
+      <p class="sub-instruction" data-i18n="todayReminder"></p>
+      <div class="card-board" id="daily-board">
+        <button class="primary large" id="daily-draw" data-i18n="dailyDraw"></button>
       </div>
+      <div id="daily-card" class="card-result"></div>
     </section>
-
   </main>
 
   <footer id="site-footer"></footer>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

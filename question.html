@@ -9,55 +9,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body data-context="question" data-page="question">
+<body data-page="question">
   <header id="site-header"></header>
 
-  <main>
-    <section class="tarot-hero" id="question-hero">
-      <div class="tarot-board-wrapper">
-        <div class="board hero-board" id="daily-board">
-          <div class="board-inner">
-            <div class="board-overlay" id="board-overlay">
-              <div class="overlay-icon">😺🌙</div>
-              <button class="primary" data-start="question" data-i18n="startQuestion"></button>
-            </div>
-            <div class="board-controls">
-              <div>
-                <p class="instruction" data-i18n="instruction"></p>
-                <p class="sub-instruction" id="context-copy"></p>
-              </div>
-              <div class="controls">
-                <button id="shuffleBtn" class="ghost" data-i18n="shuffle"></button>
-              </div>
-            </div>
-            <div class="card-grid" id="cardGrid"></div>
-            <div class="continue-row">
-              <div class="hint-wrap">
-                <span id="hintText" class="hint" data-i18n="selectThreeHint"></span>
-                <span id="selectedCount" class="count">0/3</span>
-              </div>
-              <button id="continueBtn" class="primary" disabled data-i18n="continue"></button>
-            </div>
-          </div>
-        </div>
-        <a class="hero-link" href="daily.html" data-i18n="navDaily"></a>
+  <main class="page-shell">
+    <section class="section-block">
+      <p class="eyebrow" data-i18n="questionTitle"></p>
+      <h1 data-i18n="questionDesc"></h1>
+      <label class="input-label" for="question-text" data-i18n="questionHint"></label>
+      <textarea id="question-text" rows="3" class="input"></textarea>
+
+      <div class="chip-row" id="spread-toggle">
+        <button class="chip active" data-mode="quick" data-i18n="quickAnswer"></button>
+        <button class="chip" data-mode="story" data-i18n="storyMode"></button>
       </div>
 
-      <div class="hero-content">
-        <p class="eyebrow" data-i18n="navQuestion"></p>
-        <h1 data-i18n="questionTitle" data-reading-title></h1>
-        <p class="hero-copy" data-i18n="questionDesc"></p>
-        <div class="hero-actions">
-          <button class="primary" data-start="question" data-i18n="startQuestion"></button>
-          <a class="ghost" href="daily.html" data-i18n="navDaily"></a>
-        </div>
+      <div class="chip-row" id="topic-toggle">
+        <button class="chip active" data-topic="any" data-i18n="topicAny"></button>
+        <button class="chip" data-topic="love" data-i18n="topicLove"></button>
+        <button class="chip" data-topic="career" data-i18n="topicCareer"></button>
+        <button class="chip" data-topic="finance" data-i18n="topicFinance"></button>
+        <button class="chip" data-topic="other" data-i18n="topicOther"></button>
       </div>
+
+      <div class="card-board" id="question-board">
+        <button class="primary large" id="question-draw" data-i18n="drawAnswer"></button>
+      </div>
+
+      <div id="question-result" class="card-result"></div>
     </section>
-
   </main>
 
   <footer id="site-footer"></footer>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
