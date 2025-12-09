@@ -985,11 +985,18 @@ button,
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
-.chip-row {
+.chip-row,
+.spread-toggle,
+.topic-chips {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin: 12px 0;
+}
+
+.topic-chips {
+  overflow-x: auto;
+  padding-bottom: 6px;
 }
 
 .chip {
@@ -999,11 +1006,19 @@ button,
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.chip.active {
+.chip.active,
+.chip.chip-active {
   border-color: var(--lavender);
   background: rgba(198, 183, 255, 0.12);
+}
+
+.question-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 4px 0 8px;
 }
 
 .input {
