@@ -33,16 +33,16 @@ function getFoolCard() {
     || meowTarotCards.find((card) => card.id === 'the-fool');
 }
 
-function findUprightCard(id) {
-  const direct = meowTarotCards.find((card) => card.id === id);
-  if (direct && direct.orientation === 'upright') return direct;
-
-  const baseId = id.endsWith('-reversed') ? id.replace(/-reversed$/, '') : id;
-  const upright = meowTarotCards.find((card) => card.id === baseId && card.orientation === 'upright');
-  if (upright) return upright;
-
+function findCard(id) {
+  const idStr = String(id || '');
+  const direct = meowTarotCards.find((card) => String(card.id) === idStr);
   if (direct) return direct;
-  return getFoolCard();
+
+  const baseId = idStr.endsWith('-reversed') ? idStr.replace(/-reversed$/, '') : idStr;
+  const baseMatch = meowTarotCards.find((card) => String(card.id) === baseId);
+  if (baseMatch) return baseMatch;
+
+  return null;
 }
 
 function getCardArchetype(card) {
@@ -64,10 +64,21 @@ function getReadingSummary(card) {
   return state.currentLang === 'th' ? card.reading_summary_preview_th : card.reading_summary_preview_en;
 }
 
+function getOrientationLabel(card) {
+  const orientation = (card.orientation || 'upright').toLowerCase();
+  if (state.currentLang === 'th' && card.orientation_label_th) return card.orientation_label_th;
+  return orientation;
+}
+
+function getTarotImply(card) {
+  const key = state.currentLang === 'th' ? 'tarot_imply_th' : 'tarot_imply_en';
+  return card[key] || '';
+}
+
 function getSelectedCards() {
   return state.selectedIds
     .slice(0, 3)
-    .map((id) => findUprightCard(id) || getFoolCard())
+    .map((id) => findCard(id) || getFoolCard())
     .filter(Boolean);
 }
 
@@ -88,12 +99,15 @@ function renderResults() {
     const name = getCardName(card);
     const archetype = getCardArchetype(card);
     const meaning = getStandaloneByPosition(card, idx);
+    const orientation = getOrientationLabel(card);
+    const keywords = getTarotImply(card);
     const cardEl = document.createElement('div');
     cardEl.className = 'result-card';
     cardEl.innerHTML = `
       <div class="label">${labels[idx]}</div>
-      <h5>${card.icon_emoji ? `${card.icon_emoji} ` : ''}${name}</h5>
+      <h5>${card.icon_emoji ? `${card.icon_emoji} ` : ''}${name} (${orientation})</h5>
       <p class="archetype">${archetype}</p>
+      ${keywords ? `<p class="keywords">${keywords}</p>` : ''}
       <p>${meaning}</p>
     `;
     resultsGrid.appendChild(cardEl);
