@@ -1,5 +1,5 @@
 import { translations, initShell } from './common.js';
-import { loadTarotData, meowTarotCards } from './data.js';
+import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
 
 const state = {
   currentLang: 'en',
@@ -31,16 +31,30 @@ function getDrawableCards() {
   return meowTarotCards.length ? meowTarotCards : [];
 }
 
+function matchesCardId(card, candidateId) {
+  if (!card) return false;
+  const candidate = String(candidateId || '');
+  const normalizedCandidate = normalizeId(candidate);
+
+  const idsToCheck = [card.id, card.legacy_id]
+    .map((val) => (val == null ? '' : String(val)))
+    .filter(Boolean);
+
+  return idsToCheck.some((val) => {
+    const normalizedVal = normalizeId(val);
+    return val === candidate || normalizedVal === normalizedCandidate;
+  });
+}
+
 function findCardForReading(id) {
   const idStr = String(id || '');
-  const direct = meowTarotCards.find((card) => String(card.id) === idStr);
-  if (direct) return direct;
-
   const baseId = idStr.endsWith('-reversed') ? idStr.replace(/-reversed$/, '') : idStr;
-  const baseMatch = meowTarotCards.find((card) => String(card.id) === baseId);
-  if (baseMatch) return baseMatch;
 
-  return null;
+  return (
+    meowTarotCards.find((card) => matchesCardId(card, idStr))
+    || meowTarotCards.find((card) => matchesCardId(card, baseId))
+    || null
+  );
 }
 
 function shuffleArray(arr) {
