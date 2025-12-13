@@ -203,29 +203,34 @@ body.nav-open {
 
 .hero {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 32px;
-  padding: 72px 32px 48px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 56px 24px 32px;
   align-items: center;
+}
+
+.hero--compact {
+  row-gap: 12px;
 }
 
 .brand-title {
   font-family: 'Prata', serif;
-  font-size: 56px;
-  margin: 0 0 12px;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.05;
+  margin: 0 0 10px;
 }
 
 .tagline {
-  font-size: 20px;
+  font-size: 18px;
   color: var(--gold);
   max-width: 520px;
-  margin: 0 0 24px;
+  margin: 0 0 12px;
 }
 
 .intro {
   color: #dfe4ff;
   max-width: 640px;
-  margin: 0 0 18px;
+  margin: 0 0 12px;
 }
 
 .eyebrow {
@@ -268,10 +273,10 @@ body.nav-open {
 
 .cta-group {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: 1rem;
-  margin: 1.75rem auto 2.5rem;
+  gap: 12px;
+  margin: 14px 0 12px;
   max-width: 420px;
   flex-wrap: wrap;
 }
@@ -309,6 +314,56 @@ body.nav-open {
 .hero-card {
   display: flex;
   justify-content: center;
+}
+
+.hero-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.hero-card-stack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow);
+}
+
+.mini-card {
+  display: inline-block;
+  width: 82px;
+  height: 124px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.mini-card--lavender {
+  background: radial-gradient(circle at 30% 20%, rgba(198, 183, 255, 0.35), transparent 60%), #0e1740;
+}
+
+.mini-card--gold {
+  background: radial-gradient(circle at 60% 10%, rgba(242, 219, 166, 0.38), transparent 62%), #0b1336;
+}
+
+.mini-card--back {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    url('../assets/meowtarot-back.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-note {
+  margin: 0;
+  color: #cfd9ff;
+  font-size: 14px;
+  max-width: 260px;
 }
 
 .card-shell {
@@ -852,6 +907,41 @@ button,
   .board-controls { align-items: flex-start; }
 }
 
+@media (max-width: 720px) {
+  .hero {
+    padding: 38px 16px 18px;
+  }
+
+  .hero-copy {
+    text-align: left;
+  }
+
+  .brand-title {
+    font-size: clamp(28px, 8vw, 38px);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .tagline {
+    font-size: 16px;
+  }
+
+  .hero-note {
+    max-width: none;
+  }
+
+  .card-meanings-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .meanings-btn {
+    width: 100%;
+  }
+}
+
 .is-hidden { display: none !important; }
 
 /* New layout helpers */
@@ -867,6 +957,160 @@ button,
   border-radius: 18px;
   padding: 20px;
   box-shadow: var(--shadow);
+}
+
+body[data-page='home'] .page-shell {
+  max-width: 1180px;
+  padding: 12px 18px 60px;
+}
+
+body[data-page='home'] .section-block {
+  margin-bottom: 18px;
+}
+
+.section-spreads {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.feature-card--pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.section-meanings {
+  background: radial-gradient(circle at 20% 20%, rgba(198, 183, 255, 0.12), transparent 35%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(198, 183, 255, 0.3);
+}
+
+.card-meanings-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.card-strip {
+  display: flex;
+  gap: 10px;
+  padding: 10px 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  flex: 1;
+}
+
+.card-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.card-strip::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+.meaning-card {
+  min-width: 110px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  font-weight: 700;
+  color: #f8f9ff;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.32);
+}
+
+.meaning-card--fool {
+  background: linear-gradient(145deg, rgba(198, 183, 255, 0.28), rgba(255, 255, 255, 0.02));
+}
+
+.meaning-card--star {
+  background: linear-gradient(145deg, rgba(146, 213, 255, 0.2), rgba(255, 255, 255, 0.04));
+}
+
+.meaning-card--death {
+  background: linear-gradient(145deg, rgba(149, 133, 255, 0.22), rgba(255, 255, 255, 0.03));
+}
+
+.meaning-card--sun {
+  background: linear-gradient(145deg, rgba(242, 219, 166, 0.3), rgba(255, 255, 255, 0.04));
+}
+
+.meaning-card--moon {
+  background: linear-gradient(145deg, rgba(132, 164, 255, 0.22), rgba(255, 255, 255, 0.03));
+}
+
+.meanings-btn {
+  max-width: 220px;
+}
+
+.section-why {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.32);
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.why-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.why-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 18px;
+}
+
+.section-faq {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 12px 0 6px;
+}
+
+.faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+.faq-list details {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.faq-list summary {
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.faq-list p {
+  margin: 10px 0 0;
+  color: #dfe4ff;
 }
 
 .board-page .board-shell {
