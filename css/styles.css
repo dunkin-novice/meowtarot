@@ -360,7 +360,7 @@ body.nav-open {
 
 .mini-card--back {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
-    url('../assets/meowtarot-back.webp');
+    url('../assets/meow-v1/00-back.webp');
   background-size: cover;
   background-position: center;
 }
@@ -388,9 +388,7 @@ body.nav-open {
   box-shadow: var(--shadow);
 }
 
-/* Shared card back uses assets/meowtarot-back.webp (uploaded manually). */
 .card-back {
-  background-image: url('../assets/meowtarot-back.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

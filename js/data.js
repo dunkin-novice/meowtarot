@@ -1,3 +1,36 @@
+// Deck configuration (for future multi-deck support)
+export const DECKS = {
+  'meow-v1': {
+    id: 'meow-v1',
+    name: 'MeowTarot v1',
+    assetsBase: '/assets/meow-v1',
+    backImage: '/assets/meow-v1/00-back.webp',
+    // future: pattern for card faces, e.g.
+    // cardImagePattern: '/assets/meow-v1/{imageId}.webp',
+  },
+};
+
+export let activeDeckId = 'meow-v1';
+
+export function getActiveDeck() {
+  return DECKS[activeDeckId];
+}
+
+export function getCardBackUrl() {
+  return getActiveDeck().backImage;
+}
+
+// Placeholder for future card images (do NOT use it yet in the UI)
+export function getCardImageUrl(card, options = {}) {
+  const deck = getActiveDeck();
+  const orientation = options.orientation || card.orientation || 'upright';
+
+  // TODO: once card image IDs are finalized, replace this with the real mapping
+  const imageId = card.image_id || card.id; // temporary fallback
+
+  return `${deck.assetsBase}/${imageId}.webp`;
+}
+
 // Dynamic deck used by the app
 export let meowTarotCards = [];
 

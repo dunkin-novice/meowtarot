@@ -1,5 +1,5 @@
 import { initShell, localizePath, translations } from './common.js';
-import { loadTarotData, meowTarotCards } from './data.js';
+import { loadTarotData, meowTarotCards, getCardBackUrl } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -8,6 +8,7 @@ const STORAGE_KEY = 'meowtarot_selection';
 const DAILY_SELECTION_MAX = 1;
 const DEAL_STAGGER = 180;
 const STACK_DURATION = 520;
+const CARD_BACK_URL = getCardBackUrl();
 
 const state = {
   currentLang: 'en',
@@ -16,6 +17,14 @@ const state = {
 };
 
 const meaningPreview = document.getElementById('meaningPreview');
+const staticCardBacks = document.querySelectorAll('.card-back');
+
+function applyCardBackBackground(el) {
+  if (!el) return;
+  el.style.backgroundImage = `url('${CARD_BACK_URL}')`;
+}
+
+staticCardBacks.forEach(applyCardBackBackground);
 
 function getDrawableCards(size = 6) {
   if (!state.cards.length) return [];
@@ -91,7 +100,9 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange) {
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'card-slot';
-      slot.appendChild(Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' }));
+      const cardBack = Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' });
+      applyCardBackBackground(cardBack);
+      slot.appendChild(cardBack);
       slot.onclick = () => {
         if (selected.includes(i)) {
           selected = selected.filter((idx) => idx !== i);
