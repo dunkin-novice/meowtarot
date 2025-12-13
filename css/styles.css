@@ -9,6 +9,12 @@
   --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
