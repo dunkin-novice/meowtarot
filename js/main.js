@@ -1,5 +1,5 @@
 import { initShell, localizePath, translations } from './common.js';
-import { loadTarotData } from './data.js';
+import { loadTarotData, meowTarotCards } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -14,6 +14,8 @@ const state = {
   cards: [],
   questionTopic: 'love',
 };
+
+const meaningPreview = document.getElementById('meaningPreview');
 
 function getDrawableCards(size = 6) {
   if (!state.cards.length) return [];
@@ -342,11 +344,43 @@ function renderQuestion() {
   renderBoard();
 }
 
+function renderMeaningPreview(cardsSource = []) {
+  if (!meaningPreview) return;
+  const pool = cardsSource.length ? cardsSource : meowTarotCards;
+  if (!pool.length) return;
+
+  meaningPreview.innerHTML = '';
+
+  pool.slice(0, 9).forEach((card) => {
+    const name =
+      state.currentLang === 'en'
+        ? card.card_name_en || card.name_en || card.name || card.id
+        : card.alias_th || card.name_th || card.name || card.id;
+
+    const summary =
+      state.currentLang === 'en'
+        ? card.reading_summary_preview_en || card.meaning_en || card.tarot_imply_en || ''
+        : card.reading_summary_preview_th || card.meaning_th || card.tarot_imply_th || '';
+
+    const archetype = state.currentLang === 'en' ? card.archetype_en || '' : card.archetype_th || '';
+
+    const div = document.createElement('div');
+    div.className = 'sample-card';
+    div.innerHTML = `
+      <h5>${card.icon_emoji ? `${card.icon_emoji} ` : ''}${name}</h5>
+      ${archetype ? `<p class="archetype">${archetype}</p>` : ''}
+      <p>${summary}</p>
+    `;
+    meaningPreview.appendChild(div);
+  });
+}
+
 function renderPage(dict) {
   const page = document.body.dataset.page;
   if (page === 'daily') renderDaily(dict);
   if (page === 'overall') renderOverall(dict);
   if (page === 'question') renderQuestion(dict);
+  if (page === 'home') renderMeaningPreview(state.cards);
 }
 
 function init() {
