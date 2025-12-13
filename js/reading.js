@@ -328,7 +328,12 @@ function renderReading(dict) {
     return;
   }
 
-  if (state.mode === 'daily' || state.spread === 'quick') {
+  if (state.mode === 'daily') {
+    renderThreeCards(cards.slice(0, 3), dict, state.topic || 'generic');
+    return;
+  }
+
+  if (state.spread === 'quick') {
     renderSingleCard(cards[0], dict, state.topic || 'generic');
     return;
   }
