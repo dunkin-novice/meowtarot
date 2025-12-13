@@ -1,5 +1,10 @@
 import { translations, initShell } from './common.js';
-import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
+import {
+  loadTarotData,
+  meowTarotCards,
+  normalizeId,
+  getCardBackUrl,
+} from './data.js';
 
 const STORAGE_KEY = 'meowtarot_selection';
 
@@ -97,6 +102,7 @@ function renderGrid(options = {}) {
   if (!cardGrid) return;
 
   cardGrid.innerHTML = '';
+  const backUrl = getCardBackUrl();
   state.spreadCards.forEach((card) => {
     const cardEl = document.createElement('div');
     cardEl.className = `card${entering ? ' is-shuffling-in' : ''}`;
@@ -104,6 +110,7 @@ function renderGrid(options = {}) {
 
     const back = document.createElement('div');
     back.className = 'face back card-back';
+    back.style.backgroundImage = `url('${backUrl}')`;
 
     const front = document.createElement('div');
     front.className = 'face front';
