@@ -91,8 +91,8 @@ export const translations = {
     loveActionHeading: 'What to do about this love situation',
     careerActionHeading: 'Career guidance',
     financeActionHeading: 'Financial guidance',
-    readingSummaryTitle: 'Your Fortune',
-    suggestionTitle: 'Suggestion for You',
+    readingSummaryTitle: 'Your fortune today',
+    suggestionTitle: 'Suggestion',
     guidanceHeading: 'Guidance',
   },
   th: {
@@ -183,8 +183,8 @@ export const translations = {
     loveActionHeading: 'แนวทางดูแลเรื่องความรักนี้',
     careerActionHeading: 'คำแนะนำด้านการงาน',
     financeActionHeading: 'คำแนะนำด้านการเงิน',
-    readingSummaryTitle: 'ดวงชะตาของคุณ',
-    suggestionTitle: 'คำแนะนำจากไพ่',
+    readingSummaryTitle: 'ดวงของคุณวันนี้',
+    suggestionTitle: 'คำแนะนำ',
     guidanceHeading: 'คำแนะนำ',
   },
 };

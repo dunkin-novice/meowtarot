@@ -78,7 +78,15 @@ function buildCardHeader(card) {
   const archetype = state.currentLang === 'en' ? card.archetype_en : card.archetype_th;
   const orientation = getOrientationLabel(card);
   subtitle.textContent = [archetype, orientation].filter(Boolean).join(' • ');
+  const imply = getText(card, 'tarot_imply');
+  const implyLine = document.createElement('p');
+  if (imply) {
+    implyLine.className = 'keywords';
+    implyLine.textContent = imply;
+  }
+
   header.append(title, subtitle);
+  if (imply) header.appendChild(implyLine);
   return header;
 }
 
@@ -262,7 +270,7 @@ function renderThreeCards(cards, dict, topic) {
     wrap.className = 'panel';
 
     const h = document.createElement('h3');
-    h.textContent = dict.readingSummaryTitle || (state.currentLang === 'th' ? 'ดวงชะตาของคุณ' : 'Your Fortune');
+    h.textContent = dict.readingSummaryTitle || (state.currentLang === 'th' ? 'ดวงของคุณวันนี้' : 'Your fortune today');
     wrap.appendChild(h);
 
     const p = document.createElement('p');
@@ -305,7 +313,7 @@ function renderThreeCards(cards, dict, topic) {
       wrap.appendChild(p);
       readingContent.appendChild(wrap);
     }
-    const suggestionHeading = dict.suggestionTitle || (state.currentLang === 'th' ? 'คำแนะนำจากไพ่' : 'Suggestion for You');
+    const suggestionHeading = dict.suggestionTitle || (state.currentLang === 'th' ? 'คำแนะนำ' : 'Suggestion');
     const actions = buildActionBlock(presentCard, dict, {}, suggestionHeading);
     if (actions) readingContent.appendChild(actions);
   }
