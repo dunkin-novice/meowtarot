@@ -177,7 +177,9 @@ function renderDaily() {
       slot.type = 'button';
       slot.className = 'card-slot card-slot--dealable';
       slot.dataset.id = card.id;
-      slot.appendChild(Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' }));
+      const cardBack = Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' });
+      applyCardBackBackground(cardBack);
+      slot.appendChild(cardBack);
       bindCard(slot, card);
       board.appendChild(slot);
       return slot;
