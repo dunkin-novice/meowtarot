@@ -3,11 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MeowTarot | Past • Present • Future</title>
+  <title>MeowTarot – Free Cat Tarot Readings & Tarot Card Meanings (EN/TH)</title>
+  <meta
+    name="description"
+    content="Get free daily cat tarot readings, 3-card spreads, and tarot card meanings in English and Thai. MeowTarot blends cute cat art with grounded, emotionally safe guidance in love, career, and money."
+  />
+  <link rel="canonical" href="https://www.meowtarot.com/" />
+  <link rel="alternate" href="https://www.meowtarot.com/" hreflang="en" />
+  <link rel="alternate" href="https://www.meowtarot.com/th/" hreflang="th-TH" />
+  <link rel="alternate" href="https://www.meowtarot.com/" hreflang="x-default" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MeowTarot",
+      "url": "https://www.meowtarot.com/",
+      "inLanguage": "en",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.meowtarot.com/meaning.html?card={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+  </script>
 </head>
 <body data-page="home">
   <header id="site-header"></header>
@@ -15,40 +37,111 @@
   <main class="page-shell">
     <section class="hero hero--stacked">
       <div class="hero-copy">
-        <p class="eyebrow" data-i18n="languageLabel"></p>
-        <h1 class="brand-title">MeowTarot</h1>
-        <p class="tagline" data-i18n="heroTagline"></p>
-        <p class="intro" data-i18n="landingIntro"></p>
+        <p class="eyebrow">Tarot for cat people</p>
+        <h1 class="brand-title">Cat Tarot Readings & Tarot Card Meanings – MeowTarot</h1>
+        <p class="tagline">
+          Free daily tarot readings, 3-card spreads, and bilingual tarot card meanings – all in a cozy, cat-themed universe.
+        </p>
+        <p class="intro">
+          Draw a card, ask the universe, and get gentle, psychologically safe guidance on love, career, and money. No fear-mongering – just clear insights wrapped in fluffy cat energy.
+        </p>
         <div class="cta-group">
-          <a href="daily.html" class="btn btn-primary" data-i18n="homeDailyCta">Daily Reading</a>
-          <a href="overall.html" class="btn btn-secondary" data-i18n="homeOverallCta">Life Reading</a>
-          <a href="question.html" class="btn btn-secondary" data-i18n="homeQuestionCta">Ask a Question</a>
+          <a href="daily.html" class="btn btn-primary">Daily Reading</a>
+          <a href="overall.html" class="btn btn-secondary">Full Reading</a>
         </div>
       </div>
       <div class="hero-card">
         <div class="card-shell">
           <div class="card-back card-back-hero" aria-hidden="true"></div>
-          <a class="primary large" href="daily.html" data-i18n="startReadingCta"></a>
+          <a class="primary large" href="daily.html">Start your daily reading</a>
         </div>
       </div>
     </section>
 
-    <section class="feature-grid">
-      <article class="feature-card">
-        <h3 data-i18n="dailyTitle"></h3>
-        <p data-i18n="dailyDesc"></p>
-        <a class="pill-link" href="daily.html" data-i18n="ctaDaily"></a>
-      </article>
-      <article class="feature-card">
-        <h3 data-i18n="overallTitle"></h3>
-        <p data-i18n="overallDesc"></p>
-        <a class="pill-link" href="overall.html" data-i18n="ctaOverall"></a>
-      </article>
-      <article class="feature-card">
-        <h3 data-i18n="questionTitle"></h3>
-        <p data-i18n="questionDesc"></p>
-        <a class="pill-link" href="question.html" data-i18n="ctaQuestion"></a>
-      </article>
+    <section class="section-block alt">
+      <div class="section-heading">
+        <p class="eyebrow">Choose your spread</p>
+        <h2>Daily Tarot Reading, Full 3-Card Spread & Card Meanings</h2>
+        <p>Start with a quick daily tarot card, dive into a full past-present-future spread, or explore the meaning of each tarot card at your own pace.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>Daily Tarot Reading</h3>
+          <p>Pull a single-card daily tarot reading for yes/no clarity and quick guidance you can check anytime.</p>
+          <a class="btn btn-primary" href="daily.html">Daily Reading</a>
+        </article>
+        <article class="feature-card">
+          <h3>Full 3-Card Tarot Reading</h3>
+          <p>Read a full past, present, future spread with focused insights for love, career, and money.</p>
+          <a class="btn btn-secondary" href="overall.html">Full Reading</a>
+        </article>
+        <article class="feature-card">
+          <h3>Tarot Card Meanings Library</h3>
+          <p>Study all 78 tarot card meanings with upright and reversed takes across love, career, and finance.</p>
+          <a class="btn" href="meanings.html">Browse meanings</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <p class="eyebrow">Card meanings</p>
+        <h2>Tarot Card Meanings for All 78 Cards</h2>
+        <p>Browse upright and reversed tarot card meanings, with love, career, and money interpretations for every card – from The Fool to the Court Cards.</p>
+      </div>
+
+      <div class="meaning-grid" id="meaningPreview"></div>
+
+      <div class="cta-row">
+        <a href="meanings.html" class="btn btn-primary">Explore all tarot card meanings</a>
+      </div>
+    </section>
+
+    <section class="section-block alt">
+      <div class="section-heading">
+        <p class="eyebrow">Why MeowTarot?</p>
+        <h2>Gentle, Cat-Themed Tarot with Modern Guidance</h2>
+        <p>MeowTarot is built for modern mystics: cute cat imagery, clear language, and guidance that respects your mental health. No doom predictions – just insights you can actually use.</p>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>Emotionally safe readings</h3>
+          <p>We avoid fear-based language and focus on self-awareness, choices, and growth.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Bilingual: English &amp; Thai</h3>
+          <p>All core content is available in both English and Thai, with culturally sensitive phrasing.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Cat tarot, but serious about clarity</h3>
+          <p>Under the cute art is a structured tarot system: clear spreads, love/career/money focus, and yes/no hints.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Tarot Reading FAQ</h2>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>Is MeowTarot free?</h3>
+          <p>Yes. You can use the daily tarot, full 3-card readings, and card meanings for free.</p>
+        </div>
+        <div class="feature-card">
+          <h3>What can I ask the cards?</h3>
+          <p>Most users ask about love, career, money, and life direction. We encourage questions that focus on clarity and choices, not fear.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Is this fortune-telling or guidance?</h3>
+          <p>We treat tarot as a tool for reflection and emotional insight, not fixed fate. Always use your own judgment and, when needed, consult professionals.</p>
+        </div>
+      </div>
+
+      <p class="hint">MeowTarot is for entertainment and self-reflection only and is not a substitute for professional advice.</p>
     </section>
   </main>
 

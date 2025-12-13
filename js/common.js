@@ -191,6 +191,21 @@ export const translations = {
 
 const LANG_STORAGE_KEY = 'meowtarot_lang';
 
+export function switchLang(targetLang) {
+  const { pathname, search } = window.location;
+  const isThai = pathname.startsWith('/th');
+  const base = isThai ? pathname.replace(/^\/th/, '') || '/' : pathname || '/';
+
+  let newPath;
+  if (targetLang === 'th') {
+    newPath = '/th' + (base === '/' ? '/' : base);
+  } else {
+    newPath = base === '/' ? '/' : base;
+  }
+
+  window.location.href = newPath + search;
+}
+
 function normalizePathname(pathname = '/') {
   if (!pathname || pathname === '/') return '/';
   if (pathname === '/index.html') return '/';
@@ -245,7 +260,7 @@ export function applyLocaleMeta(currentLang = 'en') {
   const canonical = currentLang === 'th' ? thHref : enHref;
   updateLink('canonical', canonical);
   updateLink('alternate', enHref, 'en');
-  updateLink('alternate', thHref, 'th');
+  updateLink('alternate', thHref, 'th-TH');
   updateLink('alternate', enHref, 'x-default');
 }
 
@@ -271,16 +286,13 @@ export function applyTranslations(currentLang = 'en', afterApply) {
 }
 
 export function initShell(state, afterApply, activePage) {
-  const savedLang = getSavedLang(state.currentLang || 'en');
-  const pathLang = pathHasThaiPrefix(window.location?.pathname || '') ? 'th' : savedLang;
+  const pathLang = window.location.pathname.startsWith('/th') ? 'th' : 'en';
   state.currentLang = pathLang;
 
   renderNavbar(document.getElementById('site-header'), (lang) => {
     if (lang === state.currentLang) return;
     localStorage.setItem(LANG_STORAGE_KEY, lang);
-    const nextPath = localizePath(window.location?.pathname || '/', lang);
-    const suffix = `${window.location?.search || ''}${window.location?.hash || ''}`;
-    window.location.href = `${nextPath}${suffix}`;
+    switchLang(lang);
   });
   renderFooter(document.getElementById('site-footer'));
   highlightActiveNav(activePage);
