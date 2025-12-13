@@ -1,10 +1,13 @@
-import { initShell, translations } from './common.js';
+import { initShell, localizePath, translations } from './common.js';
 import { loadTarotData } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
 const OVERALL_SELECTION_COUNT = 3;
 const STORAGE_KEY = 'meowtarot_selection';
+const DAILY_SELECTION_MAX = 1;
+const DEAL_STAGGER = 180;
+const STACK_DURATION = 520;
 
 const state = {
   currentLang: 'en',
@@ -32,7 +35,8 @@ function saveSelectionAndGo({ mode, spread, topic, cards }) {
     cards: cards.join(','),
     lang: state.currentLang,
   });
-  window.location.href = `reading.html?${params.toString()}`;
+  const destination = localizePath('/reading.html', state.currentLang);
+  window.location.href = `${destination}?${params.toString()}`;
 }
 
 function animateBoard(boardEl) {
@@ -115,40 +119,139 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange) {
 function renderDaily() {
   const startBtn = document.getElementById('daily-start');
   const board = document.getElementById('daily-board');
-  const actions = document.getElementById('daily-actions');
   const shuffleBtn = document.getElementById('daily-shuffle');
-  const toolbar = document.getElementById('daily-toolbar');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  if (!startBtn || !board || !actions || !shuffleBtn || !continueBtn || !toolbar || !counter) return;
+  const startShell = document.getElementById('daily-start-shell');
+  if (!startBtn || !board || !shuffleBtn || !continueBtn || !counter || !startShell) return;
 
-  let boardApi = null;
   let latestSelection = [];
+  let isAnimating = false;
+  let hasStarted = false;
 
-  const updateContinue = (cards) => {
+  const updateContinue = (cards = [], dict = translations[state.currentLang] || translations.en) => {
     latestSelection = cards;
-    counter.textContent = `${cards.length}/1`;
-    continueBtn.disabled = cards.length !== 1;
+    counter.textContent = `${cards.length}/${DAILY_SELECTION_MAX}`;
+    continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX || isAnimating;
+    shuffleBtn.disabled = !hasStarted || isAnimating;
   };
 
-  const renderBoard = () => {
-    board.hidden = false;
-    actions.hidden = false;
-    toolbar.hidden = false;
-    boardApi = setupBoard(board, DAILY_BOARD_COUNT, 1, updateContinue);
+  const resetSelection = () => {
+    latestSelection = [];
+    board.querySelectorAll('.card-slot').forEach((slot) => slot.classList.remove('is-selected'));
     updateContinue([]);
   };
 
+  const bindCard = (slot, card) => {
+    slot.addEventListener('click', () => {
+      if (isAnimating) return;
+      if (latestSelection.some((c) => c.id === card.id)) {
+        slot.classList.remove('is-selected');
+        updateContinue([]);
+      } else {
+        board.querySelectorAll('.card-slot').forEach((btn) => btn.classList.remove('is-selected'));
+        slot.classList.add('is-selected');
+        updateContinue([card]);
+      }
+    });
+  };
+
+  const createSlots = () => {
+    const cards = getDrawableCards(DAILY_BOARD_COUNT);
+    board.innerHTML = '';
+    const slots = cards.map((card) => {
+      const slot = document.createElement('button');
+      slot.type = 'button';
+      slot.className = 'card-slot card-slot--dealable';
+      slot.dataset.id = card.id;
+      slot.appendChild(Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' }));
+      bindCard(slot, card);
+      board.appendChild(slot);
+      return slot;
+    });
+    return { cards, slots };
+  };
+
+  const animateDeal = (slots) => {
+    const boardRect = board.getBoundingClientRect();
+    const centerX = boardRect.left + boardRect.width / 2;
+    const centerY = boardRect.top + boardRect.height / 2;
+
+    slots.forEach((slot) => {
+      const rect = slot.getBoundingClientRect();
+      const dx = centerX - (rect.left + rect.width / 2);
+      const dy = centerY - (rect.top + rect.height / 2);
+      slot.style.transition = 'none';
+      slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+      slot.style.opacity = '0';
+    });
+
+    requestAnimationFrame(() => {
+      slots.forEach((slot, idx) => {
+        slot.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+        setTimeout(() => {
+          slot.style.opacity = '1';
+          slot.style.transform = 'translate(0, 0) scale(1)';
+        }, idx * DEAL_STAGGER);
+      });
+
+      const total = 350 + slots.length * DEAL_STAGGER + 120;
+      setTimeout(() => {
+        isAnimating = false;
+        updateContinue(latestSelection);
+        board.classList.remove('is-locked');
+      }, total);
+    });
+  };
+
+  const animateCollect = (slots) => {
+    const boardRect = board.getBoundingClientRect();
+    const centerX = boardRect.left + boardRect.width / 2;
+    const centerY = boardRect.top + boardRect.height / 2;
+
+    slots.forEach((slot) => {
+      const rect = slot.getBoundingClientRect();
+      const dx = centerX - (rect.left + rect.width / 2);
+      const dy = centerY - (rect.top + rect.height / 2);
+      slot.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+      slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+      slot.style.opacity = '0.8';
+    });
+  };
+
+  const deal = () => {
+    if (!state.cards.length) return;
+    isAnimating = true;
+    board.classList.add('is-locked');
+    resetSelection();
+    const { slots } = createSlots();
+    requestAnimationFrame(() => animateDeal(slots));
+  };
+
   startBtn.onclick = () => {
-    renderBoard();
+    if (!state.cards.length) return;
+    hasStarted = true;
+    startShell.classList.add('is-hidden');
+    shuffleBtn.disabled = true;
+    continueBtn.disabled = true;
+    deal();
   };
 
   shuffleBtn.onclick = () => {
-    boardApi?.render();
+    if (isAnimating || !hasStarted) return;
+    isAnimating = true;
+    continueBtn.disabled = true;
+    shuffleBtn.disabled = true;
+    resetSelection();
+    const slots = Array.from(board.querySelectorAll('.card-slot'));
+    animateCollect(slots);
+    setTimeout(() => {
+      deal();
+    }, STACK_DURATION);
   };
 
   continueBtn.onclick = () => {
-    if (!latestSelection.length) return;
+    if (!latestSelection.length || isAnimating) return;
     saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: latestSelection.map((c) => c.id) });
   };
 }
