@@ -822,8 +822,33 @@ button,
 }
 
 @media (max-width: 768px) {
-  .brand-title { font-size: 44px; }
-  .card-shell { width: 100%; max-width: 320px; }
+  .hero {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+
+  .brand-title {
+    font-size: 32px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .tagline {
+    font-size: 16px;
+    margin: 0 0 10px;
+  }
+
+  .intro {
+    font-size: 14px;
+    margin: 0 0 10px;
+  }
+
+  .cta-group {
+    margin: 14px auto 20px;
+    max-width: 360px;
+  }
+
+  .card-shell { width: 100%; max-width: 300px; }
   .board-controls { align-items: flex-start; }
 }
 
