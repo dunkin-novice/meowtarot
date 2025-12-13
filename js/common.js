@@ -191,6 +191,64 @@ export const translations = {
 
 const LANG_STORAGE_KEY = 'meowtarot_lang';
 
+function normalizePathname(pathname = '/') {
+  if (!pathname || pathname === '/') return '/';
+  if (pathname === '/index.html') return '/';
+  if (pathname === '/th' || pathname === '/th/') return '/th/';
+  if (pathname === '/th/index.html') return '/th/';
+  return pathname;
+}
+
+export function pathHasThaiPrefix(pathname = '') {
+  const normalized = normalizePathname(pathname);
+  return normalized === '/th/' || normalized.startsWith('/th/');
+}
+
+export function stripThaiPrefix(pathname = '') {
+  const normalized = normalizePathname(pathname);
+  if (normalized === '/th/') return '/';
+  if (normalized.startsWith('/th/')) return normalized.replace(/^\/th/, '') || '/';
+  return normalized || '/';
+}
+
+export function localizePath(pathname = '/', lang = 'en') {
+  const normalized = stripThaiPrefix(pathname.startsWith('/') ? pathname : `/${pathname}`);
+  if (lang === 'th') {
+    if (normalized === '/') return '/th/';
+    return `/th${normalized}`;
+  }
+  return normalized || '/';
+}
+
+function updateLink(rel, href, hreflang) {
+  if (!href) return;
+  let selector = `link[rel="${rel}"]`;
+  if (hreflang) selector += `[hreflang="${hreflang}"]`;
+  let link = document.head.querySelector(selector);
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = rel;
+    if (hreflang) link.hreflang = hreflang;
+    document.head.appendChild(link);
+  }
+  link.href = href;
+}
+
+export function applyLocaleMeta(currentLang = 'en') {
+  const base = 'https://www.meowtarot.com';
+  const pathname = normalizePathname(window.location?.pathname || '/');
+  const cleanPath = stripThaiPrefix(pathname);
+
+  const enHref = new URL(cleanPath || '/', base).toString();
+  const thHref = new URL(localizePath(cleanPath || '/', 'th'), base).toString();
+
+  const canonical = currentLang === 'th' ? thHref : enHref;
+  updateLink('canonical', canonical);
+  updateLink('alternate', enHref, 'en');
+  updateLink('alternate', thHref, 'th');
+  updateLink('alternate', enHref, 'x-default');
+}
+
 function getSavedLang(defaultLang = 'en') {
   const stored = localStorage.getItem(LANG_STORAGE_KEY);
   return stored || defaultLang;
@@ -214,17 +272,21 @@ export function applyTranslations(currentLang = 'en', afterApply) {
 
 export function initShell(state, afterApply, activePage) {
   const savedLang = getSavedLang(state.currentLang || 'en');
-  state.currentLang = savedLang;
+  const pathLang = pathHasThaiPrefix(window.location?.pathname || '') ? 'th' : savedLang;
+  state.currentLang = pathLang;
 
   renderNavbar(document.getElementById('site-header'), (lang) => {
-    state.currentLang = lang;
-    localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
-    applyTranslations(state.currentLang, afterApply);
+    if (lang === state.currentLang) return;
+    localStorage.setItem(LANG_STORAGE_KEY, lang);
+    const nextPath = localizePath(window.location?.pathname || '/', lang);
+    const suffix = `${window.location?.search || ''}${window.location?.hash || ''}`;
+    window.location.href = `${nextPath}${suffix}`;
   });
   renderFooter(document.getElementById('site-footer'));
   highlightActiveNav(activePage);
   attachLogoHome();
   applyTranslations(state.currentLang, afterApply);
+  applyLocaleMeta(state.currentLang);
 }
 
 function highlightActiveNav(activePage) {

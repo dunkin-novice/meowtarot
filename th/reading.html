@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeowTarot | Reading</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+</head>
+<body data-page="reading">
+  <header id="site-header"></header>
+
+  <main class="page-shell">
+    <section class="section-block results show">
+      <p class="eyebrow" id="reading-context"></p>
+      <h1 id="readingTitle"></h1>
+      <div id="reading-content" class="reading-content"></div>
+
+      <div class="action-row">
+        <button class="primary" id="newReadingBtn" data-i18n="newReading"></button>
+        <button class="ghost" id="shareBtn" data-i18n="share"></button>
+        <button class="ghost" id="saveBtn" data-i18n="save"></button>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/reading.js"></script>
+</body>
+</html>

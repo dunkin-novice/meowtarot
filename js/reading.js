@@ -1,4 +1,4 @@
-import { initShell, translations } from './common.js';
+import { initShell, localizePath, pathHasThaiPrefix, translations } from './common.js';
 import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
 import { findCardById } from './reading-helpers.js';
 
@@ -26,7 +26,7 @@ const defaultSpread =
 let dataLoaded = false;
 
 const state = {
-  currentLang: params.get('lang') || 'en',
+  currentLang: params.get('lang') || (pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en'),
   mode: initialMode,
   spread: defaultSpread,
   topic: params.get('topic') || storageSelection?.topic || 'generic',
@@ -382,8 +382,8 @@ function init() {
   initShell(state, handleTranslations, 'reading');
 
   newReadingBtn?.addEventListener('click', () => {
-    const target = state.mode === 'question' ? 'question.html' : state.mode === 'overall' ? 'overall.html' : 'daily.html';
-    window.location.href = target;
+    const target = state.mode === 'question' ? '/question.html' : state.mode === 'overall' ? '/overall.html' : '/daily.html';
+    window.location.href = localizePath(target, state.currentLang);
   });
   shareBtn?.addEventListener('click', handleShare);
   saveBtn?.addEventListener('click', saveImage);
