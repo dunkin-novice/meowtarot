@@ -1537,3 +1537,42 @@ details summary::-webkit-details-marker {
 .card-art.is-thumb .card-art-img {
   width: min(260px, 100%);
 }
+
+
+.reading-card-hero,
+.reading-card-thumb {
+  display: flex;
+  justify-content: center;
+}
+
+.tarot-card-img--hero {
+  width: 100%;
+  max-width: 340px;
+  border-radius: 14px;
+  display: block;
+  box-shadow: var(--shadow);
+  margin: 0 auto 12px;
+}
+
+.tarot-card-img--thumb {
+  width: 100%;
+  max-width: 180px;
+  border-radius: 12px;
+  display: block;
+  box-shadow: var(--shadow);
+  margin: 10px auto 8px;
+}
+
+/* Fix: keep spacing for the imply/keywords line inside the heading */
+.card-heading .keywords {
+  margin: 4px 0 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Optional: if your HTML uses only id="reading-content" without class */
+#reading-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
