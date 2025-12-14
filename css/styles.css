@@ -1517,3 +1517,23 @@ details summary::-webkit-details-marker {
 .card-result details .color-chip {
   margin-left: 4px;
 }
+
+/* Reading card image (results page) */
+.card-art {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.card-art-img {
+  width: min(320px, 100%);
+  height: auto;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow);
+}
+
+.card-art.is-thumb .card-art-img {
+  width: min(260px, 100%);
+}
