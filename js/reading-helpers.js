@@ -5,7 +5,7 @@ export function matchesCardId(card, candidateId, normalizeFn = normalizeId) {
   const candidate = String(candidateId ?? '');
   const normalizedCandidate = normalizeFn(candidate);
 
-  const idsToCheck = [card.id, card.legacy_id]
+  const idsToCheck = [card.id, card.card_id, card.legacy_id]
     .map((val) => (val == null ? '' : String(val)))
     .filter(Boolean);
 
