@@ -1267,21 +1267,59 @@ body[data-page='home'] .section-block {
   cursor: default;
 }
 
+/* MUCH stronger selected state */
 .card-slot.is-selected {
-  border-color: var(--lavender);
-  box-shadow: 0 8px 18px rgba(198, 183, 255, 0.4);
+  transform: translateY(-10px) scale(1.07);
+  border-color: transparent; /* ring will be clearer than border */
+  box-shadow:
+    0 0 0 4px rgba(198, 183, 255, 0.95),
+    0 0 0 10px rgba(198, 183, 255, 0.22),
+    0 22px 60px rgba(198, 183, 255, 0.42),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+  z-index: 5; /* lift above neighbors */
 }
 
-.card-slot .card-back {
+/* Glow overlay ring (sits ABOVE the card back image) */
+.card-slot.is-selected::after {
+  content: "";
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.02em;
+  inset: -10px;               /* ring outside the card */
+  border-radius: 18px;
+  pointer-events: none;
+  z-index: 6;
+  background: radial-gradient(circle at 30% 20%,
+    rgba(198, 183, 255, 0.55),
+    rgba(198, 183, 255, 0.0) 60%);
+  box-shadow: 0 0 46px rgba(198, 183, 255, 0.75);
+  animation: selectedPulse 1.05s ease-in-out infinite;
 }
+
+/* Check badge so you can’t miss it */
+.card-slot.is-selected::before {
+  content: "✓";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: #0b102b;
+  background: rgba(198, 183, 255, 0.98);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  z-index: 7;
+}
+
+@keyframes selectedPulse {
+  0%   { opacity: 0.65; transform: scale(1); }
+  50%  { opacity: 1;    transform: scale(1.02); }
+  100% { opacity: 0.65; transform: scale(1); }
+}
+
+.card-slot { position: relative; }
+.card-slot .card-back { position: relative; z-index: 1; }
 
 .selection-badge {
   position: absolute;
