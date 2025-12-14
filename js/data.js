@@ -108,17 +108,34 @@ if (typeof window !== 'undefined') {
 
 // Load full deck from JSON, fall back to static tarotCards if anything fails
 export function loadTarotData() {
-  return fetch('/data/cards.json')
-    .then((res) => res.json())
+  return fetch('/data/cards.json', { cache: 'no-store' })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Failed to fetch /data/cards.json (HTTP ${res.status})`);
+      return res.json();
+    })
     .then((data) => {
-      meowTarotCards = normalizeCards(data.cards && data.cards.length ? data.cards : tarotCards);
+      // Support BOTH:
+      // 1) { cards: [...] }
+      // 2) [ ... ]
+      const rawCards = Array.isArray(data)
+        ? data
+        : Array.isArray(data.cards)
+          ? data.cards
+          : [];
+
+      if (!rawCards.length) {
+        throw new Error('cards.json loaded but no cards array found (expected {cards:[...]} or [...])');
+      }
+
+      meowTarotCards = normalizeCards(rawCards);
+
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
       }
       return meowTarotCards;
     })
     .catch((err) => {
-      console.error('Failed to load tarot data', err);
+      console.error('Failed to load tarot data (falling back to built-in tarotCards)', err);
       meowTarotCards = normalizeCards(tarotCards);
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
