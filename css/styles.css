@@ -1637,3 +1637,28 @@ details summary::-webkit-details-marker {
   flex-direction: column;
   gap: 12px;
 }
+
+/* Home meanings actions (no overlap) */
+.section-meanings .meanings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.section-meanings .meanings-btn {
+  width: 100%;
+  max-width: none;
+}
+
+.section-meanings .meanings-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.section-meanings .meanings-categories .chip {
+  flex: 1 1 140px;
+  text-align: center;
+}
