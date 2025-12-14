@@ -2,489 +2,515 @@ import { initShell, localizePath, pathHasThaiPrefix, translations } from './comm
 import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
 import { findCardById } from './reading-helpers.js';
 
-// Toggle this later if/when you upload reversed images.
-// For now: reversed cards use the upright image file (no 404 spam).
-const USE_REVERSED_IMAGES = false;
+/**
+ * Card images
+ * - Current: you said upright & reversed can use same file for now.
+ * - Future-ready: if /assets/meow-v1/<id>.webp exists (incl. reversed), it will load.
+ *   If missing (common now for reversed), it auto-falls-back to the upright file.
+ */
+const CARD_IMAGE_BASE = '/assets/meow-v1/';
 
-const params = new URLSearchParams(window.location.search);
-const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
+const readingTitle = document.getElementById('reading-title');
+const contextCopy = document.getElementById('context-copy');
+const readingContent = document.getElementById('reading-content');
 
-function normalizeMode(modeRaw) {
-  const mode = String(modeRaw || '').toLowerCase().trim();
-  // Back-compat: older links might use "overall"
-  if (mode === 'overall' || mode === 'life' || mode === 'full') return 'full';
-  if (mode === 'question') return 'question';
+const newReadingBtn = document.getElementById('new-reading-btn');
+const saveImageBtn = document.getElementById('save-image-btn');
+const shareReadingBtn = document.getElementById('share-reading-btn');
+
+function safeJsonParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeMode(raw) {
+  const val = String(raw ?? '').toLowerCase().trim();
+  if (val === 'daily') return 'daily';
+  if (val === 'question') return 'question';
+  // treat old "overall" as "full"
+  if (val === 'full' || val === 'overall' || val === 'life') return 'full';
   return 'daily';
 }
 
+function getInitialLang() {
+  return pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en';
+}
+
+const params = new URLSearchParams(window.location.search);
+const storedSelection = safeJsonParse(sessionStorage.getItem('meowtarot_selection')) || {};
+
+const state = {
+  currentLang: getInitialLang(),
+  mode: normalizeMode(params.get('mode') || storedSelection.mode || 'daily'),
+  topic: String(params.get('topic') || storedSelection.topic || 'love').toLowerCase(),
+  selectedIds: [],
+};
+
 function parseSelectedIds() {
-  // Daily uses `card=...`
-  const paramCard = params.get('card');
-  // Full/question uses `cards=a,b,c`
-  const paramCards = params.get('cards');
-  const storedCards = storageSelection?.cards;
+  const urlCards = params.get('cards'); // comma separated
+  const urlCard = params.get('card'); // single
+  const storedCards = storedSelection.cards ?? storedSelection.card;
 
-  if (paramCard) return [paramCard.trim()].filter(Boolean);
+  let combined = '';
+  if (urlCards) combined = urlCards;
+  else if (urlCard) combined = urlCard;
+  else if (Array.isArray(storedCards)) combined = storedCards.join(',');
+  else if (typeof storedCards === 'string') combined = storedCards;
 
-  let combined = paramCards;
-  if (!combined && Array.isArray(storedCards)) return storedCards.map((x) => String(x).trim()).filter(Boolean);
-  if (!combined && storedCards) combined = storedCards;
-
-  if (!combined) return [];
-
-  return combined
-    .toString()
+  return String(combined || '')
     .split(',')
-    .map((id) => id.trim())
+    .map((val) => val.trim())
     .filter(Boolean);
 }
 
-let dataLoaded = false;
-
-const state = {
-  currentLang: params.get('lang') || (pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en'),
-  mode: normalizeMode(params.get('mode') || storageSelection?.mode || 'daily'),
-  topic: params.get('topic') || storageSelection?.topic || 'generic',
-  selectedIds: parseSelectedIds(),
-};
-
-const readingContent = document.getElementById('reading-content');
-const contextCopy = document.getElementById('reading-context');
-const readingTitle = document.getElementById('readingTitle');
-const newReadingBtn = document.getElementById('newReadingBtn');
-const shareBtn = document.getElementById('shareBtn');
-const saveBtn = document.getElementById('saveBtn');
-
-function getCardId(card) {
-  return (card?.id || card?.card_id || card?.legacy_id || '').toString();
-}
-
-function getText(card, keyBase, lang = state.currentLang) {
-  const suffix = lang === 'en' ? '_en' : '_th';
-  return card?.[`${keyBase}${suffix}`] || '';
-}
-
-function getName(card, lang = state.currentLang) {
+function getText(card, baseKey) {
   if (!card) return '';
-  if (lang === 'en') return card.card_name_en || card.name_en || card.name || getCardId(card);
+  const key = `${baseKey}_${state.currentLang}`;
+  return card[key] || '';
+}
 
-  // TH UI: alias_th (card_name_en)
-  const thaiName = card.alias_th || card.name_th || card.name || card.card_name_en || getCardId(card);
-  const englishName = card.card_name_en || card.name_en || '';
-  return englishName ? `${thaiName} (${englishName})` : thaiName;
+function getName(card) {
+  if (!card) return '';
+  if (state.currentLang === 'th') {
+    const th = card.alias_th || '';
+    const en = card.card_name_en || '';
+    if (th && en) return `${th} (${en})`;
+    return th || en || '';
+  }
+  return card.card_name_en || card.alias_th || '';
 }
 
 function isReversed(card) {
-  const orientation = (card?.orientation || '').toLowerCase();
-  if (orientation === 'reversed') return true;
-  const id = getCardId(card).toLowerCase();
-  return id.endsWith('-reversed');
+  const id = String(card?.card_id || card?.id || '');
+  return id.endsWith('-reversed') || String(card?.orientation || '').toLowerCase() === 'reversed';
 }
 
 function getOrientationLabel(card) {
-  // Per your spec: show Upright / Reversed (English) even in TH UI.
+  // Per your spec: show Upright / Reversed (even in TH UI)
   return isReversed(card) ? 'Reversed' : 'Upright';
 }
 
-function findCard(id) {
-  const deck = Array.isArray(meowTarotCards) ? meowTarotCards : [];
-  const direct = findCardById(deck, id, normalizeId);
-  if (direct) return direct;
-
-  // Extra safety if your card objects only have `card_id` (not `id`)
-  const normalizedCandidate = normalizeId(String(id ?? ''));
-  return (
-    deck.find((c) => normalizeId(getCardId(c)) === normalizedCandidate)
-    || deck.find((c) => getCardId(c) === String(id ?? ''))
-    || null
-  );
+function getCardId(card) {
+  return String(card?.card_id || card?.id || card?.legacy_id || '');
 }
 
-function withPreservedNewlines(el) {
-  if (!el) return el;
-  el.style.whiteSpace = 'pre-line';
-  return el;
+function getCardBaseIdFromId(id) {
+  return String(id || '').replace(/-(upright|reversed)$/i, '');
 }
 
-function buildCardImage(card, size = 'hero') {
+function getCardImageFiles(card) {
   const id = getCardId(card);
-  if (!id) return null;
+  const base = getCardBaseIdFromId(id);
+  // exact file: 04-the-empress-reversed.webp (future)
+  const exactFile = `${id}.webp`;
+  // fallback: 04-the-empress-upright.webp (current default)
+  const uprightFile = `${base}-upright.webp`;
+  return { exactFile, uprightFile };
+}
 
-  const wrapper = document.createElement('div');
-  wrapper.className = size === 'thumb' ? 'reading-card-thumb' : 'reading-card-hero';
+function createCardImage(card, variant = 'hero') {
+  const wrap = document.createElement('div');
+  wrap.className = variant === 'thumb' ? 'reading-card-thumb' : 'reading-card-hero';
 
   const img = document.createElement('img');
-  img.className = size === 'thumb' ? 'tarot-card-img tarot-card-img--thumb' : 'tarot-card-img tarot-card-img--hero';
+  img.alt = getName(card);
 
-  img.alt = getText(card, 'image_alt') || getName(card) || 'Tarot card';
-
-  const uprightId = id.replace(/-reversed$/i, '-upright');
-  const reversedId = id;
-
-  const basePath = '/assets/meow-v1/';
-  const candidates = [];
-  if (USE_REVERSED_IMAGES && isReversed(card)) candidates.push(`${reversedId}.webp`);
-  candidates.push(`${uprightId}.webp`);
-
-  let i = 0;
-  function setNext() {
-    if (i >= candidates.length) return;
-    img.src = basePath + candidates[i];
-    i += 1;
+  // Use your CSS hooks
+  if (variant === 'thumb') {
+    img.className = 'tarot-card-img--thumb';
+    img.loading = 'lazy';
+  } else {
+    img.className = 'card-art-img';
   }
 
-  img.addEventListener('error', () => setNext());
-  setNext();
+  const { exactFile, uprightFile } = getCardImageFiles(card);
+  img.src = `${CARD_IMAGE_BASE}${exactFile}`;
 
-  wrapper.appendChild(img);
-  return wrapper;
+  // Fallback to upright art if reversed file doesn't exist (current situation).
+  img.addEventListener('error', () => {
+    if (img.dataset.fallbackDone) return;
+    img.dataset.fallbackDone = '1';
+    img.src = `${CARD_IMAGE_BASE}${uprightFile}`;
+  });
+
+  wrap.appendChild(img);
+  return wrap;
 }
 
-function parseColorPalette(value) {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.filter((v) => typeof v === 'string' && v.trim()).map((v) => v.trim());
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-      try {
-        const arr = JSON.parse(trimmed);
-        if (Array.isArray(arr)) return arr.filter((v) => typeof v === 'string' && v.trim()).map((v) => v.trim());
-      } catch (e) {
-        // fall through
-      }
-    }
-    return trimmed.split(',').map((v) => v.trim()).filter(Boolean);
-  }
-  return [];
-}
+function createMetaBlock(card, dict) {
+  if (!card) return null;
 
-function buildDailyHeader(card) {
-  const header = document.createElement('div');
-  header.className = 'card-heading';
-
-  const title = document.createElement('h2');
-  title.textContent = `${getName(card)} — ${getOrientationLabel(card)}`;
-  header.appendChild(title);
-
-  const imply = getText(card, 'tarot_imply');
-  if (imply) {
-    const implyLine = document.createElement('p');
-    implyLine.className = 'keywords';
-    implyLine.textContent = imply;
-    header.appendChild(implyLine);
+  const chips = [];
+  if (card.element) chips.push(`Element: ${card.element}`);
+  if (card.planet) chips.push(`Planet: ${card.planet}`);
+  if (card.numerology_value != null && String(card.numerology_value).trim() !== '') {
+    chips.push(`No. ${card.numerology_value}`);
   }
 
-  return header;
+  let colors = card.color_palette;
+  if (typeof colors === 'string') {
+    // allow "['#fff', '#000']" or "#fff,#000" etc.
+    const maybeJson = safeJsonParse(colors);
+    colors = Array.isArray(maybeJson) ? maybeJson : colors.split(',').map((v) => v.trim());
+  }
+  if (!Array.isArray(colors)) colors = [];
+  colors = colors.filter(Boolean);
+
+  if (!chips.length && !colors.length) return null;
+
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+
+  const row = document.createElement('div');
+  row.className = 'meta-row';
+
+  chips.forEach((text) => {
+    const badge = document.createElement('div');
+    badge.className = 'meta-badge';
+    badge.textContent = text;
+    row.appendChild(badge);
+  });
+
+  panel.appendChild(row);
+
+  if (colors.length) {
+    const colorsRow = document.createElement('div');
+    colorsRow.className = 'meta-row';
+
+    colors.slice(0, 8).forEach((hex) => {
+      const badge = document.createElement('div');
+      badge.className = 'meta-badge';
+
+      const sw = document.createElement('span');
+      sw.className = 'swatch';
+      sw.style.backgroundColor = hex;
+
+      const label = document.createElement('span');
+      label.textContent = hex;
+
+      badge.appendChild(sw);
+      badge.appendChild(label);
+      colorsRow.appendChild(badge);
+    });
+
+    panel.appendChild(colorsRow);
+  }
+
+  return panel;
 }
 
-function buildSuggestionPanel(card, dict, headingText) {
+function createSuggestionPanel(card, dict, headingText) {
   if (!card) return null;
 
   const action = getText(card, 'action_prompt');
   const reflection = getText(card, 'reflection_question');
   const affirmation = getText(card, 'affirmation');
 
-  if (!action && !reflection && !affirmation) return null;
+  const combined = [action, reflection].filter(Boolean).join(' ').trim();
+  if (!combined && !affirmation) return null;
 
   const panel = document.createElement('div');
   panel.className = 'panel';
 
   const h = document.createElement('h3');
-  h.textContent = headingText || dict?.suggestionTitle || (state.currentLang === 'th' ? 'คำแนะนำ' : 'Suggestion');
+  h.textContent = headingText;
   panel.appendChild(h);
 
-  const combined = [action, reflection].filter(Boolean).map((t) => t.trim()).join(' ');
   if (combined) {
     const p = document.createElement('p');
     p.textContent = combined;
-    panel.appendChild(withPreservedNewlines(p));
+    panel.appendChild(p);
   }
 
   if (affirmation) {
-    const pAff = document.createElement('p');
+    const p = document.createElement('p');
     const em = document.createElement('em');
     em.textContent = `"${affirmation.trim()}"`;
-    pAff.appendChild(em);
-    panel.appendChild(withPreservedNewlines(pAff));
+    p.appendChild(em);
+    panel.appendChild(p);
   }
 
   return panel;
 }
 
-function buildMetaPanel(card, dict) {
-  // Optional meta (you said can come later). Keep or remove anytime.
-  if (!card) return null;
+function createDailyReading(card, dict) {
+  const container = document.createElement('div');
+  container.className = 'card-result';
 
-  const element = (card.element || '').toString().trim();
-  const planet = (card.planet || '').toString().trim();
-  const numerology = (card.numerology_value || '').toString().trim();
-  const colors = parseColorPalette(card.color_palette);
+  const header = document.createElement('div');
+  header.className = 'panel';
 
-  if (!element && !planet && !numerology && !colors.length) return null;
+  header.appendChild(createCardImage(card, 'hero'));
 
-  const panel = document.createElement('div');
-  panel.className = 'panel';
+  const heading = document.createElement('div');
+  heading.className = 'card-heading';
 
-  const h = document.createElement('h3');
-  h.textContent = dict?.metaTitle || (state.currentLang === 'th' ? 'ข้อมูลเพิ่มเติม' : 'Details');
-  panel.appendChild(h);
+  const h2 = document.createElement('h2');
+  h2.textContent = `${getName(card)} — ${getOrientationLabel(card)}`;
+  heading.appendChild(h2);
 
-  const row = document.createElement('div');
-  row.className = 'meta-row';
-
-  const labelElement = state.currentLang === 'th' ? 'ธาตุ' : 'Element';
-  const labelPlanet = state.currentLang === 'th' ? 'ดาว' : 'Planet';
-  const labelNumber = state.currentLang === 'th' ? 'เลข' : 'Number';
-
-  function addBadge(text) {
-    const badge = document.createElement('span');
-    badge.className = 'meta-badge';
-    badge.textContent = text;
-    row.appendChild(badge);
+  const imply = getText(card, 'tarot_imply');
+  if (imply) {
+    const p = document.createElement('p');
+    p.className = 'keywords';
+    p.textContent = imply;
+    heading.appendChild(p);
   }
 
-  if (element) addBadge(`${labelElement}: ${element}`);
-  if (planet) addBadge(`${labelPlanet}: ${planet}`);
-  if (numerology) addBadge(`${labelNumber}: ${numerology}`);
-
-  if (row.childNodes.length) panel.appendChild(row);
-
-  if (colors.length) {
-    const colorRow = document.createElement('div');
-    colorRow.className = 'meta-row';
-    colors.slice(0, 8).forEach((hex) => {
-      const sw = document.createElement('span');
-      sw.className = 'swatch';
-      sw.title = hex;
-      sw.style.backgroundColor = hex;
-      colorRow.appendChild(sw);
-    });
-    panel.appendChild(colorRow);
-  }
-
-  return panel;
-}
-
-function renderDaily(card, dict) {
-  if (!readingContent || !card) return;
-  readingContent.innerHTML = '';
-
-  // Header block (image + name/orientation + imply + main message)
-  const hero = document.createElement('div');
-  hero.className = 'panel';
-
-  const img = buildCardImage(card, 'hero');
-  if (img) hero.appendChild(img);
-
-  hero.appendChild(buildDailyHeader(card));
+  header.appendChild(heading);
 
   const main = getText(card, 'standalone_present');
   if (main) {
     const p = document.createElement('p');
     p.className = 'lede';
     p.textContent = main;
-    hero.appendChild(withPreservedNewlines(p));
+    header.appendChild(p);
   }
 
-  readingContent.appendChild(hero);
+  container.appendChild(header);
 
-  // Suggestion box (Daily-specific heading)
-  const dailySuggestionHeading = state.currentLang === 'th' ? 'คำแนะนำวันนี้' : 'Today’s Guidance';
-  const suggestion = buildSuggestionPanel(card, dict, dailySuggestionHeading);
-  if (suggestion) readingContent.appendChild(suggestion);
+  const meta = createMetaBlock(card, dict);
+  if (meta) container.appendChild(meta);
 
-  // Optional meta
-  const meta = buildMetaPanel(card, dict);
-  if (meta) readingContent.appendChild(meta);
+  const suggestionHeading = dict.dailySuggestionTitle || (state.currentLang === 'th' ? 'คำแนะนำวันนี้' : 'Suggestion');
+  const suggestion = createSuggestionPanel(card, dict, suggestionHeading);
+  if (suggestion) container.appendChild(suggestion);
+
+  return container;
 }
 
-function getPositionText(card, position, mode, topic) {
-  if (!card) return '';
+function createThreeCardBoxes(cards, dict, mode) {
+  const wrap = document.createElement('div');
+  wrap.className = 'results-grid';
 
-  // Ask-a-question: topic fields only (love/career/finance), fallback to standalone
-  if (mode === 'question' && topic && topic !== 'generic') {
-    const topicKey = `${topic}_${position}`; // e.g., love_present
-    const topicText = getText(card, topicKey);
-    if (topicText) return topicText;
-  }
-
-  return getText(card, `standalone_${position}`);
-}
-
-function buildThreeCardGrid(cards, dict, mode, topic) {
   const positions = ['past', 'present', 'future'];
-  const grid = document.createElement('div');
-  grid.className = 'results-grid';
 
-  cards.slice(0, 3).forEach((card, idx) => {
-    const position = positions[idx];
-    const box = document.createElement('div');
-    box.className = 'result-card';
+  positions.forEach((pos, idx) => {
+    const card = cards[idx];
+    if (!card) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'result-card';
 
     const label = document.createElement('div');
     label.className = 'label';
-    label.textContent = dict?.[position] || position;
+    label.textContent = dict[pos] || pos.toUpperCase();
+    panel.appendChild(label);
 
-    const imgWrap = buildCardImage(card, 'thumb');
+    panel.appendChild(createCardImage(card, 'thumb'));
 
     const title = document.createElement('h5');
     title.textContent = `${getName(card)} — ${getOrientationLabel(card)}`;
+    panel.appendChild(title);
 
-    const text = getPositionText(card, position, mode, topic);
+    let text = '';
+    if (mode === 'question') {
+      const topicKey = `${state.topic}_${pos}`; // love_past, career_present, finance_future
+      text = getText(card, topicKey) || getText(card, `standalone_${pos}`);
+    } else {
+      text = getText(card, `standalone_${pos}`);
+    }
+
     const p = document.createElement('p');
     p.textContent = text || '';
-    withPreservedNewlines(p);
+    panel.appendChild(p);
 
-    box.appendChild(label);
-    if (imgWrap) box.appendChild(imgWrap);
-    box.appendChild(title);
-    if (text) box.appendChild(p);
-
-    grid.appendChild(box);
+    wrap.appendChild(panel);
   });
 
-  return grid;
+  return wrap;
 }
 
-function buildFortunePanel(cards, dict) {
+function createFullSummary(cards, dict) {
   const positions = ['past', 'present', 'future'];
-  const summaries = cards
-    .slice(0, 3)
-    .map((card, idx) => getText(card, `reading_summary_${positions[idx]}`))
-    .filter(Boolean);
+  const summaryText = positions
+    .map((pos, idx) => getText(cards[idx], `reading_summary_${pos}`))
+    .filter(Boolean)
+    .join(' ')
+    .trim();
 
-  if (!summaries.length) return null;
+  if (!summaryText) return null;
 
   const panel = document.createElement('div');
   panel.className = 'panel';
 
   const h = document.createElement('h3');
-  h.textContent = dict?.readingSummaryTitle || (state.currentLang === 'th' ? 'ดวงของคุณ' : 'Your Fortune');
+  h.textContent = dict.yourFortuneTitle || (state.currentLang === 'th' ? 'ดวงของคุณ' : 'Your Fortune');
   panel.appendChild(h);
 
   const p = document.createElement('p');
-  p.textContent = summaries.join(' ');
-  panel.appendChild(withPreservedNewlines(p));
+  p.textContent = summaryText;
+  panel.appendChild(p);
 
   return panel;
-}
-
-function renderThreeCardMode(cards, dict, mode, topic) {
-  if (!readingContent) return;
-  readingContent.innerHTML = '';
-
-  readingContent.appendChild(buildThreeCardGrid(cards, dict, mode, topic));
-
-  // Full reading: show combined summary paragraph
-  if (mode === 'full') {
-    const fortune = buildFortunePanel(cards, dict);
-    if (fortune) readingContent.appendChild(fortune);
-  }
-
-  // Suggestion: anchor on the center card (Present)
-  const presentCard = cards[1] || cards[0];
-  const suggestionHeading = dict?.suggestionTitle || (state.currentLang === 'th' ? 'คำแนะนำ' : 'Suggestion');
-  const suggestion = buildSuggestionPanel(presentCard, dict, suggestionHeading);
-  if (suggestion) readingContent.appendChild(suggestion);
 }
 
 function renderReading(dict) {
   if (!readingContent) return;
 
-  const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
+  readingContent.innerHTML = '';
 
-  if (!cards.length) {
-    const message = dict?.missingSelection || 'No cards found. Please draw cards first.';
-    readingContent.innerHTML = `<div class="panel"><p class="lede">${message}</p></div>`;
+  if (!state.selectedIds.length) {
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.textContent = dict.noCards || 'No cards found. Please go back and select again.';
+    readingContent.appendChild(panel);
+    return;
+  }
+
+  // Find cards (robust even if helpers not updated yet)
+  const resolved = state.selectedIds
+    .map((id) => {
+      const byHelper = findCardById(meowTarotCards, id, normalizeId);
+      if (byHelper) return byHelper;
+
+      const target = normalizeId(String(id));
+      return (
+        meowTarotCards.find((c) => normalizeId(String(c.card_id || c.id || '')) === target)
+        || null
+      );
+    })
+    .filter(Boolean);
+
+  if (!resolved.length) {
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.textContent = dict.noCards || 'No cards found. Please go back and select again.';
+    readingContent.appendChild(panel);
     return;
   }
 
   if (state.mode === 'daily') {
-    renderDaily(cards[0], dict);
+    const card = resolved[0];
+    readingContent.appendChild(createDailyReading(card, dict));
     return;
   }
 
-  // full / question: 3 cards required
-  if (cards.length < 3) {
-    const message = dict?.selectThreeHint || (state.currentLang === 'th' ? 'เลือกไพ่ให้ครบ 3 ใบก่อน' : 'Please select 3 cards.');
-    readingContent.innerHTML = `<div class="panel"><p class="lede">${message}</p></div>`;
-    return;
+  // Both full + question are 3-card
+  const cards = resolved.slice(0, 3);
+
+  // A) 3 boxes Past/Present/Future
+  readingContent.appendChild(createThreeCardBoxes(cards, dict, state.mode));
+
+  // B) Full-only summary "Your Fortune"
+  if (state.mode === 'full') {
+    const summary = createFullSummary(cards, dict);
+    if (summary) readingContent.appendChild(summary);
   }
 
-  renderThreeCardMode(cards.slice(0, 3), dict, state.mode, state.topic);
+  // C) Suggestion (anchor on Present card)
+  const presentCard = cards[1] || cards[0];
+  const suggestionHeading =
+    dict.suggestionTitle || (state.currentLang === 'th' ? 'คำแนะนำ' : 'Suggestion');
+
+  const suggestion = createSuggestionPanel(presentCard, dict, suggestionHeading);
+  if (suggestion) readingContent.appendChild(suggestion);
+
+  // Optional meta: show meta for present card
+  const meta = createMetaBlock(presentCard, dict);
+  if (meta) readingContent.appendChild(meta);
 }
 
-function handleShare() {
-  const url = window.location.href;
-  if (navigator.share) {
-    navigator
-      .share({ title: 'MeowTarot', text: translations[state.currentLang].yourReading, url })
-      .catch(() => copyLink(url));
-  } else {
-    copyLink(url);
-  }
-}
-
-function copyLink(url) {
-  navigator.clipboard.writeText(url).then(() => alert(translations[state.currentLang].shareFallback));
-}
-
-function saveImage() {
-  if (!readingContent || typeof html2canvas !== 'function') return;
-  html2canvas(readingContent, { backgroundColor: '#0b102b', scale: 2, useCORS: true }).then((canvas) => {
-    const link = document.createElement('a');
-    link.download = `meowtarot-reading-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  });
-}
-
-function updateContextCopy(dict = translations[state.currentLang]) {
-  if (!contextCopy) return;
-  contextCopy.textContent = state.mode === 'question' ? dict.contextQuestion : dict.contextDaily;
-}
-
-function handleTranslations(dict) {
-  updateContextCopy(dict);
-
+function updateHeader(dict) {
   if (readingTitle) {
-    if (state.mode === 'question') {
-      readingTitle.textContent = dict.questionTitle;
-    } else if (state.mode === 'full') {
-      readingTitle.textContent = dict.overallTitle; // reuse existing "Life Reading" label
-    } else {
-      readingTitle.textContent = dict.dailyTitle;
+    if (state.mode === 'daily') readingTitle.textContent = dict.dailyTitle || 'Daily Reading';
+    else if (state.mode === 'question') readingTitle.textContent = dict.questionTitle || 'Ask a Question';
+    else readingTitle.textContent = dict.overallTitle || 'Full Reading';
+  }
+
+  if (contextCopy) {
+    if (state.mode === 'daily') contextCopy.textContent = dict.contextDaily || '';
+    else if (state.mode === 'question') contextCopy.textContent = dict.contextQuestion || '';
+    else contextCopy.textContent = dict.overallDesc || '';
+  }
+}
+
+function handleTranslations(lang) {
+  state.currentLang = lang;
+  const dict = translations[lang] || translations.en;
+
+  updateHeader(dict);
+  renderReading(dict);
+
+  // Button labels (if they exist)
+  if (newReadingBtn) newReadingBtn.textContent = dict.newReading || 'New reading';
+  if (saveImageBtn) saveImageBtn.textContent = dict.saveImage || 'Save image';
+  if (shareReadingBtn) shareReadingBtn.textContent = dict.share || 'Share';
+}
+
+function handleNewReading() {
+  // Clear previous selection so board starts fresh
+  sessionStorage.removeItem('meowtarot_selection');
+
+  let target = '/daily.html';
+  if (state.mode === 'question') target = '/question.html';
+  if (state.mode === 'full') target = '/overall.html';
+
+  window.location.href = localizePath(target, state.currentLang);
+}
+
+async function handleSaveImage() {
+  if (typeof window.html2canvas !== 'function') {
+    alert('html2canvas is not loaded on this page.');
+    return;
+  }
+
+  const target = document.querySelector('main') || document.body;
+  const canvas = await window.html2canvas(target, { scale: 2 });
+  const link = document.createElement('a');
+  link.download = `meowtarot-reading-${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function handleShare() {
+  const dict = translations[state.currentLang] || translations.en;
+
+  const shareData = {
+    title: dict.siteTitle || 'Meow Tarot',
+    text: dict.shareCopy || 'My tarot reading on Meow Tarot ✨',
+    url: window.location.href,
+  };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch {
+      // user cancelled
     }
   }
 
-  if (dataLoaded) renderReading(dict);
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    alert(dict.copied || 'Link copied!');
+  } catch {
+    alert('Unable to copy link.');
+  }
 }
 
-function init() {
-  initShell(state, handleTranslations, 'reading');
+async function init() {
+  await loadTarotData();
 
-  newReadingBtn?.addEventListener('click', () => {
-    const target =
-      state.mode === 'question'
-        ? '/question.html'
-        : state.mode === 'full'
-          ? '/overall.html'
-          : '/daily.html';
-    window.location.href = localizePath(target, state.currentLang);
+  state.selectedIds = parseSelectedIds();
+
+  // Highlight nav based on mode
+  const activePage = state.mode === 'question' ? 'question' : state.mode === 'full' ? 'overall' : 'daily';
+
+  initShell({
+    activePage,
+    initialLang: state.currentLang,
+    onLangChange: handleTranslations,
   });
 
-  shareBtn?.addEventListener('click', handleShare);
-  saveBtn?.addEventListener('click', saveImage);
+  handleTranslations(state.currentLang);
 
-  loadTarotData()
-    .then(() => {
-      dataLoaded = true;
-      renderReading(translations[state.currentLang] || translations.en);
-    })
-    .catch(() => {
-      dataLoaded = true;
-      renderReading(translations[state.currentLang] || translations.en);
-    });
+  if (newReadingBtn) newReadingBtn.addEventListener('click', handleNewReading);
+  if (saveImageBtn) saveImageBtn.addEventListener('click', handleSaveImage);
+  if (shareReadingBtn) shareReadingBtn.addEventListener('click', handleShare);
 }
 
-document.addEventListener('DOMContentLoaded', init);
+init();
