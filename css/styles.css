@@ -1365,6 +1365,8 @@ body[data-page='home'] .section-block {
   }
 }
 
+.card-board { overflow: visible; }
+
 .overall-cta-wrapper {
   display: flex;
   justify-content: center;
