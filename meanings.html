@@ -37,6 +37,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
+
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -48,7 +49,7 @@
         "@id": "https://www.meowtarot.com/#website"
       },
       "inLanguage": "en",
-      "description": "Browse tarot card meanings for all 78 cards with upright and reversed interpretations for love, career, and money."
+      "description": "Browse tarot card meanings for all 78 cards with upright and reversed interpretations for love, career, and money.",
       "about": [
         { "@type": "Thing", "name": "tarot card meanings" },
         { "@type": "Thing", "name": "upright tarot meanings" },
@@ -57,16 +58,30 @@
     }
   </script>
 </head>
+
 <body data-page="meanings">
   <header id="site-header"></header>
 
-  <main>
+  <main class="page-shell">
     <section class="section-block" id="tarot-meanings">
       <div class="section-heading">
-        <p class="eyebrow" data-i18n="navMeanings"></p>
-        <h1 data-i18n="meaningTitle"></h1>
-        <p data-i18n="meaningDesc"></p>
+        <p class="eyebrow" data-i18n="navMeanings">Card meanings</p>
+        <h1 data-i18n="meaningTitle">Tarot Card Meanings</h1>
+        <p data-i18n="meaningDesc">
+          Browse all 78 cards with upright & reversed interpretations.
+        </p>
+
+        <!-- Category chips (links only — filter logic comes from meanings.js) -->
+        <div class="chip-row" id="meaningFilters" aria-label="Browse by category">
+          <a class="chip" href="meanings.html">All</a>
+          <a class="chip" href="meanings.html?group=major">Major Arcana</a>
+          <a class="chip" href="meanings.html?suit=wands">Wands</a>
+          <a class="chip" href="meanings.html?suit=cups">Cups</a>
+          <a class="chip" href="meanings.html?suit=swords">Swords</a>
+          <a class="chip" href="meanings.html?suit=pentacles">Pentacles</a>
+        </div>
       </div>
+
       <div class="meaning-grid" id="meaningList"></div>
     </section>
   </main>
