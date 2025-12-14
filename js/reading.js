@@ -80,7 +80,163 @@ function getOrientationEnglish(card) {
   return isReversed(card) ? 'Reversed' : 'Upright';
 }
 
+/* -------------------------------------------------------------------------- */
+/* Color helpers: show swatch + show COLOR NAME (no hex text)                  */
+/* -------------------------------------------------------------------------- */
+
+function isHexColor(v = '') {
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(String(v).trim());
+}
+
+function normalizeHex(hex) {
+  let h = String(hex || '').trim().toUpperCase();
+  if (!h.startsWith('#')) h = `#${h}`;
+  if (/^#([0-9A-F]{3})$/.test(h)) {
+    const s = h.slice(1);
+    return `#${s[0]}${s[0]}${s[1]}${s[1]}${s[2]}${s[2]}`;
+  }
+  if (/^#([0-9A-F]{8})$/.test(h)) return `#${h.slice(1, 7)}`; // ignore alpha
+  return h;
+}
+
+function hexToRgb(hex) {
+  const h = normalizeHex(hex).slice(1);
+  if (!/^[0-9A-F]{6}$/.test(h)) return null;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return { r, g, b };
+}
+
+function rgbToHsl(r, g, b) {
+  const rr = r / 255;
+  const gg = g / 255;
+  const bb = b / 255;
+
+  const max = Math.max(rr, gg, bb);
+  const min = Math.min(rr, gg, bb);
+  const d = max - min;
+
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    switch (max) {
+      case rr:
+        h = ((gg - bb) / d) % 6;
+        break;
+      case gg:
+        h = (bb - rr) / d + 2;
+        break;
+      default:
+        h = (rr - gg) / d + 4;
+        break;
+    }
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+  }
+
+  return { h, s, l };
+}
+
+// overrides สำหรับสีที่เจอบ่อยในเด็ค (เติมเพิ่มได้เรื่อยๆ)
+const HEX_NAME_OVERRIDES = {
+  '#87CEEB': { en: 'Sky Blue', th: 'ฟ้าใส' },
+  '#87CEFA': { en: 'Light Sky Blue', th: 'ฟ้าอ่อน' },
+  '#E6E6FA': { en: 'Lavender', th: 'ลาเวนเดอร์' },
+  '#708090': { en: 'Slate Gray', th: 'เทาสเลต' },
+  '#FFD700': { en: 'Gold', th: 'ทอง' },
+};
+
+function basicColorNameFromHex(hex, lang = 'en') {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return lang === 'th' ? 'สี' : 'Color';
+
+  const { r, g, b } = rgb;
+  const { h, s, l } = rgbToHsl(r, g, b);
+
+  // black/white/gray first
+  if (l >= 0.93) return lang === 'th' ? 'ขาว' : 'White';
+  if (l <= 0.08) return lang === 'th' ? 'ดำ' : 'Black';
+  if (s <= 0.12) return lang === 'th' ? 'เทา' : 'Gray';
+
+  // brown heuristic
+  if (h >= 15 && h <= 45 && l <= 0.45) return lang === 'th' ? 'น้ำตาล' : 'Brown';
+
+  // hue buckets
+  if (h >= 345 || h < 15) return lang === 'th' ? 'แดง' : 'Red';
+  if (h >= 15 && h < 45) return lang === 'th' ? 'ส้ม' : 'Orange';
+  if (h >= 45 && h < 70) return lang === 'th' ? 'เหลือง' : 'Yellow';
+  if (h >= 70 && h < 160) return lang === 'th' ? 'เขียว' : 'Green';
+  if (h >= 160 && h < 200) return lang === 'th' ? 'เขียวอมฟ้า' : 'Teal';
+  if (h >= 200 && h < 250) return lang === 'th' ? 'ฟ้า' : 'Blue';
+  if (h >= 250 && h < 290) return lang === 'th' ? 'น้ำเงิน' : 'Indigo';
+  if (h >= 290 && h < 330) return lang === 'th' ? 'ม่วง' : 'Purple';
+  if (h >= 330 && h < 345) return lang === 'th' ? 'ชมพู' : 'Pink';
+
+  return lang === 'th' ? 'สี' : 'Color';
+}
+
+function hexToName(hex, lang = 'en') {
+  const key = normalizeHex(hex);
+  const hit = HEX_NAME_OVERRIDES[key];
+  if (hit) return hit[lang] || hit.en;
+  return basicColorNameFromHex(key, lang);
+}
+
+function normalizeColorArray(palette) {
+  if (!palette) return [];
+  if (typeof palette === 'string') {
+    const hexes = palette.match(/#[0-9a-fA-F]{3,8}/g);
+    return (hexes && hexes.length ? hexes : palette.split(',')).map((s) => s.trim()).filter(Boolean);
+  }
+  if (Array.isArray(palette)) return palette.map((s) => String(s).trim()).filter(Boolean);
+  return [];
+}
+
+const TH_COLOR_TO_CSS = {
+  'แดง': 'red',
+  'ส้ม': 'orange',
+  'เหลือง': 'yellow',
+  'เขียว': 'green',
+  'ฟ้า': 'deepskyblue',
+  'น้ำเงิน': 'royalblue',
+  'ม่วง': 'purple',
+  'ชมพู': 'hotpink',
+  'น้ำตาล': 'saddlebrown',
+  'เทา': 'gray',
+  'ดำ': 'black',
+  'ขาว': 'white',
+  'ทอง': 'gold',
+  'ลาเวนเดอร์': 'lavender',
+};
+
+function resolveCssColor(value) {
+  const v = String(value || '').trim();
+  if (!v) return null;
+
+  if (isHexColor(v)) return normalizeHex(v);
+
+  // Thai name => map to CSS
+  if (TH_COLOR_TO_CSS[v]) return TH_COLOR_TO_CSS[v];
+
+  // English / CSS color names
+  const collapsed = v.toLowerCase().replace(/\s+/g, '');
+  if (typeof CSS !== 'undefined' && CSS.supports) {
+    if (CSS.supports('color', collapsed)) return collapsed;
+    if (CSS.supports('color', v.toLowerCase())) return v.toLowerCase();
+  }
+
+  // Fallback: try it anyway (harmless if invalid)
+  return v.toLowerCase();
+}
+
+/* -------------------------------------------------------------------------- */
 // Handles legacy ids like maj-08 by mapping majors to your new "01-..-upright" format.
+/* -------------------------------------------------------------------------- */
+
 function resolveLegacyMajorId(candidateId) {
   const id = String(candidateId || '').toLowerCase().trim();
   const match = id.match(/^maj[-_]?(\d{1,2})$/);
@@ -192,25 +348,30 @@ function buildMetaPanel(card) {
 
   const element = getText(card, 'element') || card.element;
   const planet = getText(card, 'planet') || card.planet;
-  const numerology = getText(card, 'numerology') || card.numerology;
+
+  // ✅ FIX: support numerology_value (your JSON uses numerology_value)
+  const numerology =
+    getText(card, 'numerology')
+    || card.numerology
+    || card.numerology_value;
 
   if (element) meta.push({ label: state.currentLang === 'th' ? 'ธาตุ' : 'Element', value: element });
   if (planet) meta.push({ label: state.currentLang === 'th' ? 'ดาว' : 'Planet', value: planet });
-  if (numerology) meta.push({ label: state.currentLang === 'th' ? 'เลข' : 'Numerology', value: numerology });
-
-  let palette = card.color_palette || card.colors || null;
-  if (typeof palette === 'string') {
-    // try to extract hex codes, or split by comma
-    const hexes = palette.match(/#[0-9a-fA-F]{3,8}/g);
-    palette = hexes && hexes.length ? hexes : palette.split(',').map((s) => s.trim()).filter(Boolean);
-  }
-  if (Array.isArray(palette)) {
-    palette = palette.filter(Boolean).slice(0, 6);
-  } else {
-    palette = [];
+  if (numerology !== undefined && numerology !== null && numerology !== '') {
+    meta.push({ label: state.currentLang === 'th' ? 'เลข' : 'Numerology', value: numerology });
   }
 
-  if (!meta.length && !palette.length) return null;
+  // ✅ Lucky colors: use color_palette (existing) but show NAME not hex
+  const luckyPalette = normalizeColorArray(
+    card.lucky_color_palette || card.lucky_colors || card.color_palette || card.colors
+  ).filter(Boolean).slice(0, 6);
+
+  // ✅ Avoid colors: optional (if you add it later)
+  const avoidPalette = normalizeColorArray(
+    card.avoid_color_palette || card.avoid_colors || card.colors_to_avoid || card.unlucky_colors
+  ).filter(Boolean).slice(0, 6);
+
+  if (!meta.length && !luckyPalette.length && !avoidPalette.length) return null;
 
   const panel = document.createElement('div');
   panel.className = 'panel';
@@ -225,20 +386,47 @@ function buildMetaPanel(card) {
     row.appendChild(chip);
   });
 
-  palette.forEach((color) => {
-    const chip = document.createElement('span');
-    chip.className = 'meta-badge';
+  function appendColorGroup(label, colors) {
+    if (!colors.length) return;
 
-    const swatch = document.createElement('span');
-    swatch.className = 'swatch';
-    swatch.style.background = color;
+    const labelChip = document.createElement('span');
+    labelChip.className = 'meta-badge';
+    labelChip.textContent = label;
+    row.appendChild(labelChip);
 
-    const txt = document.createElement('span');
-    txt.textContent = String(color).toUpperCase();
+    colors.forEach((c) => {
+      const chip = document.createElement('span');
+      chip.className = 'meta-badge';
 
-    chip.append(swatch, txt);
-    row.appendChild(chip);
-  });
+      const swatch = document.createElement('span');
+      swatch.className = 'swatch';
+
+      const cssColor = resolveCssColor(c);
+      if (cssColor) swatch.style.background = cssColor;
+
+      const txt = document.createElement('span');
+
+      // ✅ IMPORTANT: never show hex text
+      if (isHexColor(c)) {
+        txt.textContent = hexToName(c, state.currentLang === 'th' ? 'th' : 'en');
+      } else {
+        txt.textContent = String(c);
+      }
+
+      chip.append(swatch, txt);
+      row.appendChild(chip);
+    });
+  }
+
+  appendColorGroup(
+    state.currentLang === 'th' ? 'สีมงคลประจำวัน' : "Today's lucky colors",
+    luckyPalette
+  );
+
+  appendColorGroup(
+    state.currentLang === 'th' ? 'สีที่ควรเลี่ยง' : 'Colors to avoid',
+    avoidPalette
+  );
 
   panel.appendChild(row);
   return panel;
