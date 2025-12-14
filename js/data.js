@@ -26,7 +26,7 @@ export function getCardImageUrl(card, options = {}) {
   const orientation = options.orientation || card.orientation || 'upright';
 
   // TODO: once card image IDs are finalized, replace this with the real mapping
-  const imageId = card.image_id || card.id; // temporary fallback
+  const imageId = card.image_id || card.card_id || card.id; // temporary fallback
 
   return `${deck.assetsBase}/${imageId}.webp`;
 }
@@ -47,6 +47,7 @@ export function normalizeCards(cards) {
     const orientation = card.orientation || 'upright';
     const rawId =
       card.id
+      || card.card_id
       || card.seo_slug_en
       || card.card_name_en
       || card.name_en
