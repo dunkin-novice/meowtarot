@@ -1662,3 +1662,33 @@ details summary::-webkit-details-marker {
   flex: 1 1 140px;
   text-align: center;
 }
+
+/* Make card back fill the whole slot */
+.card-slot {
+  position: relative;
+  overflow: hidden;
+}
+
+/* If card-back is a DIV with background-image */
+.card-slot .card-back {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* If card-back is an IMG */
+.card-slot img.card-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
