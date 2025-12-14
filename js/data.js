@@ -48,6 +48,7 @@ export function normalizeCards(cards) {
     const rawId =
       card.id
       || card.card_id
+      || card.image_id
       || card.seo_slug_en
       || card.card_name_en
       || card.name_en
@@ -107,7 +108,7 @@ if (typeof window !== 'undefined') {
 
 // Load full deck from JSON, fall back to static tarotCards if anything fails
 export function loadTarotData() {
-  return fetch('data/cards.json')
+  return fetch('/data/cards.json')
     .then((res) => res.json())
     .then((data) => {
       meowTarotCards = normalizeCards(data.cards && data.cards.length ? data.cards : tarotCards);
