@@ -944,6 +944,17 @@ button,
   .meanings-btn {
     width: 100%;
   }
+
+  /* ✅ FIX: prevent the strip from stretching vertically on mobile */
+  .card-strip {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .meaning-card {
+    min-width: 160px;
+    height: 52px;
+  }
 }
 
 .is-hidden { display: none !important; }
@@ -998,13 +1009,17 @@ body[data-page='home'] .section-block {
   justify-content: space-between;
 }
 
+/* ✅ FIX: stop vertical stretching + allow shrinking in flex */
 .card-strip {
   display: flex;
   gap: 10px;
   padding: 10px 4px;
   overflow-x: auto;
   scrollbar-width: thin;
-  flex: 1;
+
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center; /* IMPORTANT: prevents tall stretched cards */
 }
 
 .card-strip::-webkit-scrollbar {
@@ -1016,9 +1031,11 @@ body[data-page='home'] .section-block {
   border-radius: 10px;
 }
 
+/* ✅ FIX: compact pill height so it never becomes a tall bar */
 .meaning-card {
   min-width: 110px;
-  padding: 12px;
+  height: 54px;
+  padding: 0 14px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1026,6 +1043,11 @@ body[data-page='home'] .section-block {
   font-weight: 700;
   color: #f8f9ff;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.32);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .meaning-card--fool {
@@ -1578,7 +1600,6 @@ details summary::-webkit-details-marker {
   width: min(260px, 100%);
 }
 
-
 .reading-card-hero,
 .reading-card-thumb {
   display: flex;
@@ -1615,60 +1636,4 @@ details summary::-webkit-details-marker {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-/* --- Meanings section: fix CTA overflow on mobile --- */
-.card-meanings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-/* KEY FIX: allow the strip to shrink in flex (prevents pushing CTA offscreen) */
-.card-strip {
-  min-width: 0;
-  flex: 1 1 420px;
-}
-
-.meanings-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: stretch;
-  flex: 0 1 260px;
-}
-
-.meanings-categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
-
-.meanings-categories .chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 140px;
-  text-align: center;
-}
-
-/* Mobile: stack everything nicely, CTA full width */
-@media (max-width: 720px) {
-  .card-meanings-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .meanings-actions {
-    width: 100%;
-    flex: none;
-  }
-
-  .meanings-btn {
-    max-width: none;
-    width: 100%;
-  }
 }
