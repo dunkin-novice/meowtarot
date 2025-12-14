@@ -40,6 +40,66 @@ const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveBtn = document.getElementById('saveBtn');
 
+/** =========================
+ *  Card image helpers
+ *  ========================= */
+const CARD_IMAGE_BASE = '/assets/meow-v1';
+
+function getCardIdValue(card) {
+  return card?.card_id || card?.id || '';
+}
+
+function getCardImageSrc(card) {
+  const rawId = getCardIdValue(card);
+  const id = normalizeId(rawId);
+  if (!id) return null;
+  return `${CARD_IMAGE_BASE}/${id}.webp`;
+}
+
+function getUprightFallbackSrc(card) {
+  const rawId = getCardIdValue(card);
+  const id = normalizeId(rawId);
+  if (!id) return null;
+  // If reversed image missing, try upright file with same base id.
+  const fallbackId = id.endsWith('-reversed') ? id.replace(/-reversed$/, '-upright') : null;
+  return fallbackId ? `${CARD_IMAGE_BASE}/${fallbackId}.webp` : null;
+}
+
+function buildCardImage(card, variant = 'full') {
+  const src = getCardImageSrc(card);
+  if (!src) return null;
+
+  const wrap = document.createElement('div');
+  wrap.className = `card-art ${variant === 'thumb' ? 'is-thumb' : ''}`;
+
+  const img = document.createElement('img');
+  img.className = 'card-art-img';
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  img.src = src;
+
+  const alt = getText(card, 'image_alt') || getName(card);
+  img.alt = alt || 'Tarot card';
+
+  img.onerror = () => {
+    // 1) Try upright fallback (useful if you only have upright images for now)
+    const uprightFallback = getUprightFallbackSrc(card);
+    if (uprightFallback && img.src !== uprightFallback) {
+      img.src = uprightFallback;
+      return;
+    }
+    // 2) Otherwise show back
+    img.onerror = null;
+    img.src = `${CARD_IMAGE_BASE}/00-back.webp`;
+  };
+
+  wrap.appendChild(img);
+  return wrap;
+}
+
+/** =========================
+ *  Text helpers
+ *  ========================= */
 function getText(card, keyBase, lang = state.currentLang) {
   const suffix = lang === 'en' ? '_en' : '_th';
   return card?.[`${keyBase}${suffix}`] || '';
@@ -72,12 +132,15 @@ function findCard(id) {
 function buildCardHeader(card) {
   const header = document.createElement('div');
   header.className = 'card-heading';
+
   const title = document.createElement('h2');
   title.textContent = `${card.icon_emoji || '🐾'} ${getName(card)}`;
+
   const subtitle = document.createElement('p');
   const archetype = state.currentLang === 'en' ? card.archetype_en : card.archetype_th;
   const orientation = getOrientationLabel(card);
   subtitle.textContent = [archetype, orientation].filter(Boolean).join(' • ');
+
   const imply = getText(card, 'tarot_imply');
   const implyLine = document.createElement('p');
   if (imply) {
@@ -87,6 +150,7 @@ function buildCardHeader(card) {
 
   header.append(title, subtitle);
   if (imply) header.appendChild(implyLine);
+
   return header;
 }
 
@@ -157,10 +221,17 @@ function buildActionBlock(card, dict, labels = {}, heading) {
 
 function renderSingleCard(card, dict, topic) {
   if (!card || !readingContent) return;
+
   readingContent.innerHTML = '';
+
   const panel = document.createElement('div');
   panel.className = 'panel';
-  panel.appendChild(buildCardHeader(card, dict));
+
+  panel.appendChild(buildCardHeader(card));
+
+  // ✅ Card image
+  const art = buildCardImage(card, 'full');
+  if (art) panel.appendChild(art);
 
   const implyNode = renderImplyLine(card);
   if (implyNode) panel.appendChild(implyNode);
@@ -220,17 +291,24 @@ function renderThreeCards(cards, dict, topic) {
     const position = positions[idx];
     const panel = document.createElement('div');
     panel.className = 'panel';
+
     const header = document.createElement('h3');
     const name = getName(card, state.currentLang);
     const orientation = getOrientationLabel(card, state.currentLang);
+
     const headerText =
       state.mode === 'question'
         ? orientation
           ? `${dict[position]} • ${name} • ${orientation}`
           : `${dict[position]} • ${name}`
         : `${dict[position]} • ${name}`;
+
     header.textContent = headerText;
     panel.appendChild(header);
+
+    // ✅ Card image
+    const art = buildCardImage(card, 'thumb');
+    if (art) panel.appendChild(art);
 
     const implyNode = renderImplyLine(card);
     if (implyNode) panel.appendChild(implyNode);
@@ -322,6 +400,7 @@ function renderThreeCards(cards, dict, topic) {
 function renderReading(dict) {
   if (!readingContent) return;
   const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
+
   if (!cards.length) {
     const message = dict?.missingSelection || 'No cards found. Please draw cards first.';
     readingContent.innerHTML = `<div class="panel"><p class="lede">${message}</p></div>`;
@@ -337,6 +416,7 @@ function renderReading(dict) {
     renderSingleCard(cards[0], dict, state.topic || 'generic');
     return;
   }
+
   renderThreeCards(cards.slice(0, 3), dict, state.topic || 'generic');
 }
 
@@ -398,6 +478,7 @@ function init() {
     const target = state.mode === 'question' ? '/question.html' : state.mode === 'overall' ? '/overall.html' : '/daily.html';
     window.location.href = localizePath(target, state.currentLang);
   });
+
   shareBtn?.addEventListener('click', handleShare);
   saveBtn?.addEventListener('click', saveImage);
 
