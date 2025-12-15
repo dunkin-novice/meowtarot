@@ -4,32 +4,56 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { normalizeCards, normalizeId } from '../js/data.js';
-import { findCardById, matchesCardId } from '../js/reading-helpers.js';
+import {
+  findCardById,
+  getBaseId,
+  getOrientation,
+  matchesCardId,
+  toSeoSlugFromId,
+} from '../js/reading-helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cardsJsonPath = path.join(__dirname, '../data/cards.json');
 const cardsJson = JSON.parse(fs.readFileSync(cardsJsonPath, 'utf8'));
-const deck = normalizeCards(cardsJson.cards);
+const rawCards = Array.isArray(cardsJson) ? cardsJson : Array.isArray(cardsJson.cards) ? cardsJson.cards : [];
+const deck = normalizeCards(rawCards);
 
-test('findCardById resolves SEO slug ids', () => {
-  const card = findCardById(deck, 'the-fool-tarot-meaning');
-  assert.ok(card, 'expected to resolve a card for the first slugged ID');
-  assert.strictEqual(card.id, 'the-fool-tarot-meaning');
+test('getBaseId strips orientation while getOrientation defaults to upright', () => {
+  assert.strictEqual(getBaseId('01-the-fool-reversed'), '01-the-fool');
+  assert.strictEqual(getBaseId('01-the-fool-upright'), '01-the-fool');
+  assert.strictEqual(getOrientation('01-the-fool-reversed'), 'reversed');
+  assert.strictEqual(getOrientation('01-the-fool-upright'), 'upright');
+  assert.strictEqual(getOrientation('MAJ_01'), 'upright');
 });
 
-test('reversed cards match both base and reversed IDs', () => {
-  const reversedCard = deck.find((card) => card.id.endsWith('-reversed'));
-  assert.ok(reversedCard, 'expected at least one reversed card in the deck');
+test('SEO slug generation ignores orientation suffixes', () => {
+  const sample = deck.find((card) => card.id.includes('-')); // any normalized id
+  assert.ok(sample, 'expected at least one card in the deck');
 
-  const baseId = reversedCard.id.replace(/-reversed$/, '');
-  assert.ok(matchesCardId(reversedCard, reversedCard.id), 'should match the full reversed id');
-  assert.ok(
-    matchesCardId(reversedCard, baseId),
-    'should match the base id even when selection omits the reversed suffix',
-  );
-  assert.strictEqual(
-    findCardById(deck, baseId),
-    reversedCard,
-    'findCardById should resolve reversed cards using the base id',
-  );
+  const base = getBaseId(sample.id, normalizeId);
+  assert.strictEqual(toSeoSlugFromId(sample.id, normalizeId), base);
+  assert.strictEqual(toSeoSlugFromId(`${base}-reversed`, normalizeId), base);
+});
+
+test('findCardById resolves SEO slug ids', () => {
+  const slugged = deck.find((card) => card.seo_slug_en);
+  assert.ok(slugged, 'expected to find at least one card with an SEO slug');
+
+  const card = findCardById(deck, slugged.seo_slug_en);
+  assert.ok(card, 'expected to resolve a card for the first slugged ID');
+  assert.ok(matchesCardId(card, slugged.seo_slug_en));
+  assert.strictEqual(getBaseId(card.id), getBaseId(slugged.id));
+});
+
+test('each base card appears in both upright and reversed orientations', () => {
+  const baseIds = new Set(deck.map((card) => getBaseId(card.id)));
+
+  for (const baseId of baseIds) {
+    const upright = deck.find((card) => card.id === `${baseId}-upright`);
+    const reversed = deck.find((card) => card.id === `${baseId}-reversed`);
+    assert.ok(upright, `missing upright orientation for ${baseId}`);
+    assert.ok(reversed, `missing reversed orientation for ${baseId}`);
+  }
+
+  assert.strictEqual(deck.length, baseIds.size * 2, 'deck should be doubled by orientation');
 });

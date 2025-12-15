@@ -1,9 +1,10 @@
 import { initShell, localizePath, translations } from './common.js';
-import { loadTarotData, meowTarotCards, getCardBackUrl } from './data.js';
+import { loadTarotData, meowTarotCards, getCardBackUrl, normalizeId } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
 const OVERALL_SELECTION_COUNT = 3;
+const ORIENTATION_REVERSED_PROBABILITY = 0.5;
 const STORAGE_KEY = 'meowtarot_selection';
 const DAILY_SELECTION_MAX = 1;
 const DEAL_STAGGER = 180;
@@ -26,9 +27,44 @@ function applyCardBackBackground(el) {
 
 staticCardBacks.forEach(applyCardBackBackground);
 
+const stripOrientation = (value = '') => String(value || '').replace(/-(upright|reversed)$/i, '');
+
+function pickOrientation(probabilityReversed = ORIENTATION_REVERSED_PROBABILITY) {
+  const safeProb = Math.min(1, Math.max(0, probabilityReversed));
+  return Math.random() < safeProb ? 'reversed' : 'upright';
+}
+
+function findCardWithOrientation(baseCard, orientation) {
+  const baseId = stripOrientation(baseCard.card_id || baseCard.id || '');
+  const targetId = `${baseId}-${orientation}`;
+  const targetNormalized = normalizeId(targetId);
+
+  const hit = state.cards.find((card) => normalizeId(card.card_id || card.id || '') === targetNormalized);
+  if (hit) return hit;
+
+  return {
+    ...baseCard,
+    id: targetNormalized,
+    card_id: targetId,
+    orientation,
+  };
+}
+
+function buildDrawablePool() {
+  const seen = new Set();
+  return state.cards
+    .filter((card) => {
+      const baseId = stripOrientation(card.card_id || card.id || '');
+      if (!baseId || seen.has(baseId)) return false;
+      seen.add(baseId);
+      return true;
+    })
+    .map((card) => findCardWithOrientation(card, pickOrientation()));
+}
+
 function getDrawableCards(size = 6) {
   if (!state.cards.length) return [];
-  const pool = [...state.cards];
+  const pool = buildDrawablePool();
   for (let i = pool.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
