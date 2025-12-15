@@ -983,6 +983,13 @@ body[data-page='home'] .section-block {
   margin-bottom: 18px;
 }
 
+body[data-page='home'] .section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-start;
+}
+
 .section-spreads {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
   border-color: rgba(255, 255, 255, 0.07);
