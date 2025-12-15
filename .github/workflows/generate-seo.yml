@@ -1,0 +1,39 @@
+name: Generate SEO files
+
+on:
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate sitemap and robots.txt
+        env:
+          BASE_URL: ${{ vars.BASE_URL || secrets.BASE_URL || 'https://example.com' }}
+          EXCLUDE_QUERY_PAGES: ${{ vars.EXCLUDE_QUERY_PAGES }}
+          SEPARATE_LANG_SITEMAPS: ${{ vars.SEPARATE_LANG_SITEMAPS }}
+        run: node scripts/generate-seo-files.mjs
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update sitemap and robots.txt"
+          file_pattern: |
+            robots.txt
+            sitemap*.xml
