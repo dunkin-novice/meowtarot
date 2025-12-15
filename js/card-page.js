@@ -1,6 +1,8 @@
 import { initShell } from './common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
 
+const TARGET_CARD_ID = '01-the-fool-upright';
+
 const metaFields = {
   title: document.querySelector('[data-card-meta="title"]'),
   description: document.querySelector('[data-card-meta="description"]'),
@@ -21,6 +23,7 @@ const dom = {
   cardArchetype: document.getElementById('cardArchetype'),
   cardImage: document.getElementById('cardImage'),
   orientationBadge: document.getElementById('orientationBadge'),
+  orientationToggle: document.getElementById('orientationToggle'),
   orientationButtons: Array.from(document.querySelectorAll('[data-orientation]')),
   keywordChips: document.getElementById('keywordChips'),
   cardSummary: document.getElementById('cardSummary'),
@@ -57,11 +60,20 @@ function deriveBaseSlug(rawSlug = '') {
   return normalized.replace(/-reversed(?=-tarot-meaning|$)/, '').replace(/-upright(?=-tarot-meaning|$)/, '');
 }
 
-function extractSlug() {
+function deriveOrientationFromId(rawId = '') {
+  return /reversed/i.test(rawId) ? 'reversed' : 'upright';
+}
+
+function resolveRequestedId() {
   const pathSlug = cleanSlug(window.location.pathname || '');
   const querySlug = new URLSearchParams(window.location.search || '').get('card');
   const pathCandidate = pathSlug && pathSlug !== 'tarot-card-meanings' ? pathSlug : '';
-  return deriveBaseSlug(pathCandidate || querySlug || '');
+  return pathCandidate || querySlug || TARGET_CARD_ID;
+}
+
+function extractSlug() {
+  const requestedId = resolveRequestedId();
+  return deriveBaseSlug(requestedId);
 }
 
 function cardBaseSlug(card) {
@@ -166,7 +178,8 @@ function updateImage(card, orientation) {
   if (!dom.cardImage) return;
   const url = getCardImageUrl(card, { orientation });
   dom.cardImage.src = url;
-  dom.cardImage.alt = card?.image_alt_en || `${card?.card_name_en || 'Tarot card'} illustration`;
+  const safeName = card?.card_name_en || card?.name_en || 'Tarot card';
+  dom.cardImage.alt = card?.image_alt_en || `${safeName} tarot card illustration (${orientationLabel(orientation)})`;
   dom.cardImage.onerror = () => {
     if (orientation === 'reversed' && state.orientedCards.upright) {
       dom.cardImage.src = getCardImageUrl(state.orientedCards.upright, { orientation: 'upright' });
@@ -259,7 +272,9 @@ function buildFaq(card) {
     });
   }
 
-  faqs.forEach((item) => {
+  const filteredFaqs = faqs.filter((item) => Boolean(item.a));
+
+  filteredFaqs.forEach((item) => {
     const detail = document.createElement('details');
     const summary = document.createElement('summary');
     summary.textContent = item.q;
@@ -270,7 +285,7 @@ function buildFaq(card) {
     dom.faqList.appendChild(detail);
   });
 
-  renderFaqSchema(faqs, cardBaseSlug(card));
+  renderFaqSchema(filteredFaqs, cardBaseSlug(card));
 }
 
 function renderFaqSchema(entries, baseSlug) {
@@ -291,7 +306,7 @@ function renderFaqSchema(entries, baseSlug) {
 
 function hydrateBaseCard(baseCard) {
   if (!baseCard) return;
-  setText(dom.cardTitle, `${baseCard.card_name_en || baseCard.name_en || 'Tarot card'} meaning`);
+  setText(dom.cardTitle, `${baseCard.card_name_en || baseCard.name_en || 'Tarot card'} Tarot Meaning`);
   setText(dom.cardAlias, baseCard.alias_th ? `Thai: ${baseCard.alias_th}` : '');
   setText(dom.cardArchetype, baseCard.archetype_en || 'Tarot archetype');
   setText(dom.crumbCard, baseCard.card_name_en || baseCard.name_en || 'Card');
@@ -308,15 +323,27 @@ function bindOrientationToggle() {
 }
 
 function setOrientationAvailability() {
+  const availableCount = dom.orientationButtons.reduce(
+    (count, btn) => count + (state.orientedCards[btn.dataset.orientation] ? 1 : 0),
+    0,
+  );
   dom.orientationButtons.forEach((btn) => {
     const orientation = btn.dataset.orientation;
     const hasCard = Boolean(state.orientedCards[orientation]);
     btn.disabled = !hasCard;
     btn.classList.toggle('is-disabled', !hasCard);
   });
+
+  const shouldHideToggle = availableCount < 2;
+  if (dom.orientationToggle) {
+    dom.orientationToggle.classList.toggle('is-hidden', shouldHideToggle);
+    dom.orientationToggle.setAttribute('aria-hidden', shouldHideToggle ? 'true' : 'false');
+  }
 }
 
 function hydratePage() {
+  const requestedId = resolveRequestedId();
+  const requestedOrientation = deriveOrientationFromId(requestedId);
   state.baseSlug = extractSlug();
   if (!state.baseSlug) return;
   const oriented = findOrientedCards(state.baseSlug);
@@ -328,7 +355,11 @@ function hydratePage() {
   updateSeo(state.baseSlug, state.baseCard);
   buildRelatedCards(state.baseCard);
   setOrientationAvailability();
-  const initialOrientation = state.orientedCards.upright ? 'upright' : 'reversed';
+  const initialOrientation = state.orientedCards[requestedOrientation]
+    ? requestedOrientation
+    : state.orientedCards.upright
+      ? 'upright'
+      : 'reversed';
   const initialCard = state.orientedCards[initialOrientation] || state.baseCard;
   renderOrientation(initialCard, initialOrientation);
 }
