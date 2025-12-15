@@ -10,7 +10,210 @@
     window.location.replace(`/tarot-card-meanings/${search}`);
   </script>
 </head>
-<body>
-  <p>Redirecting to <a href="/tarot-card-meanings/">Tarot Card Meanings</a>…</p>
+
+<body data-page="meanings">
+  <header id="site-header"></header>
+
+  <main class="page-shell page-meanings">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">Tarot Card Meanings</li>
+      </ol>
+    </nav>
+
+    <section class="meaning-hero section-block" id="meaning-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Card meanings</p>
+        <h1>Tarot Card Meanings</h1>
+        <p class="hero-subtext">
+          Learn upright and reversed interpretations for love, career, and money across every Major and Minor Arcana card.
+        </p>
+        <div class="cta-group">
+          <a class="btn btn-primary" href="#category-grid">Browse all meanings</a>
+          <a class="btn btn-secondary" href="reading.html">Try a reading</a>
+        </div>
+        <ul class="hero-highlights">
+          <li>Full library of 78 cards</li>
+          <li>Premium cat-inspired art</li>
+          <li>Beginner-friendly guidance</li>
+        </ul>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-glow"></div>
+        <div class="stat-block">
+          <p class="stat-label">Featured</p>
+          <p class="stat-value">Major Arcana</p>
+          <p class="stat-desc">22 archetypes that anchor every reading.</p>
+        </div>
+        <div class="stat-block secondary">
+          <p class="stat-label">Minor Suits</p>
+          <p class="stat-value">Wands · Cups · Swords · Pentacles</p>
+          <p class="stat-desc">Action, emotion, mind, and material lessons.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block meaning-categories" id="category-grid">
+      <div class="section-heading">
+        <p class="eyebrow">Browse by suit</p>
+        <h2>Card library</h2>
+        <p class="section-lead">Jump into the five tarot families. Major Arcana is highlighted to guide first-time readers.</p>
+      </div>
+      <div class="category-grid">
+        <a class="category-card is-featured" data-category="major" href="/tarot-card-meanings/major">
+          <div class="category-icon" aria-hidden="true">🌟</div>
+          <div>
+            <p class="category-title">Major Arcana</p>
+            <p class="category-desc">Core archetypes and life milestones.</p>
+          </div>
+          <span class="count-badge" data-category-count="major">22 cards</span>
+        </a>
+        <a class="category-card" data-category="wands" href="/tarot-card-meanings/wands">
+          <div class="category-icon" aria-hidden="true">🔥</div>
+          <div>
+            <p class="category-title">Wands</p>
+            <p class="category-desc">Passion, action, and creative fire.</p>
+          </div>
+          <span class="count-badge" data-category-count="wands">14 cards</span>
+        </a>
+        <a class="category-card" data-category="cups" href="/tarot-card-meanings/cups">
+          <div class="category-icon" aria-hidden="true">💧</div>
+          <div>
+            <p class="category-title">Cups</p>
+            <p class="category-desc">Feelings, relationships, and intuition.</p>
+          </div>
+          <span class="count-badge" data-category-count="cups">14 cards</span>
+        </a>
+        <a class="category-card" data-category="swords" href="/tarot-card-meanings/swords">
+          <div class="category-icon" aria-hidden="true">🗡️</div>
+          <div>
+            <p class="category-title">Swords</p>
+            <p class="category-desc">Mindset, clarity, and decisions.</p>
+          </div>
+          <span class="count-badge" data-category-count="swords">14 cards</span>
+        </a>
+        <a class="category-card" data-category="pentacles" href="/tarot-card-meanings/pentacles">
+          <div class="category-icon" aria-hidden="true">🌿</div>
+          <div>
+            <p class="category-title">Pentacles</p>
+            <p class="category-desc">Money, body, and grounded growth.</p>
+          </div>
+          <span class="count-badge" data-category-count="pentacles">14 cards</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block meaning-search" id="search">
+      <div class="section-heading">
+        <p class="eyebrow">Search + quick find</p>
+        <h2>Find a specific card</h2>
+        <p class="section-lead">Search by card name and jump straight into the meaning you need.</p>
+      </div>
+      <div class="search-row">
+        <label class="search-label" for="cardSearchInput">Search a card name…</label>
+        <div class="search-input">
+          <span aria-hidden="true">🔎</span>
+          <input id="cardSearchInput" type="search" name="card" placeholder="Search a card name…" autocomplete="off" />
+          <button class="btn btn-secondary" id="clearSearch" type="button">Clear</button>
+        </div>
+        <div class="chip-row quick-chips" aria-label="Quick card shortcuts">
+          <button class="chip" data-quick="The Fool">The Fool</button>
+          <button class="chip" data-quick="The Lovers">The Lovers</button>
+          <button class="chip" data-quick="Death">Death</button>
+          <button class="chip" data-quick="Ace of Cups">Ace of Cups</button>
+        </div>
+      </div>
+      <ul class="search-results" id="searchResults" aria-live="polite"></ul>
+    </section>
+
+    <section class="section-block helper-cards" id="learning">
+      <div class="section-heading">
+        <p class="eyebrow">Learning helpers</p>
+        <h2>Read with confidence</h2>
+        <p class="section-lead">Short primers that keep your readings grounded and beginner-friendly.</p>
+      </div>
+      <div class="helper-grid">
+        <a class="helper-card" href="/guides/upright-vs-reversed">
+          <div class="helper-icon" aria-hidden="true">↕️</div>
+          <div>
+            <p class="helper-title">Upright vs Reversed</p>
+            <p class="helper-desc">Spot the difference between supportive and blocked energy.</p>
+          </div>
+        </a>
+        <a class="helper-card" href="/guides/how-to-read-a-card">
+          <div class="helper-icon" aria-hidden="true">🧭</div>
+          <div>
+            <p class="helper-title">How to read a card</p>
+            <p class="helper-desc">Pull symbols, colors, and keywords into a short story.</p>
+          </div>
+        </a>
+        <a class="helper-card" href="/guides/beginner-spreads">
+          <div class="helper-icon" aria-hidden="true">📐</div>
+          <div>
+            <p class="helper-title">Spreads for beginners</p>
+            <p class="helper-desc">Start with 1-card clarity or a 3-card past/present/future.</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block featured-cards" id="featured">
+      <div class="section-heading">
+        <p class="eyebrow">Featured & trending</p>
+        <h2>Popular tarot cards</h2>
+        <p class="section-lead">Top searched or frequently drawn cards to explore first.</p>
+      </div>
+      <div class="featured-grid" id="featuredCards"></div>
+    </section>
+
+    <section class="section-block faq" id="faq">
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Tarot card meanings FAQs</h2>
+        <p class="section-lead">Quick answers to common questions about reading and applying tarot interpretations.</p>
+      </div>
+      <div class="faq-list">
+        <details open>
+          <summary>What are tarot card meanings?</summary>
+          <p>They are the symbols, archetypes, and guidance behind each card in upright and reversed positions.</p>
+        </details>
+        <details>
+          <summary>How do upright and reversed meanings differ?</summary>
+          <p>Upright meanings highlight the main supportive energy; reversed meanings reveal blocks, delays, or hidden lessons.</p>
+        </details>
+        <details>
+          <summary>Can I use these meanings for love, career, and money?</summary>
+          <p>Yes. MeowTarot offers prompts you can map directly to relationships, work, and finances.</p>
+        </details>
+        <details>
+          <summary>How do I find a specific tarot card?</summary>
+          <p>Use the search bar or quick chips to jump to cards like The Fool, The Lovers, Death, or Ace of Cups.</p>
+        </details>
+        <details>
+          <summary>Do I need experience to read tarot meanings?</summary>
+          <p>No. Start with the learning helpers and build confidence one card at a time.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="section-block footer-cta" id="footer-cta">
+      <div class="footer-cta-inner">
+        <div>
+          <p class="eyebrow">Ready to draw?</p>
+          <h3>Start your MeowTarot reading</h3>
+          <p class="section-lead">Pull a card now or dive deeper into the Major Arcana guide.</p>
+        </div>
+        <div class="cta-group">
+          <a class="btn btn-primary" href="reading.html">Start a reading</a>
+          <a class="btn btn-secondary" href="/tarot-card-meanings/major">Browse Major Arcana</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="js/meanings.js"></script>
 </body>
 </html>
