@@ -25,10 +25,12 @@ export function getCardImageUrl(card, options = {}) {
   const deck = getActiveDeck();
   const orientation = options.orientation || card.orientation || 'upright';
 
-  // TODO: once card image IDs are finalized, replace this with the real mapping
-  const imageId = card.image_id || card.card_id || card.id; // temporary fallback
+  const baseId = String(card.image_id || card.card_id || card.id || '')
+    .replace(/-(upright|reversed)$/i, '');
 
-  return `${deck.assetsBase}/${imageId}.webp`;
+  const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
+
+  return `${deck.assetsBase}/${finalId}.webp`;
 }
 
 // Dynamic deck used by the app

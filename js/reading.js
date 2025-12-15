@@ -281,12 +281,21 @@ function getSafeCardImageUrl(card) {
     const majNum = Number(majMatch[1]);
     const num = String(majNum + 1).padStart(2, '0');
     const slug = normalizeId(card.card_name_en || card.name_en || card.name || 'card');
-    const orient = getOrientationEnglish(card).toLowerCase(); // upright/reversed
+    const orient = isReversed(card) ? 'reversed' : 'upright';
     const mappedImageId = `${num}-${slug}-${orient}`;
-    return getCardImageUrl({ ...card, id: mappedImageId, image_id: mappedImageId });
+    return getCardImageUrl({ ...card, id: mappedImageId, image_id: mappedImageId, orientation: orient });
   }
 
-  return getCardImageUrl(card);
+  const orientation = isReversed(card) ? 'reversed' : 'upright';
+  return getCardImageUrl(card, { orientation });
+}
+
+function getUprightImageCard(card) {
+  const sourceId = String(card?.image_id || card?.card_id || card?.id || '');
+  const base = sourceId.replace(/-(upright|reversed)$/i, '');
+  if (!base) return null;
+  const uprightId = `${base}-upright`;
+  return { ...card, id: uprightId, card_id: uprightId, image_id: uprightId, orientation: 'upright' };
 }
 
 function buildCardArt(card, variant = 'hero') {
@@ -300,7 +309,15 @@ function buildCardArt(card, variant = 'hero') {
 
   img.src = getSafeCardImageUrl(card);
   img.addEventListener('error', () => {
-    img.src = getCardBackUrl();
+    const upright = getUprightImageCard(card);
+    if (img.dataset.fallback === 'upright' || !upright) {
+      img.dataset.fallback = 'back';
+      img.src = getCardBackUrl();
+      return;
+    }
+
+    img.dataset.fallback = 'upright';
+    img.src = getSafeCardImageUrl(upright);
   });
 
   wrap.appendChild(img);
