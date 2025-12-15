@@ -1939,6 +1939,19 @@ details summary::-webkit-details-marker {
   flex-wrap: wrap;
 }
 
+.filter-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #dfe4ff;
+}
+
+.chip-clear {
+  border-color: rgba(242, 219, 166, 0.4);
+  color: #fff;
+}
+
 .search-results {
   list-style: none;
   padding: 0;
@@ -2030,46 +2043,37 @@ details summary::-webkit-details-marker {
   color: #dfe4ff;
 }
 
-.featured-grid {
+.featured-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
-.featured-card {
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+.featured-link-item {
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-.featured-card:hover,
-.featured-card:focus-within {
-  transform: translateY(-3px);
+.featured-link-item:hover,
+.featured-link-item:focus-within {
   border-color: rgba(242, 219, 166, 0.4);
+  transform: translateY(-2px);
 }
 
 .featured-link {
-  display: grid;
-  grid-template-columns: 120px 1fr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   color: inherit;
+  padding: 12px 14px;
 }
 
-.featured-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  background: rgba(0, 0, 0, 0.35);
-}
-
-.featured-copy {
-  padding: 12px 12px 12px 0;
-}
-
-.featured-copy h3 {
+.featured-link h3 {
   margin: 4px 0;
 }
 
