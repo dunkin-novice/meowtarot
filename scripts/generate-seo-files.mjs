@@ -42,6 +42,7 @@ async function walkHtmlFiles(startDir) {
       if (isDevLike(absolutePath)) continue;
       files.push(...(await walkHtmlFiles(absolutePath)));
     } else if (entry.isFile() && entry.name.endsWith('.html')) {
+      if (entry.name === 'meanings.html') continue;
       if (isDevLike(absolutePath)) continue;
       const relative = asPosix(path.relative(ROOT_DIR, absolutePath));
       files.push(relative);
@@ -118,7 +119,7 @@ function buildCardUrls(slugs, lastmod) {
   const urls = [];
 
   for (const { code, prefix } of LOCALES) {
-    const basePath = prefix ? `${prefix}/meanings.html` : 'meanings.html';
+    const basePath = prefix ? `${prefix}/tarot-card-meanings/` : 'tarot-card-meanings/';
     for (const slug of slugs) {
       const loc = `${BASE_URL}/${basePath}?card=${encodeURIComponent(slug)}`;
       urls.push({ loc, lastmod: lastmodDate, locale: code });

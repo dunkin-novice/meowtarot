@@ -14,7 +14,7 @@ export function renderNavbar(container, onLangToggle) {
           <a href="daily.html" class="nav-link" data-page="daily" data-i18n="navDaily"></a>
           <a href="overall.html" class="nav-link" data-page="overall" data-i18n="navOverall"></a>
           <a href="question.html" class="nav-link" data-page="question" data-i18n="navQuestion"></a>
-          <a href="meanings.html" class="nav-link" data-page="meanings" data-i18n="navMeanings"></a>
+          <a href="tarot-card-meanings/" class="nav-link" data-page="meanings" data-i18n="navMeanings"></a>
         </div>
         <div class="nav-meta">
           <div class="language-toggle" aria-label="Language toggle">

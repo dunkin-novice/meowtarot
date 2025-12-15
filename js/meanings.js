@@ -1,5 +1,5 @@
 import { initShell } from './common.js';
-import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
+import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
 
 const state = {
   currentLang: 'en',
@@ -18,6 +18,7 @@ const searchResultsEl = document.getElementById('searchResults');
 const quickChips = Array.from(document.querySelectorAll('[data-quick]'));
 const clearSearchBtn = document.getElementById('clearSearch');
 const featuredGrid = document.getElementById('featuredCards');
+const filterNote = document.getElementById('categoryFilterNote');
 
 const featuredSlugs = [
   'the-fool-tarot-meaning',
@@ -34,6 +35,23 @@ const featuredSlugs = [
   'ace-of-swords-tarot-meaning',
   'ace-of-pentacles-tarot-meaning',
 ];
+
+const categoryNames = {
+  en: {
+    major: 'Major Arcana',
+    wands: 'Wands',
+    cups: 'Cups',
+    swords: 'Swords',
+    pentacles: 'Pentacles',
+  },
+  th: {
+    major: 'Major Arcana',
+    wands: 'ไม้เท้า',
+    cups: 'ถ้วย',
+    swords: 'ดาบ',
+    pentacles: 'เหรียญ',
+  },
+};
 
 function getUprightCards() {
   return meowTarotCards.filter((card) => (card.orientation || '').toLowerCase() !== 'reversed');
@@ -90,13 +108,18 @@ function renderCategoryCounts() {
 
 function buildResultHref(card) {
   const slug = card.seo_slug_en || normalizeId(getCardName(card));
-  return `meanings.html?card=${slug}`;
+  const basePath = state.currentLang === 'th' ? '/th/tarot-card-meanings/' : '/tarot-card-meanings/';
+  return `${basePath}?card=${slug}`;
 }
 
 function renderSearchResults(query = '') {
   if (!searchResultsEl) return;
   const trimmed = query.trim().toLowerCase();
-  const cards = getUprightCards();
+  let cards = getUprightCards();
+
+  if (state.activeCategory) {
+    cards = cards.filter((card) => getCardCategory(card) === state.activeCategory);
+  }
 
   const matches = trimmed
     ? cards.filter((card) => {
@@ -141,6 +164,34 @@ function renderSearchResults(query = '') {
   });
 }
 
+function renderFilterNote() {
+  if (!filterNote) return;
+  if (!state.activeCategory) {
+    filterNote.hidden = true;
+    filterNote.innerHTML = '';
+    return;
+  }
+
+  const label = categoryNames[state.currentLang]?.[state.activeCategory] || state.activeCategory;
+  const intro = state.currentLang === 'th' ? 'กำลังกรอง:' : 'Filtering:';
+  const clearLabel = state.currentLang === 'th' ? 'ลบตัวกรอง' : 'Clear';
+
+  filterNote.hidden = false;
+  filterNote.innerHTML = `
+    <span>${intro} <strong>${label}</strong></span>
+    <button type="button" class="chip chip-clear" id="clearCategoryFilter">${clearLabel}</button>
+  `;
+
+  const clearBtn = document.getElementById('clearCategoryFilter');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      state.activeCategory = null;
+      renderFilterNote();
+      renderSearchResults(searchInput ? searchInput.value : '');
+    });
+  }
+}
+
 function categoryLabel(key) {
   switch (key) {
     case 'wands':
@@ -177,29 +228,25 @@ function renderFeaturedCards() {
   });
 
   featured.slice(0, 12).forEach((card) => {
-    const cardEl = document.createElement('article');
-    cardEl.className = 'featured-card';
+    const item = document.createElement('li');
+    item.className = 'featured-link-item';
 
     const name = getCardName(card);
     const category = getCardCategory(card);
     const summary = getCardSummary(card);
-    const imageUrl = getCardImageUrl(card, { orientation: 'upright' });
-    const altText = card.image_alt_en || `${name} tarot card illustration`;
 
-    cardEl.innerHTML = `
+    item.innerHTML = `
       <a class="featured-link" href="${buildResultHref(card)}">
-        <div class="featured-media">
-          <img loading="lazy" src="${imageUrl}" alt="${altText}" />
-        </div>
-        <div class="featured-copy">
+        <div>
           <p class="result-meta">${categoryLabel(category)}</p>
           <h3>${name}</h3>
           ${summary ? `<p class="result-summary">${summary}</p>` : ''}
         </div>
+        <span aria-hidden="true">›</span>
       </a>
     `;
 
-    featuredGrid.appendChild(cardEl);
+    featuredGrid.appendChild(item);
   });
 }
 
@@ -235,6 +282,12 @@ function applyInitialQuery() {
   if (cardParam) {
     searchInput.value = cardParam.replace(/-/g, ' ');
   }
+  const categoryParam = params.get('category');
+  const allowed = ['major', 'wands', 'cups', 'swords', 'pentacles'];
+  if (categoryParam && allowed.includes(categoryParam.toLowerCase())) {
+    state.activeCategory = categoryParam.toLowerCase();
+  }
+  renderFilterNote();
   renderSearchResults(searchInput.value);
 }
 
@@ -242,6 +295,7 @@ function handleTranslations() {
   renderCategoryCounts();
   renderFeaturedCards();
   renderSearchResults(searchInput ? searchInput.value : '');
+  renderFilterNote();
 }
 
 function init() {
