@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title data-card-meta="title">Tarot Card Meaning | MeowTarot</title>
+  <meta name="description" content="" data-card-meta="description" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="MeowTarot" />
+  <meta property="og:title" content="" data-card-meta="og-title" />
+  <meta property="og:description" content="" data-card-meta="og-description" />
+  <meta property="og:url" content="" data-card-meta="og-url" />
+  <meta property="og:image" content="https://www.meowtarot.com/assets/meowtarot-og.jpg" />
+  <meta property="og:image:alt" content="Illustrated tarot cards with playful cats." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="" data-card-meta="twitter-title" />
+  <meta name="twitter:description" content="" data-card-meta="twitter-description" />
+  <meta name="twitter:image" content="https://www.meowtarot.com/assets/meowtarot-og.jpg" />
+  <link rel="canonical" href="https://www.meowtarot.com/tarot-card-meanings/" data-card-meta="canonical" />
+  <link rel="alternate" href="https://www.meowtarot.com/tarot-card-meanings/" hreflang="en" data-card-meta="hreflang-en" />
+  <link rel="alternate" href="https://www.meowtarot.com/th/tarot-card-meanings/" hreflang="th-TH" data-card-meta="hreflang-th" />
+  <link rel="alternate" href="https://www.meowtarot.com/tarot-card-meanings/" hreflang="x-default" data-card-meta="hreflang-x" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script type="application/ld+json" id="card-schema"></script>
+</head>
+<body data-page="card-meaning">
+  <header id="site-header"></header>
+  <main class="page-shell page-card-meaning">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li><a href="/tarot-card-meanings/">Tarot Card Meanings</a></li>
+        <li aria-current="page" id="crumbCard">Card</li>
+      </ol>
+    </nav>
+
+    <section class="card-hero section-block" id="cardHero">
+      <div class="card-visual">
+        <div class="card-orientation-badge" id="orientationBadge">Upright</div>
+        <div class="card-frame">
+          <img id="cardImage" alt="Tarot card illustration" loading="lazy" />
+        </div>
+      </div>
+      <div class="card-meta">
+        <p class="eyebrow" id="cardArchetype">Tarot archetype</p>
+        <h1 id="cardTitle">Tarot card meaning</h1>
+        <p class="card-alias" id="cardAlias"></p>
+        <div class="orientation-toggle" role="group" aria-label="Choose card orientation">
+          <button type="button" class="chip" data-orientation="upright">Upright</button>
+          <button type="button" class="chip" data-orientation="reversed">Reversed</button>
+        </div>
+        <div class="keyword-chips" id="keywordChips" aria-label="Card keywords"></div>
+        <p class="card-summary" id="cardSummary"></p>
+      </div>
+    </section>
+
+    <section class="section-block meaning-grid" id="meaningGrid">
+      <div class="meaning-card">
+        <h2>Overview</h2>
+        <p id="meaningOverview"></p>
+      </div>
+      <div class="meaning-card">
+        <h2>Love</h2>
+        <p id="meaningLove"></p>
+      </div>
+      <div class="meaning-card">
+        <h2>Career &amp; Money</h2>
+        <div id="meaningCareer"></div>
+      </div>
+      <div class="meaning-card">
+        <h2>Advice</h2>
+        <p id="meaningAdvice"></p>
+      </div>
+      <div class="meaning-card">
+        <h2>Warning / Shadow</h2>
+        <p id="meaningWarning"></p>
+      </div>
+    </section>
+
+    <section class="section-block quick-spreads" id="quickSpreads">
+      <div class="section-heading">
+        <p class="eyebrow">Quick pulls</p>
+        <h2>Spread-ready meanings</h2>
+      </div>
+      <div class="spread-grid">
+        <article class="spread-card">
+          <p class="spread-label">Single card</p>
+          <p id="spreadSingle"></p>
+        </article>
+        <article class="spread-card">
+          <p class="spread-label">Past</p>
+          <p id="spreadPast"></p>
+        </article>
+        <article class="spread-card">
+          <p class="spread-label">Present</p>
+          <p id="spreadPresent"></p>
+        </article>
+        <article class="spread-card">
+          <p class="spread-label">Future</p>
+          <p id="spreadFuture"></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block related-cards" id="relatedCardsSection">
+      <div class="section-heading">
+        <p class="eyebrow">You may also like</p>
+        <h2>Related cards</h2>
+      </div>
+      <ul id="relatedCards" class="related-list"></ul>
+    </section>
+
+    <section class="section-block card-faq" id="cardFaq">
+      <div class="section-heading">
+        <p class="eyebrow">Card FAQs</p>
+        <h2>Questions readers ask</h2>
+      </div>
+      <div class="faq-list" id="faqList"></div>
+    </section>
+  </main>
+  <script type="module" src="/js/card-page.js"></script>
+</body>
+</html>

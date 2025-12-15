@@ -109,7 +109,7 @@ function renderCategoryCounts() {
 function buildResultHref(card) {
   const slug = card.seo_slug_en || normalizeId(getCardName(card));
   const basePath = state.currentLang === 'th' ? '/th/tarot-card-meanings/' : '/tarot-card-meanings/';
-  return `${basePath}?card=${slug}`;
+  return `${basePath}${slug}/`;
 }
 
 function renderSearchResults(query = '') {
