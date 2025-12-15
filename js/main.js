@@ -61,41 +61,85 @@ function animateBoard(boardEl) {
   });
 }
 
-function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange) {
+function animateCollectSlots(boardEl, slots) {
+  const boardRect = boardEl.getBoundingClientRect();
+  const centerX = boardRect.left + boardRect.width / 2;
+  const centerY = boardRect.top + boardRect.height / 2;
+
+  slots.forEach((slot) => {
+    const rect = slot.getBoundingClientRect();
+    const dx = centerX - (rect.left + rect.width / 2);
+    const dy = centerY - (rect.top + rect.height / 2);
+    slot.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+    slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+    slot.style.opacity = '0.8';
+  });
+}
+
+function animateDealSlots(boardEl, slots, onDone) {
+  const boardRect = boardEl.getBoundingClientRect();
+  const centerX = boardRect.left + boardRect.width / 2;
+  const centerY = boardRect.top + boardRect.height / 2;
+
+  slots.forEach((slot) => {
+    const rect = slot.getBoundingClientRect();
+    const dx = centerX - (rect.left + rect.width / 2);
+    const dy = centerY - (rect.top + rect.height / 2);
+    slot.style.transition = 'none';
+    slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+    slot.style.opacity = '0';
+  });
+
+  requestAnimationFrame(() => {
+    slots.forEach((slot, idx) => {
+      slot.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+      setTimeout(() => {
+        slot.style.opacity = '1';
+        slot.style.transform = 'translate(0, 0) scale(1)';
+      }, idx * DEAL_STAGGER);
+    });
+
+    const total = 350 + slots.length * DEAL_STAGGER + 120;
+    setTimeout(() => {
+      onDone?.();
+    }, total);
+  });
+}
+
+function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { animated = false } = {}) {
   let cards = [];
   let selected = [];
-  const render = () => {
-    cards = getDrawableCards(boardSize);
-    selected = [];
-    boardEl.innerHTML = '';
-    const slots = [];
+  let slots = [];
 
-    const refreshBadges = () => {
+  const refreshBadges = () => {
+    slots.forEach((slot) => {
+      slot.classList.remove('is-selected');
+      slot.querySelector('.selection-badge')?.remove();
+    });
+    selected.forEach((idx, order) => {
+      const slot = slots[idx];
+      if (!slot) return;
+      slot.classList.add('is-selected');
+      const badge = document.createElement('span');
+      badge.className = 'selection-badge';
+      badge.textContent = `${order + 1}`;
+      slot.appendChild(badge);
+    });
+    if (selectionGoal > 1 && selected.length >= selectionGoal) {
+      slots.forEach((slot, idx) => {
+        if (!selected.includes(idx)) slot.disabled = true;
+      });
+    } else {
       slots.forEach((slot) => {
-        slot.classList.remove('is-selected');
-        slot.querySelector('.selection-badge')?.remove();
+        slot.disabled = false;
       });
-      selected.forEach((idx, order) => {
-        const slot = slots[idx];
-        if (!slot) return;
-        slot.classList.add('is-selected');
-        const badge = document.createElement('span');
-        badge.className = 'selection-badge';
-        badge.textContent = `${order + 1}`;
-        slot.appendChild(badge);
-      });
-      if (selectionGoal > 1 && selected.length >= selectionGoal) {
-        slots.forEach((slot, idx) => {
-          if (!selected.includes(idx)) slot.disabled = true;
-        });
-      } else {
-        slots.forEach((slot) => {
-          slot.disabled = false;
-        });
-      }
-      onSelectionChange(selected.map((idx) => cards[idx]).filter(Boolean));
-    };
+    }
+    onSelectionChange(selected.map((idx) => cards[idx]).filter(Boolean));
+  };
 
+  const buildSlots = () => {
+    boardEl.innerHTML = '';
+    slots = [];
     for (let i = 0; i < boardSize; i += 1) {
       const slot = document.createElement('button');
       slot.type = 'button';
@@ -116,15 +160,45 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange) {
       slots.push(slot);
       boardEl.appendChild(slot);
     }
-
-    animateBoard(boardEl);
-    refreshBadges();
   };
 
-  render();
+  const performDeal = (withAnimation) => {
+    buildSlots();
+    refreshBadges();
+    if (withAnimation) {
+      boardEl.classList.add('is-locked');
+      requestAnimationFrame(() => {
+        animateDealSlots(boardEl, slots, () => {
+          boardEl.classList.remove('is-locked');
+          refreshBadges();
+        });
+      });
+    } else {
+      animateBoard(boardEl);
+    }
+  };
+
+  const render = ({ withAnimation = false } = {}) => {
+    const previousSlots = withAnimation ? Array.from(boardEl.querySelectorAll('.card-slot')) : [];
+    const proceed = () => {
+      cards = getDrawableCards(boardSize);
+      selected = [];
+      performDeal(withAnimation);
+    };
+
+    if (withAnimation && previousSlots.length) {
+      boardEl.classList.add('is-locked');
+      animateCollectSlots(boardEl, previousSlots);
+      setTimeout(proceed, STACK_DURATION);
+    } else {
+      proceed();
+    }
+  };
+
+  render({ withAnimation: animated });
 
   return {
-    render,
+    render: () => render({ withAnimation: true }),
     getSelectedCards: () => selected.map((idx) => cards[idx]).filter(Boolean),
   };
 }
@@ -135,8 +209,7 @@ function renderDaily() {
   const shuffleBtn = document.getElementById('daily-shuffle');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  const startShell = document.getElementById('daily-start-shell');
-  if (!startBtn || !board || !shuffleBtn || !continueBtn || !counter || !startShell) return;
+  if (!startBtn || !board || !shuffleBtn || !continueBtn || !counter) return;
 
   let latestSelection = [];
   let isAnimating = false;
@@ -188,49 +261,10 @@ function renderDaily() {
   };
 
   const animateDeal = (slots) => {
-    const boardRect = board.getBoundingClientRect();
-    const centerX = boardRect.left + boardRect.width / 2;
-    const centerY = boardRect.top + boardRect.height / 2;
-
-    slots.forEach((slot) => {
-      const rect = slot.getBoundingClientRect();
-      const dx = centerX - (rect.left + rect.width / 2);
-      const dy = centerY - (rect.top + rect.height / 2);
-      slot.style.transition = 'none';
-      slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
-      slot.style.opacity = '0';
-    });
-
-    requestAnimationFrame(() => {
-      slots.forEach((slot, idx) => {
-        slot.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
-        setTimeout(() => {
-          slot.style.opacity = '1';
-          slot.style.transform = 'translate(0, 0) scale(1)';
-        }, idx * DEAL_STAGGER);
-      });
-
-      const total = 350 + slots.length * DEAL_STAGGER + 120;
-      setTimeout(() => {
-        isAnimating = false;
-        updateContinue(latestSelection);
-        board.classList.remove('is-locked');
-      }, total);
-    });
-  };
-
-  const animateCollect = (slots) => {
-    const boardRect = board.getBoundingClientRect();
-    const centerX = boardRect.left + boardRect.width / 2;
-    const centerY = boardRect.top + boardRect.height / 2;
-
-    slots.forEach((slot) => {
-      const rect = slot.getBoundingClientRect();
-      const dx = centerX - (rect.left + rect.width / 2);
-      const dy = centerY - (rect.top + rect.height / 2);
-      slot.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-      slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
-      slot.style.opacity = '0.8';
+    animateDealSlots(board, slots, () => {
+      isAnimating = false;
+      updateContinue(latestSelection);
+      board.classList.remove('is-locked');
     });
   };
 
@@ -246,7 +280,7 @@ function renderDaily() {
   startBtn.onclick = () => {
     if (!state.cards.length) return;
     hasStarted = true;
-    startShell.classList.add('is-hidden');
+    startBtn.disabled = true;
     shuffleBtn.disabled = true;
     continueBtn.disabled = true;
     deal();
@@ -259,7 +293,7 @@ function renderDaily() {
     shuffleBtn.disabled = true;
     resetSelection();
     const slots = Array.from(board.querySelectorAll('.card-slot'));
-    animateCollect(slots);
+    animateCollectSlots(board, slots);
     setTimeout(() => {
       deal();
     }, STACK_DURATION);
@@ -294,7 +328,7 @@ function renderOverall() {
     board.hidden = false;
     toolbar.hidden = false;
     actions.hidden = false;
-    boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue);
+    boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue, { animated: true });
     updateContinue([]);
   };
 
