@@ -40,7 +40,7 @@
     <section class="card-hero section-block" id="cardHero">
       <div class="card-visual">
         <div class="card-orientation-badge" id="orientationBadge">Upright</div>
-        <div class="card-frame">
+        <div class="card-frame" aria-live="polite">
           <img id="cardImage" alt="Tarot card illustration" loading="lazy" />
         </div>
       </div>
@@ -48,7 +48,7 @@
         <p class="eyebrow" id="cardArchetype">Tarot archetype</p>
         <h1 id="cardTitle">Tarot card meaning</h1>
         <p class="card-alias" id="cardAlias"></p>
-        <div class="orientation-toggle" role="group" aria-label="Choose card orientation">
+        <div class="orientation-toggle" id="orientationToggle" role="group" aria-label="Choose card orientation">
           <button type="button" class="chip" data-orientation="upright">Upright</button>
           <button type="button" class="chip" data-orientation="reversed">Reversed</button>
         </div>
@@ -119,6 +119,20 @@
         <h2>Questions readers ask</h2>
       </div>
       <div class="faq-list" id="faqList"></div>
+    </section>
+
+    <section class="section-block footer-cta" id="footerCta">
+      <div class="section-heading">
+        <p class="eyebrow">Ready to draw?</p>
+        <h2>Take your next step</h2>
+        <p class="section-lead">Start a guided spread with artfully crafted prompts for your reading.</p>
+      </div>
+      <div class="footer-cta-inner">
+        <div>
+          <p class="card-summary">Stay in the flow and pull the next card with confidence.</p>
+        </div>
+        <a class="btn btn-primary" href="/reading.html">Start a reading</a>
+      </div>
     </section>
   </main>
   <script type="module" src="/js/card-page.js"></script>
