@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Tarot Card Meanings | MeowTarot</title>
+  <meta name="description" content="" data-suit-meta="description" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="MeowTarot" />
+  <meta property="og:title" content="" data-suit-meta="og-title" />
+  <meta property="og:description" content="" data-suit-meta="og-description" />
+  <meta property="og:url" content="" data-suit-meta="og-url" />
+  <meta property="og:image" content="https://www.meowtarot.com/assets/meowtarot-og.jpg" />
+  <meta property="og:image:alt" content="Cat-themed tarot cards on a cosmic table." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="" data-suit-meta="twitter-title" />
+  <meta name="twitter:description" content="" data-suit-meta="twitter-description" />
+  <meta name="twitter:image" content="https://www.meowtarot.com/assets/meowtarot-og.jpg" />
+  <link rel="canonical" href="https://www.meowtarot.com/tarot-card-meanings/pentacles" data-suit-meta="canonical" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Space+Grotesk:wght@400;500;600&family=Prata&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script type="application/ld+json" id="suit-schema"></script>
+</head>
+<body data-page="suit" data-suit="pentacles">
+  <header id="site-header"></header>
+  <main class="page-shell page-suit">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li><a href="/meanings.html">Tarot Card Meanings</a></li>
+        <li aria-current="page" data-suit-crumb>Pentacles</li>
+      </ol>
+    </nav>
+
+    <section class="suit-hero section-block" id="suit-hero">
+      <div class="hero-copy">
+        <p class="eyebrow" data-suit-eyebrow>Suit guide</p>
+        <h1 id="suitTitle">Tarot Card Meanings</h1>
+        <p class="hero-subtext" id="suitIntro"></p>
+        <div class="chip-row" id="suitChips"></div>
+      </div>
+      <div class="hero-support">
+        <div class="hero-card-count">
+          <p class="label">Cards in this suit</p>
+          <p class="value" id="suitCardCount">14</p>
+        </div>
+        <div class="hero-highlights" id="suitHighlights"></div>
+      </div>
+    </section>
+
+    <section class="section-block suit-cards" id="suit-cards">
+      <div class="section-heading suit-heading">
+        <div>
+          <p class="eyebrow">Browse the suit</p>
+          <h2>All cards in order</h2>
+          <p class="section-lead">See every card in canonical order and jump into the full meaning page.</p>
+        </div>
+        <div class="view-toggle" role="group" aria-label="Toggle card layout">
+          <button class="toggle active" data-view="grid">Grid</button>
+          <button class="toggle" data-view="list">List</button>
+        </div>
+      </div>
+      <div id="suitCardList" class="suit-card-collection is-grid" aria-live="polite"></div>
+    </section>
+
+    <section class="section-block suit-guide" id="suit-guide">
+      <div class="section-heading">
+        <p class="eyebrow">Mini guide</p>
+        <h2>How to read this suit</h2>
+        <p class="section-lead" id="guideLead"></p>
+      </div>
+      <div class="guide-grid" id="guideContent"></div>
+    </section>
+
+    <section class="section-block suit-faq" id="suit-faq">
+      <div class="section-heading">
+        <p class="eyebrow">Suit FAQ</p>
+        <h2 id="faqTitle">Common questions</h2>
+        <p class="section-lead" id="faqLead"></p>
+      </div>
+      <div class="faq-list" id="faqList"></div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+  <script type="module" src="/js/suit-page.js"></script>
+</body>
+</html>
