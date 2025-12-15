@@ -5,14 +5,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-const BASE_URL = (process.env.BASE_URL || '').replace(/\/$/, '');
-if (!BASE_URL) {
-  console.error('BASE_URL environment variable is required (e.g., https://example.com)');
-  process.exitCode = 1;
-  throw new Error('BASE_URL is missing');
-}
-
-const EXCLUDE_QUERY_PAGES = String(process.env.EXCLUDE_QUERY_PAGES || '').toLowerCase() === 'true';
+const BASE_URL = (process.env.BASE_URL || 'https://www.meowtarot.com').replace(/\/$/, '');
 const SEPARATE_LANG_SITEMAPS = String(process.env.SEPARATE_LANG_SITEMAPS || '').toLowerCase() === 'true';
 
 const LOCALES = [
@@ -28,6 +21,18 @@ function asPosix(p) {
 
 function isDevLike(filePath) {
   return DEVLIKE_SEGMENTS.some((segment) => filePath.split(path.sep).includes(segment));
+}
+
+function normalizeSlug(value = '') {
+  const normalized = value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return normalized.replace(/-(upright|reversed)(?=-|$)/g, '').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
 }
 
 async function walkHtmlFiles(startDir) {
@@ -56,12 +61,19 @@ async function loadCardSlugs() {
   const cardsPath = path.join(ROOT_DIR, 'data', 'cards.json');
   try {
     const raw = await fs.readFile(cardsPath, 'utf8');
-    const data = JSON.parse(raw);
-    const slugs = data
-      .map((card) => card.card_id || card.id || card.slug)
-      .filter(Boolean)
-      .map(String);
-    return { slugs, lastmod: (await fs.stat(cardsPath)).mtime };
+    const parsed = JSON.parse(raw);
+    const cards = Array.isArray(parsed) ? parsed : Array.isArray(parsed.cards) ? parsed.cards : [];
+
+    const baseSlugs = new Set();
+    for (const card of cards) {
+      const candidate =
+        card.seo_slug_en || card.card_id || card.id || card.slug || card.card_name_en || card.name_en || card.name;
+      if (!candidate) continue;
+      const slug = normalizeSlug(candidate);
+      if (slug) baseSlugs.add(slug);
+    }
+
+    return { slugs: Array.from(baseSlugs.values()).sort(), lastmod: (await fs.stat(cardsPath)).mtime };
   } catch (error) {
     console.warn('No card data found at data/cards.json; card-specific URLs will be skipped.');
     return { slugs: [], lastmod: undefined };
@@ -114,15 +126,15 @@ async function buildStaticPages() {
 }
 
 function buildCardUrls(slugs, lastmod) {
-  if (!slugs.length || EXCLUDE_QUERY_PAGES) return [];
+  if (!slugs.length) return [];
   const lastmodDate = formatDate(lastmod);
   const urls = [];
 
-  for (const { code, prefix } of LOCALES) {
+  for (const { prefix } of LOCALES) {
     const basePath = prefix ? `${prefix}/tarot-card-meanings/` : 'tarot-card-meanings/';
     for (const slug of slugs) {
-      const loc = `${BASE_URL}/${basePath}?card=${encodeURIComponent(slug)}`;
-      urls.push({ loc, lastmod: lastmodDate, locale: code });
+      const loc = `${BASE_URL}/${basePath}${slug}/`;
+      urls.push({ loc, lastmod: lastmodDate });
     }
   }
 

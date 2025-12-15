@@ -25,8 +25,7 @@ jobs:
 
       - name: Generate sitemap and robots.txt
         env:
-          BASE_URL: ${{ vars.BASE_URL || secrets.BASE_URL || 'https://example.com' }}
-          EXCLUDE_QUERY_PAGES: ${{ vars.EXCLUDE_QUERY_PAGES }}
+          BASE_URL: ${{ vars.BASE_URL || secrets.BASE_URL || 'https://www.meowtarot.com' }}
           SEPARATE_LANG_SITEMAPS: ${{ vars.SEPARATE_LANG_SITEMAPS }}
         run: node scripts/generate-seo-files.mjs
 
