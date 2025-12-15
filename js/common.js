@@ -311,9 +311,11 @@ function highlightActiveNav(activePage) {
 function attachLogoHome() {
   document.querySelectorAll('[data-logo]').forEach((logo) => {
     logo.addEventListener('click', (e) => {
-      if (location.pathname.endsWith('index.html') || location.pathname === '/') return;
+      const isThai = location.pathname.startsWith('/th');
+      const homePath = isThai ? '/th/' : '/';
+      if (location.pathname === homePath || location.pathname.endsWith('/index.html')) return;
       e.preventDefault();
-      window.location.href = 'index.html';
+      window.location.href = homePath;
     });
   });
 }
