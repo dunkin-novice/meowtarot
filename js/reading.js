@@ -6,7 +6,7 @@ import {
   getCardImageUrl,
   getCardBackUrl,
 } from './data.js';
-import { findCardById } from './reading-helpers.js';
+import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 
 const params = new URLSearchParams(window.location.search);
 const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
@@ -55,7 +55,16 @@ const saveBtn = document.getElementById('saveBtn');
 function getText(card, keyBase, lang = state.currentLang) {
   if (!card) return '';
   const suffix = lang === 'en' ? '_en' : '_th';
-  return card[`${keyBase}${suffix}`] || card[keyBase] || '';
+  const orientation = toOrientation(card);
+  const orientedKey = orientation === 'reversed' ? `${keyBase}_reversed${suffix}` : `${keyBase}_upright${suffix}`;
+  const orientedBaseKey = orientation === 'reversed' ? `${keyBase}_reversed` : `${keyBase}_upright`;
+  return (
+    card[orientedKey]
+    || card[orientedBaseKey]
+    || card[`${keyBase}${suffix}`]
+    || card[keyBase]
+    || ''
+  );
 }
 
 function getName(card, lang = state.currentLang) {
@@ -69,15 +78,8 @@ function getName(card, lang = state.currentLang) {
   return thaiName || englishName || card.id;
 }
 
-function isReversed(card) {
-  if (!card) return false;
-  const byField = String(card.orientation || '').toLowerCase() === 'reversed';
-  const byId = String(card.id || '').toLowerCase().includes('reversed');
-  return byField || byId;
-}
-
 function getOrientationEnglish(card) {
-  return isReversed(card) ? 'Reversed' : 'Upright';
+  return toOrientation(card) === 'reversed' ? 'Reversed' : 'Upright';
 }
 
 /* -------------------------------------------------------------------------- */
@@ -246,7 +248,7 @@ function resolveLegacyMajorId(candidateId) {
   if (!Number.isFinite(majNum)) return null;
 
   const newNum = String(majNum + 1).padStart(2, '0');
-  const orient = id.includes('reversed') ? 'reversed' : 'upright';
+  const orient = toOrientation(id);
 
   const hit =
     (meowTarotCards || []).find((c) => String(c.id || '').startsWith(`${newNum}-`) && String(c.id || '').endsWith(`-${orient}`))
@@ -255,47 +257,84 @@ function resolveLegacyMajorId(candidateId) {
   return hit ? hit.id : null;
 }
 
+function ensureOrientation(card, targetOrientation = toOrientation(card)) {
+  if (!card) return null;
+  const sourceId = String(card?.image_id || card?.card_id || card?.id || '');
+  const base = getBaseCardId(sourceId, normalizeId);
+  const orientedId = base ? `${base}-${targetOrientation}` : normalizeId(sourceId || `card-${Date.now()}`);
+  return {
+    ...card,
+    id: orientedId,
+    card_id: orientedId,
+    image_id: orientedId,
+    orientation: targetOrientation,
+    orientation_label_th: card.orientation_label_th
+      || (targetOrientation === 'reversed' ? 'ไพ่กลับหัว' : 'ไพ่ปกติ'),
+  };
+}
+
 function findCard(id) {
   if (!id) return null;
 
+  const targetOrientation = toOrientation(id);
   const direct = findCardById(meowTarotCards, id, normalizeId);
-  if (direct) return direct;
+  if (direct) return toOrientation(direct) === targetOrientation ? direct : ensureOrientation(direct, targetOrientation);
 
   const mapped = resolveLegacyMajorId(id);
   if (mapped) {
     const mappedCard = findCardById(meowTarotCards, mapped, normalizeId);
-    if (mappedCard) return mappedCard;
+    if (mappedCard) {
+      return toOrientation(mappedCard) === targetOrientation
+        ? mappedCard
+        : ensureOrientation(mappedCard, targetOrientation);
+    }
   }
 
   return null;
 }
 
-function getSafeCardImageUrl(card) {
-  if (!card) return getCardBackUrl();
-
-  // If we still have a legacy maj-xx object in memory (fallback deck), build a best-effort new image id.
-  const idLower = String(card.id || '').toLowerCase();
+function resolveImageIds(card, targetOrientation = toOrientation(card)) {
+  const idLower = String(card?.id || '').toLowerCase();
   const majMatch = idLower.match(/^maj-(\d{1,2})$/);
 
   if (majMatch) {
     const majNum = Number(majMatch[1]);
     const num = String(majNum + 1).padStart(2, '0');
-    const slug = normalizeId(card.card_name_en || card.name_en || card.name || 'card');
-    const orient = isReversed(card) ? 'reversed' : 'upright';
-    const mappedImageId = `${num}-${slug}-${orient}`;
-    return getCardImageUrl({ ...card, id: mappedImageId, image_id: mappedImageId, orientation: orient });
+    const slug = normalizeId(card?.card_name_en || card?.name_en || card?.name || 'card');
+    const baseId = `${num}-${slug}`;
+    return {
+      baseId,
+      orientedId: `${baseId}-${targetOrientation}`,
+      uprightId: `${baseId}-upright`,
+      orientation: targetOrientation,
+    };
   }
 
-  const orientation = isReversed(card) ? 'reversed' : 'upright';
-  return getCardImageUrl(card, { orientation });
+  const sourceId = String(card?.image_id || card?.card_id || card?.id || '');
+  const baseId = getBaseCardId(sourceId, normalizeId) || normalizeId(sourceId);
+  return {
+    baseId,
+    orientedId: baseId ? `${baseId}-${targetOrientation}` : '',
+    uprightId: baseId ? `${baseId}-upright` : '',
+    orientation: targetOrientation,
+  };
 }
 
-function getUprightImageCard(card) {
-  const sourceId = String(card?.image_id || card?.card_id || card?.id || '');
-  const base = sourceId.replace(/-(upright|reversed)$/i, '');
-  if (!base) return null;
-  const uprightId = `${base}-upright`;
-  return { ...card, id: uprightId, card_id: uprightId, image_id: uprightId, orientation: 'upright' };
+function getCardImageUrlWithFallback(card) {
+  if (!card) return { src: getCardBackUrl(), fallback: null };
+
+  const { orientedId, uprightId, orientation } = resolveImageIds(card, toOrientation(card));
+  if (!orientedId) return { src: getCardBackUrl(), fallback: null };
+
+  const orientedCard = { ...card, id: orientedId, card_id: orientedId, image_id: orientedId, orientation };
+  const uprightCard = { ...card, id: uprightId, card_id: uprightId, image_id: uprightId, orientation: 'upright' };
+
+  const src = getCardImageUrl(orientedCard, { orientation });
+  const fallback = orientation === 'reversed'
+    ? getCardImageUrl(uprightCard, { orientation: 'upright' })
+    : null;
+
+  return { src, fallback };
 }
 
 function buildCardArt(card, variant = 'hero') {
@@ -307,17 +346,17 @@ function buildCardArt(card, variant = 'hero') {
   img.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   img.loading = 'lazy';
 
-  img.src = getSafeCardImageUrl(card);
+  const { src, fallback } = getCardImageUrlWithFallback(card);
+  img.src = src;
   img.addEventListener('error', () => {
-    const upright = getUprightImageCard(card);
-    if (img.dataset.fallback === 'upright' || !upright) {
-      img.dataset.fallback = 'back';
-      img.src = getCardBackUrl();
+    if (fallback && img.dataset.fallback !== 'upright') {
+      img.dataset.fallback = 'upright';
+      img.src = fallback;
       return;
     }
-
-    img.dataset.fallback = 'upright';
-    img.src = getSafeCardImageUrl(upright);
+    if (img.dataset.fallback === 'back') return;
+    img.dataset.fallback = 'back';
+    img.src = getCardBackUrl();
   });
 
   wrap.appendChild(img);
