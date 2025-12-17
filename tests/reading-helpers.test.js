@@ -6,10 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { normalizeCards, normalizeId } from '../js/data.js';
 import {
   findCardById,
+  getBaseCardId,
   getBaseId,
   getOrientation,
   matchesCardId,
   toSeoSlugFromId,
+  toOrientation,
 } from '../js/reading-helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +26,8 @@ test('getBaseId strips orientation while getOrientation defaults to upright', ()
   assert.strictEqual(getOrientation('01-the-fool-reversed'), 'reversed');
   assert.strictEqual(getOrientation('01-the-fool-upright'), 'upright');
   assert.strictEqual(getOrientation('MAJ_01'), 'upright');
+  assert.strictEqual(getBaseCardId('MAJ_01'), 'maj-01');
+  assert.strictEqual(toOrientation({ id: '01-the-fool-reversed', orientation: 'reversed' }), 'reversed');
 });
 
 test('SEO slug generation ignores orientation suffixes', () => {
@@ -43,6 +47,21 @@ test('findCardById resolves SEO slug ids', () => {
   assert.ok(card, 'expected to resolve a card for the first slugged ID');
   assert.ok(matchesCardId(card, slugged.seo_slug_en));
   assert.strictEqual(getBaseId(card.id), getBaseId(slugged.id));
+});
+
+test('findCardById prefers the requested orientation', () => {
+  const sampleBase = getBaseId(deck[0].id);
+  const upright = deck.find((card) => card.id === `${sampleBase}-upright`);
+  const reversed = deck.find((card) => card.id === `${sampleBase}-reversed`);
+
+  assert.ok(upright, 'expected upright orientation');
+  assert.ok(reversed, 'expected reversed orientation');
+
+  const uprightHit = findCardById(deck, `${sampleBase}-upright`);
+  const reversedHit = findCardById(deck, `${sampleBase}-reversed`);
+
+  assert.strictEqual(uprightHit?.id, upright.id);
+  assert.strictEqual(reversedHit?.id, reversed.id);
 });
 
 test('each base card appears in both upright and reversed orientations', () => {
