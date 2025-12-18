@@ -1,5 +1,5 @@
 import { initShell, localizePath, translations } from './common.js';
-import { loadTarotData, meowTarotCards, getCardBackUrl, normalizeId } from './data.js';
+import { loadTarotData, meowTarotCards, getCardBackUrl, getCardImageUrl, normalizeId } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -458,6 +458,37 @@ function renderMeaningPreview(cardsSource = []) {
   });
 }
 
+function initHomeHeroRandomCards(cards = []) {
+  const card1 = document.getElementById('homeHeroCard1');
+  const card2 = document.getElementById('homeHeroCard2');
+  const cardBack = document.getElementById('homeHeroCardBack');
+  if (!card1 || !card2 || !cardBack) return;
+
+  const seen = new Set();
+  const baseIds = [];
+
+  cards.forEach((card) => {
+    const baseId = stripOrientation(card.card_id || card.id || '');
+    if (baseId && !seen.has(baseId)) {
+      seen.add(baseId);
+      baseIds.push(baseId);
+    }
+  });
+
+  if (baseIds.length < 2) return;
+
+  for (let i = baseIds.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [baseIds[i], baseIds[j]] = [baseIds[j], baseIds[i]];
+  }
+
+  const [firstId, secondId] = baseIds.slice(0, 2).map((id) => `${id}-upright`);
+
+  card1.src = getCardImageUrl({ id: firstId, card_id: firstId, orientation: 'upright' });
+  card2.src = getCardImageUrl({ id: secondId, card_id: secondId, orientation: 'upright' });
+  cardBack.src = getCardBackUrl();
+}
+
 function renderPage(dict) {
   const page = document.body.dataset.page;
   if (page === 'daily') renderDaily(dict);
@@ -472,9 +503,11 @@ function init() {
     .then((cards) => {
       state.cards = cards;
       renderPage(translations[state.currentLang] || translations.en);
+      initHomeHeroRandomCards(cards);
     })
     .catch(() => {
       renderPage(translations[state.currentLang] || translations.en);
+      initHomeHeroRandomCards([]);
     });
 }
 
