@@ -329,41 +329,33 @@ body.nav-open {
   gap: 12px;
 }
 
-.hero-card-stack {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: 14px;
+.hero-visual-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
   border-radius: 18px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  background: radial-gradient(circle at 20% 20%, rgba(207, 217, 255, 0.12), transparent 55%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow);
 }
 
-.mini-card {
-  display: inline-block;
-  width: 82px;
-  height: 124px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-  object-fit: cover;
+.hero-visual-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+  font-size: 22px;
 }
 
-.mini-card--lavender {
-  background: radial-gradient(circle at 30% 20%, rgba(198, 183, 255, 0.35), transparent 60%), #0e1740;
-}
-
-.mini-card--gold {
-  background: radial-gradient(circle at 60% 10%, rgba(242, 219, 166, 0.38), transparent 62%), #0b1336;
-}
-
-.mini-card--back {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
-    url('../assets/meow-v1/00-back.webp');
-  background-size: cover;
-  background-position: center;
+.hero-visual-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: #f5f3ff;
 }
 
 .hero-note {
