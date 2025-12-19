@@ -1,5 +1,5 @@
 import { initShell, localizePath, translations } from './common.js';
-import { loadTarotData, meowTarotCards, getCardBackUrl, getCardImageUrl, normalizeId } from './data.js';
+import { loadTarotData, getCardBackUrl, normalizeId } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -17,7 +17,6 @@ const state = {
   questionTopic: 'love',
 };
 
-const meaningPreview = document.getElementById('meaningPreview');
 const staticCardBacks = document.querySelectorAll('.card-back');
 
 function applyCardBackBackground(el) {
@@ -427,87 +426,29 @@ function renderQuestion() {
   renderBoard();
 }
 
-function renderMeaningPreview(cardsSource = []) {
-  if (!meaningPreview) return;
-  const pool = cardsSource.length ? cardsSource : meowTarotCards;
-  if (!pool.length) return;
-
-  meaningPreview.innerHTML = '';
-
-  pool.slice(0, 9).forEach((card) => {
-    const name =
-      state.currentLang === 'en'
-        ? card.card_name_en || card.name_en || card.name || card.id
-        : card.alias_th || card.name_th || card.name || card.id;
-
-    const summary =
-      state.currentLang === 'en'
-        ? card.reading_summary_preview_en || card.meaning_en || card.tarot_imply_en || ''
-        : card.reading_summary_preview_th || card.meaning_th || card.tarot_imply_th || '';
-
-    const archetype = state.currentLang === 'en' ? card.archetype_en || '' : card.archetype_th || '';
-
-    const div = document.createElement('div');
-    div.className = 'sample-card';
-    div.innerHTML = `
-      <h5>${card.icon_emoji ? `${card.icon_emoji} ` : ''}${name}</h5>
-      ${archetype ? `<p class="archetype">${archetype}</p>` : ''}
-      <p>${summary}</p>
-    `;
-    meaningPreview.appendChild(div);
-  });
-}
-
-function initHomeHeroRandomCards(cards = []) {
-  const card1 = document.getElementById('homeHeroCard1');
-  const card2 = document.getElementById('homeHeroCard2');
-  const cardBack = document.getElementById('homeHeroCardBack');
-  if (!card1 || !card2 || !cardBack) return;
-
-  const seen = new Set();
-  const baseIds = [];
-
-  cards.forEach((card) => {
-    const baseId = stripOrientation(card.card_id || card.id || '');
-    if (baseId && !seen.has(baseId)) {
-      seen.add(baseId);
-      baseIds.push(baseId);
-    }
-  });
-
-  if (baseIds.length < 2) return;
-
-  for (let i = baseIds.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [baseIds[i], baseIds[j]] = [baseIds[j], baseIds[i]];
-  }
-
-  const [firstId, secondId] = baseIds.slice(0, 2).map((id) => `${id}-upright`);
-
-  card1.src = getCardImageUrl({ id: firstId, card_id: firstId, orientation: 'upright' });
-  card2.src = getCardImageUrl({ id: secondId, card_id: secondId, orientation: 'upright' });
-  cardBack.src = getCardBackUrl();
-}
-
 function renderPage(dict) {
   const page = document.body.dataset.page;
   if (page === 'daily') renderDaily(dict);
   if (page === 'overall') renderOverall(dict);
   if (page === 'question') renderQuestion(dict);
-  if (page === 'home') renderMeaningPreview(state.cards);
 }
 
 function init() {
-  initShell(state, (dict) => renderPage(dict), document.body.dataset.page);
+  const page = document.body.dataset.page;
+  initShell(state, (dict) => renderPage(dict), page);
+
+  if (page === 'home') {
+    renderPage(translations[state.currentLang] || translations.en);
+    return;
+  }
+
   loadTarotData()
     .then((cards) => {
       state.cards = cards;
       renderPage(translations[state.currentLang] || translations.en);
-      initHomeHeroRandomCards(cards);
     })
     .catch(() => {
       renderPage(translations[state.currentLang] || translations.en);
-      initHomeHeroRandomCards([]);
     });
 }
 
