@@ -34,6 +34,94 @@ const selectedCount = document.getElementById('selectedCount');
 const contextCopy = document.getElementById('context-copy');
 const readingTitle = document.querySelector('[data-reading-title]');
 
+async function exportDiagnostics(selectorOrEl) {
+  const el = typeof selectorOrEl === 'string'
+    ? document.querySelector(selectorOrEl)
+    : selectorOrEl;
+
+  const ua = navigator.userAgent;
+  console.group('🧪 Export Diagnostics');
+  console.log('UserAgent:', ua);
+  console.log('URL:', location.href);
+  console.log('DevicePixelRatio:', window.devicePixelRatio);
+
+  if (!el) {
+    console.error('❌ Target element not found:', selectorOrEl);
+    console.groupEnd();
+    return { ok: false, reason: 'element_not_found', ua };
+  }
+
+  const rect = el.getBoundingClientRect();
+  const cs = window.getComputedStyle(el);
+
+  console.log('Target:', el);
+  console.log('Rect:', { w: rect.width, h: rect.height, top: rect.top, left: rect.left });
+  console.log('Visibility:', {
+    display: cs.display,
+    visibility: cs.visibility,
+    opacity: cs.opacity,
+  });
+
+  // Wait for fonts (important on iOS)
+  if (document.fonts && document.fonts.ready) {
+    console.log('Waiting for document.fonts.ready...');
+    await document.fonts.ready;
+    console.log('Fonts ready ✅');
+  } else {
+    console.log('document.fonts not supported');
+  }
+
+  // Wait for images inside the element
+  const imgs = Array.from(el.querySelectorAll('img'));
+  console.log('Images found:', imgs.length);
+
+  const imgInfo = imgs.map((img) => {
+    let url = img.currentSrc || img.src || '';
+    let origin = '';
+    try { origin = new URL(url, location.href).origin; } catch {}
+    const sameOrigin = origin === location.origin || origin === '';
+    return {
+      url,
+      origin,
+      sameOrigin,
+      crossOriginAttr: img.getAttribute('crossorigin'),
+      complete: img.complete,
+      naturalWidth: img.naturalWidth,
+      naturalHeight: img.naturalHeight,
+    };
+  });
+  console.table(imgInfo);
+
+  // Try decoding images (helps timing bugs)
+  await Promise.all(imgs.map(async (img) => {
+    try {
+      if (img.decode) await img.decode();
+      else if (!img.complete) await new Promise((res, rej) => {
+        img.onload = res; img.onerror = rej;
+      });
+    } catch (e) {
+      console.warn('⚠️ Image decode/load failed:', img.currentSrc || img.src, e);
+    }
+  }));
+
+  // Next-frame settle (helps iOS rendering)
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  // CORS risk flag
+  const corsRisk = imgInfo.some((i) => i.url && !i.sameOrigin);
+  console.log('CORS risk (cross-origin images present):', corsRisk);
+
+  console.groupEnd();
+  return {
+    ok: true,
+    ua,
+    rect: { w: rect.width, h: rect.height },
+    visibility: { display: cs.display, visibility: cs.visibility, opacity: cs.opacity },
+    images: imgInfo,
+    corsRisk,
+  };
+}
+
 function getDrawableCards() {
   return meowTarotCards.length ? meowTarotCards : [];
 }
@@ -307,14 +395,20 @@ function renderResults() {
   }
 }
 
-function saveImage() {
+async function saveImage() {
   if (!resultsSection || typeof html2canvas === 'undefined') return;
-  html2canvas(resultsSection, { backgroundColor: '#0b102b', scale: 2 }).then((canvas) => {
+  try {
+    const diag = await exportDiagnostics(resultsSection);
+    console.log('DIAG_JSON:', JSON.stringify(diag, null, 2));
+
+    const canvas = await html2canvas(resultsSection, { backgroundColor: '#0b102b', scale: 2 });
     const link = document.createElement('a');
     link.download = `meowtarot-reading-${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-  });
+  } catch (e) {
+    console.error('❌ Export failed:', e);
+  }
 }
 
 function handleShare() {
