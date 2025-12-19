@@ -1,0 +1,142 @@
+.sharekit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.sharekit-overlay.active {
+  display: flex;
+}
+
+.sharekit-modal {
+  background: #0d0a12;
+  color: #f4f3f8;
+  border-radius: 18px;
+  width: min(960px, 92vw);
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0;
+}
+
+@media (max-width: 900px) {
+  .sharekit-modal {
+    grid-template-columns: 1fr;
+    width: 94vw;
+  }
+}
+
+.sharekit-preview {
+  background: #0f0c1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sharekit-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.sharekit-panel {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(180deg, #141026 0%, #0d0a12 100%);
+}
+
+.sharekit-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.sharekit-title-row h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.sharekit-close {
+  background: none;
+  border: none;
+  color: #c8c5d8;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.sharekit-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.sharekit-btn {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f4f3f8;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: center;
+  transition: background 0.2s ease, transform 0.12s ease;
+}
+
+.sharekit-btn.primary {
+  background: linear-gradient(120deg, #7d5fff 0%, #4a7bff 100%);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.sharekit-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sharekit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sharekit-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.sharekit-status {
+  font-size: 0.95rem;
+  color: #c8c5d8;
+  min-height: 20px;
+}
+
+.sharekit-safezone-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #d6d3e6;
+}
+
+.sharekit-loader {
+  display: none;
+  color: #c8c5d8;
+  font-size: 0.9rem;
+}
+
+.sharekit-loader.active {
+  display: inline-block;
+}
