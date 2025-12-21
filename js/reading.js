@@ -984,14 +984,21 @@ async function waitForFontsImagesAndRAF(target) {
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 }
 
-function downscaleCanvas(canvas, maxWidth = 1080) {
-  if (!canvas || !canvas.width || !canvas.height || canvas.width <= maxWidth) return canvas;
-  const ratio = maxWidth / canvas.width;
+function downscaleCanvas(canvas, targetWidth = 1080, maxHeight = 1920, backgroundColor = '#0b1020') {
+  if (!canvas || !canvas.width || !canvas.height) return canvas;
+  const ratio = Math.min(targetWidth / canvas.width, maxHeight / canvas.height);
+  const scaledWidth = Math.round(canvas.width * ratio);
+  const scaledHeight = Math.round(canvas.height * ratio);
   const c = document.createElement('canvas');
-  c.width = maxWidth;
-  c.height = Math.round(canvas.height * ratio);
+  c.width = targetWidth;
+  c.height = Math.min(maxHeight, Math.max(scaledHeight, 1));
   const ctx = c.getContext('2d');
-  if (ctx) ctx.drawImage(canvas, 0, 0, c.width, c.height);
+  if (ctx) {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, c.width, c.height);
+    const offsetX = Math.max((c.width - scaledWidth) / 2, 0);
+    ctx.drawImage(canvas, offsetX, 0, scaledWidth, scaledHeight);
+  }
   return c;
 }
 
@@ -1013,51 +1020,21 @@ function canvasLooksBlank(canvas) {
 }
 
 async function exportShareCard() {
-  const target = pickShareCardElement();
+  const target = document.getElementById('reading-content');
   const html2c = typeof html2canvas !== 'undefined' ? html2canvas : null;
+  if (!target || !html2c) return;
 
-  if (!target || !html2c) {
-    console.error('❌ Export failed: target or html2canvas unavailable');
-    return;
-  }
-  const download = (canvas) => {
-    const link = document.createElement('a');
-    link.download = `meowtarot-reading-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  };
+  const backgroundColor = window.getComputedStyle(target).backgroundColor || '#0b1020';
+  const scale = isIOS() ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
-  const capture = async (scale, maxWidth) => {
-    await waitForFontsImagesAndRAF(target);
-    const canvas = await html2c(target, { backgroundColor: '#0b1020', scale });
-    const resized = downscaleCanvas(canvas, maxWidth);
-    return resized;
-  };
+  await waitForFontsImagesAndRAF(target);
+  const rawCanvas = await html2c(target, { backgroundColor, scale });
+  const storyCanvas = downscaleCanvas(rawCanvas, 1080, 1920, backgroundColor);
 
-  const baseScale = isIOS() ? 1 : Math.min(window.devicePixelRatio || 1, 2);
-  const baseMaxWidth = 1080;
-
-  try {
-    const canvas = await capture(baseScale, baseMaxWidth);
-    if (canvasLooksBlank(canvas)) throw new Error('blank_canvas');
-    download(canvas);
-    return;
-  } catch (err) {
-    console.warn('⚠️ Export retry with safer settings:', err?.message || err);
-  }
-
-  try {
-    const fallbackScale = Math.min(baseScale, 0.75);
-    const fallbackMaxWidth = Math.min(baseMaxWidth, 720);
-    const canvas = await capture(fallbackScale, fallbackMaxWidth);
-    if (canvasLooksBlank(canvas)) {
-      console.error('❌ Export failed: canvas appears blank even after retry');
-      return;
-    }
-    download(canvas);
-  } catch (err) {
-    console.error('❌ Export failed after retry:', err);
-  }
+  const link = document.createElement('a');
+  link.download = `meowtarot-reading-${Date.now()}.png`;
+  link.href = storyCanvas.toDataURL('image/png');
+  link.click();
 }
 
 function findExportButton() {
