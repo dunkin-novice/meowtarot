@@ -10,79 +10,8 @@ import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js
 
 const params = new URLSearchParams(window.location.search);
 const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
-const isSelfTestMode = params.get('selftest') === '1';
 
 const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-function ensureDebugOverlay() {
-  if (!isSelfTestMode) return null;
-  let box = document.getElementById('export-selftest-overlay');
-  if (!box) {
-    box = document.createElement('pre');
-    box.id = 'export-selftest-overlay';
-    Object.assign(box.style, {
-      position: 'fixed',
-      inset: '12px auto auto 12px',
-      minWidth: '260px',
-      maxWidth: '90vw',
-      maxHeight: '60vh',
-      padding: '10px 12px',
-      background: 'rgba(6, 10, 24, 0.92)',
-      color: '#e8ecff',
-      border: '1px solid rgba(255,255,255,0.2)',
-      borderRadius: '8px',
-      fontFamily: 'ui-monospace, SFMono-Regular, SFMono, Menlo, Consolas, "Liberation Mono", "Courier New", monospace',
-      fontSize: '12px',
-      lineHeight: '1.35',
-      whiteSpace: 'pre-wrap',
-      zIndex: 9999,
-      overflow: 'auto',
-    });
-    document.body.appendChild(box);
-  }
-  return box;
-}
-
-function renderDebugOverlay(data = {}) {
-  const box = ensureDebugOverlay();
-  if (!box) return;
-
-  const lines = [
-    '🧪 Export selftest',
-    `userAgent: ${navigator.userAgent}`,
-    `devicePixelRatio: ${window.devicePixelRatio || 1}`,
-    `html2canvas: ${typeof html2canvas !== 'undefined' ? 'yes' : 'no'}`,
-    `target: ${data.targetWidth || '?'} x ${data.targetHeight || '?'}`,
-    `scale: ${data.scale || '?'}`,
-    `canvas: ${data.canvasWidth || '?'} x ${data.canvasHeight || '?'}`,
-    `blank: ${data.blank === true ? 'YES ⚠️' : data.blank === false ? 'no' : '?'}`,
-  ];
-
-  if (data.warning) lines.push(`warning: ${data.warning}`);
-
-  box.textContent = lines.join('\n');
-}
-
-function isCanvasBlank(canvas) {
-  if (!canvas || !canvas.width || !canvas.height) return true;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) return true;
-
-  const samples = [
-    [0, 0],
-    [canvas.width - 1, 0],
-    [0, canvas.height - 1],
-    [canvas.width - 1, canvas.height - 1],
-    [Math.floor(canvas.width / 2), Math.floor(canvas.height / 2)],
-  ];
-
-  const colors = samples.map(([x, y]) => {
-    const { data } = ctx.getImageData(x, y, 1, 1);
-    return data.join(',');
-  });
-
-  return colors.every((c) => c === colors[0]);
-}
 
 function normalizeMode(raw = '') {
   const val = String(raw || '').toLowerCase().trim();
@@ -124,222 +53,6 @@ const readingTitle = document.getElementById('readingTitle');
 const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveBtn = document.getElementById('saveBtn');
-
-function pickShareCardElement(selector = '#share-card') {
-  return (
-    document.querySelector(selector)
-    || document.getElementById('reading-content')
-    || document.querySelector('.reading-content')
-  );
-}
-
-async function exportDiagnostics(selectorOrEl) {
-  const el = typeof selectorOrEl === 'string'
-    ? document.querySelector(selectorOrEl)
-    : selectorOrEl;
-
-  const ua = navigator.userAgent;
-  console.group('🧪 Export Diagnostics');
-  console.log('UserAgent:', ua);
-  console.log('URL:', location.href);
-  console.log('DevicePixelRatio:', window.devicePixelRatio);
-
-  if (!el) {
-    console.error('❌ Target element not found:', selectorOrEl);
-    console.groupEnd();
-    return { ok: false, reason: 'element_not_found', ua };
-  }
-
-  const rect = el.getBoundingClientRect();
-  const cs = window.getComputedStyle(el);
-
-  console.log('Target:', el);
-  console.log('Rect:', { w: rect.width, h: rect.height, top: rect.top, left: rect.left });
-  console.log('Visibility:', {
-    display: cs.display,
-    visibility: cs.visibility,
-    opacity: cs.opacity,
-  });
-
-  // Wait for fonts (important on iOS)
-  if (document.fonts && document.fonts.ready) {
-    console.log('Waiting for document.fonts.ready...');
-    await document.fonts.ready;
-    console.log('Fonts ready ✅');
-  } else {
-    console.log('document.fonts not supported');
-  }
-
-  // Wait for images inside the element
-  const imgs = Array.from(el.querySelectorAll('img'));
-  console.log('Images found:', imgs.length);
-
-  const imgInfo = imgs.map((img) => {
-    let url = img.currentSrc || img.src || '';
-    let origin = '';
-    try { origin = new URL(url, location.href).origin; } catch {}
-    const sameOrigin = origin === location.origin || origin === '';
-    return {
-      url,
-      origin,
-      sameOrigin,
-      crossOriginAttr: img.getAttribute('crossorigin'),
-      complete: img.complete,
-      naturalWidth: img.naturalWidth,
-      naturalHeight: img.naturalHeight,
-    };
-  });
-  console.table(imgInfo);
-
-  // Try decoding images (helps timing bugs)
-  await Promise.all(imgs.map(async (img) => {
-    try {
-      if (img.decode) await img.decode();
-      else if (!img.complete) await new Promise((res, rej) => {
-        img.onload = res; img.onerror = rej;
-      });
-    } catch (e) {
-      console.warn('⚠️ Image decode/load failed:', img.currentSrc || img.src, e);
-    }
-  }));
-
-  // Next-frame settle (helps iOS rendering)
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-  // CORS risk flag
-  const corsRisk = imgInfo.some((i) => i.url && !i.sameOrigin);
-  console.log('CORS risk (cross-origin images present):', corsRisk);
-
-  console.groupEnd();
-  return {
-    ok: true,
-    ua,
-    rect: { w: rect.width, h: rect.height },
-    visibility: { display: cs.display, visibility: cs.visibility, opacity: cs.opacity },
-    images: imgInfo,
-    corsRisk,
-  };
-}
-
-async function runExportSelfTest(selector = '#share-card') {
-  const target = pickShareCardElement(selector);
-  const report = {
-    ok: true,
-    reason: null,
-    selector,
-    resolvedTarget: target ? (target.id || target.className || target.tagName?.toLowerCase()) : null,
-    waits: { fonts: false, images: false, raf: false },
-    target: null,
-    images: [],
-    cssRisks: [],
-    sizeRisk: null,
-    errors: [],
-  };
-
-  if (!target) {
-    report.ok = false;
-    report.reason = 'selector-not-found';
-    console.log('SELFTEST_JSON:', JSON.stringify(report));
-    return report;
-  }
-
-  try {
-    const rect = target.getBoundingClientRect();
-    const style = window.getComputedStyle(target);
-    report.target = {
-      width: rect.width,
-      height: rect.height,
-      display: style.display,
-      visibility: style.visibility,
-      opacity: style.opacity,
-      hidden:
-        rect.width === 0
-        || rect.height === 0
-        || style.display === 'none'
-        || style.visibility === 'hidden'
-        || parseFloat(style.opacity || '1') === 0,
-    };
-
-    if (document.fonts?.ready) {
-      await document.fonts.ready;
-      report.waits.fonts = true;
-    }
-
-    const imgs = Array.from(target.querySelectorAll('img'));
-    report.images = imgs.map((img) => {
-      const src = img.currentSrc || img.src || '';
-      let origin = '';
-      try { origin = new URL(src, window.location.href).origin; } catch (err) { report.errors.push(String(err)); }
-      const sameOrigin = !origin || origin === window.location.origin;
-      return {
-        src,
-        sameOrigin,
-        crossOriginAttr: img.getAttribute('crossorigin'),
-        complete: img.complete,
-        naturalWidth: img.naturalWidth,
-        naturalHeight: img.naturalHeight,
-        corsRisk: !sameOrigin && !img.getAttribute('crossorigin'),
-      };
-    });
-
-    await Promise.all(
-      imgs.map(async (img) => {
-        try {
-          if (img.decode) {
-            await img.decode();
-          } else if (!img.complete) {
-            await new Promise((resolve) => {
-              img.addEventListener('load', resolve, { once: true });
-              img.addEventListener('error', resolve, { once: true });
-            });
-          }
-        } catch (err) {
-          report.errors.push(`image-wait-error:${err?.message || err}`);
-        }
-      }),
-    );
-    report.waits.images = true;
-
-    const nodes = [target, ...Array.from(target.querySelectorAll('*'))];
-    report.cssRisks = nodes
-      .map((node) => {
-        const cs = window.getComputedStyle(node);
-        return {
-          node: node.tagName?.toLowerCase(),
-          filter: cs.filter,
-          backdropFilter: cs.backdropFilter,
-          mixBlendMode: cs.mixBlendMode,
-          mask: cs.mask,
-          clipPath: cs.clipPath,
-          position: cs.position,
-          transform: cs.transform,
-        };
-      })
-      .filter(
-        (c) => (c.filter && c.filter !== 'none')
-          || (c.backdropFilter && c.backdropFilter !== 'none')
-          || (c.mixBlendMode && c.mixBlendMode !== 'normal')
-          || (c.mask && c.mask !== 'none')
-          || (c.clipPath && c.clipPath !== 'none')
-          || c.position === 'fixed'
-          || (c.transform && c.transform !== 'none'),
-      );
-
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    report.waits.raf = true;
-
-    const dpr = window.devicePixelRatio || 1;
-    const pixelEstimate = rect.width * rect.height * dpr * dpr;
-    report.sizeRisk = { pixelEstimate, threshold: 20000000, atRisk: pixelEstimate > 20000000 };
-  } catch (err) {
-    report.ok = false;
-    report.reason = err?.message || String(err);
-    report.errors.push(report.reason);
-  }
-
-  console.log('SELFTEST_JSON:', JSON.stringify(report));
-  return report;
-}
 
 function getText(card, keyBase, lang = state.currentLang) {
   if (!card) return '';
@@ -962,28 +675,6 @@ function copyLink(url) {
   navigator.clipboard.writeText(url).then(() => alert(translations[state.currentLang].shareFallback));
 }
 
-async function waitForFontsImagesAndRAF(target) {
-  if (document.fonts?.ready) await document.fonts.ready;
-
-  const images = Array.from(target?.querySelectorAll('img') || []);
-  if (images.length) {
-    await Promise.all(images.map(async (img) => {
-      try {
-        if (img.decode) return img.decode();
-        if (img.complete) return undefined;
-        return new Promise((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = reject;
-        });
-      } catch (_) {
-        return undefined;
-      }
-    }));
-  }
-
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-}
-
 function downscaleCanvas(canvas, targetWidth = 1080, maxHeight = 1920, backgroundColor = '#0b1020') {
   if (!canvas || !canvas.width || !canvas.height) return canvas;
   const ratio = Math.min(targetWidth / canvas.width, maxHeight / canvas.height);
@@ -1002,63 +693,65 @@ function downscaleCanvas(canvas, targetWidth = 1080, maxHeight = 1920, backgroun
   return c;
 }
 
-function canvasLooksBlank(canvas) {
-  if (!canvas || !canvas.width || !canvas.height) return true;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) return true;
-
-  const samples = [
-    [0, 0],
-    [canvas.width - 1, 0],
-    [0, canvas.height - 1],
-    [canvas.width - 1, canvas.height - 1],
-    [Math.floor(canvas.width / 2), Math.floor(canvas.height / 2)],
-  ];
-
-  const colors = samples.map(([x, y]) => ctx.getImageData(x, y, 1, 1).data.join(','));
-  return colors.every((c) => c === colors[0]);
-}
-
 async function exportShareCard() {
   const target = document.getElementById('reading-content');
-  const html2c = typeof html2canvas !== 'undefined' ? html2canvas : null;
-  if (!target || !html2c) return;
+  const html2c = typeof html2canvas === 'function' ? html2canvas : null;
+
+  if (!target || !html2c) {
+    console.error('Save as image unavailable: missing target or html2canvas');
+    return;
+  }
 
   const backgroundColor = window.getComputedStyle(target).backgroundColor || '#0b1020';
   const scale = isIOS() ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
-  await waitForFontsImagesAndRAF(target);
-  const rawCanvas = await html2c(target, { backgroundColor, scale });
-  const storyCanvas = downscaleCanvas(rawCanvas, 1080, 1920, backgroundColor);
+  try {
+    if (document.fonts?.ready) await document.fonts.ready;
 
-  const link = document.createElement('a');
-  link.download = `meowtarot-reading-${Date.now()}.png`;
-  link.href = storyCanvas.toDataURL('image/png');
-  link.click();
-}
+    const images = Array.from(target.querySelectorAll('img'));
+    await Promise.all(
+      images.map(async (img) => {
+        try {
+          if (img.decode) {
+            await img.decode();
+          } else if (!img.complete) {
+            await new Promise((resolve, reject) => {
+              img.addEventListener('load', resolve, { once: true });
+              img.addEventListener('error', reject, { once: true });
+            });
+          }
+        } catch (_) {
+          // Ignore decode failures; html2canvas will best-effort render
+        }
+      }),
+    );
 
-function findExportButton() {
-  return (
-    document.getElementById('btn-save-image')
-    || document.getElementById('saveBtn')
-    || document.querySelector('button[id*="save" i]')
-    || Array.from(document.querySelectorAll('button')).find((btn) => /save/i.test(btn.textContent || ''))
-  );
-}
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-function setupSelfTestHooks() {
-  if (!isSelfTestMode) return;
+    const rawCanvas = await html2c(target, { backgroundColor, scale });
+    const storyCanvas = downscaleCanvas(rawCanvas, 1080, 1920, backgroundColor);
 
-  window.runExportSelfTest = runExportSelfTest;
-  window.__RUN_EXPORT_SELFTEST__ = async () => runExportSelfTest('#share-card');
-  window.__CLICK_EXPORT__ = async () => {
-    const btn = findExportButton();
-    if (!btn) throw new Error('export_button_not_found');
-    btn.click();
-    return true;
-  };
+    const triggerDownload = (href) => {
+      const link = document.createElement('a');
+      link.download = `meowtarot-reading-${Date.now()}.png`;
+      link.href = href;
+      link.click();
+    };
 
-  console.log('Self-test hooks ready');
+    if (storyCanvas.toBlob) {
+      storyCanvas.toBlob((blob) => {
+        if (blob) {
+          triggerDownload(URL.createObjectURL(blob));
+        } else {
+          triggerDownload(storyCanvas.toDataURL('image/png'));
+        }
+      }, 'image/png');
+    } else {
+      triggerDownload(storyCanvas.toDataURL('image/png'));
+    }
+  } catch (err) {
+    console.error('Save as image failed', err);
+  }
 }
 
 function updateContextCopy(dict = translations[state.currentLang]) {
@@ -1085,8 +778,6 @@ function handleTranslations(dict) {
 
 function init() {
   initShell(state, handleTranslations, 'reading');
-
-  setupSelfTestHooks();
 
   newReadingBtn?.addEventListener('click', () => {
     const target =
