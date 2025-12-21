@@ -12,6 +12,78 @@ const params = new URLSearchParams(window.location.search);
 const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
 const isSelfTestMode = params.get('selftest') === '1';
 
+const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+function ensureDebugOverlay() {
+  if (!isSelfTestMode) return null;
+  let box = document.getElementById('export-selftest-overlay');
+  if (!box) {
+    box = document.createElement('pre');
+    box.id = 'export-selftest-overlay';
+    Object.assign(box.style, {
+      position: 'fixed',
+      inset: '12px auto auto 12px',
+      minWidth: '260px',
+      maxWidth: '90vw',
+      maxHeight: '60vh',
+      padding: '10px 12px',
+      background: 'rgba(6, 10, 24, 0.92)',
+      color: '#e8ecff',
+      border: '1px solid rgba(255,255,255,0.2)',
+      borderRadius: '8px',
+      fontFamily: 'ui-monospace, SFMono-Regular, SFMono, Menlo, Consolas, "Liberation Mono", "Courier New", monospace',
+      fontSize: '12px',
+      lineHeight: '1.35',
+      whiteSpace: 'pre-wrap',
+      zIndex: 9999,
+      overflow: 'auto',
+    });
+    document.body.appendChild(box);
+  }
+  return box;
+}
+
+function renderDebugOverlay(data = {}) {
+  const box = ensureDebugOverlay();
+  if (!box) return;
+
+  const lines = [
+    '🧪 Export selftest',
+    `userAgent: ${navigator.userAgent}`,
+    `devicePixelRatio: ${window.devicePixelRatio || 1}`,
+    `html2canvas: ${typeof html2canvas !== 'undefined' ? 'yes' : 'no'}`,
+    `target: ${data.targetWidth || '?'} x ${data.targetHeight || '?'}`,
+    `scale: ${data.scale || '?'}`,
+    `canvas: ${data.canvasWidth || '?'} x ${data.canvasHeight || '?'}`,
+    `blank: ${data.blank === true ? 'YES ⚠️' : data.blank === false ? 'no' : '?'}`,
+  ];
+
+  if (data.warning) lines.push(`warning: ${data.warning}`);
+
+  box.textContent = lines.join('\n');
+}
+
+function isCanvasBlank(canvas) {
+  if (!canvas || !canvas.width || !canvas.height) return true;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return true;
+
+  const samples = [
+    [0, 0],
+    [canvas.width - 1, 0],
+    [0, canvas.height - 1],
+    [canvas.width - 1, canvas.height - 1],
+    [Math.floor(canvas.width / 2), Math.floor(canvas.height / 2)],
+  ];
+
+  const colors = samples.map(([x, y]) => {
+    const { data } = ctx.getImageData(x, y, 1, 1);
+    return data.join(',');
+  });
+
+  return colors.every((c) => c === colors[0]);
+}
+
 function normalizeMode(raw = '') {
   const val = String(raw || '').toLowerCase().trim();
   if (['daily', 'day'].includes(val)) return 'daily';
@@ -890,36 +962,101 @@ function copyLink(url) {
   navigator.clipboard.writeText(url).then(() => alert(translations[state.currentLang].shareFallback));
 }
 
+async function waitForFontsImagesAndRAF(target) {
+  if (document.fonts?.ready) await document.fonts.ready;
+
+  const images = Array.from(target?.querySelectorAll('img') || []);
+  if (images.length) {
+    await Promise.all(images.map(async (img) => {
+      try {
+        if (img.decode) return img.decode();
+        if (img.complete) return undefined;
+        return new Promise((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = reject;
+        });
+      } catch (_) {
+        return undefined;
+      }
+    }));
+  }
+
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+}
+
 function downscaleCanvas(canvas, maxWidth = 1080) {
-  if (canvas.width <= maxWidth) return canvas;
+  if (!canvas || !canvas.width || !canvas.height || canvas.width <= maxWidth) return canvas;
   const ratio = maxWidth / canvas.width;
   const c = document.createElement('canvas');
   c.width = maxWidth;
   c.height = Math.round(canvas.height * ratio);
-  c.getContext('2d').drawImage(canvas, 0, 0, c.width, c.height);
+  const ctx = c.getContext('2d');
+  if (ctx) ctx.drawImage(canvas, 0, 0, c.width, c.height);
   return c;
 }
 
-async function saveImage() {
-  const target = pickShareCardElement();
-  if (!target) return;
-  try {
-    const diag = await exportDiagnostics(target);
-    console.log('DIAG_JSON:', JSON.stringify(diag, null, 2));
+function canvasLooksBlank(canvas) {
+  if (!canvas || !canvas.width || !canvas.height) return true;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return true;
 
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const dpr = Math.min(window.devicePixelRatio || 2, 2);
-    const canvas = await html2canvas(target, {
-      backgroundColor: '#0b1020',
-      scale: isIOS ? 1 : dpr,
-    });
-    const downscaled = downscaleCanvas(canvas);
+  const samples = [
+    [0, 0],
+    [canvas.width - 1, 0],
+    [0, canvas.height - 1],
+    [canvas.width - 1, canvas.height - 1],
+    [Math.floor(canvas.width / 2), Math.floor(canvas.height / 2)],
+  ];
+
+  const colors = samples.map(([x, y]) => ctx.getImageData(x, y, 1, 1).data.join(','));
+  return colors.every((c) => c === colors[0]);
+}
+
+async function exportShareCard() {
+  const target = pickShareCardElement();
+  const html2c = typeof html2canvas !== 'undefined' ? html2canvas : null;
+
+  if (!target || !html2c) {
+    console.error('❌ Export failed: target or html2canvas unavailable');
+    return;
+  }
+  const download = (canvas) => {
     const link = document.createElement('a');
     link.download = `meowtarot-reading-${Date.now()}.png`;
-    link.href = downscaled.toDataURL('image/png');
+    link.href = canvas.toDataURL('image/png');
     link.click();
-  } catch (e) {
-    console.error('❌ Export failed:', e);
+  };
+
+  const capture = async (scale, maxWidth) => {
+    await waitForFontsImagesAndRAF(target);
+    const canvas = await html2c(target, { backgroundColor: '#0b1020', scale });
+    const resized = downscaleCanvas(canvas, maxWidth);
+    return resized;
+  };
+
+  const baseScale = isIOS() ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+  const baseMaxWidth = 1080;
+
+  try {
+    const canvas = await capture(baseScale, baseMaxWidth);
+    if (canvasLooksBlank(canvas)) throw new Error('blank_canvas');
+    download(canvas);
+    return;
+  } catch (err) {
+    console.warn('⚠️ Export retry with safer settings:', err?.message || err);
+  }
+
+  try {
+    const fallbackScale = Math.min(baseScale, 0.75);
+    const fallbackMaxWidth = Math.min(baseMaxWidth, 720);
+    const canvas = await capture(fallbackScale, fallbackMaxWidth);
+    if (canvasLooksBlank(canvas)) {
+      console.error('❌ Export failed: canvas appears blank even after retry');
+      return;
+    }
+    download(canvas);
+  } catch (err) {
+    console.error('❌ Export failed after retry:', err);
   }
 }
 
@@ -986,7 +1123,7 @@ function init() {
   });
 
   shareBtn?.addEventListener('click', handleShare);
-  saveBtn?.addEventListener('click', saveImage);
+  saveBtn?.addEventListener('click', exportShareCard);
 
   loadTarotData()
     .then(() => {
