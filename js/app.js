@@ -395,16 +395,32 @@ function renderResults() {
   }
 }
 
+function downscaleCanvas(canvas, maxWidth = 1080) {
+  if (canvas.width <= maxWidth) return canvas;
+  const ratio = maxWidth / canvas.width;
+  const c = document.createElement('canvas');
+  c.width = maxWidth;
+  c.height = Math.round(canvas.height * ratio);
+  c.getContext('2d').drawImage(canvas, 0, 0, c.width, c.height);
+  return c;
+}
+
 async function saveImage() {
   if (!resultsSection || typeof html2canvas === 'undefined') return;
   try {
     const diag = await exportDiagnostics(resultsSection);
     console.log('DIAG_JSON:', JSON.stringify(diag, null, 2));
 
-    const canvas = await html2canvas(resultsSection, { backgroundColor: '#0b102b', scale: 2 });
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const dpr = Math.min(window.devicePixelRatio || 2, 2);
+    const canvas = await html2canvas(resultsSection, {
+      backgroundColor: '#0b1020',
+      scale: isIOS ? 1 : dpr,
+    });
+    const downscaled = downscaleCanvas(canvas);
     const link = document.createElement('a');
     link.download = `meowtarot-reading-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = downscaled.toDataURL('image/png');
     link.click();
   } catch (e) {
     console.error('❌ Export failed:', e);
