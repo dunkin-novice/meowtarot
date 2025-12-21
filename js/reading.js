@@ -731,27 +731,40 @@ async function exportShareCard() {
     const rawCanvas = await html2c(target, { backgroundColor, scale });
     const storyCanvas = downscaleCanvas(rawCanvas, 1080, 1920, backgroundColor);
 
-    const triggerDownload = (href) => {
-      const link = document.createElement('a');
-      link.download = `meowtarot-reading-${Date.now()}.png`;
-      link.href = href;
-      link.click();
+    const triggerDelivery = (href, blob) => {
+      if (isIOS()) {
+        const url = blob ? URL.createObjectURL(blob) : href;
+        window.open(url, '_blank', 'noopener');
+      } else {
+        const link = document.createElement('a');
+        link.download = `meowtarot-reading-${Date.now()}.png`;
+        link.href = href;
+        link.click();
+      }
     };
 
     if (storyCanvas.toBlob) {
       storyCanvas.toBlob((blob) => {
         if (blob) {
-          triggerDownload(URL.createObjectURL(blob));
+          triggerDelivery(URL.createObjectURL(blob), blob);
         } else {
-          triggerDownload(storyCanvas.toDataURL('image/png'));
+          triggerDelivery(storyCanvas.toDataURL('image/png'));
         }
       }, 'image/png');
     } else {
-      triggerDownload(storyCanvas.toDataURL('image/png'));
+      triggerDelivery(storyCanvas.toDataURL('image/png'));
     }
   } catch (err) {
     console.error('Save as image failed', err);
   }
+}
+
+function isIOS() {
+  const ua = navigator.userAgent || navigator.vendor || '';
+  const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isWebKit = /AppleWebKit/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/.test(ua);
+  const isMacDesktop = /Macintosh/.test(ua) && !isIOSDevice;
+  return isIOSDevice && isWebKit && !isMacDesktop;
 }
 
 function updateContextCopy(dict = translations[state.currentLang]) {
