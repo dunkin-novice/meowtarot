@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:export": "playwright test tests/export.spec.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.44.1"
+  }
 }
