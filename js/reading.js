@@ -10,8 +10,7 @@ import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js
 
 const params = new URLSearchParams(window.location.search);
 const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
-
-const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const DEBUG_CAPTURE_ERRORS = false;
 
 function normalizeMode(raw = '') {
   const val = String(raw || '').toLowerCase().trim();
@@ -790,6 +789,11 @@ function handleTranslations(dict) {
 }
 
 function init() {
+  if (DEBUG_CAPTURE_ERRORS) {
+    window.onerror = (...args) => console.error('Reading page error', ...args);
+    window.onunhandledrejection = (event) => console.error('Reading page unhandled rejection', event?.reason || event);
+  }
+
   initShell(state, handleTranslations, 'reading');
 
   newReadingBtn?.addEventListener('click', () => {
