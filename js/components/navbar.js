@@ -29,6 +29,12 @@ export function renderNavbar(container, onLangToggle) {
 
   const toggleBtn = container.querySelector('.mobile-menu-toggle');
   const navPanel = container.querySelector('.nav-panel');
+  const updateNavHeight = () => {
+    const navHeight = container.offsetHeight;
+    if (navHeight) {
+      document.documentElement.style.setProperty('--nav-height', `${navHeight}px`);
+    }
+  };
 
   const closeMenu = () => {
     navPanel.classList.remove('is-open');
@@ -52,4 +58,9 @@ export function renderNavbar(container, onLangToggle) {
       onLangToggle?.(btn.dataset.lang);
     });
   });
+
+  updateNavHeight();
+  window.addEventListener('load', updateNavHeight);
+  requestAnimationFrame(updateNavHeight);
+  window.addEventListener('resize', updateNavHeight, { passive: true });
 }
