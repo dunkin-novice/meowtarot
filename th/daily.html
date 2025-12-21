@@ -31,7 +31,19 @@
         <span class="selection-counter" id="daily-counter">0/1</span>
       </div>
 
-      <div class="card-board card-board--daily" id="daily-board" aria-live="polite"></div>
+      <div class="card-board card-board--daily" id="daily-board" aria-live="polite">
+        <div class="board-start-overlay" id="daily-start-overlay">
+          <div class="board-start-overlay__inner">
+            <button
+              class="primary board-start-overlay__cta"
+              type="button"
+              id="daily-start-overlay-btn"
+              data-i18n="start"
+            ></button>
+            <p class="board-start-overlay__hint" data-i18n="dailyStartHint"></p>
+          </div>
+        </div>
+      </div>
 
       <div class="board-actions board-actions--center">
         <button class="primary continue-btn" type="button" id="daily-continue" data-i18n="continue" disabled></button>

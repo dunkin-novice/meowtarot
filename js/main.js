@@ -244,11 +244,17 @@ function renderDaily() {
   const shuffleBtn = document.getElementById('daily-shuffle');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
+  const startOverlay = document.getElementById('daily-start-overlay');
+  const overlayStartBtn = document.getElementById('daily-start-overlay-btn');
   if (!startBtn || !board || !shuffleBtn || !continueBtn || !counter) return;
 
   let latestSelection = [];
   let isAnimating = false;
   let hasStarted = false;
+
+  const hideStartOverlay = () => {
+    if (startOverlay) startOverlay.remove();
+  };
 
   const updateContinue = (cards = [], dict = translations[state.currentLang] || translations.en) => {
     latestSelection = cards;
@@ -312,14 +318,18 @@ function renderDaily() {
     requestAnimationFrame(() => animateDeal(slots));
   };
 
-  startBtn.onclick = () => {
-    if (!state.cards.length) return;
+  const handleStart = () => {
+    if (!state.cards.length || isAnimating || hasStarted) return;
     hasStarted = true;
     startBtn.disabled = true;
     shuffleBtn.disabled = true;
     continueBtn.disabled = true;
+    hideStartOverlay();
     deal();
   };
+
+  startBtn.onclick = handleStart;
+  overlayStartBtn?.addEventListener('click', handleStart);
 
   shuffleBtn.onclick = () => {
     if (isAnimating || !hasStarted) return;
