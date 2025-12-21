@@ -1,4 +1,5 @@
 :root {
+  --nav-height: 72px;
   --navy: #080f2d;
   --midnight: #0d1638;
   --panel: rgba(255, 255, 255, 0.04);
@@ -36,8 +37,10 @@ a {
 }
 
 header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
 }
 
@@ -49,6 +52,7 @@ header {
   background: rgba(5, 9, 26, 0.88);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: calc(18px + env(safe-area-inset-top, 0px));
 }
 
 .primary-nav {
@@ -956,7 +960,7 @@ button,
 .page-shell {
   max-width: 640px;
   margin: 0 auto;
-  padding: 20px 18px 60px;
+  padding: calc(var(--nav-height) + 20px) 18px 60px;
 }
 
 .section-block {
@@ -969,7 +973,7 @@ button,
 
 body[data-page='home'] .page-shell {
   max-width: 1180px;
-  padding: 12px 18px 60px;
+  padding: calc(var(--nav-height) + 12px) 18px 60px;
 }
 
 body[data-page='home'] .section-block {
