@@ -94,3 +94,9 @@ Add a trigger button somewhere on the page:
 - Clipboard API failures fall back to user messaging; ensure `https` and a user gesture for best support.
 - If images fail to render, confirm card URLs serve proper CORS headers or move assets to the same origin.
 - To debug canvas output, enable the safe-zone toggle in the modal to see where Instagram UI overlaps.
+
+## Export self-test workflow (blank image debugging)
+- Trigger `Export Self-Test` from the **Actions** tab (workflow dispatch) and optionally override `target_url` with your GitHub Pages URL including `?selftest=1`.
+- On every push the workflow also runs against the default URL.
+- The Playwright job prints `SELFTEST_JSON`, target visibility, and any cross-origin image URLs to the logs.
+- Download the `export-selftest-artifacts` attachment from the workflow run to grab screenshots and the Playwright report.

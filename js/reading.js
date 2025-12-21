@@ -10,6 +10,7 @@ import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js
 
 const params = new URLSearchParams(window.location.search);
 const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
+const isSelfTestMode = params.get('selftest') === '1';
 
 function normalizeMode(raw = '') {
   const val = String(raw || '').toLowerCase().trim();
@@ -51,6 +52,14 @@ const readingTitle = document.getElementById('readingTitle');
 const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveBtn = document.getElementById('saveBtn');
+
+function pickShareCardElement(selector = '#share-card') {
+  return (
+    document.querySelector(selector)
+    || document.getElementById('reading-content')
+    || document.querySelector('.reading-content')
+  );
+}
 
 async function exportDiagnostics(selectorOrEl) {
   const el = typeof selectorOrEl === 'string'
@@ -138,6 +147,126 @@ async function exportDiagnostics(selectorOrEl) {
     images: imgInfo,
     corsRisk,
   };
+}
+
+async function runExportSelfTest(selector = '#share-card') {
+  const target = pickShareCardElement(selector);
+  const report = {
+    ok: true,
+    reason: null,
+    selector,
+    resolvedTarget: target ? (target.id || target.className || target.tagName?.toLowerCase()) : null,
+    waits: { fonts: false, images: false, raf: false },
+    target: null,
+    images: [],
+    cssRisks: [],
+    sizeRisk: null,
+    errors: [],
+  };
+
+  if (!target) {
+    report.ok = false;
+    report.reason = 'selector-not-found';
+    console.log('SELFTEST_JSON:', JSON.stringify(report));
+    return report;
+  }
+
+  try {
+    const rect = target.getBoundingClientRect();
+    const style = window.getComputedStyle(target);
+    report.target = {
+      width: rect.width,
+      height: rect.height,
+      display: style.display,
+      visibility: style.visibility,
+      opacity: style.opacity,
+      hidden:
+        rect.width === 0
+        || rect.height === 0
+        || style.display === 'none'
+        || style.visibility === 'hidden'
+        || parseFloat(style.opacity || '1') === 0,
+    };
+
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+      report.waits.fonts = true;
+    }
+
+    const imgs = Array.from(target.querySelectorAll('img'));
+    report.images = imgs.map((img) => {
+      const src = img.currentSrc || img.src || '';
+      let origin = '';
+      try { origin = new URL(src, window.location.href).origin; } catch (err) { report.errors.push(String(err)); }
+      const sameOrigin = !origin || origin === window.location.origin;
+      return {
+        src,
+        sameOrigin,
+        crossOriginAttr: img.getAttribute('crossorigin'),
+        complete: img.complete,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        corsRisk: !sameOrigin && !img.getAttribute('crossorigin'),
+      };
+    });
+
+    await Promise.all(
+      imgs.map(async (img) => {
+        try {
+          if (img.decode) {
+            await img.decode();
+          } else if (!img.complete) {
+            await new Promise((resolve) => {
+              img.addEventListener('load', resolve, { once: true });
+              img.addEventListener('error', resolve, { once: true });
+            });
+          }
+        } catch (err) {
+          report.errors.push(`image-wait-error:${err?.message || err}`);
+        }
+      }),
+    );
+    report.waits.images = true;
+
+    const nodes = [target, ...Array.from(target.querySelectorAll('*'))];
+    report.cssRisks = nodes
+      .map((node) => {
+        const cs = window.getComputedStyle(node);
+        return {
+          node: node.tagName?.toLowerCase(),
+          filter: cs.filter,
+          backdropFilter: cs.backdropFilter,
+          mixBlendMode: cs.mixBlendMode,
+          mask: cs.mask,
+          clipPath: cs.clipPath,
+          position: cs.position,
+          transform: cs.transform,
+        };
+      })
+      .filter(
+        (c) => (c.filter && c.filter !== 'none')
+          || (c.backdropFilter && c.backdropFilter !== 'none')
+          || (c.mixBlendMode && c.mixBlendMode !== 'normal')
+          || (c.mask && c.mask !== 'none')
+          || (c.clipPath && c.clipPath !== 'none')
+          || c.position === 'fixed'
+          || (c.transform && c.transform !== 'none'),
+      );
+
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    report.waits.raf = true;
+
+    const dpr = window.devicePixelRatio || 1;
+    const pixelEstimate = rect.width * rect.height * dpr * dpr;
+    report.sizeRisk = { pixelEstimate, threshold: 20000000, atRisk: pixelEstimate > 20000000 };
+  } catch (err) {
+    report.ok = false;
+    report.reason = err?.message || String(err);
+    report.errors.push(report.reason);
+  }
+
+  console.log('SELFTEST_JSON:', JSON.stringify(report));
+  return report;
 }
 
 function getText(card, keyBase, lang = state.currentLang) {
@@ -762,12 +891,13 @@ function copyLink(url) {
 }
 
 async function saveImage() {
-  if (!readingContent) return;
+  const target = pickShareCardElement();
+  if (!target) return;
   try {
-    const diag = await exportDiagnostics(readingContent);
+    const diag = await exportDiagnostics(target);
     console.log('DIAG_JSON:', JSON.stringify(diag, null, 2));
 
-    const canvas = await html2canvas(readingContent, { backgroundColor: '#0b102b', scale: 2 });
+    const canvas = await html2canvas(target, { backgroundColor: '#0b102b', scale: 2 });
     const link = document.createElement('a');
     link.download = `meowtarot-reading-${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png');
@@ -775,6 +905,30 @@ async function saveImage() {
   } catch (e) {
     console.error('❌ Export failed:', e);
   }
+}
+
+function findExportButton() {
+  return (
+    document.getElementById('btn-save-image')
+    || document.getElementById('saveBtn')
+    || document.querySelector('button[id*="save" i]')
+    || Array.from(document.querySelectorAll('button')).find((btn) => /save/i.test(btn.textContent || ''))
+  );
+}
+
+function setupSelfTestHooks() {
+  if (!isSelfTestMode) return;
+
+  window.runExportSelfTest = runExportSelfTest;
+  window.__RUN_EXPORT_SELFTEST__ = async () => runExportSelfTest('#share-card');
+  window.__CLICK_EXPORT__ = async () => {
+    const btn = findExportButton();
+    if (!btn) throw new Error('export_button_not_found');
+    btn.click();
+    return true;
+  };
+
+  console.log('Self-test hooks ready');
 }
 
 function updateContextCopy(dict = translations[state.currentLang]) {
@@ -801,6 +955,8 @@ function handleTranslations(dict) {
 
 function init() {
   initShell(state, handleTranslations, 'reading');
+
+  setupSelfTestHooks();
 
   newReadingBtn?.addEventListener('click', () => {
     const target =
