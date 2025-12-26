@@ -117,13 +117,28 @@ function createRenderer(globalConfig = {}) {
   async function loadImage(src) {
     if (!src) return null;
     if (imageCache.has(src)) return imageCache.get(src);
-    const promise = new Promise((resolve) => {
+    const promise = (async () => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
       img.src = src;
-    });
+      if (img.decode) {
+        try {
+          await img.decode();
+          return img;
+        } catch (err) {
+          // fall through to onload
+        }
+      }
+      await new Promise((resolve, reject) => {
+        if (img.complete && img.naturalWidth) {
+          resolve();
+          return;
+        }
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Failed to load image'));
+      });
+      return img;
+    })().catch(() => null);
     imageCache.set(src, promise);
     return promise;
   }
@@ -145,6 +160,10 @@ function createRenderer(globalConfig = {}) {
   async function renderReading(readingResult, presetKey, options = {}) {
     const preset = SHAREKIT_PRESETS[presetKey];
     if (!preset) throw new Error(`Unknown preset: ${presetKey}`);
+
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+    }
 
     const cacheKey = buildCacheKey(readingResult, presetKey);
     if (renderCache.has(cacheKey)) {
@@ -248,14 +267,7 @@ function createRenderer(globalConfig = {}) {
     ctx.textAlign = 'right';
     ctx.fillStyle = theme.wartermarkColor || theme.watermarkColor || 'rgba(255,255,255,0.72)';
     ctx.font = `600 ${Math.floor(preset.width * 0.035)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
-    ctx.fillText(globalConfig.watermarkText || 'meowtarot.com', preset.width - margin, preset.height - margin * 0.6);
-
-    ctx.textAlign = 'center';
-    ctx.font = `500 ${Math.floor(preset.width * 0.03)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
-    const shareUrl = readingResult.shareUrl || (globalConfig.baseUrl ? `${globalConfig.baseUrl.replace(/\/$/, '')}${readingResult.slug ? `/reading/${readingResult.slug}` : ''}` : '');
-    if (shareUrl) {
-      ctx.fillText(shareUrl, preset.width / 2, preset.height - margin * 0.6);
-    }
+    ctx.fillText('meowtarot.com', preset.width - margin, preset.height - margin * 0.6);
 
     if (options.safeZone) {
       ctx.strokeStyle = 'rgba(255,255,255,0.18)';
