@@ -90,22 +90,66 @@ function drawStarfield(ctx, width, height) {
   ctx.restore();
 }
 
-function drawTextBlock(ctx, text, x, y, maxWidth, lineHeight) {
-  if (!text) return y;
-  const words = String(text).split(' ');
-  let line = '';
-  for (let i = 0; i < words.length; i += 1) {
-    const testLine = `${line}${words[i]} `;
-    if (ctx.measureText(testLine).width > maxWidth && i > 0) {
-      ctx.fillText(line.trim(), x, y);
-      line = `${words[i]} `;
-      y += lineHeight;
-    } else {
-      line = testLine;
-    }
+function ellipsizeText(ctx, text, maxWidth) {
+  const clean = String(text);
+  if (ctx.measureText(clean).width <= maxWidth) return clean;
+  let truncated = clean;
+  while (truncated.length > 0 && ctx.measureText(`${truncated}…`).width > maxWidth) {
+    truncated = truncated.slice(0, -1);
   }
-  if (line) ctx.fillText(line.trim(), x, y);
-  return y + lineHeight;
+  return truncated ? `${truncated}…` : '…';
+}
+
+function tokenizeText(ctx, text, maxWidth) {
+  const value = String(text || '');
+  if (!value) return [];
+  const words = value.split(/\s+/).filter(Boolean);
+  if (words.length > 1) return words;
+  if (ctx.measureText(value).width <= maxWidth) return [value];
+  return Array.from(value);
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = Infinity) {
+  if (!text) return y;
+  const tokens = tokenizeText(ctx, text, maxWidth);
+  let line = '';
+  const lines = [];
+  tokens.forEach((token) => {
+    const candidate = line ? `${line} ${token}`.trim() : token;
+    if (ctx.measureText(candidate).width > maxWidth && line) {
+      lines.push(line);
+      line = token;
+    } else {
+      line = candidate;
+    }
+  });
+  if (line) lines.push(line);
+
+  let output = lines;
+  if (lines.length > maxLines) {
+    output = lines.slice(0, maxLines);
+    output[maxLines - 1] = ellipsizeText(ctx, output[maxLines - 1], maxWidth);
+  }
+
+  output.forEach((content, index) => {
+    ctx.fillText(content, x, y + index * lineHeight);
+  });
+  return y + output.length * lineHeight;
+}
+
+function drawTextBlock(ctx, text, x, y, maxWidth, lineHeight) {
+  return wrapText(ctx, text, x, y, maxWidth, lineHeight);
+}
+
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
 }
 
 function buildShareUrl(payload) {
@@ -115,6 +159,28 @@ function buildShareUrl(payload) {
     .replace(/\//g, '_')
     .replace(/=+$/g, '');
   return `${window.location.origin}/share/?d=${encoded}`;
+}
+
+function getDailyStrings(lang = 'en') {
+  if (lang === 'th') {
+    return {
+      title: 'คำทำนายรายวัน',
+      subtitle: 'คำตอบด่วน (1 ใบ)',
+      readingHeading: 'คำทำนายวันนี้',
+      luckyColors: 'สีนำโชค',
+    };
+  }
+  return {
+    title: 'Daily Reading',
+    subtitle: 'Quick Answer (1 card)',
+    readingHeading: 'Today’s Reading',
+    luckyColors: 'Lucky colors',
+  };
+}
+
+function isDailySingle(payload) {
+  const spread = String(payload?.spread || '').toLowerCase();
+  return payload?.mode === 'daily' && (spread === 'quick' || spread === 'single' || spread === 'one');
 }
 
 export async function buildPoster(payload, { preset = 'story' } = {}) {
@@ -133,6 +199,187 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
   drawStarfield(ctx, width, height);
+
+  if (isDailySingle(payload) && preset === 'story') {
+    const safeMargin = 72;
+    const strings = getDailyStrings(payload?.lang);
+    const cardEntries = buildCardEntries(payload).slice(0, 1);
+    const cardEntry = cardEntries[0];
+    const reading = payload?.reading || {};
+    const summary = reading.summary || payload?.headline || '';
+    const advice = Array.isArray(reading.advice) ? reading.advice.filter(Boolean) : [];
+    const caution = Array.isArray(reading.caution) ? reading.caution.filter(Boolean) : [];
+    const lucky = payload?.lucky || {};
+    const luckyColors = Array.isArray(lucky.colors) ? lucky.colors.filter(Boolean).slice(0, 3) : [];
+    const hasLuckyRow = luckyColors.length || lucky?.number || lucky?.element || lucky?.planet;
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#f8d77a';
+    ctx.font = '600 76px "Poppins", "Space Grotesk", sans-serif';
+    let cursorY = safeMargin + 16;
+    ctx.fillText(strings.title, width / 2, cursorY + 72);
+    cursorY += 96;
+
+    ctx.fillStyle = '#d8dbe6';
+    ctx.font = '500 40px "Space Grotesk", sans-serif';
+    ctx.fillText(strings.subtitle, width / 2, cursorY + 48);
+    cursorY += 72;
+
+    if (cardEntry?.name) {
+      ctx.fillStyle = '#f7f4ee';
+      ctx.font = '500 32px "Space Grotesk", sans-serif';
+      ctx.fillText(cardEntry.name, width / 2, cursorY + 36);
+      cursorY += 52;
+    }
+
+    const cardWidth = 460;
+    const cardHeight = Math.round(cardWidth * 1.55);
+    const cardX = (width - cardWidth) / 2;
+    const cardY = Math.max(cursorY + 24, height * 0.28);
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(248, 215, 122, 0.35)';
+    ctx.shadowBlur = 40;
+    ctx.shadowOffsetY = 16;
+    ctx.fillStyle = '#0f1429';
+    ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+    ctx.restore();
+
+    if (cardEntry?.card) {
+      const baseId = baseCardId(cardEntry.card.id || cardEntry.card.card_id || cardEntry.card.image_id);
+      const orientedId = `${baseId}-${cardEntry.orientation}`;
+      const uprightId = `${baseId}-upright`;
+      const primary = getCardImageUrl(
+        { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
+        { orientation: cardEntry.orientation },
+      );
+      const fallback = cardEntry.orientation === 'reversed'
+        ? getCardImageUrl(
+          { ...cardEntry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
+          { orientation: 'upright' },
+        )
+        : null;
+      const img = await loadImageWithFallback(primary, fallback);
+      ctx.drawImage(img, cardX, cardY, cardWidth, cardHeight);
+    }
+
+    const footerY = height - safeMargin;
+    const luckyRowHeight = hasLuckyRow ? 96 : 0;
+    const luckyRowTop = hasLuckyRow ? footerY - 32 - luckyRowHeight : footerY;
+    const panelTop = cardY + cardHeight + 40;
+    const panelBottom = hasLuckyRow ? luckyRowTop - 24 : footerY - 40;
+    const panelHeight = Math.max(260, panelBottom - panelTop);
+    const panelX = safeMargin;
+    const panelWidth = width - safeMargin * 2;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 20, 41, 0.68)';
+    drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 28);
+    ctx.fill();
+    ctx.restore();
+
+    let panelCursorY = panelTop + 32;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#f8d77a';
+    ctx.font = '600 40px "Poppins", "Space Grotesk", sans-serif';
+    panelCursorY = wrapText(ctx, strings.readingHeading, panelX + 32, panelCursorY + 40, panelWidth - 64, 48, 1);
+
+    ctx.fillStyle = '#f7f4ee';
+    ctx.font = '400 28px "Space Grotesk", sans-serif';
+    panelCursorY = wrapText(ctx, summary, panelX + 32, panelCursorY + 8, panelWidth - 64, 36, 4);
+
+    if (advice.length) {
+      ctx.fillStyle = '#d8dbe6';
+      ctx.font = '500 26px "Space Grotesk", sans-serif';
+      advice.slice(0, 2).forEach((item) => {
+        panelCursorY = wrapText(
+          ctx,
+          `• ${item}`,
+          panelX + 32,
+          panelCursorY + 8,
+          panelWidth - 64,
+          34,
+          1,
+        );
+      });
+    }
+
+    if (caution.length) {
+      ctx.fillStyle = '#c9a8ff';
+      ctx.font = '500 26px "Space Grotesk", sans-serif';
+      panelCursorY = wrapText(
+        ctx,
+        `• ${caution[0]}`,
+        panelX + 32,
+        panelCursorY + 8,
+        panelWidth - 64,
+        34,
+        1,
+      );
+    }
+
+    if (hasLuckyRow) {
+      const rowY = luckyRowTop + luckyRowHeight / 2;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#f7f4ee';
+      ctx.font = '500 26px "Space Grotesk", sans-serif';
+      let x = safeMargin;
+      ctx.fillText(strings.luckyColors, x, rowY);
+      x += ctx.measureText(strings.luckyColors).width + 16;
+
+      luckyColors.forEach((color) => {
+        const label = color?.name || '';
+        const hex = color?.hex || '#ffffff';
+        ctx.save();
+        ctx.fillStyle = hex;
+        ctx.beginPath();
+        ctx.arc(x + 12, rowY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        x += 28;
+        ctx.fillStyle = '#d8dbe6';
+        ctx.fillText(label, x, rowY);
+        x += ctx.measureText(label).width + 18;
+      });
+
+      const chips = [];
+      if (lucky?.number) chips.push(`#${lucky.number}`);
+      if (lucky?.element) chips.push(lucky.element);
+      if (lucky?.planet) chips.push(lucky.planet);
+
+      let chipX = width - safeMargin;
+      chips.forEach((chip) => {
+        ctx.font = '500 24px "Space Grotesk", sans-serif';
+        const textWidth = ctx.measureText(chip).width;
+        const paddingX = 16;
+        const paddingY = 10;
+        const chipWidth = textWidth + paddingX * 2;
+        const chipHeight = 36;
+        chipX -= chipWidth;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        drawRoundedRect(ctx, chipX, rowY - chipHeight / 2, chipWidth, chipHeight, 18);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = '#f7f4ee';
+        ctx.textAlign = 'left';
+        ctx.fillText(chip, chipX + paddingX, rowY);
+        chipX -= 12;
+      });
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#aab0c9';
+    ctx.font = '500 28px "Space Grotesk", sans-serif';
+    ctx.fillText('meowtarot.com', width / 2, footerY);
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
+    if (!blob) throw new Error('Failed to build poster blob');
+    return { blob, width, height };
+  }
 
   const title = payload?.title || 'MeowTarot Reading';
   const subtitle = payload?.subtitle || '';
