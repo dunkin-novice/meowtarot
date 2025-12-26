@@ -176,10 +176,10 @@ async function handleShare() {
   const blob = await ensurePoster();
   if (!blob) return;
 
-  const file = new File([blob], `meowtarot-${Date.now()}.png`, { type: 'image/png' });
+  const file = new File([blob], 'meowtarot.png', { type: 'image/png' });
   if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: currentPayload.title || 'MeowTarot', text: currentPayload.subtitle });
+      await navigator.share({ files: [file] });
       return;
     } catch (_) {
       // fallback
@@ -188,7 +188,7 @@ async function handleShare() {
 
   if (navigator.share) {
     try {
-      await navigator.share({ title: currentPayload.title || 'MeowTarot', text: currentPayload.subtitle, url: shareLink });
+      await navigator.share({ url: shareLink, title: currentPayload.title || 'MeowTarot', text: currentPayload.subtitle });
       return;
     } catch (_) {
       // fallback

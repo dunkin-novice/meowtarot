@@ -23,6 +23,7 @@ export function getCardBackUrl() {
 // Placeholder for future card images (do NOT use it yet in the UI)
 export function getCardImageUrl(card, options = {}) {
   const deck = getActiveDeck();
+  const assetsBase = options.assetsBase || deck.assetsBase;
   const orientation = options.orientation || card.orientation || 'upright';
 
   const baseId = String(card.image_id || card.card_id || card.id || '')
@@ -30,7 +31,7 @@ export function getCardImageUrl(card, options = {}) {
 
   const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
 
-  return `${deck.assetsBase}/${finalId}.webp`;
+  return `${assetsBase}/${finalId}.webp`;
 }
 
 // Dynamic deck used by the app

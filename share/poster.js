@@ -1,4 +1,4 @@
-import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from '../js/data.js';
+import { getActiveDeck, getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from '../js/data.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
 
 const PRESETS = {
@@ -16,6 +16,11 @@ function createCanvas(width, height) {
 
 function baseCardId(id = '') {
   return normalizeId(String(id).replace(/-(upright|reversed)$/i, '')) || normalizeId(id);
+}
+
+function getCleanAssetsBase() {
+  const deck = getActiveDeck();
+  return `${deck.assetsBase}-clean`;
 }
 
 function buildCardEntries(payload) {
@@ -276,17 +281,27 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const baseId = baseCardId(cardEntry.card.id || cardEntry.card.card_id || cardEntry.card.image_id);
       const orientedId = `${baseId}-${cardEntry.orientation}`;
       const uprightId = `${baseId}-upright`;
+      const cleanBase = getCleanAssetsBase();
       const primary = getCardImageUrl(
         { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
-        { orientation: cardEntry.orientation },
+        { orientation: cardEntry.orientation, assetsBase: cleanBase },
       );
       const fallback = cardEntry.orientation === 'reversed'
         ? getCardImageUrl(
           { ...cardEntry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
-          { orientation: 'upright' },
+          { orientation: 'upright', assetsBase: cleanBase },
         )
         : null;
-      const img = await loadImageWithFallback(primary, fallback);
+      const finalFallback = cardEntry.orientation === 'reversed'
+        ? getCardImageUrl(
+          { ...cardEntry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
+          { orientation: 'upright' },
+        )
+        : getCardImageUrl(
+          { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
+          { orientation: cardEntry.orientation },
+        );
+      const img = await loadImageWithFallback(primary, fallback || finalFallback);
       ctx.drawImage(img, cardX, cardY, cardWidth, cardHeight);
     };
 
@@ -472,11 +487,21 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const baseId = baseCardId(entry.card.id || entry.card.card_id || entry.card.image_id);
       const orientedId = `${baseId}-${entry.orientation}`;
       const uprightId = `${baseId}-upright`;
-      const primary = getCardImageUrl({ ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId }, { orientation: entry.orientation });
+      const cleanBase = getCleanAssetsBase();
+      const primary = getCardImageUrl(
+        { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
+        { orientation: entry.orientation, assetsBase: cleanBase },
+      );
       const fallback = entry.orientation === 'reversed'
-        ? getCardImageUrl({ ...entry.card, id: uprightId, card_id: uprightId, image_id: uprightId }, { orientation: 'upright' })
+        ? getCardImageUrl(
+          { ...entry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
+          { orientation: 'upright', assetsBase: cleanBase },
+        )
         : null;
-      const img = await loadImageWithFallback(primary, fallback);
+      const finalFallback = entry.orientation === 'reversed'
+        ? getCardImageUrl({ ...entry.card, id: uprightId, card_id: uprightId, image_id: uprightId }, { orientation: 'upright' })
+        : getCardImageUrl({ ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId }, { orientation: entry.orientation });
+      const img = await loadImageWithFallback(primary, fallback || finalFallback);
       ctx.drawImage(img, x, y, cardWidth, cardHeight);
     }
   }
