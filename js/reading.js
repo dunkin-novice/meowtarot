@@ -697,6 +697,7 @@ function buildSharePayload() {
     version: 1,
     lang: state.currentLang,
     mode: state.mode,
+    spread: state.mode === 'daily' ? 'quick' : state.spread,
     topic: state.topic,
     cards: cards.map(({ id, orientation }) => ({ id, orientation })),
     title: modeTitle,
