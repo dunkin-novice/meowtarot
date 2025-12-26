@@ -16,22 +16,39 @@ let revokeTimer = null;
 let posterPromise = null;
 let shareLink = window.location.href;
 let currentPayload = null;
+let toastTimer = null;
+const actionLabels = {
+  share: shareBtn?.textContent || 'Share',
+  save: saveBtn?.textContent || 'Save',
+};
 
 const STRINGS = {
   en: {
     generating: 'Generating poster…',
+    preparing: 'Preparing…',
+    sharing: 'Sharing…',
     ready: 'Poster ready',
     missing: 'Missing reading data. Please start from a reading result.',
     shareFail: 'Share unavailable. Link copied instead.',
     copied: 'Link copied!',
+    opened: 'Image opened. Long-press to save.',
+    popupBlocked: 'Popup blocked. Tap the link to open the image.',
+    posterFail: 'Unable to build the image. Link copied instead.',
+    error: 'Something went wrong. Please try again.',
     openImage: 'Opening image…',
   },
   th: {
     generating: 'กำลังสร้างโปสเตอร์…',
+    preparing: 'กำลังเตรียม…',
+    sharing: 'กำลังแชร์…',
     ready: 'โปสเตอร์พร้อมแชร์',
     missing: 'ไม่พบข้อมูลคำทำนาย โปรดเริ่มจากหน้าผลลัพธ์',
     shareFail: 'แชร์ไม่ได้ จึงคัดลอกลิงก์แทน',
     copied: 'คัดลอกลิงก์แล้ว',
+    opened: 'เปิดรูปแล้ว กดค้างเพื่อบันทึก',
+    popupBlocked: 'บล็อกการเปิดหน้าต่างใหม่ โปรดกดลิงก์เพื่อเปิดรูป',
+    posterFail: 'สร้างรูปไม่สำเร็จ จึงคัดลอกลิงก์แทน',
+    error: 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง',
     openImage: 'กำลังเปิดรูป…',
   },
 };
@@ -71,10 +88,34 @@ function setStatus(message) {
   statusEl.textContent = message;
 }
 
+function showToast(message, { tone = 'info', persist = false } = {}) {
+  if (!statusEl) return;
+  if (toastTimer) clearTimeout(toastTimer);
+  statusEl.dataset.tone = tone;
+  statusEl.textContent = message;
+  statusEl.hidden = !message;
+  if (!persist && message) {
+    toastTimer = setTimeout(() => {
+      statusEl.hidden = true;
+    }, 2800);
+  }
+}
+
 function setLoading(isLoading, strings) {
   if (!loadingEl) return;
   loadingEl.textContent = isLoading ? strings.generating : '';
   loadingEl.hidden = !isLoading;
+}
+
+function setActionLoading(isLoading, strings) {
+  if (shareBtn) {
+    shareBtn.disabled = isLoading;
+    shareBtn.textContent = isLoading ? strings.generating : actionLabels.share;
+  }
+  if (saveBtn) {
+    saveBtn.disabled = isLoading;
+    saveBtn.textContent = isLoading ? strings.generating : actionLabels.save;
+  }
 }
 
 function storePayload(payload) {
@@ -152,15 +193,23 @@ async function ensurePoster() {
 
   const strings = getStrings(currentPayload.lang);
   setLoading(true, strings);
+  setActionLoading(true, strings);
   posterPromise = (async () => {
-    const result = await buildPoster(currentPayload, { preset: 'story' });
-    if (result.width !== 1080 || result.height !== 1920) {
-      throw new Error('Unexpected poster size');
+    try {
+      const result = await buildPoster(currentPayload, { preset: 'story' });
+      if (result.width !== 1080 || result.height !== 1920) {
+        throw new Error('Unexpected poster size');
+      }
+      setPosterBlob(result.blob);
+      setLoading(false, strings);
+      setActionLoading(false, strings);
+      showToast(strings.ready);
+      return result.blob;
+    } catch (err) {
+      setLoading(false, strings);
+      setActionLoading(false, strings);
+      throw err;
     }
-    setPosterBlob(result.blob);
-    setLoading(false, strings);
-    setStatus(strings.ready);
-    return result.blob;
   })();
 
   try {
@@ -173,25 +222,39 @@ async function ensurePoster() {
 async function handleShare() {
   if (!currentPayload) return;
   const strings = getStrings(currentPayload.lang);
-  const blob = await ensurePoster();
-  if (!blob) return;
+  console.info('Share action triggered');
+  showToast(strings.preparing);
+  let blob = null;
+  try {
+    blob = await ensurePoster();
+  } catch (err) {
+    console.error('Failed to generate poster for sharing', err);
+    await handleCopy(strings.posterFail);
+    return;
+  }
+  if (!blob) {
+    await handleCopy(strings.posterFail);
+    return;
+  }
 
   const file = new File([blob], 'meowtarot.png', { type: 'image/png' });
   if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
     try {
+      showToast(strings.sharing);
       await navigator.share({ files: [file] });
       return;
-    } catch (_) {
-      // fallback
+    } catch (err) {
+      console.warn('File share failed, falling back', err);
     }
   }
 
   if (navigator.share) {
     try {
+      showToast(strings.sharing);
       await navigator.share({ url: shareLink, title: currentPayload.title || 'MeowTarot', text: currentPayload.subtitle });
       return;
-    } catch (_) {
-      // fallback
+    } catch (err) {
+      console.warn('Link share failed, falling back', err);
     }
   }
 
@@ -201,12 +264,35 @@ async function handleShare() {
 async function handleSave() {
   if (!currentPayload) return;
   const strings = getStrings(currentPayload.lang);
-  setStatus(strings.openImage);
-  const blob = await ensurePoster();
-  if (!blob) return;
+  console.info('Save action triggered');
+  showToast(strings.openImage);
+  let blob = null;
+  try {
+    blob = await ensurePoster();
+  } catch (err) {
+    console.error('Failed to generate poster for saving', err);
+    await handleCopy(strings.posterFail);
+    return;
+  }
+  if (!blob) {
+    await handleCopy(strings.posterFail);
+    return;
+  }
   const url = ensurePosterUrl();
-  if (!url) return;
-  window.open(url, '_blank', 'noopener');
+  if (!url) {
+    showToast(strings.error, { tone: 'error', persist: true });
+    return;
+  }
+  const popup = window.open(url, '_blank', 'noopener');
+  if (!popup) {
+    if (openLink) {
+      openLink.hidden = false;
+      openLink.href = url;
+    }
+    showToast(strings.popupBlocked, { tone: 'warning', persist: true });
+    return;
+  }
+  showToast(strings.opened);
 }
 
 async function handleCopy(customMessage) {
@@ -215,11 +301,11 @@ async function handleCopy(customMessage) {
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(shareLink);
-      setStatus(customMessage || strings.copied);
+      showToast(customMessage || strings.copied);
       return;
     }
-  } catch (_) {
-    // ignore and fallback
+  } catch (err) {
+    console.warn('Clipboard write failed, falling back', err);
   }
 
   const input = document.createElement('input');
@@ -228,7 +314,7 @@ async function handleCopy(customMessage) {
   input.select();
   document.execCommand('copy');
   document.body.removeChild(input);
-  setStatus(customMessage || strings.copied);
+  showToast(customMessage || strings.copied);
 }
 
 function applyActionFocus() {
@@ -242,14 +328,16 @@ function applyActionFocus() {
 }
 
 async function init() {
+  console.info('Initializing share page');
   currentPayload = resolvePayload();
   const lang = currentPayload?.lang || 'en';
   const strings = getStrings(lang);
   shareLink = currentPayload ? buildShareLink(currentPayload) : window.location.href;
 
   if (!currentPayload) {
-    setStatus(strings.missing);
+    showToast(strings.missing, { tone: 'error', persist: true });
     setLoading(false, strings);
+    setActionLoading(false, strings);
     shareBtn.disabled = true;
     saveBtn.disabled = true;
     copyBtn.disabled = true;
@@ -260,12 +348,18 @@ async function init() {
   if (!isIOS()) {
     hintEl.hidden = true;
   }
+  if (openLink) {
+    openLink.hidden = true;
+  }
+  setActionLoading(true, strings);
 
   try {
     await ensurePoster();
   } catch (err) {
-    setStatus(strings.missing);
+    console.error('Poster generation failed', err);
+    showToast(strings.posterFail, { tone: 'error', persist: true });
     setLoading(false, strings);
+    setActionLoading(false, strings);
   }
 
   applyActionFocus();

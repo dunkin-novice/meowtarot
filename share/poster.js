@@ -58,6 +58,7 @@ async function waitForImageLoad(img) {
 async function loadImage(src) {
   const img = new Image();
   img.decoding = 'async';
+  img.crossOrigin = 'anonymous';
   img.src = src;
   if (img.decode) {
     try {

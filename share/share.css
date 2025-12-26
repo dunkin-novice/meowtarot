@@ -47,6 +47,12 @@ body {
   gap: 12px;
 }
 
+.poster-loading {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
 .poster-frame {
   width: min(100%, 420px);
   aspect-ratio: 9 / 16;
@@ -89,6 +95,8 @@ body {
   gap: 10px;
   padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px);
   background: linear-gradient(180deg, rgba(11, 16, 32, 0) 0%, rgba(11, 16, 32, 0.9) 35%, rgba(11, 16, 32, 0.98) 100%);
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .action-btn {
@@ -100,6 +108,11 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.2px;
+}
+
+.action-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .action-btn.primary {
@@ -123,6 +136,30 @@ body {
   font-size: 0.85rem;
   color: var(--accent);
   text-decoration: none;
+}
+
+.share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 92px);
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(11, 16, 32, 0.92);
+  color: var(--text);
+  font-size: 0.9rem;
+  box-shadow: var(--shadow);
+  z-index: 20;
+  text-align: center;
+  max-width: min(90vw, 420px);
+}
+
+.share-toast[data-tone='error'] {
+  background: rgba(111, 30, 30, 0.92);
+}
+
+.share-toast[data-tone='warning'] {
+  background: rgba(118, 93, 22, 0.92);
 }
 
 .action-link:focus-visible {
