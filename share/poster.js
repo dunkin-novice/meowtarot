@@ -180,14 +180,18 @@ function getDailyStrings(lang = 'en') {
     return {
       title: 'คำทำนายรายวัน',
       subtitle: 'คำตอบด่วน (1 ใบ)',
-      readingHeading: 'คำทำนายวันนี้',
+      suggestionLabel: 'คำแนะนำ',
+      questionLabel: 'คำถาม',
+      affirmationLabel: 'คำยืนยัน',
       luckyColors: 'สีนำโชค',
     };
   }
   return {
     title: 'Daily Reading',
     subtitle: 'Quick Answer (1 card)',
-    readingHeading: 'Today’s Reading',
+    suggestionLabel: 'Suggestion',
+    questionLabel: 'Question',
+    affirmationLabel: 'Affirmation',
     luckyColors: 'Lucky colors',
   };
 }
@@ -195,6 +199,68 @@ function getDailyStrings(lang = 'en') {
 function isDailySingle(payload) {
   const spread = String(payload?.spread || '').toLowerCase();
   return payload?.mode === 'daily' && (spread === 'quick' || spread === 'single' || spread === 'one');
+}
+
+function getOrientationLabel(lang, orientation) {
+  if (lang === 'th') {
+    return orientation === 'reversed' ? 'ไพ่กลับหัว' : 'ไพ่ปกติ';
+  }
+  return orientation === 'reversed' ? 'Reversed' : 'Upright';
+}
+
+function getCardName(card, lang) {
+  if (!card) return '';
+  if (lang === 'th') {
+    return card.card_name_th || card.alias_th || card.name_th || card.name || '';
+  }
+  return card.card_name_en || card.name_en || card.name || '';
+}
+
+function getCardField(card, keyBase, lang) {
+  if (!card) return '';
+  return card[`${keyBase}_${lang}`] || card[`${keyBase}_en`] || '';
+}
+
+function buildDailyReadingFromCard(card, orientation, lang) {
+  if (!card) return null;
+  const heading = `${getCardName(card, lang)} — ${getOrientationLabel(lang, orientation)}`.trim();
+  return {
+    heading,
+    keywords: getCardField(card, 'tarot_imply', lang),
+    main: getCardField(card, 'standalone_present', lang),
+    suggestion: getCardField(card, 'action_prompt', lang),
+    question: getCardField(card, 'reflection_question', lang),
+    affirmation: getCardField(card, 'affirmation', lang),
+  };
+}
+
+function resolveDailyReading(payload, cardEntry, lang) {
+  const payloadReading = payload?.reading || {};
+  const cardReading = buildDailyReadingFromCard(cardEntry?.card, cardEntry?.orientation, lang) || {};
+  const advice = Array.isArray(payloadReading.advice) ? payloadReading.advice.filter(Boolean) : [];
+  return {
+    heading: payloadReading.heading || cardReading.heading || '',
+    keywords: payloadReading.keywords || cardReading.keywords || '',
+    main: payloadReading.main || payloadReading.summary || cardReading.main || '',
+    suggestion: payloadReading.suggestion || advice[0] || cardReading.suggestion || '',
+    question: payloadReading.question || cardReading.question || '',
+    affirmation: payloadReading.affirmation || cardReading.affirmation || '',
+  };
+}
+
+function resolveLuckyInfo(payload, cardEntry) {
+  const lucky = payload?.lucky || {};
+  const colors = Array.isArray(lucky.colors) && lucky.colors.length
+    ? lucky.colors
+    : Array.isArray(cardEntry?.card?.color_palette)
+      ? cardEntry.card.color_palette.map((hex) => ({ hex }))
+      : [];
+  return {
+    colors: colors.filter(Boolean).slice(0, 3),
+    element: lucky.element || cardEntry?.card?.element || '',
+    planet: lucky.planet || cardEntry?.card?.planet || '',
+    number: lucky.number ?? cardEntry?.card?.numerology_value,
+  };
 }
 
 export async function buildPoster(payload, { preset = 'story' } = {}) {
@@ -216,29 +282,29 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
 
   if (isDailySingle(payload) && preset === 'story') {
     const safeMargin = 72;
-    const strings = getDailyStrings(payload?.lang);
+    const lang = payload?.lang || 'en';
+    const strings = getDailyStrings(lang);
     const cardEntries = buildCardEntries(payload).slice(0, 1);
     const cardEntry = cardEntries[0];
-    const reading = payload?.reading || {};
-    const summary = reading.summary || payload?.headline || '';
-    const advice = Array.isArray(reading.advice) ? reading.advice.filter(Boolean) : [];
-    const caution = Array.isArray(reading.caution) ? reading.caution.filter(Boolean) : [];
-    const lucky = payload?.lucky || {};
-    const luckyColors = Array.isArray(lucky.colors) ? lucky.colors.filter(Boolean).slice(0, 3) : [];
-    const hasLuckyRow = luckyColors.length || lucky?.number || lucky?.element || lucky?.planet;
-    const hasReadingPanel = Boolean(summary || advice.length || caution.length);
+    const reading = resolveDailyReading(payload, cardEntry, lang);
+    const lucky = resolveLuckyInfo(payload, cardEntry);
+    const luckyColors = lucky.colors || [];
+    const hasLuckyRow = luckyColors.length || lucky.number !== undefined || lucky.element || lucky.planet;
+    const hasReadingPanel = Boolean(
+      reading.heading || reading.keywords || reading.main || reading.suggestion || reading.question || reading.affirmation
+    );
     const layout = {
-      headerTitleY: 160,
-      headerSubtitleY: 224,
-      headerCardNameY: 276,
-      cardWidth: 620,
+      headerTitleY: 140,
+      headerSubtitleY: 198,
+      headerCardNameY: 248,
+      cardWidth: 560,
       cardAspect: 1.5,
-      cardTop: 360,
-      panelTop: 1320,
-      panelHeight: 360,
-      panelPadding: 32,
-      luckyRowY: 1700,
-      footerY: 1860,
+      cardTop: 240,
+      panelTop: 1120,
+      panelHeight: 520,
+      panelPadding: 36,
+      luckyRowY: 1705,
+      footerY: 1850,
     };
 
     const cardWidth = layout.cardWidth;
@@ -273,7 +339,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
 
       ctx.fillStyle = '#f7f4ee';
       ctx.font = '500 30px "Space Grotesk", sans-serif';
-      ctx.fillText(cardEntry?.name || '', width / 2, layout.headerCardNameY);
+      ctx.fillText(getCardName(cardEntry?.card, lang) || cardEntry?.name || '', width / 2, layout.headerCardNameY);
     };
 
     const drawCardImage = async () => {
@@ -316,14 +382,26 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       let panelCursorY = panelTop + layout.panelPadding;
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f8d77a';
-      ctx.font = '600 36px "Poppins", "Space Grotesk", sans-serif';
+      ctx.font = '600 34px "Poppins", "Space Grotesk", sans-serif';
       panelCursorY = wrapText(
         ctx,
-        strings.readingHeading,
+        reading.heading,
         panelX + layout.panelPadding,
-        panelCursorY + 36,
+        panelCursorY + 34,
         panelWidth - layout.panelPadding * 2,
-        44,
+        40,
+        1,
+      );
+
+      ctx.fillStyle = '#d8dbe6';
+      ctx.font = '500 26px "Space Grotesk", sans-serif';
+      panelCursorY = wrapText(
+        ctx,
+        reading.keywords,
+        panelX + layout.panelPadding,
+        panelCursorY + 6,
+        panelWidth - layout.panelPadding * 2,
+        30,
         1,
       );
 
@@ -331,41 +409,53 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       ctx.font = '400 28px "Space Grotesk", sans-serif';
       panelCursorY = wrapText(
         ctx,
-        summary,
+        reading.main,
         panelX + layout.panelPadding,
-        panelCursorY + 8,
+        panelCursorY + 10,
         panelWidth - layout.panelPadding * 2,
         34,
         4,
       );
 
-      if (advice.length) {
-        ctx.fillStyle = '#d8dbe6';
-        ctx.font = '500 26px "Space Grotesk", sans-serif';
-        advice.slice(0, 2).forEach((item) => {
-          panelCursorY = wrapText(
-            ctx,
-            `• ${item}`,
-            panelX + layout.panelPadding,
-            panelCursorY + 8,
-            panelWidth - layout.panelPadding * 2,
-            32,
-            1,
-          );
-        });
-      }
-
-      if (caution.length) {
-        ctx.fillStyle = '#c9a8ff';
-        ctx.font = '500 26px "Space Grotesk", sans-serif';
+      if (reading.suggestion) {
+        ctx.fillStyle = '#f8d77a';
+        ctx.font = '600 24px "Space Grotesk", sans-serif';
         panelCursorY = wrapText(
           ctx,
-          `• ${caution[0]}`,
+          `${strings.suggestionLabel}: ${reading.suggestion}`,
+          panelX + layout.panelPadding,
+          panelCursorY + 10,
+          panelWidth - layout.panelPadding * 2,
+          30,
+          2,
+        );
+      }
+
+      if (reading.question) {
+        ctx.fillStyle = '#c9a8ff';
+        ctx.font = '500 24px "Space Grotesk", sans-serif';
+        panelCursorY = wrapText(
+          ctx,
+          `${strings.questionLabel}: ${reading.question}`,
           panelX + layout.panelPadding,
           panelCursorY + 8,
           panelWidth - layout.panelPadding * 2,
-          32,
-          1,
+          30,
+          2,
+        );
+      }
+
+      if (reading.affirmation) {
+        ctx.fillStyle = '#f7f4ee';
+        ctx.font = '400 24px "Space Grotesk", sans-serif';
+        panelCursorY = wrapText(
+          ctx,
+          `“${reading.affirmation}”`,
+          panelX + layout.panelPadding,
+          panelCursorY + 8,
+          panelWidth - layout.panelPadding * 2,
+          30,
+          2,
         );
       }
     };
@@ -383,24 +473,20 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       x += ctx.measureText(strings.luckyColors).width + 16;
 
       luckyColors.forEach((color) => {
-        const label = color?.name || '';
-        const hex = color?.hex || '#ffffff';
+        const hex = color?.hex || color || '#ffffff';
         ctx.save();
         ctx.fillStyle = hex;
         ctx.beginPath();
         ctx.arc(x + 12, rowY, 12, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
-        x += 28;
-        ctx.fillStyle = '#d8dbe6';
-        ctx.fillText(label, x, rowY);
-        x += ctx.measureText(label).width + 18;
+        x += 32;
       });
 
       const chips = [];
-      if (lucky?.number) chips.push(`#${lucky.number}`);
-      if (lucky?.element) chips.push(lucky.element);
-      if (lucky?.planet) chips.push(lucky.planet);
+      if (lucky.number !== undefined && lucky.number !== null && lucky.number !== '') chips.push(`#${lucky.number}`);
+      if (lucky.element) chips.push(lucky.element);
+      if (lucky.planet) chips.push(lucky.planet);
 
       let chipX = width - safeMargin;
       chips.forEach((chip) => {
