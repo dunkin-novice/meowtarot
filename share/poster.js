@@ -122,8 +122,8 @@ function tokenizeText(ctx, text, maxWidth) {
   return Array.from(value);
 }
 
-function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = Infinity) {
-  if (!text) return y;
+function wrapTextLines(ctx, text, maxWidth, maxLines = Infinity) {
+  if (!text) return [];
   const tokens = tokenizeText(ctx, text, maxWidth);
   const lines = [];
   let line = '';
@@ -153,7 +153,12 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = Infinity) {
   if (overflow && lines.length) {
     lines[maxLines - 1] = ellipsizeText(ctx, lines[maxLines - 1], maxWidth);
   }
+  return lines;
+}
 
+function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = Infinity) {
+  if (!text) return y;
+  const lines = wrapTextLines(ctx, text, maxWidth, maxLines);
   lines.forEach((content, index) => {
     ctx.fillText(content, x, y + index * lineHeight);
   });
@@ -294,12 +299,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       reading.heading || reading.keywords || reading.main || reading.suggestion || reading.question || reading.affirmation
     );
     const layout = {
-      headerTitleY: 140,
-      headerSubtitleY: 198,
-      headerCardNameY: 248,
-      cardWidth: 560,
-      cardAspect: 1.5,
-      cardTop: 240,
+      headerTop: 140,
       panelTop: 1120,
       panelHeight: 520,
       panelPadding: 36,
@@ -307,43 +307,57 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       footerY: 1850,
     };
 
-    const cardWidth = layout.cardWidth;
-    const cardHeight = Math.round(cardWidth * layout.cardAspect);
-    const cardX = (width - cardWidth) / 2;
-    const cardY = layout.cardTop;
-
-    ctx.save();
-    ctx.shadowColor = 'rgba(248, 215, 122, 0.35)';
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetY = 16;
-    ctx.fillStyle = '#0f1429';
-    ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
-    ctx.restore();
-
     const footerY = layout.footerY;
     const panelX = safeMargin;
     const panelWidth = width - safeMargin * 2;
     const panelTop = layout.panelTop;
     const panelHeight = layout.panelHeight;
 
-    const drawHeader = () => {
+    const drawHeader = (headerScale = 1, shouldDraw = true) => {
+      const maxWidth = width - safeMargin * 2;
+      const titleSize = Math.round(68 * headerScale);
+      const subtitleSize = Math.round(38 * headerScale);
+      const cardNameSize = Math.round(30 * headerScale);
+      const titleLineHeight = Math.round(titleSize * 1.1);
+      const subtitleLineHeight = Math.round(subtitleSize * 1.2);
+      const cardLineHeight = Math.round(cardNameSize * 1.25);
+      const gapAfterTitle = Math.round(14 * headerScale);
+      const gapAfterSubtitle = Math.round(10 * headerScale);
+      let cursorY = layout.headerTop;
+
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#f8d77a';
-      ctx.font = '600 68px "Poppins", "Space Grotesk", sans-serif';
-      ctx.fillText(strings.title, width / 2, layout.headerTitleY);
+      ctx.font = `600 ${titleSize}px "Poppins", "Space Grotesk", sans-serif`;
+      const titleLines = wrapTextLines(ctx, strings.title, maxWidth, 1);
+      if (shouldDraw) {
+        ctx.fillStyle = '#f8d77a';
+        titleLines.forEach((line) => ctx.fillText(line, width / 2, cursorY));
+      }
+      cursorY += titleLineHeight + gapAfterTitle;
 
-      ctx.fillStyle = '#d8dbe6';
-      ctx.font = '500 38px "Space Grotesk", sans-serif';
-      ctx.fillText(strings.subtitle, width / 2, layout.headerSubtitleY);
+      ctx.font = `500 ${subtitleSize}px "Space Grotesk", sans-serif`;
+      const subtitleLines = wrapTextLines(ctx, strings.subtitle, maxWidth, 1);
+      if (shouldDraw) {
+        ctx.fillStyle = '#d8dbe6';
+        subtitleLines.forEach((line) => ctx.fillText(line, width / 2, cursorY));
+      }
+      cursorY += subtitleLineHeight + gapAfterSubtitle;
 
-      ctx.fillStyle = '#f7f4ee';
-      ctx.font = '500 30px "Space Grotesk", sans-serif';
-      ctx.fillText(getCardName(cardEntry?.card, lang) || cardEntry?.name || '', width / 2, layout.headerCardNameY);
+      ctx.font = `500 ${cardNameSize}px "Space Grotesk", sans-serif`;
+      const cardName = getCardName(cardEntry?.card, lang) || cardEntry?.name || '';
+      const cardNameLines = wrapTextLines(ctx, cardName, maxWidth, 2);
+      if (shouldDraw) {
+        ctx.fillStyle = '#f7f4ee';
+        cardNameLines.forEach((line, index) => {
+          ctx.fillText(line, width / 2, cursorY + index * cardLineHeight);
+        });
+      }
+      cursorY += cardNameLines.length * cardLineHeight;
+      return cursorY;
     };
 
-    const drawCardImage = async () => {
-      if (!cardEntry?.card) return;
+    const resolveCardImage = async () => {
+      if (!cardEntry?.card) return null;
       const baseId = baseCardId(cardEntry.card.id || cardEntry.card.card_id || cardEntry.card.image_id);
       const orientedId = `${baseId}-${cardEntry.orientation}`;
       const uprightId = `${baseId}-upright`;
@@ -367,8 +381,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
           { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
           { orientation: cardEntry.orientation },
         );
-      const img = await loadImageWithFallback(primary, fallback || finalFallback);
-      ctx.drawImage(img, cardX, cardY, cardWidth, cardHeight);
+      return loadImageWithFallback(primary, fallback || finalFallback);
     };
 
     const drawReadingPanel = () => {
@@ -516,8 +529,41 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       ctx.fillText('meowtarot.com', width / 2, footerY);
     };
 
-    drawHeader();
-    await drawCardImage();
+    const maxHeaderBottom = 360;
+    let headerScale = 1;
+    let headerBottomY = drawHeader(headerScale, false);
+    while (headerBottomY > maxHeaderBottom && headerScale > 0.82) {
+      headerScale -= 0.06;
+      headerBottomY = drawHeader(headerScale, false);
+    }
+    drawHeader(headerScale, true);
+
+    const gapAfterHeader = Math.max(48 * headerScale, 40);
+    const cardTopY = headerBottomY + gapAfterHeader;
+    const gapBeforePanel = 48;
+    const maxCardWidth = Math.min(680, width - safeMargin * 2);
+    const maxCardHeight = Math.max(0, panelTop - gapBeforePanel - cardTopY);
+    const cardImg = await resolveCardImage();
+    const imgWidth = cardImg?.naturalWidth || 560;
+    const imgHeight = cardImg?.naturalHeight || Math.round(560 * 1.5);
+    const scale = Math.min(maxCardWidth / imgWidth, maxCardHeight / imgHeight);
+    const cardWidth = Math.max(0, imgWidth * scale);
+    const cardHeight = Math.max(0, imgHeight * scale);
+    const cardX = (width - cardWidth) / 2;
+    const cardY = cardTopY;
+
+    if (cardWidth && cardHeight) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(248, 215, 122, 0.35)';
+      ctx.shadowBlur = 40;
+      ctx.shadowOffsetY = 16;
+      ctx.fillStyle = '#0f1429';
+      ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+      ctx.restore();
+      if (cardImg) {
+        ctx.drawImage(cardImg, cardX, cardY, cardWidth, cardHeight);
+      }
+    }
     drawReadingPanel();
     drawLuckyRow();
     drawFooter();
