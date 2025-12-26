@@ -35,15 +35,15 @@
       </div>
     </section>
 
-    <div class="sr-only" id="posterLoading" aria-live="polite">Generating poster…</div>
+    <div class="poster-loading" id="posterLoading" aria-live="polite" hidden>Generating poster…</div>
     <div class="sr-only" id="posterHint">กดค้างที่รูปเพื่อบันทึก</div>
-    <div class="sr-only" id="shareStatus" aria-live="polite"></div>
+    <div class="share-toast" id="shareStatus" aria-live="polite" hidden></div>
 
     <nav class="action-bar" aria-label="Share actions">
       <button class="action-btn primary" id="shareAction">Share</button>
       <button class="action-btn" id="saveAction">Save</button>
       <button class="action-btn ghost" id="copyAction">Copy link</button>
-      <a class="action-link" id="openPosterLink" href="#" target="_blank" rel="noopener">Open poster image</a>
+      <a class="action-link" id="openPosterLink" href="#" target="_blank" rel="noopener" hidden>Open poster image</a>
     </nav>
   </main>
 
