@@ -52,6 +52,7 @@ const readingTitle = document.getElementById('readingTitle');
 const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveBtn = document.getElementById('saveBtn');
+const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 
 function getText(card, keyBase, lang = state.currentLang) {
   if (!card) return '';
@@ -661,109 +662,59 @@ function renderReading(dict) {
   renderFull(cards, dict);
 }
 
-function handleShare() {
-  const url = window.location.href;
-  if (navigator.share) {
-    navigator.share({ title: 'MeowTarot', text: translations[state.currentLang].yourReading, url }).catch(() => copyLink(url));
-  } else {
-    copyLink(url);
-  }
+function base64UrlEncode(input) {
+  const encoded = btoa(unescape(encodeURIComponent(input)));
+  return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
-function copyLink(url) {
-  navigator.clipboard.writeText(url).then(() => alert(translations[state.currentLang].shareFallback));
-}
+function buildSharePayload() {
+  const dict = translations[state.currentLang] || translations.en;
+  const modeTitle =
+    state.mode === 'question'
+      ? dict.questionTitle
+      : state.mode === 'full'
+        ? dict.overallTitle
+        : dict.dailyTitle;
+  const modeSubtitle =
+    state.mode === 'question'
+      ? dict.questionSpreadNote
+      : state.mode === 'full'
+        ? dict.readingSubtitle
+        : dict.spreadQuick;
 
-function downscaleCanvas(canvas, targetWidth = 1080, maxHeight = 1920, backgroundColor = '#0b1020') {
-  if (!canvas || !canvas.width || !canvas.height) return canvas;
-  const ratio = Math.min(targetWidth / canvas.width, maxHeight / canvas.height);
-  const scaledWidth = Math.round(canvas.width * ratio);
-  const scaledHeight = Math.round(canvas.height * ratio);
-  const c = document.createElement('canvas');
-  c.width = targetWidth;
-  c.height = Math.min(maxHeight, Math.max(scaledHeight, 1));
-  const ctx = c.getContext('2d');
-  if (ctx) {
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, c.width, c.height);
-    const offsetX = Math.max((c.width - scaledWidth) / 2, 0);
-    ctx.drawImage(canvas, offsetX, 0, scaledWidth, scaledHeight);
-  }
-  return c;
-}
-
-async function exportShareCard() {
-  const target = document.getElementById('reading-content');
-  const html2c = typeof html2canvas === 'function' ? html2canvas : null;
-
-  if (!target || !html2c) {
-    console.error('Save as image unavailable: missing target or html2canvas');
-    return;
-  }
-
-  const backgroundColor = window.getComputedStyle(target).backgroundColor || '#0b1020';
-  const scale = isIOS() ? 1 : Math.min(window.devicePixelRatio || 1, 2);
-
-  try {
-    if (document.fonts?.ready) await document.fonts.ready;
-
-    const images = Array.from(target.querySelectorAll('img'));
-    await Promise.all(
-      images.map(async (img) => {
-        try {
-          if (img.decode) {
-            await img.decode();
-          } else if (!img.complete) {
-            await new Promise((resolve, reject) => {
-              img.addEventListener('load', resolve, { once: true });
-              img.addEventListener('error', reject, { once: true });
-            });
-          }
-        } catch (_) {
-          // Ignore decode failures; html2canvas will best-effort render
-        }
-      }),
-    );
-
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-    const rawCanvas = await html2c(target, { backgroundColor, scale });
-    const storyCanvas = downscaleCanvas(rawCanvas, 1080, 1920, backgroundColor);
-
-    const triggerDelivery = (href, blob) => {
-      if (isIOS()) {
-        const url = blob ? URL.createObjectURL(blob) : href;
-        window.open(url, '_blank', 'noopener');
-      } else {
-        const link = document.createElement('a');
-        link.download = `meowtarot-reading-${Date.now()}.png`;
-        link.href = href;
-        link.click();
-      }
+  const cards = state.selectedIds.map((id) => {
+    const card = findCard(id);
+    const orientation = toOrientation(id);
+    const baseId = getBaseCardId(id, normalizeId) || normalizeId(id);
+    return {
+      id: baseId,
+      orientation,
+      name: card ? getName(card) : baseId,
     };
+  });
 
-    if (storyCanvas.toBlob) {
-      storyCanvas.toBlob((blob) => {
-        if (blob) {
-          triggerDelivery(URL.createObjectURL(blob), blob);
-        } else {
-          triggerDelivery(storyCanvas.toDataURL('image/png'));
-        }
-      }, 'image/png');
-    } else {
-      triggerDelivery(storyCanvas.toDataURL('image/png'));
-    }
-  } catch (err) {
-    console.error('Save as image failed', err);
-  }
+  return {
+    version: 1,
+    lang: state.currentLang,
+    mode: state.mode,
+    topic: state.topic,
+    cards: cards.map(({ id, orientation }) => ({ id, orientation })),
+    title: modeTitle,
+    subtitle: modeSubtitle,
+    headline: dict.yourReading,
+    keywords: cards.map((card) => card.name).filter(Boolean).slice(0, 3),
+    canonicalUrl: window.location.href,
+  };
 }
 
-function isIOS() {
-  const ua = navigator.userAgent || navigator.vendor || '';
-  const isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isWebKit = /AppleWebKit/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/.test(ua);
-  const isMacDesktop = /Macintosh/.test(ua) && !isIOSDevice;
-  return isIOSDevice && isWebKit && !isMacDesktop;
+function openSharePage({ action } = {}) {
+  const payload = buildSharePayload();
+  sessionStorage.setItem(SHARE_STORAGE_KEY, JSON.stringify(payload));
+  const encoded = base64UrlEncode(JSON.stringify(payload));
+  const url = new URL('/share/', window.location.origin);
+  if (encoded) url.searchParams.set('d', encoded);
+  if (action) url.searchParams.set('action', action);
+  window.location.href = url.toString();
 }
 
 function updateContextCopy(dict = translations[state.currentLang]) {
@@ -807,8 +758,8 @@ function init() {
     window.location.href = localizePath(target, state.currentLang);
   });
 
-  shareBtn?.addEventListener('click', handleShare);
-  saveBtn?.addEventListener('click', exportShareCard);
+  shareBtn?.addEventListener('click', () => openSharePage());
+  saveBtn?.addEventListener('click', () => openSharePage({ action: 'save' }));
 
   loadTarotData()
     .then(() => {
