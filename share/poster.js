@@ -40,23 +40,31 @@ function buildCardEntries(payload) {
     .filter((entry) => entry.card || entry.name);
 }
 
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    let done = false;
-    const finalize = () => {
-      if (done) return;
-      done = true;
-      resolve(img);
-    };
-    img.onload = finalize;
-    img.onerror = reject;
-    img.decoding = 'async';
-    img.src = src;
-    if (img.decode) {
-      img.decode().then(finalize).catch(() => {});
-    }
+async function waitForImageLoad(img) {
+  if (img.complete && img.naturalWidth) return;
+  await new Promise((resolve, reject) => {
+    const handleLoad = () => resolve();
+    const handleError = (err) => reject(err);
+    img.onload = handleLoad;
+    img.onerror = handleError;
   });
+}
+
+async function loadImage(src) {
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = src;
+  if (img.decode) {
+    try {
+      await img.decode();
+      return img;
+    } catch (err) {
+      await waitForImageLoad(img);
+      return img;
+    }
+  }
+  await waitForImageLoad(img);
+  return img;
 }
 
 async function loadImageWithFallback(primary, fallback) {
@@ -162,15 +170,6 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-function buildShareUrl(payload) {
-  const json = JSON.stringify(payload || {});
-  const encoded = btoa(unescape(encodeURIComponent(json)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-  return `${window.location.origin}/share/?d=${encoded}`;
-}
-
 function getDailyStrings(lang = 'en') {
   if (lang === 'th') {
     return {
@@ -237,22 +236,6 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       footerY: 1860,
     };
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#f8d77a';
-    ctx.font = '600 68px "Poppins", "Space Grotesk", sans-serif';
-    ctx.fillText(strings.title, width / 2, layout.headerTitleY);
-
-    ctx.fillStyle = '#d8dbe6';
-    ctx.font = '500 38px "Space Grotesk", sans-serif';
-    ctx.fillText(strings.subtitle, width / 2, layout.headerSubtitleY);
-
-    if (cardEntry?.name) {
-      ctx.fillStyle = '#f7f4ee';
-      ctx.font = '500 30px "Space Grotesk", sans-serif';
-      ctx.fillText(cardEntry.name, width / 2, layout.headerCardNameY);
-    }
-
     const cardWidth = layout.cardWidth;
     const cardHeight = Math.round(cardWidth * layout.cardAspect);
     const cardX = (width - cardWidth) / 2;
@@ -266,7 +249,30 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
     ctx.restore();
 
-    if (cardEntry?.card) {
+    const footerY = layout.footerY;
+    const panelX = safeMargin;
+    const panelWidth = width - safeMargin * 2;
+    const panelTop = layout.panelTop;
+    const panelHeight = layout.panelHeight;
+
+    const drawHeader = () => {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#f8d77a';
+      ctx.font = '600 68px "Poppins", "Space Grotesk", sans-serif';
+      ctx.fillText(strings.title, width / 2, layout.headerTitleY);
+
+      ctx.fillStyle = '#d8dbe6';
+      ctx.font = '500 38px "Space Grotesk", sans-serif';
+      ctx.fillText(strings.subtitle, width / 2, layout.headerSubtitleY);
+
+      ctx.fillStyle = '#f7f4ee';
+      ctx.font = '500 30px "Space Grotesk", sans-serif';
+      ctx.fillText(cardEntry?.name || '', width / 2, layout.headerCardNameY);
+    };
+
+    const drawCardImage = async () => {
+      if (!cardEntry?.card) return;
       const baseId = baseCardId(cardEntry.card.id || cardEntry.card.card_id || cardEntry.card.image_id);
       const orientedId = `${baseId}-${cardEntry.orientation}`;
       const uprightId = `${baseId}-upright`;
@@ -282,15 +288,10 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
         : null;
       const img = await loadImageWithFallback(primary, fallback);
       ctx.drawImage(img, cardX, cardY, cardWidth, cardHeight);
-    }
+    };
 
-    const footerY = layout.footerY;
-    const panelX = safeMargin;
-    const panelWidth = width - safeMargin * 2;
-    const panelTop = layout.panelTop;
-    const panelHeight = layout.panelHeight;
-
-    if (hasReadingPanel) {
+    const drawReadingPanel = () => {
+      if (!hasReadingPanel) return;
       ctx.save();
       ctx.fillStyle = 'rgba(15, 20, 41, 0.68)';
       drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 28);
@@ -352,9 +353,10 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
           1,
         );
       }
-    }
+    };
 
-    if (hasLuckyRow) {
+    const drawLuckyRow = () => {
+      if (!hasLuckyRow) return;
       const minLuckyY = cardY + cardHeight + 80;
       const rowY = Math.max(layout.luckyRowY, minLuckyY);
       ctx.textBaseline = 'middle';
@@ -403,13 +405,21 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
         ctx.fillText(chip, chipX + paddingX, rowY);
         chipX -= 12;
       });
-    }
+    };
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#aab0c9';
-    ctx.font = '500 28px "Space Grotesk", sans-serif';
-    ctx.fillText('meowtarot.com', width / 2, footerY);
+    const drawFooter = () => {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#aab0c9';
+      ctx.font = '500 28px "Space Grotesk", sans-serif';
+      ctx.fillText('meowtarot.com', width / 2, footerY);
+    };
+
+    drawHeader();
+    await drawCardImage();
+    drawReadingPanel();
+    drawLuckyRow();
+    drawFooter();
 
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
     if (!blob) throw new Error('Failed to build poster blob');
@@ -419,8 +429,6 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   const title = payload?.title || 'MeowTarot Reading';
   const subtitle = payload?.subtitle || '';
   const keywords = Array.isArray(payload?.keywords) ? payload.keywords.filter(Boolean).slice(0, 3) : [];
-  const shareUrl = payload?.canonicalUrl || buildShareUrl(payload);
-
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f8d77a';
   ctx.font = '600 72px "Poppins", "Space Grotesk", sans-serif';
@@ -480,8 +488,6 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   ctx.fillStyle = '#aab0c9';
   ctx.font = '500 28px "Space Grotesk", sans-serif';
   ctx.fillText('meowtarot.com', width / 2, height - 90);
-  ctx.font = '400 22px "Space Grotesk", sans-serif';
-  ctx.fillText(shareUrl, width / 2, height - 48);
 
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
   if (!blob) throw new Error('Failed to build poster blob');
