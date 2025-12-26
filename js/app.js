@@ -355,23 +355,23 @@ async function saveImage() {
     });
     const downscaled = downscaleCanvas(canvas);
 
-    const triggerDownload = (href) => {
-      const link = document.createElement('a');
-      link.download = `meowtarot-reading-${Date.now()}.png`;
-      link.href = href;
-      link.click();
+    const openImage = (href) => {
+      const opened = window.open(href, '_blank', 'noopener');
+      if (!opened) {
+        window.location.href = href;
+      }
     };
 
     if (downscaled.toBlob) {
       downscaled.toBlob((blob) => {
         if (blob) {
-          triggerDownload(URL.createObjectURL(blob));
+          openImage(URL.createObjectURL(blob));
         } else {
-          triggerDownload(downscaled.toDataURL('image/png'));
+          openImage(downscaled.toDataURL('image/png'));
         }
       }, 'image/png');
     } else {
-      triggerDownload(downscaled.toDataURL('image/png'));
+      openImage(downscaled.toDataURL('image/png'));
     }
   } catch (e) {
     console.error('Save as image failed', e);
