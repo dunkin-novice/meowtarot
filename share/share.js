@@ -7,11 +7,13 @@ const statusEl = document.getElementById('shareStatus');
 const shareBtn = document.getElementById('shareAction');
 const saveBtn = document.getElementById('saveAction');
 const copyBtn = document.getElementById('copyAction');
+const openLink = document.getElementById('openPosterLink');
 
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let currentBlob = null;
 let currentUrl = null;
 let revokeTimer = null;
+let posterPromise = null;
 let shareLink = window.location.href;
 let currentPayload = null;
 
@@ -71,8 +73,8 @@ function setStatus(message) {
 
 function setLoading(isLoading, strings) {
   if (!loadingEl) return;
-  loadingEl.textContent = isLoading ? strings.generating : strings.ready;
-  loadingEl.classList.toggle('hidden', !isLoading);
+  loadingEl.textContent = isLoading ? strings.generating : '';
+  loadingEl.hidden = !isLoading;
 }
 
 function storePayload(payload) {
@@ -107,12 +109,22 @@ function resolvePayload() {
 
 function setPosterBlob(blob) {
   currentBlob = blob;
+  setPosterUrl(URL.createObjectURL(blob));
+}
+
+function setPosterUrl(url) {
   if (currentUrl) {
     URL.revokeObjectURL(currentUrl);
-    currentUrl = null;
   }
-  currentUrl = URL.createObjectURL(blob);
+  currentUrl = url;
   previewEl.src = currentUrl;
+  if (openLink) {
+    openLink.href = currentUrl;
+  }
+  scheduleRevoke();
+}
+
+function scheduleRevoke() {
   if (revokeTimer) clearTimeout(revokeTimer);
   revokeTimer = setTimeout(() => {
     if (currentUrl) {
@@ -122,16 +134,40 @@ function setPosterBlob(blob) {
   }, 60000);
 }
 
+function ensurePosterUrl() {
+  if (!currentBlob) return null;
+  if (currentUrl) {
+    scheduleRevoke();
+    return currentUrl;
+  }
+  const url = URL.createObjectURL(currentBlob);
+  setPosterUrl(url);
+  return url;
+}
+
 async function ensurePoster() {
   if (!currentPayload) return null;
   if (currentBlob) return currentBlob;
+  if (posterPromise) return posterPromise;
+
   const strings = getStrings(currentPayload.lang);
   setLoading(true, strings);
-  const result = await buildPoster(currentPayload, { preset: 'story' });
-  setPosterBlob(result.blob);
-  setLoading(false, strings);
-  setStatus(strings.ready);
-  return result.blob;
+  posterPromise = (async () => {
+    const result = await buildPoster(currentPayload, { preset: 'story' });
+    if (result.width !== 1080 || result.height !== 1920) {
+      throw new Error('Unexpected poster size');
+    }
+    setPosterBlob(result.blob);
+    setLoading(false, strings);
+    setStatus(strings.ready);
+    return result.blob;
+  })();
+
+  try {
+    return await posterPromise;
+  } finally {
+    posterPromise = null;
+  }
 }
 
 async function handleShare() {
@@ -168,7 +204,8 @@ async function handleSave() {
   setStatus(strings.openImage);
   const blob = await ensurePoster();
   if (!blob) return;
-  const url = currentUrl || URL.createObjectURL(blob);
+  const url = ensurePosterUrl();
+  if (!url) return;
   window.open(url, '_blank', 'noopener');
 }
 
@@ -221,10 +258,9 @@ async function init() {
 
   document.title = `${currentPayload.title || 'MeowTarot'} – Share`;
   if (!isIOS()) {
-    hintEl.style.display = 'none';
+    hintEl.hidden = true;
   }
 
-  setLoading(true, strings);
   try {
     await ensurePoster();
   } catch (err) {
@@ -237,6 +273,14 @@ async function init() {
   shareBtn.addEventListener('click', handleShare);
   saveBtn.addEventListener('click', handleSave);
   copyBtn.addEventListener('click', () => handleCopy());
+  openLink?.addEventListener('click', async (event) => {
+    event.preventDefault();
+    const blob = await ensurePoster();
+    if (!blob) return;
+    const url = ensurePosterUrl();
+    if (!url) return;
+    window.open(url, '_blank', 'noopener');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);
