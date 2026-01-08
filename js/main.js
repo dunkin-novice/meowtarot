@@ -4,6 +4,7 @@ import { loadTarotData, getCardBackUrl, normalizeId } from './data.js';
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
 const OVERALL_SELECTION_COUNT = 3;
+const QUESTION_SELECTION_COUNT = 1;
 const ORIENTATION_REVERSED_PROBABILITY = 0.5;
 const STORAGE_KEY = 'meowtarot_selection';
 const DAILY_SELECTION_MAX = 1;
@@ -404,14 +405,14 @@ function renderQuestion() {
 
   const updateContinue = (cards) => {
     latestSelection = cards;
-    continueBtn.disabled = cards.length !== OVERALL_SELECTION_COUNT;
-    counter.textContent = `${cards.length}/${OVERALL_SELECTION_COUNT}`;
+    continueBtn.disabled = cards.length !== QUESTION_SELECTION_COUNT;
+    counter.textContent = `${cards.length}/${QUESTION_SELECTION_COUNT}`;
   };
 
   const renderBoard = () => {
     board.hidden = false;
     toolbar.hidden = false;
-    boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue);
+    boardApi = setupBoard(board, BOARD_CARD_COUNT, QUESTION_SELECTION_COUNT, updateContinue);
     updateContinue([]);
   };
 
@@ -424,7 +425,7 @@ function renderQuestion() {
 
   shuffleBtn.onclick = () => boardApi?.render();
   continueBtn.onclick = () => {
-    if (latestSelection.length !== OVERALL_SELECTION_COUNT) return;
+    if (latestSelection.length !== QUESTION_SELECTION_COUNT) return;
     saveSelectionAndGo({
       mode: 'question',
       spread: 'story',

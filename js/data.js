@@ -111,9 +111,9 @@ if (typeof window !== 'undefined') {
 
 // Load full deck from JSON, fall back to static tarotCards if anything fails
 export function loadTarotData() {
-  return fetch('/data/cards.json', { cache: 'no-store' })
+  return fetch('/data/cards.full.json', { cache: 'no-store' })
     .then((res) => {
-      if (!res.ok) throw new Error(`Failed to fetch /data/cards.json (HTTP ${res.status})`);
+      if (!res.ok) throw new Error(`Failed to fetch /data/cards.full.json (HTTP ${res.status})`);
       return res.json();
     })
     .then((data) => {
@@ -127,7 +127,7 @@ export function loadTarotData() {
           : [];
 
       if (!rawCards.length) {
-        throw new Error('cards.json loaded but no cards array found (expected {cards:[...]} or [...])');
+        throw new Error('cards.full.json loaded but no cards array found (expected {cards:[...]} or [...])');
       }
 
       meowTarotCards = normalizeCards(rawCards);

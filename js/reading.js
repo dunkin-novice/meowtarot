@@ -53,6 +53,7 @@ const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveBtn = document.getElementById('saveBtn');
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
+let energyChart = null;
 
 function getText(card, keyBase, lang = state.currentLang) {
   if (!card) return '';
@@ -399,6 +400,23 @@ function buildSuggestionPanel(card, dict, headingText) {
   return panel;
 }
 
+function buildTopicPanel(title, text) {
+  if (!text) return null;
+
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+
+  const h3 = document.createElement('h3');
+  h3.textContent = title;
+  panel.appendChild(h3);
+
+  const p = document.createElement('p');
+  p.textContent = text;
+  panel.appendChild(p);
+
+  return panel;
+}
+
 function buildMetaPanel(card) {
   if (!card) return null;
 
@@ -413,21 +431,25 @@ function buildMetaPanel(card) {
     || card.numerology
     || card.numerology_value;
 
+  const zodiac =
+    getText(card, 'zodiac_sign')
+    || card.zodiac_sign
+    || card.astrology_sign;
+
   if (element) meta.push({ label: state.currentLang === 'th' ? 'ธาตุ' : 'Element', value: element });
   if (planet) meta.push({ label: state.currentLang === 'th' ? 'ดาว' : 'Planet', value: planet });
   if (numerology !== undefined && numerology !== null && numerology !== '') {
     meta.push({ label: state.currentLang === 'th' ? 'เลข' : 'Numerology', value: numerology });
   }
+  if (zodiac) {
+    meta.push({ label: (translations[state.currentLang] || translations.en).metaZodiac || (state.currentLang === 'th' ? 'ราศี' : 'Zodiac'), value: zodiac });
+  }
 
-  // ✅ Lucky colors: use color_palette (existing) but show NAME not hex
-  const luckyPalette = normalizeColorArray(
-    card.lucky_color_palette || card.lucky_colors || card.color_palette || card.colors
-  ).filter(Boolean).slice(0, 6);
+  // ✅ Lucky colors: use color_palette (show NAME not hex)
+  const luckyPalette = normalizeColorArray(card.color_palette).filter(Boolean).slice(0, 6);
 
-  // ✅ Avoid colors: optional (if you add it later)
-  const avoidPalette = normalizeColorArray(
-    card.avoid_color_palette || card.avoid_colors || card.colors_to_avoid || card.unlucky_colors
-  ).filter(Boolean).slice(0, 6);
+  // ✅ Avoid colors: use avoid_color_palette
+  const avoidPalette = normalizeColorArray(card.avoid_color_palette).filter(Boolean).slice(0, 6);
 
   if (!meta.length && !luckyPalette.length && !avoidPalette.length) return null;
 
@@ -490,6 +512,96 @@ function buildMetaPanel(card) {
   return panel;
 }
 
+// Topic mapping for daily/question/full reading sections.
+const TOPIC_CONFIG = [
+  { key: 'love', titleKey: 'topicLove', singleKey: 'love_reading_single', spreadKeys: ['love_past', 'love_present', 'love_future'] },
+  { key: 'career', titleKey: 'topicCareer', singleKey: 'career_reading_single', spreadKeys: ['career_past', 'career_present', 'career_future'] },
+  { key: 'finance', titleKey: 'topicFinance', singleKey: 'finance_reading_single', spreadKeys: ['finance_past', 'finance_present', 'finance_future'] },
+  { key: 'self', titleKey: 'topicSelf', singleKey: 'self_reading_single', spreadKeys: ['self_past', 'self_present', 'self_future'] },
+  { key: 'family', titleKey: 'topicFamily', singleKey: 'family_reading_single', spreadKeys: ['family_past', 'family_present', 'family_future'] },
+  { key: 'travel', titleKey: 'topicTravel', singleKey: 'travel_reading_single', spreadKeys: ['travel_past', 'travel_present', 'travel_future'] },
+  { key: 'health', titleKey: 'topicHealth', singleKey: 'health_reading_single', spreadKeys: ['health_past', 'health_present', 'health_future'] },
+];
+
+function getTopicTitle(dict, titleKey) {
+  return dict?.[titleKey]
+    || (translations[state.currentLang] || translations.en)[titleKey]
+    || titleKey;
+}
+
+function loadChartJs() {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  if (window.Chart) return Promise.resolve(window.Chart);
+  return import('https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js')
+    .then((mod) => mod.Chart || mod.default || window.Chart)
+    .catch(() => window.Chart || null);
+}
+
+// Energy Balance radar chart (full/life reading only).
+function buildEnergyPanel(cards, dict) {
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+
+  const heading = document.createElement('h3');
+  heading.textContent = dict.energyTitle || (state.currentLang === 'th' ? 'สมดุลพลังงาน' : 'Energy Balance');
+  panel.appendChild(heading);
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'energy-chart';
+  panel.appendChild(canvas);
+
+  const elements = ['fire', 'water', 'air', 'earth'];
+  const averages = elements.map((key) => {
+    const sum = cards.slice(0, 3).reduce((acc, card) => {
+      const value = Number(card?.energy_scores?.[key] ?? 0);
+      return acc + (Number.isFinite(value) ? value : 0);
+    }, 0);
+    return Math.round(sum / 3);
+  });
+
+  const labels = [
+    dict.energyFire || 'Fire',
+    dict.energyWater || 'Water',
+    dict.energyAir || 'Air',
+    dict.energyEarth || 'Earth',
+  ];
+
+  loadChartJs().then((Chart) => {
+    if (!Chart || !canvas) return;
+    if (energyChart) energyChart.destroy();
+    energyChart = new Chart(canvas, {
+      type: 'radar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: dict.energyTitle || 'Energy',
+            data: averages,
+            backgroundColor: 'rgba(120, 107, 255, 0.2)',
+            borderColor: 'rgba(120, 107, 255, 0.9)',
+            pointBackgroundColor: 'rgba(120, 107, 255, 0.9)',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { display: false },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+        },
+      },
+    });
+  });
+
+  return panel;
+}
+
 function renderDaily(card, dict) {
   if (!readingContent || !card) return;
 
@@ -512,7 +624,7 @@ function renderDaily(card, dict) {
     panel.appendChild(p);
   }
 
-  const main = getText(card, 'standalone_present') || getText(card, 'tarot_imply_present');
+  const main = getText(card, 'standalone_present');
   if (main) {
     const p = document.createElement('p');
     p.className = 'lede';
@@ -521,6 +633,13 @@ function renderDaily(card, dict) {
   }
 
   readingContent.appendChild(panel);
+
+  TOPIC_CONFIG.forEach((topic) => {
+    const text = getText(card, topic.singleKey);
+    const title = getTopicTitle(dict, topic.titleKey);
+    const topicPanel = buildTopicPanel(title, text);
+    if (topicPanel) readingContent.appendChild(topicPanel);
+  });
 
   const suggestionHeading = state.currentLang === 'th' ? 'คำแนะนำวันนี้' : (dict.suggestionTitle || 'Suggestion');
   const suggestion = buildSuggestionPanel(card, dict, suggestionHeading);
@@ -536,29 +655,6 @@ function renderFull(cards, dict) {
 
   const positions = ['past', 'present', 'future'];
 
-  cards.slice(0, 3).forEach((card, idx) => {
-    const pos = positions[idx];
-
-    const panel = document.createElement('div');
-    panel.className = 'panel';
-
-    // optional thumbnail
-    panel.appendChild(buildCardArt(card, 'thumb'));
-
-    const h3 = document.createElement('h3');
-    h3.textContent = `${dict[pos]} • ${getName(card)} — ${getOrientationEnglish(card)}`;
-    panel.appendChild(h3);
-
-    const text = getText(card, `standalone_${pos}`);
-    if (text) {
-      const p = document.createElement('p');
-      p.textContent = text;
-      panel.appendChild(p);
-    }
-
-    readingContent.appendChild(panel);
-  });
-
   // Your Fortune (summary)
   const summaries = cards
     .slice(0, 3)
@@ -570,71 +666,91 @@ function renderFull(cards, dict) {
     panel.className = 'panel';
 
     const h3 = document.createElement('h3');
-    h3.textContent = state.currentLang === 'th' ? 'ดวงของคุณ' : 'Your Fortune';
+    h3.textContent = dict.yourFortuneTitle || (state.currentLang === 'th' ? 'ดวงของคุณ' : 'Your Fortune');
     panel.appendChild(h3);
 
-    const p = document.createElement('p');
-    p.textContent = summaries.join(' ').replace(/\s+/g, ' ').trim();
-    panel.appendChild(p);
+    summaries.forEach((summary, idx) => {
+      const label = dict[positions[idx]] || positions[idx];
+      const p = document.createElement('p');
+      p.innerHTML = `<strong>${label}:</strong> ${summary}`;
+      panel.appendChild(p);
+    });
 
     readingContent.appendChild(panel);
   }
 
-  // Suggestion (anchor on Present card)
-  const present = cards[1] || cards[0];
-  if (present) {
-    const heading = state.currentLang === 'th' ? 'คำแนะนำ' : (dict.suggestionTitle || 'Suggestion');
-    const suggestion = buildSuggestionPanel(present, dict, heading);
-    if (suggestion) readingContent.appendChild(suggestion);
+  TOPIC_CONFIG.forEach((topic) => {
+    const texts = cards.slice(0, 3).map((card, idx) => ({
+      label: dict[positions[idx]] || positions[idx],
+      text: getText(card, topic.spreadKeys[idx]),
+    })).filter((item) => item.text);
 
-    const meta = buildMetaPanel(present);
-    if (meta) readingContent.appendChild(meta);
-  }
+    if (!texts.length) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = getTopicTitle(dict, topic.titleKey);
+    panel.appendChild(h3);
+
+    texts.forEach((item) => {
+      const p = document.createElement('p');
+      p.innerHTML = `<strong>${item.label}:</strong> ${item.text}`;
+      panel.appendChild(p);
+    });
+
+    readingContent.appendChild(panel);
+  });
+
+  const energyPanel = buildEnergyPanel(cards, dict);
+  if (energyPanel) readingContent.appendChild(energyPanel);
 }
 
 function renderQuestion(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
 
-  const positions = ['past', 'present', 'future'];
   const topic = String(state.topic || 'generic').toLowerCase();
+  const card = cards[0];
 
-  cards.slice(0, 3).forEach((card, idx) => {
-    const pos = positions[idx];
+  const panel = document.createElement('div');
+  panel.className = 'panel';
 
-    const panel = document.createElement('div');
-    panel.className = 'panel';
+  panel.appendChild(buildCardArt(card, 'hero'));
 
-    panel.appendChild(buildCardArt(card, 'thumb'));
+  const h2 = document.createElement('h2');
+  h2.textContent = `${getName(card)} — ${getOrientationEnglish(card)}`;
+  panel.appendChild(h2);
 
-    const h3 = document.createElement('h3');
-    h3.textContent = `${dict[pos]} • ${getName(card)} — ${getOrientationEnglish(card)}`;
-    panel.appendChild(h3);
-
-    let key = `standalone_${pos}`;
-    if (topic === 'love') key = `love_${pos}`;
-    if (topic === 'career') key = `career_${pos}`;
-    if (topic === 'finance') key = `finance_${pos}`;
-
-    const text = getText(card, key) || getText(card, `standalone_${pos}`);
-    if (text) {
-      const p = document.createElement('p');
-      p.textContent = text;
-      panel.appendChild(p);
-    }
-
-    readingContent.appendChild(panel);
-  });
-
-  const present = cards[1] || cards[0];
-  if (present) {
-    const heading = state.currentLang === 'th' ? 'คำแนะนำ' : (dict.guidanceHeading || dict.suggestionTitle || 'Guidance');
-    const suggestion = buildSuggestionPanel(present, dict, heading);
-    if (suggestion) readingContent.appendChild(suggestion);
-
-    const meta = buildMetaPanel(present);
-    if (meta) readingContent.appendChild(meta);
+  const main = getText(card, 'standalone_present');
+  if (main) {
+    const p = document.createElement('p');
+    p.className = 'lede';
+    p.textContent = main;
+    panel.appendChild(p);
   }
+
+  readingContent.appendChild(panel);
+
+  const topicConfig = TOPIC_CONFIG.find((item) => item.key === topic);
+  const isGeneric = topic === 'generic' || topic === 'other';
+
+  if (topicConfig && !isGeneric) {
+    const topicPanel = buildTopicPanel(
+      getTopicTitle(dict, topicConfig.titleKey),
+      getText(card, topicConfig.singleKey)
+    );
+    if (topicPanel) readingContent.appendChild(topicPanel);
+    return;
+  }
+
+  const heading = state.currentLang === 'th' ? 'คำแนะนำ' : (dict.guidanceHeading || dict.suggestionTitle || 'Guidance');
+  const suggestion = buildSuggestionPanel(card, dict, heading);
+  if (suggestion) readingContent.appendChild(suggestion);
+
+  const meta = buildMetaPanel(card);
+  if (meta) readingContent.appendChild(meta);
 }
 
 function renderReading(dict) {
