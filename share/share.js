@@ -237,7 +237,9 @@ async function handleShare() {
     return;
   }
 
-  const file = new File([blob], 'meowtarot.png', { type: 'image/png' });
+  const isWebp = blob.type === 'image/webp';
+  const fileName = isWebp ? 'meowtarot.webp' : 'meowtarot.png';
+  const file = new File([blob], fileName, { type: blob.type || 'image/png' });
   if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
     try {
       showToast(strings.sharing);
