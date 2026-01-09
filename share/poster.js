@@ -14,6 +14,15 @@ function createCanvas(width, height) {
   return canvas;
 }
 
+async function canvasToBlob(canvas, quality = 0.92) {
+  const webpBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+  if (webpBlob && webpBlob.type === 'image/webp') {
+    return webpBlob;
+  }
+  const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', quality));
+  return pngBlob;
+}
+
 function baseCardId(id = '') {
   return normalizeId(String(id).replace(/-(upright|reversed)$/i, '')) || normalizeId(id);
 }
@@ -569,7 +578,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     drawLuckyRow();
     drawFooter();
 
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
+    const blob = await canvasToBlob(canvas, 0.92);
     if (!blob) throw new Error('Failed to build poster blob');
     return { blob, width, height };
   }
@@ -647,7 +656,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   ctx.font = '500 28px "Space Grotesk", sans-serif';
   ctx.fillText('meowtarot.com', width / 2, height - 90);
 
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
+  const blob = await canvasToBlob(canvas, 0.92);
   if (!blob) throw new Error('Failed to build poster blob');
   return { blob, width, height };
 }

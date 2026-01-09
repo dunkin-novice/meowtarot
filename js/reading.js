@@ -51,7 +51,6 @@ const contextCopy = document.getElementById('reading-context');
 const readingTitle = document.getElementById('readingTitle');
 const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
-const saveBtn = document.getElementById('saveBtn');
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let energyChart = null;
 
@@ -876,7 +875,6 @@ function init() {
   });
 
   shareBtn?.addEventListener('click', () => openSharePage());
-  saveBtn?.addEventListener('click', () => openSharePage({ action: 'save' }));
 
   loadTarotData()
     .then(() => {
