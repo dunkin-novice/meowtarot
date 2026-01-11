@@ -51,6 +51,8 @@ const contextCopy = document.getElementById('reading-context');
 const readingTitle = document.getElementById('readingTitle');
 const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
+const saveBtn = document.getElementById('saveBtn');
+const resultsSection = document.querySelector('.section-block.results');
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let energyChart = null;
 
@@ -843,6 +845,77 @@ function updateContextCopy(dict = translations[state.currentLang]) {
   }
 }
 
+function downscaleCanvas(canvas, maxWidth = 1080) {
+  if (canvas.width <= maxWidth) return canvas;
+  const ratio = maxWidth / canvas.width;
+  const c = document.createElement('canvas');
+  c.width = maxWidth;
+  c.height = Math.round(canvas.height * ratio);
+  c.getContext('2d').drawImage(canvas, 0, 0, c.width, c.height);
+  return c;
+}
+
+async function saveImage() {
+  const html2c = typeof html2canvas === 'function' ? html2canvas : null;
+  if (!resultsSection || !html2c) {
+    console.error('Save as image unavailable: missing target or html2canvas');
+    return;
+  }
+
+  try {
+    if (document.fonts?.ready) await document.fonts.ready;
+
+    const images = Array.from(resultsSection.querySelectorAll('img'));
+    await Promise.all(
+      images.map(async (img) => {
+        try {
+          if (img.decode) {
+            await img.decode();
+          } else if (!img.complete) {
+            await new Promise((resolve, reject) => {
+              img.addEventListener('load', resolve, { once: true });
+              img.addEventListener('error', reject, { once: true });
+            });
+          }
+        } catch (_) {
+          // ignore decode errors
+        }
+      }),
+    );
+
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const canvas = await html2c(resultsSection, {
+      backgroundColor: '#0b1020',
+      scale: isIOS ? 1 : dpr,
+    });
+    const downscaled = downscaleCanvas(canvas);
+
+    const openImage = (href) => {
+      const opened = window.open(href, '_blank', 'noopener');
+      if (!opened) {
+        window.location.href = href;
+      }
+    };
+
+    if (downscaled.toBlob) {
+      downscaled.toBlob((blob) => {
+        if (blob) {
+          openImage(URL.createObjectURL(blob));
+        } else {
+          openImage(downscaled.toDataURL('image/png'));
+        }
+      }, 'image/png');
+    } else {
+      openImage(downscaled.toDataURL('image/png'));
+    }
+  } catch (error) {
+    console.error('Save as image failed', error);
+  }
+}
+
 function handleTranslations(dict) {
   updateContextCopy(dict);
 
@@ -875,6 +948,7 @@ function init() {
   });
 
   shareBtn?.addEventListener('click', () => openSharePage());
+  saveBtn?.addEventListener('click', saveImage);
 
   loadTarotData()
     .then(() => {
