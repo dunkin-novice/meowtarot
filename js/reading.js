@@ -372,7 +372,7 @@ function buildCardArt(card, variant = 'hero') {
   const img = document.createElement('img');
   img.className = 'card-art-img';
   img.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
-  img.loading = 'lazy';
+  img.loading = 'eager';
 
   const { src, fallback } = getCardImageUrlWithFallback(card);
   img.src = src;
@@ -967,15 +967,18 @@ async function saveImage() {
 }
 
 async function shareReadingLink() {
-  if (!navigator.share) return;
+  const successMessage = 'Copy Reading link สำเร็จ';
   try {
-    await navigator.share({
-      title: 'MeowTarot Reading',
-      url: window.location.href,
-    });
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(window.location.href);
+      alert(successMessage);
+      return;
+    }
   } catch (error) {
-    console.error('Sharing failed', error);
+    console.error('Copy reading link failed', error);
   }
+
+  window.prompt(successMessage, window.location.href);
 }
 
 function configureSaveButton(dict = translations[state.currentLang]) {

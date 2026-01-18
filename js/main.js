@@ -24,7 +24,7 @@ function applyCardBackBackground(el) {
   if (!el) return;
   if (el.tagName === 'IMG') {
     el.src = CARD_BACK_URL;
-    el.loading = el.loading || 'lazy';
+    el.loading = el.loading || 'eager';
     el.alt = '';
     return;
   }
