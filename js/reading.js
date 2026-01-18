@@ -55,6 +55,9 @@ const saveBtn = document.getElementById('saveBtn');
 const resultsSection = document.querySelector('.section-block.results');
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let energyChart = null;
+let saveButtonHandler = null;
+
+const isMobile = () => window.innerWidth <= 768;
 
 function getText(card, keyBase, lang = state.currentLang) {
   if (!card) return '';
@@ -504,17 +507,19 @@ function buildMetaPanel(card) {
     luckyPalette
   );
 
-  appendColorGroup(
-    state.currentLang === 'th' ? 'สีที่ควรเลี่ยง' : 'Colors to avoid',
-    avoidPalette
-  );
+  if (!isMobile()) {
+    appendColorGroup(
+      state.currentLang === 'th' ? 'สีที่ควรเลี่ยง' : 'Colors to avoid',
+      avoidPalette
+    );
+  }
 
   panel.appendChild(row);
   return panel;
 }
 
 // Topic mapping for daily/question/full reading sections.
-const TOPIC_CONFIG = [
+const ALL_TOPICS = [
   { key: 'love', titleKey: 'topicLove', singleKey: 'love_reading_single', spreadKeys: ['love_past', 'love_present', 'love_future'] },
   { key: 'career', titleKey: 'topicCareer', singleKey: 'career_reading_single', spreadKeys: ['career_past', 'career_present', 'career_future'] },
   { key: 'finance', titleKey: 'topicFinance', singleKey: 'finance_reading_single', spreadKeys: ['finance_past', 'finance_present', 'finance_future'] },
@@ -523,6 +528,11 @@ const TOPIC_CONFIG = [
   { key: 'travel', titleKey: 'topicTravel', singleKey: 'travel_reading_single', spreadKeys: ['travel_past', 'travel_present', 'travel_future'] },
   { key: 'health', titleKey: 'topicHealth', singleKey: 'health_reading_single', spreadKeys: ['health_past', 'health_present', 'health_future'] },
 ];
+
+function getTopicConfig() {
+  if (!isMobile()) return ALL_TOPICS;
+  return ALL_TOPICS.filter((topic) => !['family', 'travel', 'self'].includes(topic.key));
+}
 
 function getTopicTitle(dict, titleKey) {
   return dict?.[titleKey]
@@ -635,7 +645,7 @@ function renderDaily(card, dict) {
 
   readingContent.appendChild(panel);
 
-  TOPIC_CONFIG.forEach((topic) => {
+  getTopicConfig().forEach((topic) => {
     const text = getText(card, topic.singleKey);
     const title = getTopicTitle(dict, topic.titleKey);
     const topicPanel = buildTopicPanel(title, text);
@@ -680,7 +690,7 @@ function renderFull(cards, dict) {
     readingContent.appendChild(panel);
   }
 
-  TOPIC_CONFIG.forEach((topic) => {
+  getTopicConfig().forEach((topic) => {
     const texts = cards.slice(0, 3).map((card, idx) => ({
       label: dict[positions[idx]] || positions[idx],
       text: getText(card, topic.spreadKeys[idx]),
@@ -734,7 +744,7 @@ function renderQuestion(cards, dict) {
 
   readingContent.appendChild(panel);
 
-  const topicConfig = TOPIC_CONFIG.find((item) => item.key === topic);
+  const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
 
   if (topicConfig && !isGeneric) {
@@ -838,11 +848,12 @@ function openSharePage({ action } = {}) {
 function updateContextCopy(dict = translations[state.currentLang]) {
   if (!contextCopy) return;
 
-  if (state.mode === 'question') {
-    contextCopy.textContent = dict.contextQuestion;
-  } else {
-    contextCopy.textContent = dict.contextDaily;
+  if (isMobile()) {
+    contextCopy.textContent = '';
+    return;
   }
+
+  contextCopy.textContent = state.mode === 'question' ? dict.contextQuestion : dict.contextDaily;
 }
 
 function downscaleCanvas(canvas, maxWidth = 1080) {
@@ -916,8 +927,38 @@ async function saveImage() {
   }
 }
 
+async function shareReadingLink() {
+  if (!navigator.share) return;
+  try {
+    await navigator.share({
+      title: 'MeowTarot Reading',
+      url: window.location.href,
+    });
+  } catch (error) {
+    console.error('Sharing failed', error);
+  }
+}
+
+function configureSaveButton(dict = translations[state.currentLang]) {
+  if (!saveBtn) return;
+  if (saveButtonHandler) {
+    saveBtn.removeEventListener('click', saveButtonHandler);
+  }
+
+  if (isMobile()) {
+    saveBtn.textContent = state.currentLang === 'th' ? 'แชร์ลิงก์' : 'Share Link';
+    saveButtonHandler = shareReadingLink;
+  } else {
+    saveBtn.textContent = dict.save || saveBtn.textContent;
+    saveButtonHandler = saveImage;
+  }
+
+  saveBtn.addEventListener('click', saveButtonHandler);
+}
+
 function handleTranslations(dict) {
   updateContextCopy(dict);
+  configureSaveButton(dict);
 
   if (readingTitle) {
     if (state.mode === 'question') readingTitle.textContent = dict.questionTitle;
@@ -948,7 +989,14 @@ function init() {
   });
 
   shareBtn?.addEventListener('click', () => openSharePage());
-  saveBtn?.addEventListener('click', saveImage);
+  configureSaveButton(translations[state.currentLang] || translations.en);
+
+  window.addEventListener('resize', () => {
+    const dict = translations[state.currentLang] || translations.en;
+    updateContextCopy(dict);
+    configureSaveButton(dict);
+    if (dataLoaded) renderReading(dict);
+  });
 
   loadTarotData()
     .then(() => {
