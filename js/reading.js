@@ -9,7 +9,10 @@ import {
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 
 const params = new URLSearchParams(window.location.search);
-const storageSelection = JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
+const hasUrlSelection = ['cards', 'card', 'id', 'mode', 'topic', 'spread'].some((key) => params.has(key));
+const storageSelection = hasUrlSelection
+  ? null
+  : JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
 const DEBUG_CAPTURE_ERRORS = false;
 
 function normalizeMode(raw = '') {
@@ -45,6 +48,9 @@ const state = {
 };
 
 let dataLoaded = false;
+let translationsReady = false;
+let hasRendered = false;
+let activeDict = translations[state.currentLang] || translations.en;
 
 const readingContent = document.getElementById('reading-content');
 const contextCopy = document.getElementById('reading-context');
@@ -56,6 +62,8 @@ const resultsSection = document.querySelector('.section-block.results');
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let energyChart = null;
 let saveButtonHandler = null;
+const HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+let html2CanvasPromise = null;
 
 const isMobile = () => window.innerWidth <= 768;
 
@@ -117,7 +125,12 @@ function hexToRgb(hex) {
   return { r, g, b };
 }
 
+const rgbToHslCache = new Map();
+
 function rgbToHsl(r, g, b) {
+  const cacheKey = `${r},${g},${b}`;
+  const cached = rgbToHslCache.get(cacheKey);
+  if (cached) return cached;
   const rr = r / 255;
   const gg = g / 255;
   const bb = b / 255;
@@ -147,7 +160,9 @@ function rgbToHsl(r, g, b) {
     if (h < 0) h += 360;
   }
 
-  return { h, s, l };
+  const result = { h, s, l };
+  rgbToHslCache.set(cacheKey, result);
+  return result;
 }
 
 // overrides สำหรับสีที่เจอบ่อยในเด็ค (เติมเพิ่มได้เรื่อยๆ)
@@ -190,10 +205,16 @@ function basicColorNameFromHex(hex, lang = 'en') {
 
 function hexToName(hex, lang = 'en') {
   const key = normalizeHex(hex);
+  const cacheKey = `${key}|${lang}`;
+  const cached = hexToName.cache.get(cacheKey);
+  if (cached) return cached;
   const hit = HEX_NAME_OVERRIDES[key];
-  if (hit) return hit[lang] || hit.en;
-  return basicColorNameFromHex(key, lang);
+  const resolved = hit ? hit[lang] || hit.en : basicColorNameFromHex(key, lang);
+  hexToName.cache.set(cacheKey, resolved);
+  return resolved;
 }
+
+hexToName.cache = new Map();
 
 function normalizeColorArray(palette) {
   if (!palette) return [];
@@ -431,9 +452,10 @@ function buildMetaPanel(card) {
 
   // ✅ FIX: support numerology_value (your JSON uses numerology_value)
   const numerology =
-    getText(card, 'numerology')
-    || card.numerology
-    || card.numerology_value;
+    card.numerology
+    ?? card.numerology_value
+    ?? getText(card, 'numerology')
+    ?? '';
 
   const zodiac =
     getText(card, 'zodiac_sign')
@@ -866,8 +888,25 @@ function downscaleCanvas(canvas, maxWidth = 1080) {
   return c;
 }
 
+async function loadHtml2Canvas() {
+  if (typeof window === 'undefined') return null;
+  if (typeof window.html2canvas === 'function') return window.html2canvas;
+  if (html2CanvasPromise) return html2CanvasPromise;
+
+  html2CanvasPromise = new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = HTML2CANVAS_SRC;
+    script.async = true;
+    script.onload = () => resolve(window.html2canvas || null);
+    script.onerror = () => resolve(null);
+    document.head.appendChild(script);
+  });
+
+  return html2CanvasPromise;
+}
+
 async function saveImage() {
-  const html2c = typeof html2canvas === 'function' ? html2canvas : null;
+  const html2c = await loadHtml2Canvas();
   if (!resultsSection || !html2c) {
     console.error('Save as image unavailable: missing target or html2canvas');
     return;
@@ -957,6 +996,8 @@ function configureSaveButton(dict = translations[state.currentLang]) {
 }
 
 function handleTranslations(dict) {
+  activeDict = dict;
+  translationsReady = true;
   updateContextCopy(dict);
   configureSaveButton(dict);
 
@@ -966,7 +1007,16 @@ function handleTranslations(dict) {
     else readingTitle.textContent = dict.dailyTitle;
   }
 
-  if (dataLoaded) renderReading(dict);
+  if (dataLoaded) {
+    renderReading(dict);
+    hasRendered = true;
+  }
+}
+
+function maybeRenderReading() {
+  if (hasRendered || !dataLoaded || !translationsReady) return;
+  renderReading(activeDict);
+  hasRendered = true;
 }
 
 function init() {
@@ -1001,11 +1051,11 @@ function init() {
   loadTarotData()
     .then(() => {
       dataLoaded = true;
-      renderReading(translations[state.currentLang] || translations.en);
+      maybeRenderReading();
     })
     .catch(() => {
       dataLoaded = true;
-      renderReading(translations[state.currentLang] || translations.en);
+      maybeRenderReading();
     });
 }
 

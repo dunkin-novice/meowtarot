@@ -386,14 +386,16 @@ body.nav-open {
 }
 
 .card-back {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .card-back-hero {
   width: 100%;
   aspect-ratio: 2.7 / 4;
+  height: auto;
   border-radius: 14px;
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35);
 }
@@ -1732,10 +1734,6 @@ details summary::-webkit-details-marker {
   width: 100%;
   height: 100%;
   display: block;
-
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 
   border-radius: inherit;
   color: transparent; /* hides the 🐾 text */
