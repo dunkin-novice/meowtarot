@@ -18,6 +18,10 @@
     return `${slug}-${presetKey}-${new Date().toISOString().slice(0, 10)}.png`;
   }
 
+  function isMobile() {
+    return window.innerWidth <= 768;
+  }
+
   function createModal(config, state) {
     const overlay = el('div', 'sharekit-overlay');
     const modal = el('div', 'sharekit-modal');
@@ -53,7 +57,11 @@
     saveBtn.addEventListener('click', () => state.save());
     copyLinkBtn.addEventListener('click', () => state.copyLink());
 
-    actions.append(renderShareBtn, saveBtn, copyLinkBtn);
+    if (isMobile()) {
+      actions.append(renderShareBtn);
+    } else {
+      actions.append(renderShareBtn, saveBtn, copyLinkBtn);
+    }
 
     const status = el('div', 'sharekit-status');
 
