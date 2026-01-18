@@ -1,5 +1,5 @@
 import { initShell, localizePath, translations } from './common.js';
-import { loadTarotData, getCardBackUrl, normalizeId } from './data.js';
+import { loadTarotManifest, getCardBackUrl, normalizeId } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -22,6 +22,12 @@ const staticCardBacks = document.querySelectorAll('.card-back');
 
 function applyCardBackBackground(el) {
   if (!el) return;
+  if (el.tagName === 'IMG') {
+    el.src = CARD_BACK_URL;
+    el.loading = el.loading || 'lazy';
+    el.alt = '';
+    return;
+  }
   el.style.backgroundImage = `url('${CARD_BACK_URL}')`;
 }
 
@@ -173,14 +179,15 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     onSelectionChange(selected.map((idx) => cards[idx]).filter(Boolean));
   };
 
-  const buildSlots = () => {
-    boardEl.innerHTML = '';
+  const ensureSlots = () => {
+    if (slots.length === boardSize) return;
     slots = [];
+    boardEl.textContent = '';
     for (let i = 0; i < boardSize; i += 1) {
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'card-slot';
-      const cardBack = Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' });
+      const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
       applyCardBackBackground(cardBack);
       slot.appendChild(cardBack);
       slot.onclick = () => {
@@ -198,8 +205,17 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     }
   };
 
+  const updateSlots = () => {
+    slots.forEach((slot, idx) => {
+      const card = cards[idx];
+      slot.dataset.id = card?.id || '';
+      slot.classList.toggle('is-hidden', !card);
+    });
+  };
+
   const performDeal = (withAnimation) => {
-    buildSlots();
+    ensureSlots();
+    updateSlots();
     refreshBadges();
     if (withAnimation) {
       boardEl.classList.add('is-locked');
@@ -271,8 +287,9 @@ function renderDaily() {
   };
 
   const bindCard = (slot, card) => {
-    slot.addEventListener('click', () => {
+    slot.onclick = () => {
       if (isAnimating) return;
+      if (!card) return;
       if (latestSelection.some((c) => c.id === card.id)) {
         slot.classList.remove('is-selected');
         updateContinue([]);
@@ -281,25 +298,38 @@ function renderDaily() {
         slot.classList.add('is-selected');
         updateContinue([card]);
       }
-    });
+    };
   };
 
-  const createSlots = () => {
-    const cards = getDrawableCards(DAILY_BOARD_COUNT);
-    board.innerHTML = '';
-    const slots = cards.map((card) => {
+  let slots = [];
+  const ensureSlots = (count) => {
+    if (slots.length === count) return;
+    slots = [];
+    board.textContent = '';
+    for (let i = 0; i < count; i += 1) {
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'card-slot card-slot--dealable';
-      slot.dataset.id = card.id;
-      const cardBack = Object.assign(document.createElement('div'), { className: 'card-back', textContent: '🐾' });
+      const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
       applyCardBackBackground(cardBack);
       slot.appendChild(cardBack);
-      bindCard(slot, card);
+      slots.push(slot);
       board.appendChild(slot);
-      return slot;
+    }
+  };
+
+  const updateSlots = (cards) => {
+    ensureSlots(cards.length);
+    slots.forEach((slot, idx) => {
+      const card = cards[idx];
+      slot.dataset.id = card?.id || '';
+      slot.classList.toggle('is-hidden', !card);
+      if (card) {
+        bindCard(slot, card);
+      } else {
+        slot.onclick = null;
+      }
     });
-    return { cards, slots };
   };
 
   const animateDeal = (slots) => {
@@ -315,7 +345,8 @@ function renderDaily() {
     isAnimating = true;
     board.classList.add('is-locked');
     resetSelection();
-    const { slots } = createSlots();
+    const cards = getDrawableCards(DAILY_BOARD_COUNT);
+    updateSlots(cards);
     requestAnimationFrame(() => animateDeal(slots));
   };
 
@@ -453,7 +484,7 @@ function init() {
     return;
   }
 
-  loadTarotData()
+  loadTarotManifest()
     .then((cards) => {
       state.cards = cards;
       renderPage(translations[state.currentLang] || translations.en);

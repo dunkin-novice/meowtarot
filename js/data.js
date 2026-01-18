@@ -36,6 +36,12 @@ export function getCardImageUrl(card, options = {}) {
 
 // Dynamic deck used by the app
 export let meowTarotCards = [];
+export let meowTarotManifest = [];
+
+const FULL_DECK_STORAGE_KEY = 'meowtarot_cards_full_v1';
+const MANIFEST_STORAGE_KEY = 'meowtarot_cards_manifest_v1';
+let fullDeckLoaded = false;
+let manifestLoaded = false;
 
 export function normalizeId(value = '') {
   return value
@@ -77,6 +83,49 @@ export function normalizeCards(cards) {
   });
 }
 
+function extractCards(data) {
+  return Array.isArray(data)
+    ? data
+    : Array.isArray(data?.cards)
+      ? data.cards
+      : [];
+}
+
+function minimalizeCard(card = {}) {
+  return {
+    id: card.id,
+    card_id: card.card_id,
+    image_id: card.image_id,
+    seo_slug_en: card.seo_slug_en,
+    card_name_en: card.card_name_en,
+    name_en: card.name_en,
+    name_th: card.name_th,
+    alias_th: card.alias_th,
+    orientation: card.orientation,
+  };
+}
+
+function readSessionJSON(key) {
+  if (typeof sessionStorage === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (error) {
+    console.warn(`Failed to read ${key} from sessionStorage`, error);
+    return null;
+  }
+}
+
+function writeSessionJSON(key, value) {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Failed to write ${key} to sessionStorage`, error);
+  }
+}
+
 // Static fallback deck + backwards-compat for old imports
 export const tarotCards = [
   { id: 'MAJ_00', name_en: 'The Fool', name_th: 'ไพ่คนโง่', meaning_en: 'New beginnings, spontaneity, a leap of faith.', meaning_th: 'การเริ่มต้นใหม่ ความกล้า การก้าวกระโดดด้วยศรัทธา' },
@@ -105,13 +154,69 @@ export const tarotCards = [
 
 // Provide a normalized fallback immediately so the board can always surface IDs.
 meowTarotCards = normalizeCards(tarotCards);
+meowTarotManifest = normalizeCards(tarotCards.map(minimalizeCard));
 if (typeof window !== 'undefined') {
   window.meowTarotCards = meowTarotCards;
+  window.meowTarotManifest = meowTarotManifest;
+}
+
+export function loadTarotManifest() {
+  if (manifestLoaded && meowTarotManifest.length) return Promise.resolve(meowTarotManifest);
+
+  const cached = readSessionJSON(MANIFEST_STORAGE_KEY);
+  if (Array.isArray(cached) && cached.length) {
+    meowTarotManifest = cached;
+    manifestLoaded = true;
+    if (typeof window !== 'undefined') {
+      window.meowTarotManifest = meowTarotManifest;
+    }
+    return Promise.resolve(meowTarotManifest);
+  }
+
+  return fetch('/data/cards.json', { cache: 'force-cache' })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Failed to fetch /data/cards.json (HTTP ${res.status})`);
+      return res.json();
+    })
+    .then((data) => {
+      const rawCards = extractCards(data);
+      if (!rawCards.length) {
+        throw new Error('cards.json loaded but no cards array found (expected {cards:[...]} or [...])');
+      }
+      meowTarotManifest = normalizeCards(rawCards.map(minimalizeCard));
+      manifestLoaded = true;
+      writeSessionJSON(MANIFEST_STORAGE_KEY, meowTarotManifest);
+      if (typeof window !== 'undefined') {
+        window.meowTarotManifest = meowTarotManifest;
+      }
+      return meowTarotManifest;
+    })
+    .catch((err) => {
+      console.error('Failed to load tarot manifest (falling back to built-in tarotCards)', err);
+      meowTarotManifest = normalizeCards(tarotCards.map(minimalizeCard));
+      manifestLoaded = true;
+      if (typeof window !== 'undefined') {
+        window.meowTarotManifest = meowTarotManifest;
+      }
+      return meowTarotManifest;
+    });
 }
 
 // Load full deck from JSON, fall back to static tarotCards if anything fails
 export function loadTarotData() {
-  return fetch('/data/cards.json', { cache: 'no-store' })
+  if (fullDeckLoaded && meowTarotCards.length) return Promise.resolve(meowTarotCards);
+
+  const cached = readSessionJSON(FULL_DECK_STORAGE_KEY);
+  if (Array.isArray(cached) && cached.length) {
+    meowTarotCards = cached;
+    fullDeckLoaded = true;
+    if (typeof window !== 'undefined') {
+      window.meowTarotCards = meowTarotCards;
+    }
+    return Promise.resolve(meowTarotCards);
+  }
+
+  return fetch('/data/cards.json', { cache: 'force-cache' })
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to fetch /data/cards.json (HTTP ${res.status})`);
       return res.json();
@@ -120,17 +225,15 @@ export function loadTarotData() {
       // Support BOTH:
       // 1) { cards: [...] }
       // 2) [ ... ]
-      const rawCards = Array.isArray(data)
-        ? data
-        : Array.isArray(data.cards)
-          ? data.cards
-          : [];
+      const rawCards = extractCards(data);
 
       if (!rawCards.length) {
         throw new Error('cards.json loaded but no cards array found (expected {cards:[...]} or [...])');
       }
 
       meowTarotCards = normalizeCards(rawCards);
+      fullDeckLoaded = true;
+      writeSessionJSON(FULL_DECK_STORAGE_KEY, meowTarotCards);
 
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
@@ -140,6 +243,7 @@ export function loadTarotData() {
     .catch((err) => {
       console.error('Failed to load tarot data (falling back to built-in tarotCards)', err);
       meowTarotCards = normalizeCards(tarotCards);
+      fullDeckLoaded = true;
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
       }

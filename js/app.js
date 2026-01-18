@@ -108,9 +108,11 @@ function renderGrid(options = {}) {
     cardEl.className = `card${entering ? ' is-shuffling-in' : ''}`;
     cardEl.dataset.id = card.id;
 
-    const back = document.createElement('div');
+    const back = document.createElement('img');
     back.className = 'face back card-back';
-    back.style.backgroundImage = `url('${backUrl}')`;
+    back.src = backUrl;
+    back.loading = 'lazy';
+    back.alt = '';
 
     const front = document.createElement('div');
     front.className = 'face front';
