@@ -1654,6 +1654,8 @@ details summary::-webkit-details-marker {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shadow);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 .card-art.is-thumb .card-art-img {
