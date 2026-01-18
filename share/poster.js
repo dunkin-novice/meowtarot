@@ -193,21 +193,17 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 function getDailyStrings(lang = 'en') {
   if (lang === 'th') {
     return {
-      title: 'คำทำนายรายวัน',
-      subtitle: 'คำตอบด่วน (1 ใบ)',
-      suggestionLabel: 'คำแนะนำ',
-      questionLabel: 'คำถาม',
-      affirmationLabel: 'คำยืนยัน',
-      luckyColors: 'สีนำโชค',
+      title: 'MEOW TAROT',
+      subtitle: 'คำทำนายรายวัน',
+      luckyColors: 'สีมงคลวันนี้',
+      archetypeLabel: 'THE ARCHETYPE',
     };
   }
   return {
-    title: 'Daily Reading',
-    subtitle: 'Quick Answer (1 card)',
-    suggestionLabel: 'Suggestion',
-    questionLabel: 'Question',
-    affirmationLabel: 'Affirmation',
-    luckyColors: 'Lucky colors',
+    title: 'MEOW TAROT',
+    subtitle: 'Daily Reading',
+    luckyColors: 'Lucky Colors',
+    archetypeLabel: 'THE ARCHETYPE',
   };
 }
 
@@ -218,7 +214,7 @@ function isDailySingle(payload) {
 
 function getOrientationLabel(lang, orientation) {
   if (lang === 'th') {
-    return orientation === 'reversed' ? 'ไพ่กลับหัว' : 'ไพ่ปกติ';
+    return orientation === 'reversed' ? 'กลับหัว' : 'ตั้งตรง';
   }
   return orientation === 'reversed' ? 'Reversed' : 'Upright';
 }
@@ -226,40 +222,31 @@ function getOrientationLabel(lang, orientation) {
 function getCardName(card, lang) {
   if (!card) return '';
   if (lang === 'th') {
-    return card.card_name_th || card.alias_th || card.name_th || card.name || '';
+    return card.alias_th || card.card_name_th || card.name_th || card.name || '';
   }
   return card.card_name_en || card.name_en || card.name || '';
 }
 
-function getCardField(card, keyBase, lang) {
-  if (!card) return '';
-  return card[`${keyBase}_${lang}`] || card[`${keyBase}_en`] || '';
-}
-
 function buildDailyReadingFromCard(card, orientation, lang) {
   if (!card) return null;
-  const heading = `${getCardName(card, lang)} — ${getOrientationLabel(lang, orientation)}`.trim();
+  const name = getCardName(card, lang);
+  const orient = getOrientationLabel(lang, orientation);
   return {
-    heading,
-    keywords: getCardField(card, 'tarot_imply', lang),
-    main: getCardField(card, 'standalone_present', lang),
-    suggestion: getCardField(card, 'action_prompt', lang),
-    question: getCardField(card, 'reflection_question', lang),
-    affirmation: getCardField(card, 'affirmation', lang),
+    heading: name,
+    subHeading: orient,
+    archetype: lang === 'th' ? card.archetype_th : card.archetype_en,
+    keywords: lang === 'th' ? card.tarot_imply_th : card.tarot_imply_en,
   };
 }
 
 function resolveDailyReading(payload, cardEntry, lang) {
   const payloadReading = payload?.reading || {};
   const cardReading = buildDailyReadingFromCard(cardEntry?.card, cardEntry?.orientation, lang) || {};
-  const advice = Array.isArray(payloadReading.advice) ? payloadReading.advice.filter(Boolean) : [];
   return {
     heading: payloadReading.heading || cardReading.heading || '',
+    subHeading: payloadReading.subHeading || cardReading.subHeading || '',
+    archetype: payloadReading.archetype || cardReading.archetype || '',
     keywords: payloadReading.keywords || cardReading.keywords || '',
-    main: payloadReading.main || payloadReading.summary || cardReading.main || '',
-    suggestion: payloadReading.suggestion || advice[0] || cardReading.suggestion || '',
-    question: payloadReading.question || cardReading.question || '',
-    affirmation: payloadReading.affirmation || cardReading.affirmation || '',
   };
 }
 
@@ -303,18 +290,19 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     const cardEntry = cardEntries[0];
     const reading = resolveDailyReading(payload, cardEntry, lang);
     const lucky = resolveLuckyInfo(payload, cardEntry);
-    const luckyColors = lucky.colors || [];
-    const hasLuckyRow = luckyColors.length || lucky.number !== undefined || lucky.element || lucky.planet;
-    const hasReadingPanel = Boolean(
-      reading.heading || reading.keywords || reading.main || reading.suggestion || reading.question || reading.affirmation
-    );
+    const luckyColors = (lucky.colors || []).slice(0, 4);
+    const hasLuckyRow = luckyColors.length > 0;
+    const hasReadingPanel = Boolean(reading.heading || reading.subHeading || reading.archetype || reading.keywords);
     const layout = {
-      headerTop: 140,
-      panelTop: 1120,
-      panelHeight: 520,
-      panelPadding: 36,
-      luckyRowY: 1705,
-      footerY: 1850,
+      headerTop: 180,
+      logoY: 100,
+      cardTop: 240,
+      cardMaxHeight: 780,
+      panelTop: 1100,
+      panelHeight: 380,
+      panelPadding: 40,
+      luckyRowY: 1600,
+      footerY: 1840,
     };
 
     const footerY = layout.footerY;
@@ -323,47 +311,46 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     const panelTop = layout.panelTop;
     const panelHeight = layout.panelHeight;
 
-    const drawHeader = (headerScale = 1, shouldDraw = true) => {
-      const maxWidth = width - safeMargin * 2;
-      const titleSize = Math.round(68 * headerScale);
-      const subtitleSize = Math.round(38 * headerScale);
-      const cardNameSize = Math.round(30 * headerScale);
-      const titleLineHeight = Math.round(titleSize * 1.1);
-      const subtitleLineHeight = Math.round(subtitleSize * 1.2);
-      const cardLineHeight = Math.round(cardNameSize * 1.25);
-      const gapAfterTitle = Math.round(14 * headerScale);
-      const gapAfterSubtitle = Math.round(10 * headerScale);
-      let cursorY = layout.headerTop;
+    const drawBrandMark = () => {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f8d77a';
+      ctx.font = '700 78px "Poppins", "Space Grotesk", sans-serif';
+      ctx.fillText('M', width / 2, layout.logoY);
+      const textWidth = ctx.measureText('M').width;
+      const earWidth = 18;
+      const earHeight = 16;
+      const leftEarX = width / 2 - textWidth / 2 + 6;
+      const rightEarX = width / 2 + textWidth / 2 - earWidth - 6;
+      const earBaseY = layout.logoY - 46;
+      ctx.beginPath();
+      ctx.moveTo(leftEarX, earBaseY);
+      ctx.lineTo(leftEarX + earWidth / 2, earBaseY - earHeight);
+      ctx.lineTo(leftEarX + earWidth, earBaseY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(rightEarX, earBaseY);
+      ctx.lineTo(rightEarX + earWidth / 2, earBaseY - earHeight);
+      ctx.lineTo(rightEarX + earWidth, earBaseY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
 
+    const drawHeader = () => {
+      const maxWidth = width - safeMargin * 2;
+      let cursorY = layout.headerTop;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.font = `600 ${titleSize}px "Poppins", "Space Grotesk", sans-serif`;
-      const titleLines = wrapTextLines(ctx, strings.title, maxWidth, 1);
-      if (shouldDraw) {
-        ctx.fillStyle = '#f8d77a';
-        titleLines.forEach((line) => ctx.fillText(line, width / 2, cursorY));
-      }
-      cursorY += titleLineHeight + gapAfterTitle;
-
-      ctx.font = `500 ${subtitleSize}px "Space Grotesk", sans-serif`;
-      const subtitleLines = wrapTextLines(ctx, strings.subtitle, maxWidth, 1);
-      if (shouldDraw) {
-        ctx.fillStyle = '#d8dbe6';
-        subtitleLines.forEach((line) => ctx.fillText(line, width / 2, cursorY));
-      }
-      cursorY += subtitleLineHeight + gapAfterSubtitle;
-
-      ctx.font = `500 ${cardNameSize}px "Space Grotesk", sans-serif`;
-      const cardName = getCardName(cardEntry?.card, lang) || cardEntry?.name || '';
-      const cardNameLines = wrapTextLines(ctx, cardName, maxWidth, 2);
-      if (shouldDraw) {
-        ctx.fillStyle = '#f7f4ee';
-        cardNameLines.forEach((line, index) => {
-          ctx.fillText(line, width / 2, cursorY + index * cardLineHeight);
-        });
-      }
-      cursorY += cardNameLines.length * cardLineHeight;
-      return cursorY;
+      ctx.fillStyle = '#f8d77a';
+      ctx.font = '600 48px "Poppins", "Space Grotesk", sans-serif';
+      wrapText(ctx, strings.title, width / 2, cursorY, maxWidth, 54, 1);
+      cursorY += 62;
+      ctx.fillStyle = '#d8dbe6';
+      ctx.font = '500 30px "Space Grotesk", sans-serif';
+      wrapText(ctx, strings.subtitle, width / 2, cursorY, maxWidth, 36, 1);
     };
 
     const resolveCardImage = async () => {
@@ -403,81 +390,61 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       ctx.restore();
 
       let panelCursorY = panelTop + layout.panelPadding;
+      const panelTextX = panelX + layout.panelPadding;
+      const panelTextWidth = panelWidth - layout.panelPadding * 2;
+
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f8d77a';
-      ctx.font = '600 34px "Poppins", "Space Grotesk", sans-serif';
+      ctx.font = '700 34px "Poppins", "Space Grotesk", sans-serif';
+      const heading = reading.heading ? reading.heading.toUpperCase() : '';
       panelCursorY = wrapText(
         ctx,
-        reading.heading,
-        panelX + layout.panelPadding,
-        panelCursorY + 34,
-        panelWidth - layout.panelPadding * 2,
+        heading,
+        panelTextX,
+        panelCursorY + 32,
+        panelTextWidth,
         40,
         1,
       );
 
-      ctx.fillStyle = '#d8dbe6';
-      ctx.font = '500 26px "Space Grotesk", sans-serif';
-      panelCursorY = wrapText(
-        ctx,
-        reading.keywords,
-        panelX + layout.panelPadding,
-        panelCursorY + 6,
-        panelWidth - layout.panelPadding * 2,
-        30,
-        1,
-      );
-
-      ctx.fillStyle = '#f7f4ee';
-      ctx.font = '400 28px "Space Grotesk", sans-serif';
-      panelCursorY = wrapText(
-        ctx,
-        reading.main,
-        panelX + layout.panelPadding,
-        panelCursorY + 10,
-        panelWidth - layout.panelPadding * 2,
-        34,
-        4,
-      );
-
-      if (reading.suggestion) {
-        ctx.fillStyle = '#f8d77a';
-        ctx.font = '600 24px "Space Grotesk", sans-serif';
-        panelCursorY = wrapText(
-          ctx,
-          `${strings.suggestionLabel}: ${reading.suggestion}`,
-          panelX + layout.panelPadding,
-          panelCursorY + 10,
-          panelWidth - layout.panelPadding * 2,
-          30,
-          2,
-        );
-      }
-
-      if (reading.question) {
-        ctx.fillStyle = '#c9a8ff';
+      if (reading.subHeading) {
+        ctx.fillStyle = '#d8dbe6';
         ctx.font = '500 24px "Space Grotesk", sans-serif';
         panelCursorY = wrapText(
           ctx,
-          `${strings.questionLabel}: ${reading.question}`,
-          panelX + layout.panelPadding,
+          reading.subHeading,
+          panelTextX,
           panelCursorY + 8,
-          panelWidth - layout.panelPadding * 2,
+          panelTextWidth,
           30,
+          1,
+        );
+      }
+
+      if (reading.archetype) {
+        ctx.fillStyle = '#f7f4ee';
+        ctx.font = '600 40px "Poppins", "Space Grotesk", sans-serif';
+        panelCursorY = wrapText(
+          ctx,
+          `“${reading.archetype}”`,
+          panelTextX,
+          panelCursorY + 14,
+          panelTextWidth,
+          48,
           2,
         );
       }
 
-      if (reading.affirmation) {
-        ctx.fillStyle = '#f7f4ee';
-        ctx.font = '400 24px "Space Grotesk", sans-serif';
+      if (reading.keywords) {
+        ctx.fillStyle = '#d8dbe6';
+        ctx.font = '400 26px "Space Grotesk", sans-serif';
         panelCursorY = wrapText(
           ctx,
-          `“${reading.affirmation}”`,
-          panelX + layout.panelPadding,
-          panelCursorY + 8,
-          panelWidth - layout.panelPadding * 2,
-          30,
+          reading.keywords,
+          panelTextX,
+          panelCursorY + 12,
+          panelTextWidth,
+          32,
           2,
         );
       }
@@ -493,41 +460,17 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       ctx.font = '500 26px "Space Grotesk", sans-serif';
       let x = safeMargin;
       ctx.fillText(strings.luckyColors, x, rowY);
-      x += ctx.measureText(strings.luckyColors).width + 16;
+      x += ctx.measureText(strings.luckyColors).width + 20;
 
       luckyColors.forEach((color) => {
         const hex = color?.hex || color || '#ffffff';
         ctx.save();
         ctx.fillStyle = hex;
         ctx.beginPath();
-        ctx.arc(x + 12, rowY, 12, 0, Math.PI * 2);
+        ctx.arc(x + 16, rowY, 16, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
-        x += 32;
-      });
-
-      const chips = [];
-      if (lucky.number !== undefined && lucky.number !== null && lucky.number !== '') chips.push(`#${lucky.number}`);
-      if (lucky.element) chips.push(lucky.element);
-      if (lucky.planet) chips.push(lucky.planet);
-
-      let chipX = width - safeMargin;
-      chips.forEach((chip) => {
-        ctx.font = '500 24px "Space Grotesk", sans-serif';
-        const textWidth = ctx.measureText(chip).width;
-        const paddingX = 16;
-        const chipWidth = textWidth + paddingX * 2;
-        const chipHeight = 36;
-        chipX -= chipWidth;
-        ctx.save();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-        drawRoundedRect(ctx, chipX, rowY - chipHeight / 2, chipWidth, chipHeight, 18);
-        ctx.fill();
-        ctx.restore();
-        ctx.fillStyle = '#f7f4ee';
-        ctx.textAlign = 'left';
-        ctx.fillText(chip, chipX + paddingX, rowY);
-        chipX -= 12;
+        x += 42;
       });
     };
 
@@ -539,20 +482,13 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       ctx.fillText('meowtarot.com', width / 2, footerY);
     };
 
-    const maxHeaderBottom = 360;
-    let headerScale = 1;
-    let headerBottomY = drawHeader(headerScale, false);
-    while (headerBottomY > maxHeaderBottom && headerScale > 0.82) {
-      headerScale -= 0.06;
-      headerBottomY = drawHeader(headerScale, false);
-    }
-    drawHeader(headerScale, true);
+    drawBrandMark();
+    drawHeader();
 
-    const gapAfterHeader = Math.max(48 * headerScale, 40);
-    const cardTopY = headerBottomY + gapAfterHeader;
+    const cardTopY = layout.cardTop;
     const gapBeforePanel = 48;
-    const maxCardWidth = Math.min(680, width - safeMargin * 2);
-    const maxCardHeight = Math.max(0, panelTop - gapBeforePanel - cardTopY);
+    const maxCardWidth = Math.min(720, width - safeMargin * 2);
+    const maxCardHeight = Math.min(layout.cardMaxHeight, Math.max(0, panelTop - gapBeforePanel - cardTopY));
     const cardImg = await resolveCardImage();
     const imgWidth = cardImg?.naturalWidth || 560;
     const imgHeight = cardImg?.naturalHeight || Math.round(560 * 1.5);
@@ -564,9 +500,9 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
 
     if (cardWidth && cardHeight) {
       ctx.save();
-      ctx.shadowColor = 'rgba(248, 215, 122, 0.35)';
-      ctx.shadowBlur = 40;
-      ctx.shadowOffsetY = 16;
+      ctx.shadowColor = 'rgba(248, 215, 122, 0.4)';
+      ctx.shadowBlur = 60;
+      ctx.shadowOffsetY = 12;
       ctx.fillStyle = '#0f1429';
       ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
       ctx.restore();
