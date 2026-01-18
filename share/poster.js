@@ -294,14 +294,14 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     const hasLuckyRow = luckyColors.length > 0;
     const hasReadingPanel = Boolean(reading.heading || reading.subHeading || reading.archetype || reading.keywords);
     const layout = {
-      headerTop: 180,
-      logoY: 100,
-      cardTop: 240,
-      cardMaxHeight: 780,
-      panelTop: 1100,
-      panelHeight: 380,
+      headerTop: 160,
+      logoY: 80,
+      cardTop: 260,
+      cardMaxHeight: 820,
+      panelTop: 1140,
+      panelHeight: 400,
       panelPadding: 40,
-      luckyRowY: 1600,
+      luckyRowY: 1620,
       footerY: 1840,
     };
 
@@ -383,38 +383,43 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
 
     const drawReadingPanel = () => {
       if (!hasReadingPanel) return;
+
       ctx.save();
-      ctx.fillStyle = 'rgba(15, 20, 41, 0.68)';
-      drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 28);
+      ctx.fillStyle = 'rgba(20, 28, 51, 0.4)';
+      drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 32);
       ctx.fill();
+      ctx.strokeStyle = 'rgba(248, 215, 122, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
       ctx.restore();
 
-      let panelCursorY = panelTop + layout.panelPadding;
-      const panelTextX = panelX + layout.panelPadding;
-      const panelTextWidth = panelWidth - layout.panelPadding * 2;
+      let panelCursorY = panelTop + 60;
+      const panelCenterX = width / 2;
+      const panelTextWidth = panelWidth - 80;
 
-      ctx.textAlign = 'left';
+      ctx.textAlign = 'center';
+
       ctx.fillStyle = '#f8d77a';
-      ctx.font = '700 34px "Poppins", "Space Grotesk", sans-serif';
+      ctx.font = '600 42px "Prata", serif';
       const heading = reading.heading ? reading.heading.toUpperCase() : '';
       panelCursorY = wrapText(
         ctx,
         heading,
-        panelTextX,
-        panelCursorY + 32,
+        panelCenterX,
+        panelCursorY,
         panelTextWidth,
-        40,
+        48,
         1,
       );
 
       if (reading.subHeading) {
-        ctx.fillStyle = '#d8dbe6';
+        ctx.fillStyle = 'rgba(181, 184, 197, 0.8)';
         ctx.font = '500 24px "Space Grotesk", sans-serif';
         panelCursorY = wrapText(
           ctx,
           reading.subHeading,
-          panelTextX,
-          panelCursorY + 8,
+          panelCenterX,
+          panelCursorY + 10,
           panelTextWidth,
           30,
           1,
@@ -423,28 +428,28 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
 
       if (reading.archetype) {
         ctx.fillStyle = '#f7f4ee';
-        ctx.font = '600 40px "Poppins", "Space Grotesk", sans-serif';
+        ctx.font = 'italic 500 38px "Prata", serif';
         panelCursorY = wrapText(
           ctx,
           `“${reading.archetype}”`,
-          panelTextX,
-          panelCursorY + 14,
+          panelCenterX,
+          panelCursorY + 40,
           panelTextWidth,
-          48,
+          54,
           2,
         );
       }
 
       if (reading.keywords) {
-        ctx.fillStyle = '#d8dbe6';
+        ctx.fillStyle = 'rgba(216, 219, 230, 0.9)';
         ctx.font = '400 26px "Space Grotesk", sans-serif';
         panelCursorY = wrapText(
           ctx,
           reading.keywords,
-          panelTextX,
-          panelCursorY + 12,
+          panelCenterX,
+          panelCursorY + 20,
           panelTextWidth,
-          32,
+          34,
           2,
         );
       }
