@@ -22,6 +22,8 @@ const ShareKitDemoResult = {
   showDate: true,
   showNames: true,
   summary: 'The Magician signals focus and power. Use clear intent to shape today\'s outcome.',
+  keywords: ['Focus', 'Intent', 'Action'],
+  luckyColor: { name: 'Electric Blue', hex: '#4a7bff' },
   shareUrl: 'https://meowtarot.com/reading/demo?utm_source=share&utm_medium=demo',
   cards: [
     {
