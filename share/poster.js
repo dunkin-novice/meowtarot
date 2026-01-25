@@ -297,12 +297,12 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       headerTop: 160,
       logoY: 80,
       cardTop: 260,
-      cardMaxHeight: 820,
-      panelTop: 1140,
+      cardMaxHeight: 1100,
+      panelTop: 1400,
       panelHeight: 400,
       panelPadding: 40,
-      luckyRowY: 1620,
-      footerY: 1840,
+      luckyRowY: 1780,
+      footerY: 1880,
     };
 
     const footerY = layout.footerY;
@@ -459,11 +459,19 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       if (!hasLuckyRow) return;
       const minLuckyY = cardY + cardHeight + 80;
       const rowY = Math.max(layout.luckyRowY, minLuckyY);
+      const dotSize = 32;
+      const dotGap = 10;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'left';
       ctx.fillStyle = '#f7f4ee';
       ctx.font = '500 26px "Space Grotesk", sans-serif';
-      let x = safeMargin;
+      const labelWidth = ctx.measureText(strings.luckyColors).width;
+      const dotsWidth = luckyColors.length
+        ? luckyColors.length * dotSize + (luckyColors.length - 1) * dotGap
+        : 0;
+      const groupWidth = labelWidth + 20 + dotsWidth;
+      const startX = (width - groupWidth) / 2;
+      let x = startX;
       ctx.fillText(strings.luckyColors, x, rowY);
       x += ctx.measureText(strings.luckyColors).width + 20;
 
