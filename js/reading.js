@@ -687,6 +687,28 @@ function renderFull(cards, dict) {
   readingContent.innerHTML = '';
 
   const positions = ['past', 'present', 'future'];
+  const spreadPanel = document.createElement('div');
+  spreadPanel.className = 'panel';
+
+  const spreadGrid = document.createElement('div');
+  spreadGrid.className = 'reading-spread-grid';
+
+  cards.slice(0, 3).forEach((card, idx) => {
+    const cardWrap = document.createElement('div');
+    cardWrap.className = 'reading-spread-card';
+
+    cardWrap.appendChild(buildCardArt(card, 'thumb'));
+
+    const label = document.createElement('div');
+    label.className = 'spread-label';
+    label.textContent = dict[positions[idx]] || positions[idx];
+    cardWrap.appendChild(label);
+
+    spreadGrid.appendChild(cardWrap);
+  });
+
+  spreadPanel.appendChild(spreadGrid);
+  readingContent.appendChild(spreadPanel);
 
   // Your Fortune (summary)
   const summaries = cards
