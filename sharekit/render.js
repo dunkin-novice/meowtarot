@@ -217,12 +217,19 @@ function createRenderer(globalConfig = {}) {
     await yieldFrame();
 
     // Cards
-    const cardAreaTop = Math.floor(preset.height * 0.2);
-    const cardAreaHeight = Math.floor(preset.height * 0.4);
+    const cardAreaTop = Math.floor(preset.height * 0.18);
+    const cardAreaHeight = Math.floor(preset.height * 0.55);
     const cardCount = clamp((readingResult.cards || []).length || 1, 1, 3);
     const gap = Math.floor(preset.width * 0.03);
-    const cardWidth = cardCount === 1 ? Math.floor(preset.width * 0.38) : Math.floor((preset.width - (gap * (cardCount - 1)) - margin * 2) / cardCount);
-    const cardHeight = Math.floor(cardWidth * 1.7);
+    let cardWidth = cardCount === 1
+      ? Math.floor(preset.width * 0.56)
+      : Math.floor((preset.width - (gap * (cardCount - 1)) - margin * 2) / cardCount);
+    let cardHeight = Math.floor(cardWidth * 1.7);
+    if (cardHeight > cardAreaHeight) {
+      const scaleDown = cardAreaHeight / cardHeight;
+      cardWidth = Math.floor(cardWidth * scaleDown);
+      cardHeight = Math.floor(cardHeight * scaleDown);
+    }
     const cardY = cardAreaTop + Math.max(0, (cardAreaHeight - cardHeight) / 2);
 
     const loadedCards = await Promise.all((readingResult.cards || []).slice(0, 3).map((card) => loadImage(card.image)));
@@ -244,7 +251,7 @@ function createRenderer(globalConfig = {}) {
       }
       ctx.restore();
 
-      if (readingResult.showNames && card && card.name) {
+      if (readingResult.showNames && cardCount > 1 && card && card.name) {
         ctx.fillStyle = theme.cardLabelColor;
         ctx.font = `600 ${Math.floor(cardWidth * 0.08)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
         ctx.textAlign = 'center';
@@ -254,20 +261,107 @@ function createRenderer(globalConfig = {}) {
 
     await yieldFrame();
 
-    // Summary
-    ctx.textAlign = 'left';
-    ctx.fillStyle = theme.summaryColor;
-    ctx.font = `500 ${Math.floor(preset.width * 0.045)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
-    const summaryBoxWidth = preset.width - margin * 2;
-    const summaryY = Math.floor(preset.height * 0.68);
-    const lineHeight = Math.floor(preset.width * 0.06);
-    wrapText(ctx, readingResult.summary || '', margin, summaryY, summaryBoxWidth, lineHeight);
+    let infoCursorY = cardY + cardHeight + Math.floor(preset.height * 0.04);
+    const infoMaxWidth = preset.width - margin * 2;
+
+    if (cardCount === 1 && readingResult.showNames && readingResult.cards?.[0]?.name) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = theme.cardLabelColor;
+      ctx.font = `600 ${Math.floor(preset.width * 0.05)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
+      infoCursorY = wrapText(
+        ctx,
+        readingResult.cards[0].name,
+        preset.width / 2,
+        infoCursorY,
+        infoMaxWidth,
+        Math.floor(preset.width * 0.06),
+      );
+    }
+
+    const keywordValue = Array.isArray(readingResult.keywords)
+      ? readingResult.keywords.filter(Boolean).join(' · ')
+      : readingResult.keywords;
+
+    if (keywordValue) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = theme.subtitleColor;
+      ctx.font = `500 ${Math.floor(preset.width * 0.036)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
+      infoCursorY = wrapText(
+        ctx,
+        keywordValue,
+        preset.width / 2,
+        infoCursorY + Math.floor(preset.height * 0.015),
+        infoMaxWidth,
+        Math.floor(preset.width * 0.05),
+      );
+    }
+
+    const luckyEntry = readingResult.luckyColor
+      || (Array.isArray(readingResult.luckyColors) ? readingResult.luckyColors[0] : null);
+    if (luckyEntry) {
+      const luckyLabel = readingResult.luckyColorLabel || 'Lucky Color';
+      const luckyHex = luckyEntry.hex || luckyEntry.color || luckyEntry;
+      const luckyName = luckyEntry.name || luckyEntry.label || '';
+      const dotSize = Math.floor(preset.width * 0.032);
+      const dotRadius = dotSize / 2;
+      const spacing = Math.floor(preset.width * 0.015);
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = theme.summaryColor;
+      ctx.font = `600 ${Math.floor(preset.width * 0.038)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
+      const labelWidth = ctx.measureText(luckyLabel).width;
+
+      ctx.font = `500 ${Math.floor(preset.width * 0.035)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
+      const nameWidth = luckyName ? ctx.measureText(luckyName).width : 0;
+      const blockWidth = labelWidth + spacing + dotSize + (luckyName ? spacing + nameWidth : 0);
+      const startX = (preset.width - blockWidth) / 2;
+      const rowY = infoCursorY + Math.floor(preset.height * 0.03);
+
+      ctx.fillStyle = theme.summaryColor;
+      ctx.font = `600 ${Math.floor(preset.width * 0.038)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
+      ctx.fillText(luckyLabel, startX, rowY);
+
+      ctx.save();
+      ctx.fillStyle = luckyHex || '#ffffff';
+      ctx.beginPath();
+      ctx.arc(startX + labelWidth + spacing + dotRadius, rowY, dotRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      if (luckyName) {
+        ctx.fillStyle = theme.summaryColor;
+        ctx.font = `500 ${Math.floor(preset.width * 0.035)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
+        ctx.fillText(luckyName, startX + labelWidth + spacing + dotSize + spacing, rowY);
+      }
+
+      infoCursorY = rowY + Math.floor(preset.height * 0.04);
+    }
+
+    if (readingResult.summary) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = theme.summaryColor;
+      ctx.font = `500 ${Math.floor(preset.width * 0.04)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
+      const summaryBoxWidth = preset.width - margin * 2;
+      const lineHeight = Math.floor(preset.width * 0.055);
+      wrapText(ctx, readingResult.summary, preset.width / 2, infoCursorY, summaryBoxWidth, lineHeight);
+    }
 
     // Branding layer
-    ctx.textAlign = 'right';
+    ctx.textAlign = 'center';
     ctx.fillStyle = theme.wartermarkColor || theme.watermarkColor || 'rgba(255,255,255,0.72)';
     ctx.font = `600 ${Math.floor(preset.width * 0.035)}px "Inter", "SF Pro Display", "Segoe UI", sans-serif`;
-    ctx.fillText('meowtarot.com', preset.width - margin, preset.height - margin * 0.6);
+    const meowCodeSrc = readingResult.meowCodeUrl || readingResult.meowCode?.url || readingResult.meowCode?.image;
+    if (meowCodeSrc) {
+      const meowCodeImg = await loadImage(meowCodeSrc);
+      if (meowCodeImg) {
+        const codeSize = Math.min(Math.floor(preset.width * 0.2), Math.floor(preset.height * 0.12));
+        const codeX = (preset.width - codeSize) / 2;
+        const codeY = preset.height - margin * 1.8 - codeSize;
+        ctx.drawImage(meowCodeImg, codeX, codeY, codeSize, codeSize);
+      }
+    }
+    ctx.fillText('meowtarot.com', preset.width / 2, preset.height - margin * 0.6);
 
     if (options.safeZone) {
       ctx.strokeStyle = 'rgba(255,255,255,0.18)';

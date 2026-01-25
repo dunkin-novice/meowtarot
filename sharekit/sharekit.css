@@ -36,6 +36,7 @@
 .sharekit-preview {
   background: #0f0c1a;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 20px;
