@@ -10,8 +10,8 @@ const SHAREKIT_PRESETS = {
 };
 
 const DEFAULT_CDN_BASES = [
-  'https://cdn.jsdelivr.net/gh/meowtarot/meowtarot@main',
-  'https://cdn.statically.io/gh/meowtarot/meowtarot/main',
+  'https://cdn.jsdelivr.net/gh/dunkin-novice/meowtarot@main',
+  'https://cdn.statically.io/gh/dunkin-novice/meowtarot/main',
 ];
 
 function getConfiguredCdnBases() {

@@ -30,7 +30,7 @@ function baseCardId(id = '') {
 
 function getCleanAssetsBase() {
   const deck = getActiveDeck();
-  return `${deck.assetsBase}-clean`;
+  return deck.assetsBase;
 }
 
 function buildCardEntries(payload) {
@@ -478,7 +478,12 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     const gapBeforePanel = 48;
     const maxCardWidth = Math.min(720, width - safeMargin * 2);
     const maxCardHeight = Math.min(layout.cardMaxHeight, Math.max(0, panelTop - gapBeforePanel - cardTopY));
-    const cardImg = await resolveCardImage();
+    let cardImg = null;
+    try {
+      cardImg = await resolveCardImage();
+    } catch (error) {
+      console.warn('Poster image failed to load, continuing without card art.', error);
+    }
     const imgWidth = cardImg?.naturalWidth || 560;
     const imgHeight = cardImg?.naturalHeight || Math.round(560 * 1.5);
     const scale = Math.min(maxCardWidth / imgWidth, maxCardHeight / imgHeight);

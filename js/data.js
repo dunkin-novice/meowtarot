@@ -179,7 +179,7 @@ export function loadTarotManifest() {
     return Promise.resolve(meowTarotManifest);
   }
 
-  return fetch('data/cards.json', { cache: 'force-cache' })
+  return fetch('/data/cards.json', { cache: 'force-cache' })
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();
@@ -222,7 +222,7 @@ export function loadTarotData() {
     return Promise.resolve(meowTarotCards);
   }
 
-  return fetch('data/cards.json', { cache: 'force-cache' })
+  return fetch('/data/cards.json', { cache: 'force-cache' })
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();
