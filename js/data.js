@@ -38,8 +38,9 @@ export function getCardImageUrl(card, options = {}) {
 export let meowTarotCards = [];
 export let meowTarotManifest = [];
 
-const FULL_DECK_STORAGE_KEY = 'meowtarot_cards_full_v1';
-const MANIFEST_STORAGE_KEY = 'meowtarot_cards_manifest_v1';
+export const TAROT_DATA_VERSION = '2024-10-01';
+const FULL_DECK_STORAGE_KEY = 'meowtarot_cards_full';
+const MANIFEST_STORAGE_KEY = 'meowtarot_cards_manifest';
 let fullDeckLoaded = false;
 let manifestLoaded = false;
 
@@ -105,24 +106,29 @@ function minimalizeCard(card = {}) {
   };
 }
 
-function readSessionJSON(key) {
-  if (typeof sessionStorage === 'undefined') return null;
+function readLocalJSON(key) {
+  if (typeof localStorage === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(key);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && parsed.version === TAROT_DATA_VERSION && Array.isArray(parsed.data)) {
+      return parsed.data;
+    }
+    return null;
   } catch (error) {
-    console.warn(`Failed to read ${key} from sessionStorage`, error);
+    console.warn(`Failed to read ${key} from localStorage`, error);
     return null;
   }
 }
 
-function writeSessionJSON(key, value) {
-  if (typeof sessionStorage === 'undefined') return;
+function writeLocalJSON(key, value) {
+  if (typeof localStorage === 'undefined') return;
   try {
-    sessionStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify({ version: TAROT_DATA_VERSION, data: value }));
   } catch (error) {
-    console.warn(`Failed to write ${key} to sessionStorage`, error);
+    console.warn(`Failed to write ${key} to localStorage`, error);
   }
 }
 
@@ -163,7 +169,7 @@ if (typeof window !== 'undefined') {
 export function loadTarotManifest() {
   if (manifestLoaded && meowTarotManifest.length) return Promise.resolve(meowTarotManifest);
 
-  const cached = readSessionJSON(MANIFEST_STORAGE_KEY);
+  const cached = readLocalJSON(MANIFEST_STORAGE_KEY);
   if (Array.isArray(cached) && cached.length) {
     meowTarotManifest = cached;
     manifestLoaded = true;
@@ -173,9 +179,9 @@ export function loadTarotManifest() {
     return Promise.resolve(meowTarotManifest);
   }
 
-  return fetch('/data/cards.json', { cache: 'force-cache' })
+  return fetch('data/cards.json', { cache: 'force-cache' })
     .then((res) => {
-      if (!res.ok) throw new Error(`Failed to fetch /data/cards.json (HTTP ${res.status})`);
+      if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();
     })
     .then((data) => {
@@ -185,7 +191,7 @@ export function loadTarotManifest() {
       }
       meowTarotManifest = normalizeCards(rawCards.map(minimalizeCard));
       manifestLoaded = true;
-      writeSessionJSON(MANIFEST_STORAGE_KEY, meowTarotManifest);
+      writeLocalJSON(MANIFEST_STORAGE_KEY, meowTarotManifest);
       if (typeof window !== 'undefined') {
         window.meowTarotManifest = meowTarotManifest;
       }
@@ -206,7 +212,7 @@ export function loadTarotManifest() {
 export function loadTarotData() {
   if (fullDeckLoaded && meowTarotCards.length) return Promise.resolve(meowTarotCards);
 
-  const cached = readSessionJSON(FULL_DECK_STORAGE_KEY);
+  const cached = readLocalJSON(FULL_DECK_STORAGE_KEY);
   if (Array.isArray(cached) && cached.length) {
     meowTarotCards = cached;
     fullDeckLoaded = true;
@@ -216,9 +222,9 @@ export function loadTarotData() {
     return Promise.resolve(meowTarotCards);
   }
 
-  return fetch('/data/cards.json', { cache: 'force-cache' })
+  return fetch('data/cards.json', { cache: 'force-cache' })
     .then((res) => {
-      if (!res.ok) throw new Error(`Failed to fetch /data/cards.json (HTTP ${res.status})`);
+      if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();
     })
     .then((data) => {
@@ -233,7 +239,7 @@ export function loadTarotData() {
 
       meowTarotCards = normalizeCards(rawCards);
       fullDeckLoaded = true;
-      writeSessionJSON(FULL_DECK_STORAGE_KEY, meowTarotCards);
+      writeLocalJSON(FULL_DECK_STORAGE_KEY, meowTarotCards);
 
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
