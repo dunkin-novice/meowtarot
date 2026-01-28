@@ -9,6 +9,128 @@ const SHAREKIT_PRESETS = {
   postPortrait: { key: 'postPortrait', label: 'Post 4:5', width: 1080, height: 1350 },
 };
 
+const DEFAULT_CDN_BASES = [
+  'https://cdn.jsdelivr.net/gh/meowtarot/meowtarot@main',
+  'https://cdn.statically.io/gh/meowtarot/meowtarot/main',
+];
+
+function getConfiguredCdnBases() {
+  if (Array.isArray(window.MEOWTAROT_CDN_BASES) && window.MEOWTAROT_CDN_BASES.length) {
+    return window.MEOWTAROT_CDN_BASES;
+  }
+  if (typeof window.MEOWTAROT_CDN_BASE === 'string' && window.MEOWTAROT_CDN_BASE) {
+    return [window.MEOWTAROT_CDN_BASE];
+  }
+  return DEFAULT_CDN_BASES;
+}
+
+function toAbsoluteUrl(src) {
+  if (!src) return null;
+  try {
+    return new URL(src, window.location.origin).toString();
+  } catch (error) {
+    return src;
+  }
+}
+
+function stripLeadingSlash(pathname = '') {
+  return pathname.startsWith('/') ? pathname.slice(1) : pathname;
+}
+
+function buildCdnFallbacks(src) {
+  if (!src || /^(data|blob):/i.test(src)) return [];
+  let url;
+  try {
+    url = new URL(src, window.location.origin);
+  } catch (error) {
+    return [];
+  }
+  const path = stripLeadingSlash(url.pathname);
+  if (!path) return [];
+  return getConfiguredCdnBases()
+    .filter(Boolean)
+    .map((base) => base.replace(/\/+$/, ''))
+    .map((base) => `${base}/${path}`);
+}
+
+function uniqueSources(sources) {
+  const seen = new Set();
+  return sources.filter((source) => {
+    const key = source || '';
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function createImageManager() {
+  const imageCache = new Map();
+
+  async function waitForLoad(img) {
+    if (img.complete && img.naturalWidth) return;
+    await new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (err) => reject(err);
+    });
+  }
+
+  async function loadImage(src, { crossOrigin = 'anonymous' } = {}) {
+    if (!src) return null;
+    const absolute = toAbsoluteUrl(src);
+    if (imageCache.has(absolute)) return imageCache.get(absolute);
+
+    const promise = (async () => {
+      const img = new Image();
+      img.decoding = 'async';
+      if (crossOrigin) {
+        img.crossOrigin = crossOrigin;
+      }
+      img.src = absolute;
+
+      if (img.decode) {
+        try {
+          await img.decode();
+          return img;
+        } catch (error) {
+          await waitForLoad(img);
+          return img;
+        }
+      }
+
+      await waitForLoad(img);
+      return img;
+    })();
+
+    imageCache.set(absolute, promise);
+    return promise;
+  }
+
+  async function loadWithFallback(primary, fallbacks = [], options = {}) {
+    const sources = uniqueSources([primary, ...fallbacks].filter(Boolean).flatMap((src) => [src, ...buildCdnFallbacks(src)]));
+    let lastError;
+    for (const source of sources) {
+      try {
+        return await loadImage(source, options);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError) {
+      throw lastError;
+    }
+    return null;
+  }
+
+  return { loadImage, loadWithFallback };
+}
+
+function getImageManager() {
+  if (!window.ImageManager) {
+    window.ImageManager = createImageManager();
+  }
+  return window.ImageManager;
+}
+
 function clamp(val, min, max) {
   return Math.min(Math.max(val, min), max);
 }
@@ -108,39 +230,18 @@ function yieldFrame() {
 }
 
 function createRenderer(globalConfig = {}) {
-  const imageCache = new Map();
   const renderCache = new Map();
   const placeholderCache = new Map();
   const quality = globalConfig.format === 'image/jpeg' ? globalConfig.quality || 0.92 : undefined;
   const format = globalConfig.format || 'image/png';
+  const imageManager = getImageManager();
 
   async function loadImage(src) {
-    if (!src) return null;
-    if (imageCache.has(src)) return imageCache.get(src);
-    const promise = (async () => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = src;
-      if (img.decode) {
-        try {
-          await img.decode();
-          return img;
-        } catch (err) {
-          // fall through to onload
-        }
-      }
-      await new Promise((resolve, reject) => {
-        if (img.complete && img.naturalWidth) {
-          resolve();
-          return;
-        }
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to load image'));
-      });
-      return img;
-    })().catch(() => null);
-    imageCache.set(src, promise);
-    return promise;
+    try {
+      return await imageManager.loadWithFallback(src);
+    } catch (error) {
+      return null;
+    }
   }
 
   function getPlaceholder(width, height) {

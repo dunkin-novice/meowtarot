@@ -1,4 +1,5 @@
 import { getActiveDeck, getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from '../js/data.js';
+import { imageManager } from '../js/image-manager.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
 
 const PRESETS = {
@@ -54,41 +55,16 @@ function buildCardEntries(payload) {
     .filter((entry) => entry.card || entry.name);
 }
 
-async function waitForImageLoad(img) {
-  if (img.complete && img.naturalWidth) return;
-  await new Promise((resolve, reject) => {
-    const handleLoad = () => resolve();
-    const handleError = (err) => reject(err);
-    img.onload = handleLoad;
-    img.onerror = handleError;
-  });
-}
+let tarotDataPromise = null;
 
-async function loadImage(src) {
-  const img = new Image();
-  img.decoding = 'async';
-  img.crossOrigin = 'anonymous';
-  img.src = src;
-  if (img.decode) {
-    try {
-      await img.decode();
-      return img;
-    } catch (err) {
-      await waitForImageLoad(img);
-      return img;
-    }
+function ensureTarotData() {
+  if (meowTarotCards.length) return Promise.resolve(meowTarotCards);
+  if (!tarotDataPromise) {
+    tarotDataPromise = loadTarotData().finally(() => {
+      tarotDataPromise = null;
+    });
   }
-  await waitForImageLoad(img);
-  return img;
-}
-
-async function loadImageWithFallback(primary, fallback) {
-  try {
-    return await loadImage(primary);
-  } catch (err) {
-    if (!fallback) throw err;
-    return loadImage(fallback);
-  }
+  return tarotDataPromise;
 }
 
 function drawStarfield(ctx, width, height) {
@@ -266,7 +242,7 @@ function resolveLuckyInfo(payload, cardEntry) {
 }
 
 export async function buildPoster(payload, { preset = 'story' } = {}) {
-  await loadTarotData();
+  await ensureTarotData();
   if (document.fonts?.ready) {
     await document.fonts.ready;
   }
@@ -378,7 +354,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
           { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
           { orientation: cardEntry.orientation },
         );
-      return loadImageWithFallback(primary, fallback || finalFallback);
+      return imageManager.loadWithFallback(primary, [fallback, finalFallback].filter(Boolean));
     };
 
     const drawReadingPanel = () => {
@@ -592,7 +568,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const finalFallback = entry.orientation === 'reversed'
         ? getCardImageUrl({ ...entry.card, id: uprightId, card_id: uprightId, image_id: uprightId }, { orientation: 'upright' })
         : getCardImageUrl({ ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId }, { orientation: entry.orientation });
-      const img = await loadImageWithFallback(primary, fallback || finalFallback);
+      const img = await imageManager.loadWithFallback(primary, [fallback, finalFallback].filter(Boolean));
       ctx.drawImage(img, x, y, cardWidth, cardHeight);
     }
   }
