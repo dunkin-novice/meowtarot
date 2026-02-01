@@ -40,7 +40,12 @@ function getCleanAssetsBase() {
   return deck.assetsBase;
 }
 
-function buildCardEntries(payload) {
+async function buildCardEntries(payload) {
+  console.log('[Poster] buildCardEntries: meowTarotCards length', meowTarotCards.length);
+  if (!meowTarotCards.length) {
+    await ensureTarotData();
+    console.log('[Poster] buildCardEntries: reloaded tarot data', meowTarotCards.length);
+  }
   const cards = Array.isArray(payload?.cards) ? payload.cards : [];
   return cards
     .map((entry) => {
@@ -249,6 +254,10 @@ function resolveLuckyInfo(payload, cardEntry) {
 }
 
 export async function buildPoster(payload, { preset = 'story' } = {}) {
+  let cardY = 0;
+  let cardHeight = 0;
+  let cardWidth = 0;
+
   await ensureTarotData();
   if (document.fonts?.ready) {
     await document.fonts.ready;
@@ -258,6 +267,11 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   const { width, height } = PRESETS[preset] || PRESETS.story;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
+  const fontFamilies = ['"Poppins", sans-serif', '"Space Grotesk", sans-serif', '"Prata", serif'];
+  fontFamilies.forEach((family) => {
+    ctx.font = `16px ${family}`;
+    ctx.fillText(' ', 0, 0);
+  });
 
   const gradient = ctx.createLinearGradient(0, 0, width, height);
   gradient.addColorStop(0, '#0b1020');
@@ -270,7 +284,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     const safeMargin = 72;
     const lang = payload?.lang || 'en';
     const strings = getDailyStrings(lang);
-    const cardEntries = buildCardEntries(payload).slice(0, 1);
+    const cardEntries = (await buildCardEntries(payload)).slice(0, 1);
     const cardEntry = cardEntries[0];
     const reading = resolveDailyReading(payload, cardEntry, lang);
     const lucky = resolveLuckyInfo(payload, cardEntry);
@@ -470,6 +484,15 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     const gapBeforePanel = 48;
     const maxCardWidth = Math.min(720, width - safeMargin * 2);
     const maxCardHeight = Math.min(layout.cardMaxHeight, Math.max(0, panelTop - gapBeforePanel - cardTopY));
+    const fallbackAspect = 2 / 3;
+    const fallbackWidth = Math.min(
+      maxCardWidth,
+      maxCardHeight ? maxCardHeight * fallbackAspect : maxCardWidth,
+    );
+    const fallbackHeight = fallbackWidth / fallbackAspect;
+    cardWidth = fallbackWidth || 560;
+    cardHeight = fallbackHeight || Math.round(560 * 1.5);
+    cardY = cardTopY;
     let cardImg = null;
     try {
       cardImg = await resolveCardImage();
@@ -477,20 +500,13 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       console.warn('Poster image failed to load, continuing without card art.', error);
     }
     console.log('[Poster] Images resolved');
-    const fallbackAspect = 2 / 3;
-    const fallbackWidth = Math.min(
-      maxCardWidth,
-      maxCardHeight ? maxCardHeight * fallbackAspect : maxCardWidth,
-    );
-    const fallbackHeight = fallbackWidth / fallbackAspect;
-    const imgWidth = cardImg?.naturalWidth || fallbackWidth || 560;
-    const imgHeight = cardImg?.naturalHeight || fallbackHeight || Math.round(560 * 1.5);
+    const imgWidth = cardImg?.naturalWidth || cardWidth || 560;
+    const imgHeight = cardImg?.naturalHeight || cardHeight || Math.round(560 * 1.5);
     const heightScale = maxCardHeight ? maxCardHeight / imgHeight : 1;
     const scale = Math.min(maxCardWidth / imgWidth, heightScale);
-    const cardWidth = Math.max(0, imgWidth * scale);
-    const cardHeight = Math.max(0, imgHeight * scale);
+    cardWidth = Math.max(0, imgWidth * scale);
+    cardHeight = Math.max(0, imgHeight * scale);
     const cardX = (width - cardWidth) / 2;
-    const cardY = cardTopY;
 
     if (cardWidth && cardHeight) {
       ctx.save();
@@ -534,7 +550,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     ctx.fillText(keywords.join(' · '), width / 2, 265);
   }
 
-  const cardEntries = buildCardEntries(payload);
+  const cardEntries = await buildCardEntries(payload);
   const cardCount = cardEntries.length || 1;
   const cardGap = cardCount > 1 ? 32 : 0;
   const cardWidth = cardCount === 1 ? 520 : 280;
