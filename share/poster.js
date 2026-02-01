@@ -1,4 +1,11 @@
-import { getActiveDeck, getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from '../js/data.js';
+import {
+  getActiveDeck,
+  getCardImageUrl,
+  joinAssetPath,
+  loadTarotData,
+  meowTarotCards,
+  normalizeId,
+} from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
 
@@ -246,6 +253,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   if (document.fonts?.ready) {
     await document.fonts.ready;
   }
+  console.log('[Poster] Data loaded');
 
   const { width, height } = PRESETS[preset] || PRESETS.story;
   const canvas = createCanvas(width, height);
@@ -335,26 +343,10 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const orientedId = `${baseId}-${cardEntry.orientation}`;
       const uprightId = `${baseId}-upright`;
       const cleanBase = getCleanAssetsBase();
-      const primary = getCardImageUrl(
-        { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
-        { orientation: cardEntry.orientation, assetsBase: cleanBase },
-      );
-      const fallback = cardEntry.orientation === 'reversed'
-        ? getCardImageUrl(
-          { ...cardEntry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
-          { orientation: 'upright', assetsBase: cleanBase },
-        )
-        : null;
-      const finalFallback = cardEntry.orientation === 'reversed'
-        ? getCardImageUrl(
-          { ...cardEntry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
-          { orientation: 'upright' },
-        )
-        : getCardImageUrl(
-          { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
-          { orientation: cardEntry.orientation },
-        );
-      return imageManager.loadWithFallback(primary, [fallback, finalFallback].filter(Boolean));
+      const primary = joinAssetPath(cleanBase, `${orientedId}.webp`);
+      const upright = joinAssetPath(cleanBase, `${uprightId}.webp`);
+      const back = joinAssetPath(cleanBase, '00-back.webp');
+      return imageManager.loadWithFallback(primary, [upright, back]);
     };
 
     const drawReadingPanel = () => {
@@ -484,9 +476,17 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     } catch (error) {
       console.warn('Poster image failed to load, continuing without card art.', error);
     }
-    const imgWidth = cardImg?.naturalWidth || 560;
-    const imgHeight = cardImg?.naturalHeight || Math.round(560 * 1.5);
-    const scale = Math.min(maxCardWidth / imgWidth, maxCardHeight / imgHeight);
+    console.log('[Poster] Images resolved');
+    const fallbackAspect = 2 / 3;
+    const fallbackWidth = Math.min(
+      maxCardWidth,
+      maxCardHeight ? maxCardHeight * fallbackAspect : maxCardWidth,
+    );
+    const fallbackHeight = fallbackWidth / fallbackAspect;
+    const imgWidth = cardImg?.naturalWidth || fallbackWidth || 560;
+    const imgHeight = cardImg?.naturalHeight || fallbackHeight || Math.round(560 * 1.5);
+    const heightScale = maxCardHeight ? maxCardHeight / imgHeight : 1;
+    const scale = Math.min(maxCardWidth / imgWidth, heightScale);
     const cardWidth = Math.max(0, imgWidth * scale);
     const cardHeight = Math.max(0, imgHeight * scale);
     const cardX = (width - cardWidth) / 2;
@@ -507,6 +507,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     drawReadingPanel();
     drawLuckyRow();
     drawFooter();
+    console.log('[Poster] Canvas drawn');
 
     const blob = await canvasToBlob(canvas, 0.92);
     if (!blob) throw new Error('Failed to build poster blob');
@@ -577,6 +578,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       ctx.drawImage(img, x, y, cardWidth, cardHeight);
     }
   }
+  console.log('[Poster] Images resolved');
 
   ctx.fillStyle = '#f7f4ee';
   ctx.font = '500 30px "Space Grotesk", sans-serif';
@@ -585,6 +587,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   ctx.fillStyle = '#aab0c9';
   ctx.font = '500 28px "Space Grotesk", sans-serif';
   ctx.fillText('meowtarot.com', width / 2, height - 90);
+  console.log('[Poster] Canvas drawn');
 
   const blob = await canvasToBlob(canvas, 0.92);
   if (!blob) throw new Error('Failed to build poster blob');
