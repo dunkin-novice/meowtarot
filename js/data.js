@@ -4,9 +4,9 @@ export const DECKS = {
     id: 'meow-v1',
     name: 'MeowTarot v1',
     assetsBase: 'assets/meow-v1',
-    backImage: '/assets/meow-v1/00-back.webp',
+    backImage: 'assets/meow-v1/00-back.webp',
     // future: pattern for card faces, e.g.
-    // cardImagePattern: '/assets/meow-v1/{imageId}.webp',
+    // cardImagePattern: 'assets/meow-v1/{imageId}.webp',
   },
 };
 
@@ -23,8 +23,10 @@ export function getCardBackUrl() {
 export function joinAssetPath(base = '', subpath = '') {
   if (!base && !subpath) return '';
   if (!base) return subpath.replace(/^\/+/, '');
-  if (!subpath) return base.replace(/\/+$/, '');
-  return `${base.replace(/\/+$/, '')}/${subpath.replace(/^\/+/, '')}`;
+  if (!subpath) return base.replace(/^\/+/, '').replace(/\/+$/, '');
+  const cleanBase = base.replace(/^\/+/, '').replace(/\/+$/, '');
+  const cleanSubpath = subpath.replace(/^\/+/, '');
+  return `${cleanBase}/${cleanSubpath}`;
 }
 
 function joinAssetPathSingleSlash(base = '', subpath = '') {
@@ -37,8 +39,9 @@ export function getCardImageUrl(card, options = {}) {
   const assetsBase = options.assetsBase || deck.assetsBase;
   const orientation = options.orientation || card.orientation || 'upright';
 
-  const baseId = String(card.image_id || card.card_id || card.id || '')
-    .replace(/-(upright|reversed)$/i, '');
+  const baseId = normalizeId(
+    String(card.image_id || card.card_id || card.id || '').replace(/-(upright|reversed)$/i, ''),
+  );
 
   const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
 
