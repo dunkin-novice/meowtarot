@@ -14,6 +14,7 @@ let revokeTimer = null;
 let posterPromise = null;
 let currentPayload = null;
 let toastTimer = null;
+let fontsReadyPromise = null;
 const actionLabels = {
   share: shareBtn?.textContent || 'Share',
 };
@@ -159,6 +160,16 @@ function ensurePosterUrl() {
   return url;
 }
 
+async function ensureFontsReady() {
+  if (!document.fonts?.ready) return;
+  if (!fontsReadyPromise) {
+    fontsReadyPromise = document.fonts.ready.catch((error) => {
+      console.warn('Font readiness check failed', error);
+    });
+  }
+  await fontsReadyPromise;
+}
+
 async function ensurePoster() {
   if (!currentPayload) return null;
   if (currentBlob) return currentBlob;
@@ -169,6 +180,7 @@ async function ensurePoster() {
   setActionLoading(true, strings);
   posterPromise = (async () => {
     try {
+      await ensureFontsReady();
       const result = await buildPoster(currentPayload, { preset: 'story' });
       if (result.width !== 1080 || result.height !== 1920) {
         throw new Error('Unexpected poster size');
