@@ -3,7 +3,7 @@ export const DECKS = {
   'meow-v1': {
     id: 'meow-v1',
     name: 'MeowTarot v1',
-    assetsBase: '/assets/meow-v1',
+    assetsBase: 'assets/meow-v1',
     backImage: '/assets/meow-v1/00-back.webp',
     // future: pattern for card faces, e.g.
     // cardImagePattern: '/assets/meow-v1/{imageId}.webp',
@@ -27,6 +27,10 @@ export function joinAssetPath(base = '', subpath = '') {
   return `${base.replace(/\/+$/, '')}/${subpath.replace(/^\/+/, '')}`;
 }
 
+function joinAssetPathSingleSlash(base = '', subpath = '') {
+  return joinAssetPath(base, subpath);
+}
+
 // Placeholder for future card images (do NOT use it yet in the UI)
 export function getCardImageUrl(card, options = {}) {
   const deck = getActiveDeck();
@@ -38,7 +42,7 @@ export function getCardImageUrl(card, options = {}) {
 
   const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
 
-  return joinAssetPath(assetsBase, `${finalId}.webp`);
+  return joinAssetPathSingleSlash(assetsBase, `${finalId}.webp`);
 }
 
 // Dynamic deck used by the app
@@ -186,7 +190,7 @@ export function loadTarotManifest() {
     return Promise.resolve(meowTarotManifest);
   }
 
-  return fetch('/data/cards.json', { cache: 'force-cache' })
+  return fetch('./data/cards.json', { cache: 'force-cache' })
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();
@@ -229,7 +233,7 @@ export function loadTarotData() {
     return Promise.resolve(meowTarotCards);
   }
 
-  return fetch('/data/cards.json', { cache: 'force-cache' })
+  return fetch('./data/cards.json', { cache: 'force-cache' })
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();
