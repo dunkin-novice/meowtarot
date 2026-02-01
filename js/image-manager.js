@@ -28,6 +28,13 @@ function stripLeadingSlash(pathname = '') {
   return pathname.startsWith('/') ? pathname.slice(1) : pathname;
 }
 
+function joinPath(base = '', subpath = '') {
+  if (!base && !subpath) return '';
+  if (!base) return subpath.replace(/^\/+/, '');
+  if (!subpath) return base.replace(/\/+$/, '');
+  return `${base.replace(/\/+$/, '')}/${subpath.replace(/^\/+/, '')}`;
+}
+
 function buildCdnFallbacks(src) {
   if (!src || /^(data|blob):/i.test(src)) return [];
   if (typeof window === 'undefined') return [];
@@ -43,8 +50,7 @@ function buildCdnFallbacks(src) {
   const cdnBases = getConfiguredCdnBases();
   return cdnBases
     .filter(Boolean)
-    .map((base) => base.replace(/\/+$/, ''))
-    .map((base) => `${base}/${path}`);
+    .map((base) => joinPath(base, path));
 }
 
 function uniqueSources(sources) {

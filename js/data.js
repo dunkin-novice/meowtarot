@@ -20,6 +20,13 @@ export function getCardBackUrl() {
   return getActiveDeck().backImage;
 }
 
+export function joinAssetPath(base = '', subpath = '') {
+  if (!base && !subpath) return '';
+  if (!base) return subpath.replace(/^\/+/, '');
+  if (!subpath) return base.replace(/\/+$/, '');
+  return `${base.replace(/\/+$/, '')}/${subpath.replace(/^\/+/, '')}`;
+}
+
 // Placeholder for future card images (do NOT use it yet in the UI)
 export function getCardImageUrl(card, options = {}) {
   const deck = getActiveDeck();
@@ -31,7 +38,7 @@ export function getCardImageUrl(card, options = {}) {
 
   const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
 
-  return `${assetsBase}/${finalId}.webp`;
+  return joinAssetPath(assetsBase, `${finalId}.webp`);
 }
 
 // Dynamic deck used by the app
