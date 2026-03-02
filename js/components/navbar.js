@@ -1,13 +1,16 @@
 export function renderNavbar(container, onLangToggle) {
   if (!container) return;
+  const pageTitle = document.querySelector('main h1')?.textContent?.trim() || 'MeowTarot';
+
   container.innerHTML = `
     <div class="site-header primary-nav">
-      <a href="index.html" class="logo-text" data-logo>MEOWTAROT</a>
-      <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <button class="mobile-menu-toggle header-menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
         <span class="bar"></span>
         <span class="bar"></span>
         <span class="bar"></span>
       </button>
+      <p class="header-title" aria-live="polite">${pageTitle}</p>
+      <a href="index.html" class="logo-text" data-logo aria-label="Go to home">✦</a>
       <nav class="nav-panel">
         <div class="nav-links nav-actions">
           <a href="index.html" class="nav-link" data-page="home" data-i18n="navHome"></a>
