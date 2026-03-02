@@ -11,7 +11,7 @@ export function renderNavbar(container, onLangToggle) {
       </button>
       <p class="header-title" aria-live="polite">${pageTitle}</p>
       <a href="index.html" class="logo-text" data-logo aria-label="Go to home">✦</a>
-      <nav class="nav-panel">
+      <nav class="nav-panel page-card" aria-label="Primary">
         <div class="nav-links nav-actions">
           <a href="index.html" class="nav-link" data-page="home" data-i18n="navHome"></a>
           <a href="daily.html" class="nav-link" data-page="daily" data-i18n="navDaily"></a>
