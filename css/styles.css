@@ -1583,11 +1583,45 @@ body[data-page='home'] .section-block {
   margin-top: 0;
 }
 
+
+.topic-copy {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.topic-copy-lead {
+  display: inline;
+  font-size: 1.06em;
+  font-weight: 600;
+}
+
+.topic-copy-rest {
+  display: inline;
+}
+
 .meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.meta-group {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 10px 0;
+  align-items: center;
+  min-width: 0;
+}
+
+.meta-group--identity {
+  gap: 8px;
+}
+
+.meta-group--lucky,
+.meta-group--avoid {
+  gap: 8px;
+  align-content: flex-start;
 }
 
 .meta-badge {
@@ -2763,6 +2797,7 @@ body[data-page='reading']::before {
   padding: 24px;
   margin: 0;
   display: block;
+  overflow: hidden;
 }
 
 .reading-top-nav {
@@ -2798,13 +2833,12 @@ body[data-page='reading']::before {
   color: #3e3650;
 }
 
-.reading-intro .eyebrow { color: #866f9f; }
+.reading-intro {
+  margin-bottom: 14px;
+}
 
-.title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.reading-intro .eyebrow {
+  color: #866f9f;
 }
 
 body[data-page='reading'] h1#readingTitle {
@@ -2812,55 +2846,6 @@ body[data-page='reading'] h1#readingTitle {
   font-size: clamp(28px, 7.6vw, 32px);
   margin: 0;
   color: #2b2b2b;
-}
-
-.cosmic-cat {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #f3edf9;
-  display: grid;
-  place-items: center;
-}
-
-.reading-summary {
-  color: #5f5b67;
-  line-height: 1.6;
-  margin: 10px 0 22px;
-}
-
-.featured-tarot {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.featured-card {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-}
-
-.featured-card img {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: 14px;
-  box-shadow: 0 10px 18px rgba(48, 42, 63, 0.19);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.featured-card:hover img {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 22px rgba(48, 42, 63, 0.22);
-}
-
-.featured-card p {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #74717a;
-  font-family: 'Playfair Display', Georgia, serif;
 }
 
 .meaning-accordion {
@@ -3223,6 +3208,80 @@ body[data-page='reading'] .ghost {
   .reading-experience {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .reading-experience {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .reading-card {
+    max-width: 900px;
+    padding: 28px;
+  }
+
+  .tarot-card-img--hero,
+  .card-art-img {
+    width: min(420px, 100%);
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .reading-experience {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 28px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px);
+  }
+
+  .reading-card {
+    max-width: 1100px;
+    padding: 34px;
+  }
+
+  .reading-content {
+    gap: 16px;
+  }
+
+  body[data-page='reading'] h1#readingTitle {
+    font-size: 40px;
+  }
+}
+
+
+@media (min-width: 768px) {
+  .meta-row {
+    gap: 13px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .meta-row {
+    gap: 14px;
+  }
+
+  .meta-group--identity {
+    flex-wrap: nowrap;
+  }
+}
+
+
+@media (min-width: 768px) {
+  .topic-copy-lead {
+    font-size: 1.12em;
+  }
+}
+
+@media (min-width: 1024px) {
+  .topic-copy {
+    line-height: 1.72;
+  }
+
+  .topic-copy-lead {
+    font-size: 1.16em;
+    font-weight: 700;
   }
 }
 

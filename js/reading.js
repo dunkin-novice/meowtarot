@@ -428,6 +428,21 @@ function buildSuggestionPanel(card, dict, headingText) {
   return panel;
 }
 
+function splitFirstSentence(text) {
+  const value = String(text || '').trim();
+  if (!value) return { first: '', rest: '' };
+
+  const sentenceMatch = value.match(/^(.+?[.!?。！？]+)(\s+|$)([\s\S]*)$/u);
+  if (sentenceMatch) {
+    return {
+      first: sentenceMatch[1].trim(),
+      rest: sentenceMatch[3] ? sentenceMatch[3].trim() : '',
+    };
+  }
+
+  return { first: value, rest: '' };
+}
+
 function buildTopicPanel(title, text) {
   if (!text) return null;
 
@@ -438,8 +453,23 @@ function buildTopicPanel(title, text) {
   h3.textContent = title;
   panel.appendChild(h3);
 
+  const { first, rest } = splitFirstSentence(text);
   const p = document.createElement('p');
-  p.textContent = text;
+  p.className = 'topic-copy';
+
+  const lead = document.createElement('span');
+  lead.className = 'topic-copy-lead';
+  lead.textContent = first;
+  p.appendChild(lead);
+
+  if (rest) {
+    p.appendChild(document.createTextNode(' '));
+    const detail = document.createElement('span');
+    detail.className = 'topic-copy-rest';
+    detail.textContent = rest;
+    p.appendChild(detail);
+  }
+
   panel.appendChild(p);
 
   return panel;
@@ -488,20 +518,30 @@ function buildMetaPanel(card) {
   const row = document.createElement('div');
   row.className = 'meta-row';
 
+  const identityGroup = document.createElement('div');
+  identityGroup.className = 'meta-group meta-group--identity';
+
   meta.forEach((item) => {
     const chip = document.createElement('span');
     chip.className = 'meta-badge';
     chip.textContent = `${item.label}: ${item.value}`;
-    row.appendChild(chip);
+    identityGroup.appendChild(chip);
   });
 
-  function appendColorGroup(label, colors) {
-    if (!colors.length) return;
+  if (identityGroup.childElementCount) {
+    row.appendChild(identityGroup);
+  }
+
+  function buildColorGroup(label, colors, groupClassName) {
+    if (!colors.length) return null;
+
+    const group = document.createElement('div');
+    group.className = `meta-group ${groupClassName}`;
 
     const labelChip = document.createElement('span');
     labelChip.className = 'meta-badge';
     labelChip.textContent = label;
-    row.appendChild(labelChip);
+    group.appendChild(labelChip);
 
     colors.forEach((c) => {
       const chip = document.createElement('span');
@@ -523,21 +563,25 @@ function buildMetaPanel(card) {
       }
 
       chip.append(swatch, txt);
-      row.appendChild(chip);
+      group.appendChild(chip);
     });
+
+    return group;
   }
 
-  appendColorGroup(
+  const luckyGroup = buildColorGroup(
     state.currentLang === 'th' ? 'สีมงคลประจำวัน' : "Today's lucky colors",
-    luckyPalette
+    luckyPalette,
+    'meta-group--lucky'
   );
+  if (luckyGroup) row.appendChild(luckyGroup);
 
-  if (!isMobile()) {
-    appendColorGroup(
-      state.currentLang === 'th' ? 'สีที่ควรเลี่ยง' : 'Colors to avoid',
-      avoidPalette
-    );
-  }
+  const avoidGroup = buildColorGroup(
+    state.currentLang === 'th' ? 'สีที่ควรเลี่ยง' : 'Colors to avoid',
+    avoidPalette,
+    'meta-group--avoid'
+  );
+  if (avoidGroup) row.appendChild(avoidGroup);
 
   panel.appendChild(row);
   return panel;
