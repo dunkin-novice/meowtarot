@@ -59,6 +59,9 @@ const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveBtn = document.getElementById('saveBtn');
 const resultsSection = document.querySelector('.section-block.results');
+const meaningToggle = document.getElementById('meaningToggle');
+const meaningCard = document.querySelector('.meaning-accordion');
+const backLink = document.querySelector('.back-link');
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let energyChart = null;
 let saveButtonHandler = null;
@@ -1051,6 +1054,19 @@ function init() {
   }
 
   initShell(state, handleTranslations, 'reading');
+
+  backLink?.addEventListener('click', (event) => {
+    if (window.history.length > 1) {
+      event.preventDefault();
+      window.history.back();
+    }
+  });
+
+  meaningToggle?.addEventListener('click', () => {
+    if (!meaningCard) return;
+    const isOpen = meaningCard.classList.toggle('is-open');
+    meaningToggle.setAttribute('aria-expanded', String(isOpen));
+  });
 
   newReadingBtn?.addEventListener('click', () => {
     const target =
