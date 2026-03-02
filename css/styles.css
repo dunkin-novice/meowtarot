@@ -132,6 +132,14 @@ body.nav-open {
   overflow: hidden;
 }
 
+.page-card {
+  background: var(--mystic-card);
+  border: 1px solid rgba(197, 177, 220, 0.4);
+  border-radius: var(--mystic-radius);
+  box-shadow: var(--mystic-shadow);
+  padding: var(--page-card-padding);
+}
+
 @media (max-width: 900px) {
   .site-header {
     padding: 14px 20px;
@@ -854,6 +862,94 @@ button,
   gap: 10px;
 }
 
+
+@media (max-width: 900px) {
+  .site-header {
+    grid-template-columns: 38px 1fr 38px;
+  }
+
+  .nav-panel {
+    position: absolute;
+    width: 100%;
+    max-width: 420px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 0.25s ease, opacity 0.25s ease;
+  }
+
+  .nav-panel.is-open {
+    max-height: 560px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .nav-link {
+    width: 100%;
+  }
+
+  .nav-meta {
+    justify-content: center;
+    border-top: 1px solid rgba(168, 137, 196, 0.24);
+    padding-top: 10px;
+  }
+
+  .language-toggle {
+    border-left: none;
+    padding-left: 0;
+    gap: 10px;
+  }
+}
+
+@media (min-width: 901px) {
+  .mobile-menu-toggle {
+    display: none;
+  }
+
+  .site-header {
+    max-width: min(940px, calc(100% - 2rem));
+    width: calc(100% - 2rem);
+    grid-template-columns: 38px 1fr 38px;
+  }
+
+  .nav-panel {
+    position: static;
+    max-height: none;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    overflow: visible;
+    transform: none;
+    width: auto;
+  }
+
+  .header-title {
+    text-align: left;
+    margin-left: 6px;
+  }
+
+  .nav-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
 .site-footer {
   padding: 22px 32px 28px;
   text-align: center;
@@ -2889,6 +2985,7 @@ body[data-page='reading'] .ghost {
   --mystic-muted: #7f778f;
   --mystic-shadow: 0 14px 34px rgba(70, 50, 105, 0.16);
   --mystic-radius: 28px;
+  --page-card-padding: 24px;
 }
 
 body {
@@ -2916,16 +3013,18 @@ body::before {
 
 .site-header {
   max-width: 420px;
-  margin: 0 auto;
-  border-radius: 0 0 24px 24px;
-  background: rgba(255, 255, 255, 0.72);
-  border: none;
+  width: calc(100% - 2rem);
+  margin: calc(10px + env(safe-area-inset-top, 0px)) auto 0;
+  border-radius: var(--mystic-radius);
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(197, 177, 220, 0.4);
   backdrop-filter: saturate(130%) blur(8px);
-  box-shadow: 0 8px 24px rgba(87, 57, 126, 0.12);
-  padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 12px;
+  box-shadow: var(--mystic-shadow);
+  padding: 14px 16px;
   display: grid;
   grid-template-columns: 38px 1fr 38px;
   gap: 8px;
+  z-index: 300;
 }
 
 .logo-text,
@@ -2949,14 +3048,13 @@ body::before {
 .header-title {
   margin: 0;
   font-size: 18px;
-  line-height: 1.2;
+  line-height: 1.25;
   color: #413755;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   text-align: center;
   align-self: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .header-menu-toggle {
@@ -2977,11 +3075,12 @@ body::before {
 }
 
 .nav-panel {
-  inset: calc(100% + 8px) 0 auto;
-  border-radius: 18px;
+  inset: calc(100% + 10px) 0 auto;
+  border-radius: var(--mystic-radius);
   border: 1px solid rgba(168, 137, 196, 0.24);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: var(--mystic-shadow);
+  z-index: 350;
 }
 
 .nav-link,
@@ -3003,7 +3102,7 @@ body::before {
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  padding: calc(var(--nav-height) + 16px) 14px calc(env(safe-area-inset-bottom, 0px) + 22px);
+  padding: calc(var(--nav-height) + 22px) 14px calc(env(safe-area-inset-bottom, 0px) + 22px);
 }
 
 body[data-page='home'] .page-shell {
@@ -3037,15 +3136,9 @@ body[data-page='home'] .page-shell {
   color: var(--mystic-text);
   border-radius: var(--mystic-radius);
   box-shadow: var(--mystic-shadow);
+  padding: var(--page-card-padding);
 }
 
-.hero,
-.section-block,
-.tarot-hero,
-.results {
-  padding-left: 0;
-  padding-right: 0;
-}
 
 .brand-title,
 .section-heading h2,
