@@ -4217,3 +4217,18 @@ body[data-page='full'] #overall-card-board {
   width: min(100%, 820px);
   margin-inline: auto;
 }
+
+/* Keep board card backs uncropped by preserving the source back-art aspect ratio. */
+body[data-page='daily'] #daily-board .card-slot,
+body[data-page='full'] #overall-card-board .card-slot {
+  height: auto;
+  aspect-ratio: 1568 / 2720;
+}
+
+body[data-page='daily'] #daily-board .card-back,
+body[data-page='full'] #overall-card-board .card-back {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
