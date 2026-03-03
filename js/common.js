@@ -216,19 +216,16 @@ export const translations = {
 const LANG_STORAGE_KEY = 'meowtarot_lang';
 let navbarCleanup = null;
 
+export function computeLanguageHref(targetLang, locationLike = window.location) {
+  const pathname = normalizePathname(locationLike?.pathname || '/');
+  const search = locationLike?.search || '';
+  const hash = locationLike?.hash || '';
+  const targetPath = localizePath(pathname, targetLang) || (targetLang === 'th' ? '/th/' : '/');
+  return `${targetPath}${search}${hash}`;
+}
+
 export function switchLang(targetLang) {
-  const { pathname, search } = window.location;
-  const isThai = pathname.startsWith('/th');
-  const base = isThai ? pathname.replace(/^\/th/, '') || '/' : pathname || '/';
-
-  let newPath;
-  if (targetLang === 'th') {
-    newPath = '/th' + (base === '/' ? '/' : base);
-  } else {
-    newPath = base === '/' ? '/' : base;
-  }
-
-  window.location.href = newPath + search;
+  window.location.href = computeLanguageHref(targetLang);
 }
 
 function normalizePathname(pathname = '/') {
