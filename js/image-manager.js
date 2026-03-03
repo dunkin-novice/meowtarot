@@ -1,7 +1,6 @@
-const DEFAULT_CDN_BASES = [
-  'https://cdn.jsdelivr.net/gh/dunkin-novice/meowtarot@main',
-  'https://cdn.statically.io/gh/dunkin-novice/meowtarot/main',
-];
+import { ASSET_BASE_URL } from './asset-config.js';
+
+const DEFAULT_CDN_BASES = [];
 
 function getConfiguredCdnBases() {
   if (typeof window === 'undefined') return DEFAULT_CDN_BASES;
@@ -11,6 +10,7 @@ function getConfiguredCdnBases() {
   if (typeof window.MEOWTAROT_CDN_BASE === 'string' && window.MEOWTAROT_CDN_BASE) {
     return [window.MEOWTAROT_CDN_BASE];
   }
+  if (ASSET_BASE_URL) return [ASSET_BASE_URL, ...DEFAULT_CDN_BASES].filter(Boolean);
   return DEFAULT_CDN_BASES;
 }
 
