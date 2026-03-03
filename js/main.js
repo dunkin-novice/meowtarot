@@ -1,5 +1,11 @@
 import { initShell, localizePath, translations } from './common.js';
-import { loadTarotManifest, getCardBackUrl, normalizeId } from './data.js';
+import {
+  loadTarotManifest,
+  getCardBackUrl,
+  getCardBackFallbackUrl,
+  applyImageFallback,
+  normalizeId,
+} from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -11,6 +17,7 @@ const DAILY_SELECTION_MAX = 1;
 const DEAL_STAGGER = 180;
 const STACK_DURATION = 520;
 const CARD_BACK_URL = getCardBackUrl();
+const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
 
 const state = {
   currentLang: 'en',
@@ -23,7 +30,7 @@ const staticCardBacks = document.querySelectorAll('.card-back');
 function applyCardBackBackground(el) {
   if (!el) return;
   if (el.tagName === 'IMG') {
-    el.src = CARD_BACK_URL;
+    applyImageFallback(el, CARD_BACK_URL, [CARD_BACK_FALLBACK_URL]);
     el.loading = el.loading || 'eager';
     el.alt = '';
     return;

@@ -4,7 +4,10 @@ import {
   meowTarotCards,
   normalizeId,
   getCardImageUrl,
+  getCardImageFallbackUrl,
   getCardBackUrl,
+  getCardBackFallbackUrl,
+  applyImageFallback,
 } from './data.js';
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 
@@ -484,10 +487,12 @@ function resolveImageIds(card, targetOrientation = toOrientation(card)) {
 }
 
 function getCardImageUrlWithFallback(card) {
-  if (!card) return { src: getCardBackUrl(), fallback: null };
+  const backSrc = getCardBackUrl();
+  const backFallback = getCardBackFallbackUrl();
+  if (!card) return { src: backSrc, fallback: backFallback };
 
   const { orientedId, uprightId, orientation } = resolveImageIds(card, toOrientation(card));
-  if (!orientedId) return { src: getCardBackUrl(), fallback: null };
+  if (!orientedId) return { src: backSrc, fallback: backFallback };
 
   const orientedCard = { ...card, id: orientedId, card_id: orientedId, image_id: orientedId, orientation };
   const uprightCard = { ...card, id: uprightId, card_id: uprightId, image_id: uprightId, orientation: 'upright' };
@@ -496,8 +501,17 @@ function getCardImageUrlWithFallback(card) {
   const fallback = orientation === 'reversed'
     ? getCardImageUrl(uprightCard, { orientation: 'upright' })
     : null;
+  const deckFallback = getCardImageFallbackUrl(orientedCard, { orientation });
+  const backstopFallback = backFallback || backSrc;
 
-  return { src, fallback };
+  const uprightDeckFallback = orientation === 'reversed'
+    ? getCardImageFallbackUrl(uprightCard, { orientation: 'upright' })
+    : null;
+
+  return {
+    src,
+    candidates: [deckFallback, fallback, uprightDeckFallback, backstopFallback],
+  };
 }
 
 function buildCardArt(card, variant = 'hero') {
@@ -509,18 +523,8 @@ function buildCardArt(card, variant = 'hero') {
   img.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   img.loading = 'eager';
 
-  const { src, fallback } = getCardImageUrlWithFallback(card);
-  img.src = src;
-  img.addEventListener('error', () => {
-    if (fallback && img.dataset.fallback !== 'upright') {
-      img.dataset.fallback = 'upright';
-      img.src = fallback;
-      return;
-    }
-    if (img.dataset.fallback === 'back') return;
-    img.dataset.fallback = 'back';
-    img.src = getCardBackUrl();
-  });
+  const { src, candidates = [] } = getCardImageUrlWithFallback(card);
+  applyImageFallback(img, src, candidates);
 
   wrap.appendChild(img);
   return wrap;
