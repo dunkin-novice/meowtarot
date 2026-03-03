@@ -88,12 +88,11 @@ function getDrawableCards(size = 6) {
 
 function setRitualCtaLabel(button, hasDealt) {
   if (!button) return;
-  const enLabel = hasDealt ? 'Shuffle' : 'Deal';
-  const thLabel = hasDealt ? 'สับไพ่' : 'แจกไพ่';
-  const enNode = button.querySelector('.ritual-cta__en');
-  const thNode = button.querySelector('.ritual-cta__th');
-  if (enNode) enNode.textContent = enLabel;
-  if (thNode) thNode.textContent = thLabel;
+  const isThai = state.currentLang === 'th';
+  button.textContent = isThai
+    ? (hasDealt ? 'สับไพ่' : 'แจกไพ่')
+    : (hasDealt ? 'Shuffle' : 'Deal');
+  button.classList.toggle('ritual-cta--deal', !hasDealt);
 }
 
 function saveSelectionAndGo({ mode, spread, topic, cards }) {
@@ -452,7 +451,7 @@ function renderOverall() {
   dealShuffleBtn.onclick = triggerDeal;
   continueBtn.onclick = () => {
     if (latestSelection.length !== OVERALL_SELECTION_COUNT || isAnimating) return;
-    saveSelectionAndGo({ mode: 'overall', spread: 'story', topic: 'generic', cards: latestSelection.map((c) => c.id) });
+    saveSelectionAndGo({ mode: 'full', spread: 'story', topic: 'generic', cards: latestSelection.map((c) => c.id) });
   };
 }
 
@@ -510,7 +509,7 @@ function renderQuestion() {
 function renderPage(dict) {
   const page = document.body.dataset.page;
   if (page === 'daily') renderDaily(dict);
-  if (page === 'overall') renderOverall(dict);
+  if (page === 'overall' || page === 'full') renderOverall(dict);
   if (page === 'question') renderQuestion(dict);
 }
 

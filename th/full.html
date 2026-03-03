@@ -6,8 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   />
-  <title>MeowTarot | Daily Reading</title>
-  <meta name="robots" content="noindex,follow" />
+  <title>MeowTarot | Full Reading</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -30,27 +29,29 @@
   <link rel="preload" href="../css/styles.css" as="style" />
   <link rel="stylesheet" href="../css/styles.css" />
 </head>
-<body data-page="daily">
+<body data-page="full">
   <header id="site-header"></header>
 
   <main class="page-shell board-page">
-    <section class="board-shell">
+    <section class="board-shell full-board-shell">
       <div class="board-header">
-        <p class="eyebrow" data-i18n="dailyTitle"></p>
+        <p class="eyebrow" data-i18n="overallTitle"></p>
+        <h1 data-i18n="overallShortDesc"></h1>
       </div>
 
-      <div class="board-topbar">
-        <div class="board-controls">
-          <button class="primary ritual-cta" type="button" id="daily-deal-shuffle">แจกไพ่</button>
+      <section id="overall-flow" class="full-flow">
+        <div class="overall-cta-wrapper">
+          <button id="overall-deal-shuffle" class="primary ritual-cta" type="button">แจกไพ่</button>
         </div>
-        <span class="selection-counter" id="daily-counter">0/1</span>
-      </div>
 
-      <div class="card-board card-board--daily" id="daily-board" aria-live="polite"></div>
-
-      <div class="board-actions board-actions--center">
-        <button class="primary continue-btn" type="button" id="daily-continue" data-i18n="continue" disabled></button>
-      </div>
+        <div class="board-toolbar" id="overall-toolbar" hidden>
+          <span class="selection-counter" id="overall-counter">0/3</span>
+        </div>
+        <div id="overall-card-board" class="card-board card-board--three" hidden></div>
+        <div class="board-actions board-actions--center" id="overall-actions" hidden>
+          <button id="overall-continue" type="button" class="primary" data-i18n="continue" disabled></button>
+        </div>
+      </section>
     </section>
   </main>
 
