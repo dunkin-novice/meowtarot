@@ -1,8 +1,16 @@
-import { initShell, localizePath, pathHasThaiPrefix, translations } from './common.js';
+import {
+  applyLocaleMeta,
+  applyTranslations,
+  initShell,
+  localizePath,
+  pathHasThaiPrefix,
+  translations,
+} from './common.js';
 import {
   loadTarotData,
   meowTarotCards,
   normalizeId,
+  activeDeckId,
   getCardImageUrl,
   getCardImageFallbackUrl,
   getCardBackUrl,
@@ -54,6 +62,9 @@ let dataLoaded = false;
 let translationsReady = false;
 let hasRendered = false;
 let activeDict = translations[state.currentLang] || translations.en;
+const imageSourceCache = new Map();
+const imagePreloadCache = new Map();
+const imageLoadedCache = new Set();
 
 const readingContent = document.getElementById('reading-content');
 const contextCopy = document.getElementById('reading-context');
@@ -508,10 +519,55 @@ function getCardImageUrlWithFallback(card) {
     ? getCardImageFallbackUrl(uprightCard, { orientation: 'upright' })
     : null;
 
+  const preferFallbackDeck = activeDeckId === 'meow-v2' && deckFallback;
+
   return {
-    src,
-    candidates: [deckFallback, fallback, uprightDeckFallback, backstopFallback],
+    src: preferFallbackDeck ? deckFallback : src,
+    candidates: preferFallbackDeck
+      ? [src, fallback, uprightDeckFallback, backstopFallback]
+      : [deckFallback, fallback, uprightDeckFallback, backstopFallback],
   };
+}
+
+function getStableCardImageSources(card) {
+  const orientation = toOrientation(card);
+  const cardId = String(card?.id || card?.image_id || card?.card_id || 'back-card');
+  const cacheKey = `${cardId}:${orientation}:${state.currentLang}`;
+  if (imageSourceCache.has(cacheKey)) return imageSourceCache.get(cacheKey);
+
+  const resolved = getCardImageUrlWithFallback(card);
+  const stable = {
+    src: resolved?.src || getCardBackUrl(),
+    candidates: Array.isArray(resolved?.candidates) ? resolved.candidates.filter(Boolean) : [],
+  };
+  imageSourceCache.set(cacheKey, stable);
+  return stable;
+}
+
+function preloadImageSources(src, candidates = []) {
+  const key = [src, ...candidates].filter(Boolean).join('|');
+  if (!key) return Promise.resolve();
+  if (imagePreloadCache.has(key)) return imagePreloadCache.get(key);
+
+  const promise = new Promise((resolve) => {
+    const probe = new Image();
+    applyImageFallback(probe, src, candidates);
+
+    if (probe.complete && probe.naturalWidth > 0) {
+      imageLoadedCache.add(key);
+      resolve();
+      return;
+    }
+
+    probe.onload = () => {
+      imageLoadedCache.add(key);
+      resolve();
+    };
+    probe.onerror = () => resolve();
+  });
+
+  imagePreloadCache.set(key, promise);
+  return promise;
 }
 
 function buildCardArt(card, variant = 'hero') {
@@ -523,8 +579,18 @@ function buildCardArt(card, variant = 'hero') {
   img.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   img.loading = 'eager';
 
-  const { src, candidates = [] } = getCardImageUrlWithFallback(card);
-  applyImageFallback(img, src, candidates);
+  const { src, candidates = [] } = getStableCardImageSources(card);
+  const sourceKey = [src, ...candidates].filter(Boolean).join('|');
+
+  if (imageLoadedCache.has(sourceKey)) {
+    applyImageFallback(img, src, candidates);
+  } else {
+    img.style.visibility = 'hidden';
+    preloadImageSources(src, candidates).finally(() => {
+      applyImageFallback(img, src, candidates);
+      img.style.visibility = 'visible';
+    });
+  }
 
   wrap.appendChild(img);
   return wrap;
@@ -1254,13 +1320,30 @@ function maybeRenderReading() {
   hasRendered = true;
 }
 
+
+function switchLanguageInPlace(nextLang) {
+  if (!nextLang || nextLang === state.currentLang) return;
+
+  state.currentLang = nextLang;
+  hasRendered = false;
+
+  const url = new URL(window.location.href);
+  url.searchParams.set('lang', nextLang);
+  window.history.replaceState({}, '', url.toString());
+
+  applyTranslations(nextLang, handleTranslations);
+  applyLocaleMeta(nextLang);
+}
+
 function init() {
   if (DEBUG_CAPTURE_ERRORS) {
     window.onerror = (...args) => console.error('Reading page error', ...args);
     window.onunhandledrejection = (event) => console.error('Reading page unhandled rejection', event?.reason || event);
   }
 
-  initShell(state, handleTranslations, 'reading');
+  initShell(state, handleTranslations, 'reading', {
+    onLangToggle: switchLanguageInPlace,
+  });
   ensureCardSheet();
 
   backLink?.addEventListener('click', (event) => {
@@ -1298,7 +1381,6 @@ function init() {
     const dict = translations[state.currentLang] || translations.en;
     updateContextCopy(dict);
     configureSaveButton(dict);
-    if (dataLoaded) renderReading(dict);
   });
 
   loadTarotData()
