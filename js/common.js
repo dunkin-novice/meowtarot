@@ -307,14 +307,19 @@ export function applyTranslations(currentLang = 'en', afterApply) {
   afterApply?.(dict);
 }
 
-export function initShell(state, afterApply, activePage) {
+export function initShell(state, afterApply, activePage, options = {}) {
   const pathLang = window.location.pathname.startsWith('/th') ? 'th' : 'en';
-  state.currentLang = pathLang;
+  const preferredLang = state?.currentLang;
+  state.currentLang = preferredLang === 'th' || preferredLang === 'en' ? preferredLang : pathLang;
 
   navbarCleanup?.();
   navbarCleanup = renderNavbar(document.getElementById('site-header'), (lang) => {
     if (lang === state.currentLang) return;
     localStorage.setItem(LANG_STORAGE_KEY, lang);
+    if (typeof options?.onLangToggle === 'function') {
+      options.onLangToggle(lang);
+      return;
+    }
     switchLang(lang);
   });
   renderFooter(document.getElementById('site-footer'));
