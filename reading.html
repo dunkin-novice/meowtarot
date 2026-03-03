@@ -56,13 +56,10 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body data-page="reading">
-  <main class="reading-experience" aria-label="Tarot reading result">
-    <section class="reading-card section-block results show">
-      <header class="reading-top-nav">
-        <a class="back-link" href="index.html" aria-label="Go back">←</a>
-        <p class="reading-nav-title">Tarot Reading Result</p>
-      </header>
+  <header id="site-header"></header>
 
+  <main class="page-shell" aria-label="Tarot reading result">
+    <section class="section-block results show reading-card">
       <section class="reading-intro">
         <p class="eyebrow" id="reading-context"></p>
         <h1 id="readingTitle">The Universe Whispers…</h1>
@@ -90,6 +87,8 @@
       </div>
     </section>
   </main>
+
+  <footer id="site-footer"></footer>
 
   <script type="module" src="js/reading.js"></script>
 </body>

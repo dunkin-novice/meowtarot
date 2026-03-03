@@ -3698,3 +3698,142 @@ html[lang='th'] .topic-copy-lead {
     line-height: 1.75;
   }
 }
+
+/* mobile navbar compaction + always-visible language switcher */
+@media (max-width: 900px) {
+  .site-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .nav-card-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .header-menu-toggle,
+  .mobile-menu-toggle {
+    width: 34px;
+    height: 34px;
+  }
+
+  .header-title {
+    flex: 0 0 auto;
+    margin-right: auto;
+    font-size: clamp(15px, 4.1vw, 17px);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .language-toggle--mobile {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-left: 0;
+    padding: 2px 4px;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .language-toggle--mobile .lang-btn {
+    min-width: 32px;
+    padding: 4px 7px;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .language-toggle--mobile .divider {
+    font-size: 11px;
+  }
+
+  .nav-meta {
+    display: none;
+  }
+
+  .language-toggle--menu {
+    display: none;
+  }
+}
+
+@media (min-width: 901px) {
+  .language-toggle--mobile {
+    display: none;
+  }
+
+  .language-toggle--menu {
+    display: inline-flex;
+  }
+}
+
+/* mobile layout guardrails: overall page card content fit + single-row navbar brand */
+body[data-page='overall'] .section-block {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+body[data-page='overall'] .section-block > * {
+  min-width: 0;
+}
+
+body[data-page='overall'] h1 {
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+body[data-page='overall'] #overall-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+body[data-page='overall'] .overall-cta-wrapper,
+body[data-page='overall'] .board-actions {
+  width: 100%;
+  margin: 0;
+}
+
+body[data-page='overall'] #overallStartBtn,
+body[data-page='overall'] #overall-continue {
+  width: 100%;
+}
+
+body[data-page='overall'] .board-toolbar {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+body[data-page='overall'] #overall-shuffle {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-page='overall'] #overall-counter {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .nav-brand {
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .nav-logo {
+    display: none;
+  }
+}

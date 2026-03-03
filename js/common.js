@@ -6,30 +6,30 @@ export const translations = {
   en: {
     navHome: 'Home',
     navDaily: 'Daily Fortune',
-    navOverall: 'Life Reading',
+    navOverall: 'Full Reading',
     navQuestion: 'Ask a Question',
     navMeanings: 'Card Meanings',
     heroTagline: 'Daily guidance and full spreads, led by curious cats.',
     fortuneTeller: 'Fortune Teller',
     languageLabel: 'Language',
     landingIntro:
-      'Pick a mode: Daily Reading gives a single card of the day. Life Reading explores a 3-card Past / Present / Future story. Ask a Question uses a focused 1-card answer in your chosen topic.',
+      'Pick a mode: Daily Reading gives a single card of the day. Full Reading explores a 3-card Past / Present / Future story. Ask a Question uses a focused 1-card answer in your chosen topic.',
     startReadingCta: 'Start your reading',
     homeDailyCta: 'Daily Reading',
-    homeOverallCta: 'Life Reading',
+    homeOverallCta: 'Full Reading',
     homeQuestionCta: 'Ask a Question',
     ctaDaily: 'Daily Reading',
-    ctaOverall: 'Life Reading',
+    ctaOverall: 'Full Reading',
     ctaQuestion: 'Ask a Question',
     dailyTitle: 'Daily Reading',
     dailyDesc: 'Tap once a day to reveal today’s cat-guided message.',
     dailyDraw: 'Draw your card for today',
     dailyRedraw: 'Draw for today',
     todayReminder: 'One card per device per day. Your card will stay pinned here.',
-    overallTitle: 'Life Reading',
+    overallTitle: 'Full Reading',
     overallShortDesc: 'Pull 3 cards for your broader life story.',
     overallDesc: 'Draw three cards for a past / present / future storyline about your life.',
-    overallStartCta: 'Start life reading',
+    overallStartCta: 'Start full reading',
     questionTitle: 'Ask a Question',
     questionDesc: 'Think of a question, pick a topic, then draw one card.',
     questionLead: 'Think of a question in your mind, pick a topic, then draw one card.',
@@ -87,7 +87,7 @@ export const translations = {
     colorsTitle: 'Colors of the day',
     powerColor: 'Power color',
     drainingColor: 'Draining color',
-    overallReadingLabel: 'Life reading',
+    overallReadingLabel: 'Full reading',
     questionSpreadNote: '1-card answer',
     missingSelection: 'No cards were found. Please draw your cards first to see the reading.',
     loveMetaYesNo: 'Love answer tendency',
@@ -214,6 +214,7 @@ export const translations = {
 };
 
 const LANG_STORAGE_KEY = 'meowtarot_lang';
+let navbarCleanup = null;
 
 export function switchLang(targetLang) {
   const { pathname, search } = window.location;
@@ -313,7 +314,8 @@ export function initShell(state, afterApply, activePage) {
   const pathLang = window.location.pathname.startsWith('/th') ? 'th' : 'en';
   state.currentLang = pathLang;
 
-  renderNavbar(document.getElementById('site-header'), (lang) => {
+  navbarCleanup?.();
+  navbarCleanup = renderNavbar(document.getElementById('site-header'), (lang) => {
     if (lang === state.currentLang) return;
     localStorage.setItem(LANG_STORAGE_KEY, lang);
     switchLang(lang);
@@ -324,6 +326,11 @@ export function initShell(state, afterApply, activePage) {
   applyTranslations(state.currentLang, afterApply);
   applyLocaleMeta(state.currentLang);
 }
+
+window.addEventListener('beforeunload', () => {
+  navbarCleanup?.();
+  navbarCleanup = null;
+});
 
 function highlightActiveNav(activePage) {
   if (!activePage) return;
