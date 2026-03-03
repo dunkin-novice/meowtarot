@@ -41,25 +41,15 @@
 
       <div class="board-topbar">
         <div class="board-controls">
-          <button class="primary" type="button" id="daily-start" data-i18n="start"></button>
-          <button class="ghost" type="button" id="daily-shuffle" data-i18n="shuffleCards" disabled></button>
+          <button class="primary ritual-cta" type="button" id="daily-deal-shuffle">
+            <span class="ritual-cta__en">Deal</span>
+            <span class="ritual-cta__th">แจกไพ่</span>
+          </button>
         </div>
         <span class="selection-counter" id="daily-counter">0/1</span>
       </div>
 
-      <div class="card-board card-board--daily" id="daily-board" aria-live="polite">
-        <div class="board-start-overlay" id="daily-start-overlay">
-          <div class="board-start-overlay__inner">
-            <button
-              class="primary board-start-overlay__cta"
-              type="button"
-              id="daily-start-overlay-btn"
-              data-i18n="start"
-            ></button>
-            <p class="board-start-overlay__hint" data-i18n="dailyStartHint"></p>
-          </div>
-        </div>
-      </div>
+      <div class="card-board card-board--daily" id="daily-board" aria-live="polite"></div>
 
       <div class="board-actions board-actions--center">
         <button class="primary continue-btn" type="button" id="daily-continue" data-i18n="continue" disabled></button>
