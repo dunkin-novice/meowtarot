@@ -1,16 +1,18 @@
+import { buildAssetUrl, resolveDeckAssetBase } from './asset-config.js';
+
 // Deck configuration (for future multi-deck support)
 export const DECKS = {
   'meow-v2': {
     id: 'meow-v2',
     name: 'MeowTarot v2',
-    assetsBase: '/assets/meow-v2',
-    backImage: '/assets/meow-v2/00-back.webp',
+    assetsBase: resolveDeckAssetBase('assets/meow-v2'),
+    backImage: buildAssetUrl('assets/meow-v2/00-back.webp'),
   },
   'meow-v1': {
     id: 'meow-v1',
     name: 'MeowTarot v1',
-    assetsBase: '/assets/meow-v1',
-    backImage: '/assets/meow-v1/00-back.webp',
+    assetsBase: resolveDeckAssetBase('assets/meow-v1'),
+    backImage: buildAssetUrl('assets/meow-v1/00-back.webp'),
     // future: pattern for card faces, e.g.
     // cardImagePattern: 'assets/meow-v1/{imageId}.webp',
   },
@@ -70,7 +72,7 @@ export function getCardImageUrl(card, options = {}) {
 
   const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
 
-  return joinAssetPathSingleSlash(assetsBase, `${finalId}.webp`);
+  return buildAssetUrl(joinAssetPathSingleSlash(assetsBase, `${finalId}.webp`));
 }
 
 export function getCardImageFallbackUrl(card, options = {}) {

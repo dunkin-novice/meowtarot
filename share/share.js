@@ -6,6 +6,7 @@ const hintEl = document.getElementById('posterHint');
 const statusEl = document.getElementById('shareStatus');
 const shareBtn = document.getElementById('shareAction');
 const openLink = document.getElementById('openPosterLink');
+const retryBtn = document.getElementById('retryPoster');
 
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let currentBlob = null;
@@ -15,6 +16,7 @@ let posterPromise = null;
 let currentPayload = null;
 let toastTimer = null;
 let fontsReadyPromise = null;
+let lastPosterError = null;
 const actionLabels = {
   share: shareBtn?.textContent || 'Share',
 };
@@ -32,6 +34,8 @@ const STRINGS = {
     posterFail: 'Unable to build the image. Please try again.',
     error: 'Something went wrong. Please try again.',
     openImage: 'Opening image…',
+    retry: 'Retry',
+    retrying: 'Retrying…',
   },
   th: {
     generating: 'กำลังสร้างโปสเตอร์…',
@@ -45,6 +49,8 @@ const STRINGS = {
     posterFail: 'สร้างรูปไม่สำเร็จ โปรดลองใหม่อีกครั้ง',
     error: 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง',
     openImage: 'กำลังเปิดรูป…',
+    retry: 'ลองอีกครั้ง',
+    retrying: 'กำลังลองใหม่…',
   },
 };
 
@@ -83,6 +89,13 @@ function setLoading(isLoading, strings) {
   if (!loadingEl) return;
   loadingEl.textContent = isLoading ? strings.generating : '';
   loadingEl.hidden = !isLoading;
+}
+
+function setRetryVisible(visible, strings = STRINGS.en) {
+  if (!retryBtn) return;
+  retryBtn.hidden = !visible;
+  retryBtn.disabled = false;
+  retryBtn.textContent = strings.retry;
 }
 
 function setActionLoading(isLoading, strings) {
@@ -177,8 +190,10 @@ async function ensurePoster() {
 
   const strings = getStrings(currentPayload.lang);
   setLoading(true, strings);
+  setRetryVisible(false, strings);
   setActionLoading(true, strings);
   posterPromise = (async () => {
+    const startedAt = performance.now();
     try {
       await ensureFontsReady();
       const result = await buildPoster(currentPayload, { preset: 'story' });
@@ -186,11 +201,16 @@ async function ensurePoster() {
         throw new Error('Unexpected poster size');
       }
       setPosterBlob(result.blob);
+      lastPosterError = null;
+      setRetryVisible(false, strings);
       setLoading(false, strings);
       setActionLoading(false, strings);
+      console.info('Poster generation timings', { totalMs: Number((performance.now() - startedAt).toFixed(1)), ...(result.perf || {}) });
       showToast(strings.ready);
       return result.blob;
     } catch (err) {
+      lastPosterError = err;
+      setRetryVisible(true, strings);
       setLoading(false, strings);
       setActionLoading(false, strings);
       throw err;
@@ -213,7 +233,8 @@ async function handleShare() {
   try {
     blob = await ensurePoster();
   } catch (err) {
-    console.error('Failed to generate poster for sharing', err);
+    const reason = err?.message || String(err);
+    console.error('Failed to generate poster for sharing', reason, err);
     showToast(strings.posterFail, { tone: 'error', persist: true });
     return;
   }
@@ -281,6 +302,20 @@ async function init() {
   applyActionFocus();
 
   shareBtn.addEventListener('click', handleShare);
+  retryBtn?.addEventListener('click', async () => {
+    retryBtn.disabled = true;
+    retryBtn.textContent = strings.retrying;
+    currentBlob = null;
+    try {
+      await ensurePoster();
+    } catch (error) {
+      console.error('Retry poster generation failed', error);
+      showToast(strings.posterFail, { tone: 'error', persist: true });
+      retryBtn.disabled = false;
+      retryBtn.textContent = strings.retry;
+    }
+  });
+
   openLink?.addEventListener('click', async (event) => {
     event.preventDefault();
     const blob = await ensurePoster();

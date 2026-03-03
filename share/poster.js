@@ -9,6 +9,10 @@ import {
 import { imageManager } from '../js/image-manager.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
 
+const POSTER_WEBP_QUALITY = 0.78;
+const POSTER_RETRY_WEBP_QUALITY = 0.72;
+const POSTER_WARN_MAX_BYTES = 600 * 1024;
+
 const PRESETS = {
   story: { width: 1080, height: 1920 },
   square: { width: 1080, height: 1080 },
@@ -22,12 +26,24 @@ function createCanvas(width, height) {
   return canvas;
 }
 
-async function canvasToBlob(canvas, quality = 0.92) {
-  const webpBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
-  if (webpBlob && webpBlob.type === 'image/webp') {
-    return webpBlob;
+async function canvasToBlob(canvas, quality = POSTER_WEBP_QUALITY) {
+  const primary = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+  if (primary && primary.type === 'image/webp') {
+    if (primary.size > POSTER_WARN_MAX_BYTES) {
+      console.warn('[share] Poster blob size high:', primary.size, 'bytes');
+      const retry = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', POSTER_RETRY_WEBP_QUALITY));
+      if (retry && retry.type === 'image/webp') {
+        if (retry.size > POSTER_WARN_MAX_BYTES) {
+          console.warn('[share] Poster blob still high after retry:', retry.size, 'bytes');
+        }
+        return retry.size <= primary.size ? retry : primary;
+      }
+    }
+
+    return primary;
   }
-  const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', quality));
+
+  const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
   return pngBlob;
 }
 
@@ -254,15 +270,24 @@ function resolveLuckyInfo(payload, cardEntry) {
 }
 
 export async function buildPoster(payload, { preset = 'story' } = {}) {
+  const perf = {
+    startedAt: performance.now(),
+    preloadMs: 0,
+    captureMs: 0,
+    exportMs: 0,
+    captureCount: 0,
+  };
   let cardY = 0;
   let cardHeight = 0;
   let cardWidth = 0;
 
+  const preloadStart = performance.now();
   await ensureTarotData();
   if (document.fonts?.ready) {
     await document.fonts.ready;
   }
-  console.log('[Poster] Data loaded');
+  perf.preloadMs = performance.now() - preloadStart;
+  console.log('[Poster] Data loaded', { preloadMs: Number(perf.preloadMs.toFixed(1)) });
 
   const { width, height } = PRESETS[preset] || PRESETS.story;
   const canvas = createCanvas(width, height);
@@ -525,9 +550,23 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     drawFooter();
     console.log('[Poster] Canvas drawn');
 
-    const blob = await canvasToBlob(canvas, 0.92);
+    const exportStart = performance.now();
+    perf.captureCount += 1;
+    console.info('[share-export] captureCount:', perf.captureCount);
+    const blob = await canvasToBlob(canvas, POSTER_WEBP_QUALITY);
+    perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
+    perf.exportMs = performance.now() - exportStart;
     if (!blob) throw new Error('Failed to build poster blob');
-    return { blob, width, height };
+    console.info('[Poster] Performance', {
+      preloadMs: Number(perf.preloadMs.toFixed(1)),
+      captureMs: Number(perf.captureMs.toFixed(1)),
+      exportMs: Number(perf.exportMs.toFixed(1)),
+      captureCount: perf.captureCount,
+      totalMs: Number((performance.now() - perf.startedAt).toFixed(1)),
+      bytes: blob.size,
+      type: blob.type,
+    });
+    return { blob, width, height, perf };
   }
 
   const title = payload?.title || 'MeowTarot Reading';
@@ -605,9 +644,23 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   ctx.fillText('meowtarot.com', width / 2, height - 90);
   console.log('[Poster] Canvas drawn');
 
-  const blob = await canvasToBlob(canvas, 0.92);
+  const exportStart = performance.now();
+  perf.captureCount += 1;
+  console.info('[share-export] captureCount:', perf.captureCount);
+  const blob = await canvasToBlob(canvas, POSTER_WEBP_QUALITY);
+  perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
+  perf.exportMs = performance.now() - exportStart;
   if (!blob) throw new Error('Failed to build poster blob');
-  return { blob, width, height };
+  console.info('[Poster] Performance', {
+    preloadMs: Number(perf.preloadMs.toFixed(1)),
+    captureMs: Number(perf.captureMs.toFixed(1)),
+    exportMs: Number(perf.exportMs.toFixed(1)),
+    captureCount: perf.captureCount,
+    totalMs: Number((performance.now() - perf.startedAt).toFixed(1)),
+    bytes: blob.size,
+    type: blob.type,
+  });
+  return { blob, width, height, perf };
 }
 
 export { PRESETS };

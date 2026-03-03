@@ -92,6 +92,8 @@ const cardSheetEls = {
   meaningBtn: null,
 };
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
+const SHARE_POSTER_SELECTOR = '#share-poster-root';
+const SHARE_READY_TIMEOUT_MS = 8000;
 let energyChart = null;
 let saveButtonHandler = null;
 const HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
@@ -578,6 +580,7 @@ function buildCardArt(card, variant = 'hero') {
   img.className = 'card-art-img';
   img.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   img.loading = 'eager';
+  img.crossOrigin = 'anonymous';
 
   const { src, candidates = [] } = getStableCardImageSources(card);
   const sourceKey = [src, ...candidates].filter(Boolean).join('|');
@@ -1114,6 +1117,75 @@ function base64UrlEncode(input) {
   return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
+function setShareButtonLoading(isLoading) {
+  if (!shareBtn) return;
+  const dict = translations[state.currentLang] || translations.en;
+  shareBtn.disabled = Boolean(isLoading);
+  if (isLoading) {
+    shareBtn.dataset.prevLabel = shareBtn.textContent || dict.share || 'Share';
+    shareBtn.textContent = state.currentLang === 'th' ? 'กำลังเตรียมภาพ…' : 'Preparing image…';
+  } else if (shareBtn.dataset.prevLabel) {
+    shareBtn.textContent = shareBtn.dataset.prevLabel;
+    delete shareBtn.dataset.prevLabel;
+  }
+}
+
+function getSharePosterRoot() {
+  return document.querySelector(SHARE_POSTER_SELECTOR) || resultsSection;
+}
+
+function waitForImagesLoaded(root) {
+  if (!root) return Promise.resolve();
+  const images = Array.from(root.querySelectorAll('img'));
+  return Promise.all(images.map(async (img) => {
+    if (!img) return;
+    if (img.crossOrigin !== 'anonymous') {
+      img.crossOrigin = 'anonymous';
+    }
+
+    if (img.complete && img.naturalWidth > 0) {
+      if (typeof img.decode === 'function') {
+        try {
+          await img.decode();
+        } catch (_) {
+          // ignore decode errors
+        }
+      }
+      return;
+    }
+
+    await new Promise((resolve) => {
+      const done = () => resolve();
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+
+    if (typeof img.decode === 'function') {
+      try {
+        await img.decode();
+      } catch (_) {
+        // ignore decode errors
+      }
+    }
+  }));
+}
+
+async function waitForShareReady(timeoutMs = SHARE_READY_TIMEOUT_MS) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const root = getSharePosterRoot();
+    const hasHeroImage = Boolean(root?.querySelector('.card-art-img')) || state.mode !== 'daily';
+    if (root && dataLoaded && translationsReady && hasRendered && hasHeroImage) {
+      if (document.fonts?.ready) await document.fonts.ready;
+      await waitForImagesLoaded(root);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return root;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 80));
+  }
+  throw new Error('Share poster is not ready yet');
+}
+
 function buildSharePayload() {
   const dict = translations[state.currentLang] || translations.en;
   const modeTitle =
@@ -1155,7 +1227,16 @@ function buildSharePayload() {
   };
 }
 
-function openSharePage({ action } = {}) {
+async function openSharePage({ action } = {}) {
+  setShareButtonLoading(true);
+  try {
+    await waitForShareReady();
+  } catch (error) {
+    console.error('Share readiness check failed', error);
+  } finally {
+    setShareButtonLoading(false);
+  }
+
   const payload = buildSharePayload();
   sessionStorage.setItem(SHARE_STORAGE_KEY, JSON.stringify(payload));
   const encoded = base64UrlEncode(JSON.stringify(payload));
@@ -1326,6 +1407,8 @@ function switchLanguageInPlace(nextLang) {
 
   state.currentLang = nextLang;
   hasRendered = false;
+  imageSourceCache.clear();
+  imagePreloadCache.clear();
 
   const url = new URL(window.location.href);
   url.searchParams.set('lang', nextLang);
