@@ -4,6 +4,8 @@ import {
   meowTarotCards,
   normalizeId,
   getCardBackUrl,
+  getCardBackFallbackUrl,
+  applyImageFallback,
 } from './data.js';
 
 const STORAGE_KEY = 'meowtarot_selection';
@@ -103,6 +105,7 @@ function renderGrid(options = {}) {
 
   cardGrid.innerHTML = '';
   const backUrl = getCardBackUrl();
+  const backFallbackUrl = getCardBackFallbackUrl();
   state.spreadCards.forEach((card) => {
     const cardEl = document.createElement('div');
     cardEl.className = `card${entering ? ' is-shuffling-in' : ''}`;
@@ -110,7 +113,7 @@ function renderGrid(options = {}) {
 
     const back = document.createElement('img');
     back.className = 'face back card-back';
-    back.src = backUrl;
+    applyImageFallback(back, backUrl, [backFallbackUrl]);
     back.loading = 'lazy';
     back.alt = '';
 

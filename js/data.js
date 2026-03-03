@@ -1,5 +1,11 @@
 // Deck configuration (for future multi-deck support)
 export const DECKS = {
+  'meow-v2': {
+    id: 'meow-v2',
+    name: 'MeowTarot v2',
+    assetsBase: 'assets/Meow-v2',
+    backImage: 'assets/Meow-v2/00-back.webp',
+  },
   'meow-v1': {
     id: 'meow-v1',
     name: 'MeowTarot v1',
@@ -10,7 +16,10 @@ export const DECKS = {
   },
 };
 
-export let activeDeckId = 'meow-v1';
+export const DEFAULT_DECK_ID = 'meow-v2';
+export const FALLBACK_DECK_ID = 'meow-v1';
+
+export let activeDeckId = DEFAULT_DECK_ID;
 
 export function getActiveDeck() {
   return DECKS[activeDeckId];
@@ -18,6 +27,15 @@ export function getActiveDeck() {
 
 export function getCardBackUrl() {
   return getActiveDeck().backImage;
+}
+
+export function getFallbackDeck(id = activeDeckId) {
+  if (id === FALLBACK_DECK_ID) return null;
+  return DECKS[FALLBACK_DECK_ID] || null;
+}
+
+export function getCardBackFallbackUrl() {
+  return getFallbackDeck()?.backImage || null;
 }
 
 export function joinAssetPath(base = '', subpath = '') {
@@ -46,6 +64,33 @@ export function getCardImageUrl(card, options = {}) {
   const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
 
   return joinAssetPathSingleSlash(assetsBase, `${finalId}.webp`);
+}
+
+export function getCardImageFallbackUrl(card, options = {}) {
+  const fallbackDeck = getFallbackDeck();
+  if (!fallbackDeck) return null;
+  return getCardImageUrl(card, {
+    ...options,
+    assetsBase: fallbackDeck.assetsBase,
+  });
+}
+
+export function applyImageFallback(imgEl, primarySrc, fallbackSources = []) {
+  if (!imgEl) return;
+  const candidates = [primarySrc, ...fallbackSources].filter(Boolean);
+  const uniqueCandidates = [...new Set(candidates)];
+  if (!uniqueCandidates.length) return;
+
+  let index = 0;
+  imgEl.onerror = () => {
+    index += 1;
+    if (index >= uniqueCandidates.length) {
+      imgEl.onerror = null;
+      return;
+    }
+    imgEl.src = uniqueCandidates[index];
+  };
+  imgEl.src = uniqueCandidates[index];
 }
 
 // Dynamic deck used by the app
