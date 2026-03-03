@@ -61,7 +61,22 @@ const saveBtn = document.getElementById('saveBtn');
 const resultsSection = document.querySelector('.section-block.results');
 const meaningToggle = document.getElementById('meaningToggle');
 const meaningCard = document.querySelector('.meaning-accordion');
+const meaningBody = document.getElementById('meaningBody');
 const backLink = document.querySelector('.back-link');
+
+const cardSheetState = {
+  card: null,
+  src: '',
+};
+
+const cardSheetEls = {
+  overlay: null,
+  closeBtn: null,
+  image: null,
+  title: null,
+  saveBtn: null,
+  meaningBtn: null,
+};
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let energyChart = null;
 let saveButtonHandler = null;
@@ -98,6 +113,123 @@ function getName(card, lang = state.currentLang) {
 
 function getOrientationEnglish(card) {
   return toOrientation(card) === 'reversed' ? 'Reversed' : 'Upright';
+}
+
+function getCardBaseSlug(card) {
+  const slug = normalizeId(card?.seo_slug_en || card?.card_id || card?.id || card?.name_en || card?.name || '');
+  return slug.replace(/-reversed$/, '').replace(/-upright$/, '');
+}
+
+function buildCardMeaningUrl(card) {
+  const slug = getCardBaseSlug(card);
+  if (!slug) return null;
+  const prefix = state.currentLang === 'th' ? '/th' : '';
+  return `https://www.meowtarot.com${prefix}/tarot-card-meanings/${slug}/?lang=${state.currentLang}`;
+}
+
+function setBodyScrollLocked(locked) {
+  document.body.classList.toggle('is-modal-open', locked);
+}
+
+function closeCardSheet() {
+  if (!cardSheetEls.overlay || !cardSheetEls.overlay.classList.contains('is-open')) return;
+  cardSheetEls.overlay.classList.remove('is-open');
+  cardSheetEls.overlay.setAttribute('aria-hidden', 'true');
+  setBodyScrollLocked(false);
+  cardSheetEls.closeBtn?.focus();
+}
+
+async function saveCardImageFromSheet() {
+  const src = cardSheetState.src;
+  const card = cardSheetState.card;
+  if (!src || !card) return;
+
+  const fileName = `${getCardBaseSlug(card) || 'meowtarot-card'}.webp`;
+
+  try {
+    if (navigator.share && navigator.canShare) {
+      const response = await fetch(src, { mode: 'cors' });
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: blob.type || 'image/webp' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: getName(card) });
+        return;
+      }
+    }
+  } catch (error) {
+    console.error('Share card image failed', error);
+  }
+
+  const link = document.createElement('a');
+  link.href = src;
+  link.download = fileName;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function openCardSheet(card) {
+  if (!card || !cardSheetEls.overlay || !cardSheetEls.image) return;
+
+  const { src } = getCardImageUrlWithFallback(card);
+  cardSheetState.card = card;
+  cardSheetState.src = src;
+
+  cardSheetEls.image.src = src;
+  cardSheetEls.image.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
+  cardSheetEls.title.textContent = getName(card);
+  cardSheetEls.meaningBtn.href = buildCardMeaningUrl(card) || '#';
+
+  cardSheetEls.overlay.classList.add('is-open');
+  cardSheetEls.overlay.setAttribute('aria-hidden', 'false');
+  setBodyScrollLocked(true);
+  cardSheetEls.closeBtn?.focus();
+}
+
+function ensureCardSheet() {
+  if (cardSheetEls.overlay) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'card-sheet-overlay';
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.innerHTML = `
+    <div class="card-sheet-backdrop" data-sheet-close></div>
+    <section class="card-sheet" role="dialog" aria-modal="true" aria-label="Card details">
+      <button class="card-sheet-close" type="button" aria-label="Close" data-sheet-close>✕</button>
+      <div class="card-sheet-media-wrap">
+        <img class="card-sheet-media" alt="" />
+      </div>
+      <p class="card-sheet-title"></p>
+      <div class="card-sheet-actions">
+        <button class="primary" type="button" id="cardSheetSaveBtn">Save Image</button>
+        <a class="ghost" id="cardSheetMeaningBtn" href="#">Read Card Meaning</a>
+      </div>
+    </section>
+  `;
+
+  document.body.appendChild(wrap);
+  cardSheetEls.overlay = wrap;
+  cardSheetEls.closeBtn = wrap.querySelector('.card-sheet-close');
+  cardSheetEls.image = wrap.querySelector('.card-sheet-media');
+  cardSheetEls.title = wrap.querySelector('.card-sheet-title');
+  cardSheetEls.saveBtn = wrap.querySelector('#cardSheetSaveBtn');
+  cardSheetEls.meaningBtn = wrap.querySelector('#cardSheetMeaningBtn');
+
+  wrap.addEventListener('click', (event) => {
+    if (event.target?.hasAttribute('data-sheet-close')) closeCardSheet();
+  });
+
+  cardSheetEls.saveBtn?.addEventListener('click', saveCardImageFromSheet);
+  cardSheetEls.closeBtn?.addEventListener('click', closeCardSheet);
+
+  let touchStartY = 0;
+  wrap.addEventListener('touchstart', (event) => {
+    touchStartY = event.changedTouches?.[0]?.clientY || 0;
+  }, { passive: true });
+  wrap.addEventListener('touchend', (event) => {
+    const endY = event.changedTouches?.[0]?.clientY || 0;
+    if (endY - touchStartY > 90) closeCardSheet();
+  }, { passive: true });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -734,15 +866,18 @@ function renderFull(cards, dict) {
   readingContent.innerHTML = '';
 
   const positions = ['past', 'present', 'future'];
+
   const spreadPanel = document.createElement('div');
-  spreadPanel.className = 'panel';
+  spreadPanel.className = 'panel panel--spread';
 
   const spreadGrid = document.createElement('div');
   spreadGrid.className = 'reading-spread-grid';
 
   cards.slice(0, 3).forEach((card, idx) => {
-    const cardWrap = document.createElement('div');
+    const cardWrap = document.createElement('button');
     cardWrap.className = 'reading-spread-card';
+    cardWrap.type = 'button';
+    cardWrap.setAttribute('aria-label', `${getName(card)} ${dict[positions[idx]] || positions[idx]}`);
 
     cardWrap.appendChild(buildCardArt(card, 'thumb'));
 
@@ -751,13 +886,19 @@ function renderFull(cards, dict) {
     label.textContent = dict[positions[idx]] || positions[idx];
     cardWrap.appendChild(label);
 
+    const cardName = document.createElement('div');
+    cardName.className = 'spread-name';
+    cardName.textContent = getName(card);
+    cardWrap.appendChild(cardName);
+
+    cardWrap.addEventListener('click', () => openCardSheet(card));
+
     spreadGrid.appendChild(cardWrap);
   });
 
   spreadPanel.appendChild(spreadGrid);
   readingContent.appendChild(spreadPanel);
 
-  // Your Fortune (summary)
   const summaries = cards
     .slice(0, 3)
     .map((card, idx) => getText(card, `reading_summary_${positions[idx]}`))
@@ -781,6 +922,10 @@ function renderFull(cards, dict) {
     readingContent.appendChild(panel);
   }
 
+  const deeperPanel = document.createElement('div');
+  deeperPanel.className = 'panel';
+  let deeperHasContent = false;
+
   getTopicConfig().forEach((topic) => {
     const texts = cards.slice(0, 3).map((card, idx) => ({
       label: dict[positions[idx]] || positions[idx],
@@ -789,21 +934,34 @@ function renderFull(cards, dict) {
 
     if (!texts.length) return;
 
-    const panel = document.createElement('div');
-    panel.className = 'panel';
+    const section = document.createElement('div');
+    section.className = 'deeper-section';
 
     const h3 = document.createElement('h3');
     h3.textContent = getTopicTitle(dict, topic.titleKey);
-    panel.appendChild(h3);
+    section.appendChild(h3);
 
     texts.forEach((item) => {
       const p = document.createElement('p');
       p.innerHTML = `<strong>${item.label}:</strong> ${item.text}`;
-      panel.appendChild(p);
+      section.appendChild(p);
     });
 
-    readingContent.appendChild(panel);
+    deeperPanel.appendChild(section);
+    deeperHasContent = true;
   });
+
+  if (meaningCard && meaningBody) {
+    meaningCard.hidden = !deeperHasContent;
+    meaningBody.innerHTML = '';
+    if (deeperHasContent) {
+      meaningBody.appendChild(deeperPanel);
+      meaningToggle?.setAttribute('aria-expanded', 'false');
+      meaningCard.classList.remove('is-open');
+    }
+  } else if (deeperHasContent) {
+    readingContent.appendChild(deeperPanel);
+  }
 
   const energyPanel = buildEnergyPanel(cards, dict);
   if (energyPanel) readingContent.appendChild(energyPanel);
@@ -867,16 +1025,17 @@ function renderReading(dict) {
   }
 
   if (state.mode === 'daily') {
+    if (meaningCard) meaningCard.hidden = true;
     renderDaily(cards[0], dict);
     return;
   }
 
   if (state.mode === 'question') {
+    if (meaningCard) meaningCard.hidden = true;
     renderQuestion(cards, dict);
     return;
   }
 
-  // full
   renderFull(cards, dict);
 }
 
@@ -1098,6 +1257,7 @@ function init() {
   }
 
   initShell(state, handleTranslations, 'reading');
+  ensureCardSheet();
 
   backLink?.addEventListener('click', (event) => {
     if (window.history.length > 1) {
@@ -1107,9 +1267,13 @@ function init() {
   });
 
   meaningToggle?.addEventListener('click', () => {
-    if (!meaningCard) return;
+    if (!meaningCard || meaningCard.hidden) return;
     const isOpen = meaningCard.classList.toggle('is-open');
     meaningToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeCardSheet();
   });
 
   newReadingBtn?.addEventListener('click', () => {
