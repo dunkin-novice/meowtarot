@@ -250,10 +250,23 @@ function renderFeaturedCards() {
   });
 }
 
+
+function syncGlobalSearch(query = '') {
+  window.dispatchEvent(new CustomEvent('meowtarot:meanings-search-sync', { detail: { query } }));
+}
+
+function handleNavbarSearch(event) {
+  if (!searchInput) return;
+  const query = event.detail?.query || '';
+  searchInput.value = query;
+  renderSearchResults(query);
+}
+
 function attachEvents() {
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       renderSearchResults(e.target.value);
+      syncGlobalSearch(e.target.value || '');
     });
   }
 
@@ -262,6 +275,7 @@ function attachEvents() {
       searchInput.value = '';
       renderSearchResults('');
       searchInput.focus();
+      syncGlobalSearch('');
     });
   }
 
@@ -271,8 +285,11 @@ function attachEvents() {
       searchInput.value = chip.dataset.quick || '';
       renderSearchResults(searchInput.value);
       searchInput.focus();
+      syncGlobalSearch(searchInput.value);
     });
   });
+
+  window.addEventListener('meowtarot:nav-search', handleNavbarSearch);
 }
 
 function applyInitialQuery() {
@@ -289,6 +306,7 @@ function applyInitialQuery() {
   }
   renderFilterNote();
   renderSearchResults(searchInput.value);
+  syncGlobalSearch(searchInput.value);
 }
 
 function handleTranslations() {
