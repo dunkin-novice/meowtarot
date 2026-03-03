@@ -3,14 +3,14 @@ export const DECKS = {
   'meow-v2': {
     id: 'meow-v2',
     name: 'MeowTarot v2',
-    assetsBase: 'assets/Meow-v2',
-    backImage: 'assets/Meow-v2/00-back.webp',
+    assetsBase: '/assets/meow-v2',
+    backImage: '/assets/meow-v2/00-back.webp',
   },
   'meow-v1': {
     id: 'meow-v1',
     name: 'MeowTarot v1',
-    assetsBase: 'assets/meow-v1',
-    backImage: 'assets/meow-v1/00-back.webp',
+    assetsBase: '/assets/meow-v1',
+    backImage: '/assets/meow-v1/00-back.webp',
     // future: pattern for card faces, e.g.
     // cardImagePattern: 'assets/meow-v1/{imageId}.webp',
   },
@@ -39,11 +39,18 @@ export function getCardBackFallbackUrl() {
 }
 
 export function joinAssetPath(base = '', subpath = '') {
-  if (!base && !subpath) return '';
-  if (!base) return subpath.replace(/^\/+/, '');
-  if (!subpath) return base.replace(/^\/+/, '').replace(/\/+$/, '');
-  const cleanBase = base.replace(/^\/+/, '').replace(/\/+$/, '');
-  const cleanSubpath = subpath.replace(/^\/+/, '');
+  const rawBase = String(base || '');
+  const rawSubpath = String(subpath || '');
+  const absolute = rawBase.startsWith('/') || (!rawBase && rawSubpath.startsWith('/'));
+
+  if (!rawBase && !rawSubpath) return '';
+
+  const cleanBase = rawBase.replace(/\/+$/, '');
+  const cleanSubpath = rawSubpath.replace(/^\/+/, '');
+
+  if (!cleanBase) return absolute ? `/${cleanSubpath}` : cleanSubpath;
+  if (!cleanSubpath) return cleanBase;
+
   return `${cleanBase}/${cleanSubpath}`;
 }
 
