@@ -1285,7 +1285,7 @@ function init() {
       state.mode === 'question'
         ? '/question.html'
         : state.mode === 'full'
-          ? '/overall.html'
+          ? '/full.html'
           : '/daily.html';
 
     window.location.href = localizePath(target, state.currentLang);
