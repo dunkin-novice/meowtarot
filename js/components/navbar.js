@@ -142,7 +142,9 @@ export function renderNavbar(container, onLangToggle) {
   });
 
   container.querySelectorAll('.lang-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       closeMenu();
       closeSearch();
       onLangToggle?.(btn.dataset.lang);

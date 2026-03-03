@@ -102,6 +102,7 @@ export function applyImageFallback(imgEl, primarySrc, fallbackSources = []) {
 
 // Dynamic deck used by the app
 export let meowTarotCards = [];
+const CARDS_JSON_URL = new URL('../data/cards.json', import.meta.url).toString();
 export let meowTarotManifest = [];
 
 export const TAROT_DATA_VERSION = '2024-10-01';
@@ -245,7 +246,7 @@ export function loadTarotManifest() {
     return Promise.resolve(meowTarotManifest);
   }
 
-  return fetch('./data/cards.json', { cache: 'force-cache' })
+  return fetch(CARDS_JSON_URL, { cache: 'force-cache' })
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();
@@ -288,7 +289,7 @@ export function loadTarotData() {
     return Promise.resolve(meowTarotCards);
   }
 
-  return fetch('./data/cards.json', { cache: 'force-cache' })
+  return fetch(CARDS_JSON_URL, { cache: 'force-cache' })
     .then((res) => {
       if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
       return res.json();

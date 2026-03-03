@@ -54,35 +54,31 @@
   </noscript>
   <link rel="preload" href="../css/styles.css" as="style" />
   <link rel="stylesheet" href="../css/styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "@id": "https://www.meowtarot.com/th/reading.html#webpage",
-      "url": "https://www.meowtarot.com/th/reading.html",
-      "name": "ผลการดูดวงไพ่ทาโรต์ – MeowTarot",
-      "isPartOf": {
-        "@id": "https://www.meowtarot.com/#website"
-      },
-      "inLanguage": "th",
-      "description": "ผลการดูดวงไพ่ทาโรต์สไตล์ MeowTarot พร้อมคำตีความด้านความรัก การงาน และการเงิน."
-    }
-  </script>
 </head>
 <body data-page="reading">
   <header id="site-header"></header>
 
-  <main class="page-shell">
-    <section class="section-block results show">
-      <p class="eyebrow" id="reading-context"></p>
-      <h1 id="readingTitle"></h1>
+  <main class="page-shell" aria-label="ผลการดูดวงไพ่ทาโรต์">
+    <section class="section-block results show reading-card">
+      <section class="reading-intro">
+        <p class="eyebrow" id="reading-context"></p>
+        <h1 id="readingTitle">เสียงกระซิบจากจักรวาล…</h1>
+      </section>
+
       <div id="reading-content" class="reading-content"></div>
 
+      <section class="meaning-accordion" aria-label="ส่วนความหมายเชิงลึก" hidden>
+        <button class="accordion-trigger" id="meaningToggle" aria-expanded="false" aria-controls="meaningBody">
+          <span>ความหมายเชิงลึก</span>
+          <span class="accordion-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="accordion-body" id="meaningBody"></div>
+      </section>
+
       <div class="action-row">
-        <button class="primary" id="newReadingBtn" data-i18n="newReading"></button>
+        <button class="primary" id="saveBtn">🐾 บันทึกผลการดูดวงนี้</button>
+        <button class="ghost" id="newReadingBtn" data-i18n="newReading"></button>
         <button class="ghost" id="shareBtn" data-i18n="share"></button>
-        <button class="ghost" id="saveBtn" data-i18n="save"></button>
       </div>
     </section>
   </main>
