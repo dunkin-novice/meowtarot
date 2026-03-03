@@ -85,6 +85,17 @@ function getDrawableCards(size = 6) {
   return pool.slice(0, Math.min(size, pool.length));
 }
 
+
+function setRitualCtaLabel(button, hasDealt) {
+  if (!button) return;
+  const enLabel = hasDealt ? 'Shuffle' : 'Deal';
+  const thLabel = hasDealt ? 'สับไพ่' : 'แจกไพ่';
+  const enNode = button.querySelector('.ritual-cta__en');
+  const thNode = button.querySelector('.ritual-cta__th');
+  if (enNode) enNode.textContent = enLabel;
+  if (thNode) thNode.textContent = thLabel;
+}
+
 function saveSelectionAndGo({ mode, spread, topic, cards }) {
   const payload = { mode, spread, topic, cards };
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -263,28 +274,26 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
 }
 
 function renderDaily() {
-  const startBtn = document.getElementById('daily-start');
+  const dealShuffleBtn = document.getElementById('daily-deal-shuffle');
   const board = document.getElementById('daily-board');
-  const shuffleBtn = document.getElementById('daily-shuffle');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  const startOverlay = document.getElementById('daily-start-overlay');
-  const overlayStartBtn = document.getElementById('daily-start-overlay-btn');
-  if (!startBtn || !board || !shuffleBtn || !continueBtn || !counter) return;
+  if (!dealShuffleBtn || !board || !continueBtn || !counter) return;
 
   let latestSelection = [];
   let isAnimating = false;
-  let hasStarted = false;
+  let hasDealtOnce = false;
+  setRitualCtaLabel(dealShuffleBtn, hasDealtOnce);
 
-  const hideStartOverlay = () => {
-    if (startOverlay) startOverlay.remove();
+  const setDealShuffleDisabled = () => {
+    dealShuffleBtn.disabled = isAnimating;
   };
 
-  const updateContinue = (cards = [], dict = translations[state.currentLang] || translations.en) => {
+  const updateContinue = (cards = []) => {
     latestSelection = cards;
     counter.textContent = `${cards.length}/${DAILY_SELECTION_MAX}`;
     continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX || isAnimating;
-    shuffleBtn.disabled = !hasStarted || isAnimating;
+    setDealShuffleDisabled();
   };
 
   const resetSelection = () => {
@@ -339,9 +348,11 @@ function renderDaily() {
     });
   };
 
-  const animateDeal = (slots) => {
-    animateDealSlots(board, slots, () => {
+  const animateDeal = (nextSlots) => {
+    animateDealSlots(board, nextSlots, () => {
       isAnimating = false;
+      hasDealtOnce = true;
+      setRitualCtaLabel(dealShuffleBtn, hasDealtOnce);
       updateContinue(latestSelection);
       board.classList.remove('is-locked');
     });
@@ -357,27 +368,19 @@ function renderDaily() {
     requestAnimationFrame(() => animateDeal(slots));
   };
 
-  const handleStart = () => {
-    if (!state.cards.length || isAnimating || hasStarted) return;
-    hasStarted = true;
-    startBtn.disabled = true;
-    shuffleBtn.disabled = true;
-    continueBtn.disabled = true;
-    hideStartOverlay();
-    deal();
-  };
+  dealShuffleBtn.onclick = () => {
+    if (!state.cards.length || isAnimating) return;
+    if (!hasDealtOnce) {
+      deal();
+      return;
+    }
 
-  startBtn.onclick = handleStart;
-  overlayStartBtn?.addEventListener('click', handleStart);
-
-  shuffleBtn.onclick = () => {
-    if (isAnimating || !hasStarted) return;
     isAnimating = true;
     continueBtn.disabled = true;
-    shuffleBtn.disabled = true;
+    setDealShuffleDisabled();
     resetSelection();
-    const slots = Array.from(board.querySelectorAll('.card-slot'));
-    animateCollectSlots(board, slots);
+    const currentSlots = Array.from(board.querySelectorAll('.card-slot'));
+    animateCollectSlots(board, currentSlots);
     setTimeout(() => {
       deal();
     }, STACK_DURATION);
@@ -390,36 +393,65 @@ function renderDaily() {
 }
 
 function renderOverall() {
-  const startBtn = document.getElementById('overallStartBtn');
+  const dealShuffleBtn = document.getElementById('overall-deal-shuffle');
   const board = document.getElementById('overall-card-board');
   const actions = document.getElementById('overall-actions');
-  const shuffleBtn = document.getElementById('overall-shuffle');
   const toolbar = document.getElementById('overall-toolbar');
   const counter = document.getElementById('overall-counter');
   const continueBtn = document.getElementById('overall-continue');
-  if (!startBtn || !board || !actions || !shuffleBtn || !continueBtn || !toolbar || !counter) return;
+  if (!dealShuffleBtn || !board || !actions || !continueBtn || !toolbar || !counter) return;
 
   let boardApi = null;
   let latestSelection = [];
+  let isAnimating = false;
+  let hasDealt = false;
+  setRitualCtaLabel(dealShuffleBtn, hasDealt);
+
+  const setDealShuffleDisabled = () => {
+    dealShuffleBtn.disabled = isAnimating;
+  };
 
   const updateContinue = (cards) => {
     latestSelection = cards;
     counter.textContent = `${cards.length}/${OVERALL_SELECTION_COUNT}`;
-    continueBtn.disabled = cards.length !== OVERALL_SELECTION_COUNT;
+    continueBtn.disabled = cards.length !== OVERALL_SELECTION_COUNT || isAnimating;
+    setDealShuffleDisabled();
   };
 
-  const renderBoard = () => {
+  const triggerDeal = () => {
+    if (!state.cards.length || isAnimating) return;
     board.hidden = false;
     toolbar.hidden = false;
     actions.hidden = false;
-    boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue, { animated: true });
-    updateContinue([]);
+
+    if (!boardApi) {
+      isAnimating = true;
+      setDealShuffleDisabled();
+      boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue, { animated: true });
+      setTimeout(() => {
+        isAnimating = false;
+        hasDealt = true;
+        setRitualCtaLabel(dealShuffleBtn, hasDealt);
+        updateContinue([]);
+      }, STACK_DURATION + BOARD_CARD_COUNT * DEAL_STAGGER + 520);
+      return;
+    }
+
+    isAnimating = true;
+    continueBtn.disabled = true;
+    setDealShuffleDisabled();
+    boardApi.render();
+    setTimeout(() => {
+      isAnimating = false;
+      hasDealt = true;
+      setRitualCtaLabel(dealShuffleBtn, hasDealt);
+      updateContinue([]);
+    }, STACK_DURATION + BOARD_CARD_COUNT * DEAL_STAGGER + 520);
   };
 
-  startBtn.onclick = renderBoard;
-  shuffleBtn.onclick = () => boardApi?.render();
+  dealShuffleBtn.onclick = triggerDeal;
   continueBtn.onclick = () => {
-    if (latestSelection.length !== OVERALL_SELECTION_COUNT) return;
+    if (latestSelection.length !== OVERALL_SELECTION_COUNT || isAnimating) return;
     saveSelectionAndGo({ mode: 'overall', spread: 'story', topic: 'generic', cards: latestSelection.map((c) => c.id) });
   };
 }
