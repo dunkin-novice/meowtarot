@@ -8,9 +8,12 @@ const execFileAsync = promisify(execFile);
 
 test('debug poster CI script generates poster artifacts', async () => {
   await execFileAsync('node', ['scripts/debug-poster-ci.mjs'], {
+    timeout: 90_000,
+    killSignal: 'SIGTERM',
     env: {
       ...process.env,
       DEBUG_POSTER_CI_VERBOSE: '0',
+      DEBUG_POSTER_CI_PORT: '0',
     },
   });
 

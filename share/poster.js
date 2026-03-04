@@ -65,6 +65,22 @@ async function probeImageLoad(url, kind) {
   });
 }
 
+
+function isLocalPosterAssetsEnabled() {
+  if (typeof window === 'undefined') return false;
+  return window.MEOWTAROT_LOCAL_POSTER_ASSETS === true;
+}
+
+function resolveLocalPosterFixtureUrl(kind, orientation = 'upright') {
+  if (!isLocalPosterAssetsEnabled()) return null;
+  const base = String(window.MEOWTAROT_LOCAL_POSTER_ASSET_BASE || '').replace(/\/+$/g, '');
+  const root = `${base}/tests/fixtures`;
+  if (kind === 'background') return `${root}/bg-000.png`;
+  if (kind === 'card') return `${root}/${orientation === 'reversed' ? '01-the-fool-reversed.png' : '01-the-fool-upright.png'}`;
+  if (kind === 'back') return `${root}/00-back.png`;
+  return null;
+}
+
 function createCanvas(width, height) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -265,8 +281,9 @@ function resolveDailyOrientation(payload) {
 
 
 async function drawPosterBackground(ctx, width, height, payload) {
-  const primaryBgUrl = toAssetUrl(resolvePosterBackgroundPath({ payload }));
-  const fallbackBgUrl = toAssetUrl('backgrounds/bg-000.webp');
+  const localBgUrl = resolveLocalPosterFixtureUrl('background');
+  const primaryBgUrl = localBgUrl || toAssetUrl(resolvePosterBackgroundPath({ payload }));
+  const fallbackBgUrl = localBgUrl || toAssetUrl('backgrounds/bg-000.webp');
   const bgCandidates = [primaryBgUrl, fallbackBgUrl];
   posterCiLog('bg_url', { primary: primaryBgUrl, fallback: fallbackBgUrl });
 
@@ -475,12 +492,15 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const uprightId = `${baseId}-upright`;
       const facePack = payload?.poster?.assetPack || 'meow-v1';
       const backPack = payload?.poster?.backPack || 'meow-v2';
-      const primary = toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
-      const upright = toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }));
-      const back = toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
+      const localPrimary = resolveLocalPosterFixtureUrl('card', cardEntry.orientation);
+      const localUpright = resolveLocalPosterFixtureUrl('card', 'upright');
+      const localBack = resolveLocalPosterFixtureUrl('back');
+      const primary = localPrimary || toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
+      const upright = localUpright || toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }));
+      const back = localBack || toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
       posterCiLog('card_urls', { primary, upright, back });
       if (isPosterCiDebugEnabled()) {
-        const backFallback = toAssetUrl(resolveCardBackFallbackPath());
+        const backFallback = localBack || toAssetUrl(resolveCardBackFallbackPath());
         for (const url of [primary, upright, back, backFallback]) {
           await probeImageLoad(url, 'card');
           try {
