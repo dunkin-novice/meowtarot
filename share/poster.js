@@ -213,26 +213,44 @@ function getDailyStrings(lang = 'en') {
 }
 
 
+function resolveDailyOrientation(payload) {
+  const payloadOrientation = payload?.orientation || payload?.card?.orientation;
+  if (payloadOrientation) return toOrientation(payloadOrientation);
+  const firstCardOrientation = Array.isArray(payload?.cards) ? payload.cards[0]?.orientation : null;
+  return toOrientation(firstCardOrientation || 'upright');
+}
+
 function getPosterBackgroundPath(payload) {
-  return payload?.mode === 'daily' ? 'backgrounds/bg-daily.webp' : 'backgrounds/bg-full.webp';
+  if (payload?.mode === 'daily') {
+    return resolveDailyOrientation(payload) === 'reversed'
+      ? 'backgrounds/bg-daily-reversed-v2.webp'
+      : 'backgrounds/bg-daily-upright-v2.webp';
+  }
+  return 'backgrounds/bg-full.webp';
 }
 
 async function drawPosterBackground(ctx, width, height, payload) {
-  const bgUrl = buildAssetUrl(getPosterBackgroundPath(payload));
-  try {
-    const bg = await imageManager.loadImage(bgUrl, { crossOrigin: 'anonymous' });
-    ctx.drawImage(bg, 0, 0, width, height);
-    return bgUrl;
-  } catch (error) {
-    console.warn('[Poster] Failed to load poster background image', bgUrl, error);
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#0b1020');
-    gradient.addColorStop(1, '#141c33');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-    drawStarfield(ctx, width, height);
-    return null;
+  const primaryBgUrl = buildAssetUrl(getPosterBackgroundPath(payload));
+  const fallbackBgUrl = buildAssetUrl('backgrounds/bg-000.webp');
+  const bgCandidates = [primaryBgUrl, fallbackBgUrl];
+
+  for (const bgUrl of bgCandidates) {
+    try {
+      const bg = await imageManager.loadImage(bgUrl, { crossOrigin: 'anonymous' });
+      ctx.drawImage(bg, 0, 0, width, height);
+      return bgUrl;
+    } catch (error) {
+      console.warn('[Poster] Failed to load poster background image', bgUrl, error);
+    }
   }
+
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, '#0b1020');
+  gradient.addColorStop(1, '#141c33');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  drawStarfield(ctx, width, height);
+  return null;
 }
 function isDailySingle(payload) {
   const spread = String(payload?.spread || '').toLowerCase();
