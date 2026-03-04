@@ -1,14 +1,17 @@
 import {
-  getActiveDeck,
-  getCardBackUrl,
-  getCardImageUrl,
   loadTarotData,
   meowTarotCards,
   normalizeId,
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
-import { buildAssetUrl } from '../js/asset-config.js';
+import {
+  resolveCardBackFallbackPath,
+  resolveCardBackPath,
+  resolveCardFacePath,
+  resolvePosterBackgroundPath,
+  toAssetUrl,
+} from '../js/asset-resolver.js';
 
 const POSTER_WEBP_QUALITY = 0.78;
 const POSTER_RETRY_WEBP_QUALITY = 0.72;
@@ -92,11 +95,6 @@ async function canvasToBlob(canvas, quality = POSTER_WEBP_QUALITY) {
 
 function baseCardId(id = '') {
   return normalizeId(String(id).replace(/-(upright|reversed)$/i, '')) || normalizeId(id);
-}
-
-function getCleanAssetsBase() {
-  const deck = getActiveDeck();
-  return deck.assetsBase;
 }
 
 async function buildCardEntries(payload) {
@@ -262,21 +260,10 @@ function resolveDailyOrientation(payload) {
   return toOrientation(firstCardOrientation || 'upright');
 }
 
-function getPosterBackgroundPath(payload) {
-  if (isPosterCiDebugEnabled() && payload?.debugBackgroundPath) {
-    return payload.debugBackgroundPath;
-  }
-  if (payload?.mode === 'daily') {
-    return resolveDailyOrientation(payload) === 'reversed'
-      ? 'backgrounds/bg-daily-reversed-v2.webp'
-      : 'backgrounds/bg-daily-upright-v2.webp';
-  }
-  return 'backgrounds/bg-full.webp';
-}
 
 async function drawPosterBackground(ctx, width, height, payload) {
-  const primaryBgUrl = buildAssetUrl(getPosterBackgroundPath(payload));
-  const fallbackBgUrl = buildAssetUrl('backgrounds/bg-000.webp');
+  const primaryBgUrl = toAssetUrl(resolvePosterBackgroundPath({ payload }));
+  const fallbackBgUrl = toAssetUrl('backgrounds/bg-000.webp');
   const bgCandidates = [primaryBgUrl, fallbackBgUrl];
   posterCiLog('bg_url', { primary: primaryBgUrl, fallback: fallbackBgUrl });
 
@@ -310,8 +297,8 @@ async function drawPosterBackground(ctx, width, height, payload) {
   return null;
 }
 function isDailySingle(payload) {
-  const spread = String(payload?.spread || '').toLowerCase();
-  return payload?.mode === 'daily' && (spread === 'quick' || spread === 'single' || spread === 'one');
+  const posterMode = String(payload?.poster?.mode || payload?.mode || '').toLowerCase();
+  return posterMode === 'daily';
 }
 
 function getOrientationLabel(lang, orientation) {
@@ -345,10 +332,11 @@ function resolveDailyReading(payload, cardEntry, lang) {
   const payloadReading = payload?.reading || {};
   const cardReading = buildDailyReadingFromCard(cardEntry?.card, cardEntry?.orientation, lang) || {};
   return {
-    heading: payloadReading.heading || cardReading.heading || '',
+    heading: payloadReading.heading || payload?.heading || cardReading.heading || '',
     subHeading: payloadReading.subHeading || cardReading.subHeading || '',
     archetype: payloadReading.archetype || cardReading.archetype || '',
     keywords: payloadReading.keywords || cardReading.keywords || '',
+    summary: payloadReading.summary || '',
   };
 }
 
@@ -482,19 +470,15 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const baseId = baseCardId(cardEntry.card.id || cardEntry.card.card_id || cardEntry.card.image_id);
       const orientedId = `${baseId}-${cardEntry.orientation}`;
       const uprightId = `${baseId}-upright`;
-      const cleanBase = getCleanAssetsBase();
-      const primary = getCardImageUrl(
-        { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
-        { orientation: cardEntry.orientation, assetsBase: cleanBase },
-      );
-      const upright = getCardImageUrl(
-        { ...cardEntry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
-        { orientation: 'upright', assetsBase: cleanBase },
-      );
-      const back = getCardBackUrl();
+      const facePack = payload?.poster?.assetPack || 'meow-v1';
+      const backPack = payload?.poster?.backPack || 'meow-v2';
+      const primary = toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
+      const upright = toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }));
+      const back = toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
       posterCiLog('card_urls', { primary, upright, back });
       if (isPosterCiDebugEnabled()) {
-        for (const url of [primary, upright, back]) {
+        const backFallback = toAssetUrl(resolveCardBackFallbackPath());
+        for (const url of [primary, upright, back, backFallback]) {
           await probeImageLoad(url, 'card');
           try {
             const img = await imageManager.loadImage(url, { crossOrigin: 'anonymous' });
@@ -768,20 +752,13 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const baseId = baseCardId(entry.card.id || entry.card.card_id || entry.card.image_id);
       const orientedId = `${baseId}-${entry.orientation}`;
       const uprightId = `${baseId}-upright`;
-      const cleanBase = getCleanAssetsBase();
-      const primary = getCardImageUrl(
-        { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
-        { orientation: entry.orientation, assetsBase: cleanBase },
-      );
+      const facePack = payload?.poster?.assetPack || 'meow-v1';
+      const backPack = payload?.poster?.backPack || 'meow-v2';
+      const primary = toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
       const fallback = entry.orientation === 'reversed'
-        ? getCardImageUrl(
-          { ...entry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
-          { orientation: 'upright', assetsBase: cleanBase },
-        )
+        ? toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }))
         : null;
-      const finalFallback = entry.orientation === 'reversed'
-        ? getCardImageUrl({ ...entry.card, id: uprightId, card_id: uprightId, image_id: uprightId }, { orientation: 'upright' })
-        : getCardImageUrl({ ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId }, { orientation: entry.orientation });
+      const finalFallback = toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
       const img = await imageManager.loadWithFallback(primary, [fallback, finalFallback].filter(Boolean));
       ctx.drawImage(img, x, y, cardWidth, cardHeight);
     }

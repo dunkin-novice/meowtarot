@@ -70,3 +70,33 @@ jobs:
           path: artifacts/*.webp
           if-no-files-found: error
 
+  share-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify cards.json accessibility + asset pack resolution
+        run: node --test tests/cards-json-access.test.js tests/asset-pack-resolution.test.js tests/poster-payload-ready.test.js
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify share payload + poster content
+        run: npx playwright test tests/share-poster-content.spec.js
+
+      - name: Upload share integrity artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: share-integrity-artifacts
+          path: playwright-report
+          if-no-files-found: ignore
