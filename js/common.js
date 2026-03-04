@@ -216,9 +216,21 @@ export const translations = {
 const LANG_STORAGE_KEY = 'meowtarot_lang';
 let navbarCleanup = null;
 
+function normalizeLang(value) {
+  return value === 'th' ? 'th' : value === 'en' ? 'en' : null;
+}
+
+function getUrlLanguage(locationLike = window.location) {
+  const urlLang = normalizeLang(new URLSearchParams(locationLike?.search || '').get('lang'));
+  if (urlLang) return urlLang;
+  return pathHasThaiPrefix(locationLike?.pathname || '/') ? 'th' : 'en';
+}
+
 export function computeLanguageHref(targetLang, locationLike = window.location) {
   const pathname = normalizePathname(locationLike?.pathname || '/');
-  const search = locationLike?.search || '';
+  const params = new URLSearchParams(locationLike?.search || '');
+  if (params.has('lang')) params.set('lang', targetLang);
+  const search = params.toString() ? `?${params.toString()}` : '';
   const hash = locationLike?.hash || '';
   const targetPath = localizePath(pathname, targetLang) || (targetLang === 'th' ? '/th/' : '/');
   return `${targetPath}${search}${hash}`;
@@ -287,7 +299,7 @@ export function applyLocaleMeta(currentLang = 'en') {
 }
 
 function getSavedLang(defaultLang = 'en') {
-  const stored = localStorage.getItem(LANG_STORAGE_KEY);
+  const stored = normalizeLang(localStorage.getItem(LANG_STORAGE_KEY));
   return stored || defaultLang;
 }
 
@@ -308,9 +320,10 @@ export function applyTranslations(currentLang = 'en', afterApply) {
 }
 
 export function initShell(state, afterApply, activePage, options = {}) {
-  const pathLang = window.location.pathname.startsWith('/th') ? 'th' : 'en';
-  const preferredLang = state?.currentLang;
-  state.currentLang = preferredLang === 'th' || preferredLang === 'en' ? preferredLang : pathLang;
+  const urlLang = getUrlLanguage(window.location);
+  const savedLang = getSavedLang('en');
+  state.currentLang = normalizeLang(urlLang) || savedLang || 'en';
+  localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
 
   navbarCleanup?.();
   navbarCleanup = renderNavbar(document.getElementById('site-header'), (lang) => {

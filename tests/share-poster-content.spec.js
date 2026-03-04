@@ -7,6 +7,7 @@ import { test } from '@playwright/test';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
+const USE_LOCAL_ASSETS = ['1', 'true', 'yes'].includes(String(process.env.USE_LOCAL_ASSETS || '').toLowerCase());
 
 function getMimeType(filePath) {
   if (filePath.endsWith('.html')) return 'text/html; charset=utf-8';
@@ -21,6 +22,16 @@ function getMimeType(filePath) {
 
 function shouldProxyToCdn(pathname = '') {
   return pathname.startsWith('/backgrounds/') || pathname.startsWith('/assets/');
+}
+
+
+function mapLocalFixture(pathname = '') {
+  const clean = String(pathname || '').toLowerCase();
+  if (clean.startsWith('/backgrounds/')) return path.join(repoRoot, 'tests/fixtures/bg-000.png');
+  if (clean.includes('/00-back.webp')) return path.join(repoRoot, 'tests/fixtures/00-back.png');
+  if (clean.includes('01-the-fool-reversed.webp')) return path.join(repoRoot, 'tests/fixtures/01-the-fool-reversed.png');
+  if (clean.includes('01-the-fool-upright.webp')) return path.join(repoRoot, 'tests/fixtures/01-the-fool-upright.png');
+  return null;
 }
 
 function filterProxyHeaders(headers) {
@@ -46,6 +57,22 @@ function createStaticServer(rootDir) {
       if (pathname === '/share' || pathname === '/share/') pathname = '/share/index.html';
 
       if (shouldProxyToCdn(pathname)) {
+        if (USE_LOCAL_ASSETS) {
+          const fixturePath = mapLocalFixture(pathname);
+          if (fixturePath) {
+            const fixture = await readFile(fixturePath);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', getMimeType(fixturePath));
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            if ((req.method || 'GET').toUpperCase() === 'HEAD') {
+              res.end();
+              return;
+            }
+            res.end(fixture);
+            return;
+          }
+        }
+
         const cdnUrl = `https://cdn.meowtarot.com${pathname}${requestUrl.search || ''}`;
         const upstream = await fetch(cdnUrl, {
           method: req.method || 'GET',
@@ -172,12 +199,17 @@ test('share payload and poster render include card + reading content', async ({ 
     }
   });
 
-  await page.addInitScript(async (origin) => {
+  await page.addInitScript(async ({ origin, offlineMode }) => {
     window.DEBUG_SHARE_CI = true;
     window.DEBUG_POSTER_CI = true;
     // Use same-origin assets first to avoid CORS on probeImageLoad(fetch HEAD, mode:cors).
     window.MEOWTAROT_ASSET_BASE_URL = origin;
-    window.MEOWTAROT_CDN_BASES = [origin, 'https://cdn.meowtarot.com'];
+    window.MEOWTAROT_CDN_BASES = offlineMode ? [origin] : [origin, 'https://cdn.meowtarot.com'];
+    if (offlineMode) {
+      window.MEOWTAROT_LOCAL_POSTER_ASSETS = true;
+      window.MEOWTAROT_LOCAL_POSTER_ASSET_BASE = origin;
+      window.MEOWTAROT_ASSET_REVISION = 'offline-ci';
+    }
 
     // Ensure full tarot deck is loaded before share page scripts run.
     try {
@@ -188,7 +220,7 @@ test('share payload and poster render include card + reading content', async ({ 
       window.__MEOWTAROT_DECK_READY__ = 0;
       console.log('[deck_init_failed]', error?.message || String(error));
     }
-  }, baseUrl);
+  }, { origin: baseUrl, offlineMode: USE_LOCAL_ASSETS });
 
   const payload = {
     mode: 'daily',
