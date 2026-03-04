@@ -1,0 +1,184 @@
+import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { mkdirSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import http from 'node:http';
+import { chromium } from 'playwright';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const repoRoot = path.resolve(__dirname, '..');
+const artifactsDir = path.join(repoRoot, 'artifacts');
+const useLocalAssets = process.env.POSTER_CI_LOCAL_ASSETS === '1';
+
+mkdirSync('artifacts', { recursive: true });
+
+const CASES = [
+  {
+    name: 'daily-upright',
+    filename: 'poster-daily-upright.webp',
+    payload: {
+      mode: 'daily',
+      spread: 'single',
+      lang: 'en',
+      cards: [{ id: '01-the-fool-upright', orientation: 'upright' }],
+    },
+  },
+  {
+    name: 'daily-reversed',
+    filename: 'poster-daily-reversed.webp',
+    payload: {
+      mode: 'daily',
+      spread: 'single',
+      lang: 'en',
+      cards: [{ id: '01-the-fool-reversed', orientation: 'reversed' }],
+    },
+  },
+  {
+    name: 'fallback-bg',
+    filename: 'poster-fallback.webp',
+    payload: {
+      mode: 'daily',
+      spread: 'single',
+      lang: 'en',
+      debugBackgroundPath: 'backgrounds/bg-missing-debug.webp',
+      cards: [{ id: '01-the-fool-upright', orientation: 'upright' }],
+    },
+  },
+];
+
+function jsonLog(step, payload = {}) {
+  console.log(JSON.stringify({ step, ...payload }));
+}
+
+function getMimeType(filePath) {
+  if (filePath.endsWith('.html')) return 'text/html; charset=utf-8';
+  if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) return 'application/javascript; charset=utf-8';
+  if (filePath.endsWith('.css')) return 'text/css; charset=utf-8';
+  if (filePath.endsWith('.json')) return 'application/json; charset=utf-8';
+  if (filePath.endsWith('.webp')) return 'image/webp';
+  if (filePath.endsWith('.png')) return 'image/png';
+  if (filePath.endsWith('.svg')) return 'image/svg+xml';
+  return 'application/octet-stream';
+}
+
+function createStaticServer(rootDir) {
+  const server = http.createServer(async (req, res) => {
+    try {
+      const requestUrl = new URL(req.url || '/', 'http://127.0.0.1');
+      let pathname = decodeURIComponent(requestUrl.pathname);
+      if (pathname === '/') pathname = '/share/index.html';
+      const filePath = path.join(rootDir, pathname);
+      const normalized = path.normalize(filePath);
+      if (!normalized.startsWith(rootDir)) {
+        res.statusCode = 403;
+        res.end('Forbidden');
+        return;
+      }
+
+      const file = await readFile(normalized);
+      res.statusCode = 200;
+      res.setHeader('Content-Type', getMimeType(normalized));
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.end(file);
+    } catch {
+      res.statusCode = 404;
+      res.end('Not found');
+    }
+  });
+  return server;
+}
+
+async function renderCase(page, baseUrl, testCase) {
+  jsonLog('case_start', { case: testCase.name });
+  const result = await page.evaluate(async ({ payload }) => {
+    try {
+      const mod = await import('/share/poster.js');
+      const { blob, width, height } = await mod.buildPoster(payload, { preset: 'story' });
+      const bytes = Array.from(new Uint8Array(await blob.arrayBuffer()));
+      return { ok: true, width, height, bytes, type: blob.type, size: blob.size };
+    } catch (error) {
+      return { ok: false, error: error?.message || String(error) };
+    }
+  }, { payload: testCase.payload });
+
+  if (!result.ok) {
+    jsonLog('exception', { case: testCase.name, message: result.error });
+    throw new Error(`Poster render failed (${testCase.name}): ${result.error}`);
+  }
+
+  const outPath = path.join(artifactsDir, testCase.filename);
+  await writeFile(outPath, Buffer.from(result.bytes));
+  const info = await stat(outPath);
+  jsonLog('artifact_written', {
+    case: testCase.name,
+    path: path.relative(repoRoot, outPath),
+    bytes: info.size,
+    mime: result.type,
+    width: result.width,
+    height: result.height,
+    baseUrl,
+  });
+}
+
+async function main() {
+  await mkdir(artifactsDir, { recursive: true });
+
+  const server = createStaticServer(repoRoot);
+  await new Promise((resolve) => server.listen(4173, '127.0.0.1', resolve));
+  const baseUrl = 'http://127.0.0.1:4173';
+
+  jsonLog('env', { useLocalAssets, baseUrl });
+
+  if (useLocalAssets) {
+    try {
+      await stat(path.join(repoRoot, 'backgrounds'));
+      jsonLog('local_assets', { backgrounds: 'present' });
+    } catch {
+      jsonLog('local_assets', { backgrounds: 'missing', note: 'background directory not found in repository' });
+    }
+  }
+
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+
+  page.on('console', (msg) => {
+    const text = msg.text();
+    if (!text) return;
+    if (text.startsWith('{"step"')) {
+      console.log(text);
+      return;
+    }
+    if (process.env.DEBUG_POSTER_CI_VERBOSE === '1') {
+      console.log(JSON.stringify({ step: 'browser_console', text }));
+    }
+  });
+
+  await page.addInitScript(() => {
+    window.DEBUG_POSTER_CI = true;
+  });
+  await page.addInitScript(({ localAssets, origin }) => {
+    if (localAssets) {
+      window.MEOWTAROT_ASSET_BASE_URL = origin;
+      window.MEOWTAROT_CDN_BASES = [origin];
+    }
+  }, { localAssets: useLocalAssets, origin: baseUrl });
+
+  try {
+    await page.goto(`${baseUrl}/share/index.html`, { waitUntil: 'networkidle' });
+    const debugFlag = await page.evaluate(() => Boolean(window.DEBUG_POSTER_CI));
+    jsonLog('debug_flag', { enabled: debugFlag });
+    for (const testCase of CASES) {
+      await renderCase(page, baseUrl, testCase);
+    }
+    jsonLog('done', { ok: true, artifactsDir: path.relative(repoRoot, artifactsDir) });
+  } finally {
+    await browser.close();
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+main().catch((error) => {
+  jsonLog('exception', { stage: 'script', message: error?.message || String(error) });
+  process.exitCode = 1;
+});

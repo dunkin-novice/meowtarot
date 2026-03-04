@@ -20,6 +20,48 @@ const PRESETS = {
   portrait: { width: 1080, height: 1350 },
 };
 
+function isPosterCiDebugEnabled() {
+  if (typeof window === 'undefined') return false;
+  return Boolean(window.DEBUG_POSTER_CI);
+}
+
+function posterCiLog(step, payload = {}) {
+  if (!isPosterCiDebugEnabled()) return;
+  console.log(JSON.stringify({ step, ...payload }));
+}
+
+async function probeImageLoad(url, kind) {
+  if (!isPosterCiDebugEnabled() || !url || typeof fetch !== 'function') return;
+  let status = null;
+  let ok = false;
+  let method = 'HEAD';
+  let errorMessage = null;
+
+  try {
+    const res = await fetch(url, { method: 'HEAD', mode: 'cors' });
+    status = res.status;
+    ok = res.ok;
+  } catch (error) {
+    method = 'GET';
+    try {
+      const res = await fetch(url, { method: 'GET', mode: 'cors' });
+      status = res.status;
+      ok = res.ok;
+    } catch (fallbackError) {
+      errorMessage = fallbackError?.message || String(fallbackError);
+    }
+  }
+
+  posterCiLog('img_probe', {
+    kind,
+    url,
+    ok,
+    status,
+    method,
+    error: errorMessage,
+  });
+}
+
 function createCanvas(width, height) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -221,6 +263,9 @@ function resolveDailyOrientation(payload) {
 }
 
 function getPosterBackgroundPath(payload) {
+  if (isPosterCiDebugEnabled() && payload?.debugBackgroundPath) {
+    return payload.debugBackgroundPath;
+  }
   if (payload?.mode === 'daily') {
     return resolveDailyOrientation(payload) === 'reversed'
       ? 'backgrounds/bg-daily-reversed-v2.webp'
@@ -233,13 +278,24 @@ async function drawPosterBackground(ctx, width, height, payload) {
   const primaryBgUrl = buildAssetUrl(getPosterBackgroundPath(payload));
   const fallbackBgUrl = buildAssetUrl('backgrounds/bg-000.webp');
   const bgCandidates = [primaryBgUrl, fallbackBgUrl];
+  posterCiLog('bg_url', { primary: primaryBgUrl, fallback: fallbackBgUrl });
 
   for (const bgUrl of bgCandidates) {
     try {
+      await probeImageLoad(bgUrl, 'background');
       const bg = await imageManager.loadImage(bgUrl, { crossOrigin: 'anonymous' });
       ctx.drawImage(bg, 0, 0, width, height);
+      posterCiLog('bg_draw', { executed: true, chosen: bgUrl });
       return bgUrl;
     } catch (error) {
+      posterCiLog('img_probe', {
+        kind: 'background',
+        url: bgUrl,
+        ok: false,
+        status: null,
+        method: 'loadImage',
+        error: error?.message || String(error),
+      });
       console.warn('[Poster] Failed to load poster background image', bgUrl, error);
     }
   }
@@ -250,6 +306,7 @@ async function drawPosterBackground(ctx, width, height, payload) {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
   drawStarfield(ctx, width, height);
+  posterCiLog('bg_draw', { executed: false, chosen: null, fallback: 'gradient' });
   return null;
 }
 function isDailySingle(payload) {
@@ -324,6 +381,13 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
 
   const preloadStart = performance.now();
   await ensureTarotData();
+  posterCiLog('payload_ok', {
+    mode: payload?.mode,
+    preset,
+    cards: Array.isArray(payload?.cards)
+      ? payload.cards.map((card) => card?.id || card?.cardId || card?.card_id).filter(Boolean)
+      : [],
+  });
   if (document.fonts?.ready) {
     await document.fonts.ready;
   }
@@ -428,6 +492,35 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
         { orientation: 'upright', assetsBase: cleanBase },
       );
       const back = getCardBackUrl();
+      posterCiLog('card_urls', { primary, upright, back });
+      if (isPosterCiDebugEnabled()) {
+        for (const url of [primary, upright, back]) {
+          await probeImageLoad(url, 'card');
+          try {
+            const img = await imageManager.loadImage(url, { crossOrigin: 'anonymous' });
+            if (img) {
+              posterCiLog('img_probe', {
+                kind: 'card',
+                url,
+                ok: true,
+                status: 'loaded',
+                method: 'loadImage',
+              });
+              return img;
+            }
+          } catch (error) {
+            posterCiLog('img_probe', {
+              kind: 'card',
+              url,
+              ok: false,
+              status: null,
+              method: 'loadImage',
+              error: error?.message || String(error),
+            });
+          }
+        }
+        return null;
+      }
       return imageManager.loadWithFallback(primary, [upright, back]);
     };
 
@@ -565,6 +658,7 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     try {
       cardImg = await resolveCardImage();
     } catch (error) {
+      posterCiLog('exception', { stage: 'resolveCardImage', message: error?.message || String(error) });
       console.warn('Poster image failed to load, continuing without card art.', error);
     }
     console.log('[Poster] Images resolved');
@@ -587,7 +681,23 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       if (cardImg) {
         ctx.drawImage(cardImg, cardX, cardY, cardWidth, cardHeight);
       }
+      posterCiLog('draw_card', {
+        executed: Boolean(cardImg),
+        w: Math.round(cardWidth),
+        h: Math.round(cardHeight),
+      });
     }
+    const textBlocks = {
+      heading: Boolean(reading.heading),
+      subHeading: Boolean(reading.subHeading),
+      archetype: Boolean(reading.archetype),
+      keywords: Boolean(reading.keywords),
+    };
+    posterCiLog('draw_text', {
+      executed: hasReadingPanel,
+      blocks: Object.values(textBlocks).filter(Boolean).length,
+      detail: textBlocks,
+    });
     drawReadingPanel();
     drawLuckyRow();
     drawFooter();
