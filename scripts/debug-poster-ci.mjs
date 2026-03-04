@@ -13,6 +13,8 @@ const useLocalAssets = process.env.POSTER_CI_LOCAL_ASSETS === '1';
 
 mkdirSync('artifacts', { recursive: true });
 
+const debugSteps = [];
+
 const CASES = [
   {
     name: 'daily-upright',
@@ -147,6 +149,11 @@ async function main() {
     if (!text) return;
     if (text.startsWith('{"step"')) {
       console.log(text);
+      try {
+        debugSteps.push(JSON.parse(text));
+      } catch {
+        // ignore parse failures
+      }
       return;
     }
     if (process.env.DEBUG_POSTER_CI_VERBOSE === '1') {
@@ -170,6 +177,12 @@ async function main() {
     jsonLog('debug_flag', { enabled: debugFlag });
     for (const testCase of CASES) {
       await renderCase(page, baseUrl, testCase);
+    }
+        const hasPayloadOk = debugSteps.some((entry) => entry.step === 'payload_ok');
+    const hasCardProbe = debugSteps.some((entry) => entry.step === 'img_probe' && entry.kind === 'card' && entry.ok === true);
+    const hasDrawText = debugSteps.some((entry) => entry.step === 'draw_text' && entry.executed === true);
+    if (!hasPayloadOk || !hasCardProbe || !hasDrawText) {
+      throw new Error(`Missing required poster debug steps: payload_ok=${hasPayloadOk}, card_img_probe=${hasCardProbe}, draw_text=${hasDrawText}`);
     }
     jsonLog('done', { ok: true, artifactsDir: path.relative(repoRoot, artifactsDir) });
   } finally {
