@@ -1,4 +1,9 @@
 import { buildAssetUrl, resolveDeckAssetBase } from './asset-config.js';
+import {
+  resolveCardBackFallbackPath,
+  resolveCardBackPath,
+  resolveCardFacePath,
+} from './asset-resolver.js';
 
 // Deck configuration (for future multi-deck support)
 export const DECKS = {
@@ -18,7 +23,7 @@ export const DECKS = {
   },
 };
 
-export const DEFAULT_DECK_ID = 'meow-v2';
+export const DEFAULT_DECK_ID = 'meow-v1';
 export const FALLBACK_DECK_ID = 'meow-v1';
 
 export let activeDeckId = DEFAULT_DECK_ID;
@@ -27,8 +32,9 @@ export function getActiveDeck() {
   return DECKS[activeDeckId];
 }
 
-export function getCardBackUrl() {
-  return getActiveDeck().backImage;
+export function getCardBackUrl(options = {}) {
+  const preferredPack = options.preferredPack || 'meow-v2';
+  return buildAssetUrl(resolveCardBackPath({ preferredPack }), { versioned: true });
 }
 
 export function getFallbackDeck(id = activeDeckId) {
@@ -36,8 +42,11 @@ export function getFallbackDeck(id = activeDeckId) {
   return DECKS[FALLBACK_DECK_ID] || null;
 }
 
-export function getCardBackFallbackUrl() {
-  return getFallbackDeck()?.backImage || null;
+export function getCardBackFallbackUrl(options = {}) {
+  const primaryBackPath = resolveCardBackPath({ preferredPack: options.preferredPack || 'meow-v2' });
+  const fallbackPath = resolveCardBackFallbackPath();
+  if (!fallbackPath || fallbackPath === primaryBackPath) return null;
+  return buildAssetUrl(fallbackPath, { versioned: true });
 }
 
 export function joinAssetPath(base = '', subpath = '') {
@@ -63,7 +72,6 @@ function joinAssetPathSingleSlash(base = '', subpath = '') {
 // Placeholder for future card images (do NOT use it yet in the UI)
 export function getCardImageUrl(card, options = {}) {
   const deck = getActiveDeck();
-  const assetsBase = options.assetsBase || deck.assetsBase;
   const orientation = options.orientation || card.orientation || 'upright';
 
   const baseId = normalizeId(
@@ -71,8 +79,12 @@ export function getCardImageUrl(card, options = {}) {
   );
 
   const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
+  const pack = options.pack || deck?.id || DEFAULT_DECK_ID;
+  const explicitPath = options.assetsBase
+    ? joinAssetPathSingleSlash(options.assetsBase, `${finalId}.webp`)
+    : resolveCardFacePath({ id: finalId, pack });
 
-  return buildAssetUrl(joinAssetPathSingleSlash(assetsBase, `${finalId}.webp`));
+  return buildAssetUrl(explicitPath);
 }
 
 export function getCardImageFallbackUrl(card, options = {}) {
@@ -80,7 +92,7 @@ export function getCardImageFallbackUrl(card, options = {}) {
   if (!fallbackDeck) return null;
   return getCardImageUrl(card, {
     ...options,
-    assetsBase: fallbackDeck.assetsBase,
+    pack: fallbackDeck.id,
   });
 }
 
