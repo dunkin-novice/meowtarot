@@ -18,6 +18,8 @@ import {
   applyImageFallback,
 } from './data.js';
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
+import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
+import { resolvePosterBackgroundPath } from './asset-resolver.js';
 
 const params = new URLSearchParams(window.location.search);
 const hasUrlSelection = ['cards', 'card', 'id', 'mode', 'topic', 'spread'].some((key) => params.has(key));
@@ -98,6 +100,17 @@ let energyChart = null;
 let saveButtonHandler = null;
 const HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 let html2CanvasPromise = null;
+
+function isShareCiDebugEnabled() {
+  if (typeof window === 'undefined') return false;
+  if (window.DEBUG_SHARE_CI) return true;
+  return new URLSearchParams(window.location.search).get('ci_share_debug') === '1';
+}
+
+function shareCiLog(step, payload = {}) {
+  if (!isShareCiDebugEnabled()) return;
+  console.log(JSON.stringify({ step, ...payload }));
+}
 
 const isMobile = () => window.innerWidth <= 768;
 
@@ -1205,26 +1218,67 @@ function buildSharePayload() {
     const card = findCard(id);
     const orientation = toOrientation(id);
     const baseId = getBaseCardId(id, normalizeId) || normalizeId(id);
+    const summary = card ? getText(card, `${state.topic}_reading_single`) || getText(card, 'general_meaning') : '';
     return {
       id: baseId,
       orientation,
       name: card ? getName(card) : baseId,
+      title: card ? getText(card, 'card_title') || getName(card) : baseId,
+      keywords: card ? getText(card, 'keywords') : '',
+      summary,
+      archetype: card ? getText(card, 'affirmation') : '',
     };
   });
 
-  return {
+  const primaryCard = cards[0] || null;
+  const reading = buildReadingPayload({
+    heading: primaryCard?.summary || '',
+    subHeading: primaryCard?.title || '',
+    archetype: primaryCard?.archetype || '',
+    keywords: primaryCard?.keywords || '',
+    summary: primaryCard?.summary || '',
+  });
+
+  const poster = buildPosterConfig({
+    mode: state.mode,
+    orientation: primaryCard?.orientation || 'upright',
+    backgroundPath: resolvePosterBackgroundPath({
+      payload: { mode: state.mode, cards: cards.map(({ id, orientation }) => ({ id, orientation })) },
+    }),
+    assetPack: 'meow-v1',
+    backPack: 'meow-v2',
+  });
+
+  const payload = {
     version: 1,
     lang: state.currentLang,
     mode: state.mode,
     spread: state.mode === 'daily' ? 'quick' : state.spread,
     topic: state.topic,
-    cards: cards.map(({ id, orientation }) => ({ id, orientation })),
+    cards: cards.map((card) => ({ id: card.id, orientation: card.orientation })),
     title: modeTitle,
     subtitle: modeSubtitle,
     headline: dict.yourReading,
+    heading: reading.heading,
+    reading,
+    poster,
     keywords: cards.map((card) => card.name).filter(Boolean).slice(0, 3),
     canonicalUrl: window.location.href,
   };
+
+  payload.cards = cards.map((card) => ({ ...buildPosterCardPayload(card), id: card.id, orientation: card.orientation }));
+
+  shareCiLog('share_payload', {
+    mode: payload.mode,
+    spread: payload.spread,
+    cards: payload.cards.map((card) => card.id),
+    hasReading: Boolean(payload.reading?.heading || payload.reading?.subHeading || payload.reading?.archetype || payload.reading?.keywords || payload.reading?.summary),
+    hasHeading: Boolean(payload.heading),
+    hasPoster: Boolean(payload.poster?.assetPack),
+    keywordCount: payload.keywords.length,
+  });
+
+  return payload;
 }
 
 async function openSharePage({ action } = {}) {
