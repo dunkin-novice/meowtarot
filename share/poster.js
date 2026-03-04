@@ -635,8 +635,8 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
   const cardEntries = await buildCardEntries(payload);
   const cardCount = cardEntries.length || 1;
   const cardGap = cardCount > 1 ? 32 : 0;
-  const cardWidth = cardCount === 1 ? 520 : 280;
-  const cardHeight = Math.round(cardWidth * 1.55);
+  cardWidth = cardCount === 1 ? 520 : 280;
+  cardHeight = Math.round(cardWidth * 1.55);
   const totalWidth = cardCount * cardWidth + (cardCount - 1) * cardGap;
   const startX = (width - totalWidth) / 2;
   const startY = height * 0.34;
