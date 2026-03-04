@@ -1,9 +1,9 @@
-import { mkdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { mkdir, writeFile, stat } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import http from 'node:http';
 import { chromium } from 'playwright';
+import { startStaticPreviewServer } from '../tests/helpers/preview-server.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -75,44 +75,6 @@ const CASES = [
 
 function jsonLog(step, payload = {}) {
   console.log(JSON.stringify({ step, ...payload }));
-}
-
-function getMimeType(filePath) {
-  if (filePath.endsWith('.html')) return 'text/html; charset=utf-8';
-  if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) return 'application/javascript; charset=utf-8';
-  if (filePath.endsWith('.css')) return 'text/css; charset=utf-8';
-  if (filePath.endsWith('.json')) return 'application/json; charset=utf-8';
-  if (filePath.endsWith('.webp')) return 'image/webp';
-  if (filePath.endsWith('.png')) return 'image/png';
-  if (filePath.endsWith('.svg')) return 'image/svg+xml';
-  return 'application/octet-stream';
-}
-
-function createStaticServer(rootDir) {
-  const server = http.createServer(async (req, res) => {
-    try {
-      const requestUrl = new URL(req.url || '/', 'http://127.0.0.1');
-      let pathname = decodeURIComponent(requestUrl.pathname);
-      if (pathname === '/') pathname = '/share/index.html';
-      const filePath = path.join(rootDir, pathname);
-      const normalized = path.normalize(filePath);
-      if (!normalized.startsWith(rootDir)) {
-        res.statusCode = 403;
-        res.end('Forbidden');
-        return;
-      }
-
-      const file = await readFile(normalized);
-      res.statusCode = 200;
-      res.setHeader('Content-Type', getMimeType(normalized));
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.end(file);
-    } catch {
-      res.statusCode = 404;
-      res.end('Not found');
-    }
-  });
-  return server;
 }
 
 async function renderCase(page, baseUrl, testCase) {
@@ -203,68 +165,76 @@ async function renderCase(page, baseUrl, testCase) {
 async function main() {
   await mkdir(artifactsDir, { recursive: true });
 
-  const server = createStaticServer(repoRoot);
-  await new Promise((resolve) => server.listen(4173, '127.0.0.1', resolve));
-  const baseUrl = 'http://127.0.0.1:4173';
-
-  jsonLog('env', { useLocalAssets, baseUrl });
-
-  if (useLocalAssets) {
-    try {
-      await stat(path.join(repoRoot, 'backgrounds'));
-      jsonLog('local_assets', { backgrounds: 'present' });
-    } catch {
-      jsonLog('local_assets', { backgrounds: 'missing', note: 'background directory not found in repository' });
-    }
-  }
-
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
-
-  page.on('console', (msg) => {
-    const text = msg.text();
-    if (!text) return;
-    if (text.startsWith('{"step"')) {
-      console.log(text);
-      try {
-        debugSteps.push(JSON.parse(text));
-      } catch {
-        // ignore parse failures
-      }
-      return;
-    }
-    if (process.env.DEBUG_POSTER_CI_VERBOSE === '1') {
-      console.log(JSON.stringify({ step: 'browser_console', text }));
-    }
+  const requestedPort = Number(process.env.DEBUG_POSTER_CI_PORT || 0);
+  const previewServer = await startStaticPreviewServer({
+    rootDir: repoRoot,
+    defaultPath: '/share/index.html',
+    port: Number.isFinite(requestedPort) ? requestedPort : 0,
   });
 
-  await page.addInitScript(() => {
-    window.DEBUG_POSTER_CI = true;
-  });
-  await page.addInitScript(({ origin }) => {
-    // Use CDN-first resolution for poster-debug assets, with local origin as fallback.
-    // This avoids local /backgrounds/* 404s while still allowing local fallback probes.
-    window.MEOWTAROT_ASSET_BASE_URL = 'https://cdn.meowtarot.com';
-    window.MEOWTAROT_CDN_BASES = ['https://cdn.meowtarot.com', origin];
-  }, { origin: baseUrl });
-
+  let browser;
   try {
+    const baseUrl = previewServer.baseUrl;
+    jsonLog('env', { useLocalAssets, baseUrl, port: previewServer.port });
+
+    if (useLocalAssets) {
+      try {
+        await stat(path.join(repoRoot, 'backgrounds'));
+        jsonLog('local_assets', { backgrounds: 'present' });
+      } catch {
+        jsonLog('local_assets', { backgrounds: 'missing', note: 'background directory not found in repository' });
+      }
+    }
+
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+
+    page.on('console', (msg) => {
+      const text = msg.text();
+      if (!text) return;
+      if (text.startsWith('{"step"')) {
+        console.log(text);
+        try {
+          debugSteps.push(JSON.parse(text));
+        } catch {
+          // ignore parse failures
+        }
+        return;
+      }
+      if (process.env.DEBUG_POSTER_CI_VERBOSE === '1') {
+        console.log(JSON.stringify({ step: 'browser_console', text }));
+      }
+    });
+
+    await page.addInitScript(() => {
+      window.DEBUG_POSTER_CI = true;
+    });
+    await page.addInitScript(({ origin }) => {
+      // Use CDN-first resolution for poster-debug assets, with local origin as fallback.
+      // This avoids local /backgrounds/* 404s while still allowing local fallback probes.
+      window.MEOWTAROT_ASSET_BASE_URL = 'https://cdn.meowtarot.com';
+      window.MEOWTAROT_CDN_BASES = ['https://cdn.meowtarot.com', origin];
+    }, { origin: baseUrl });
+
     await page.goto(`${baseUrl}/share/index.html`, { waitUntil: 'networkidle' });
     const debugFlag = await page.evaluate(() => Boolean(window.DEBUG_POSTER_CI));
     jsonLog('debug_flag', { enabled: debugFlag });
+
     for (const testCase of CASES) {
       await renderCase(page, baseUrl, testCase);
     }
-        const hasPayloadOk = debugSteps.some((entry) => entry.step === 'payload_ok');
+
+    const hasPayloadOk = debugSteps.some((entry) => entry.step === 'payload_ok');
     const hasCardProbe = debugSteps.some((entry) => entry.step === 'img_probe' && entry.kind === 'card' && entry.ok === true);
     const hasDrawText = debugSteps.some((entry) => entry.step === 'draw_text' && entry.executed === true);
     if (!hasPayloadOk || !hasCardProbe || !hasDrawText) {
       throw new Error(`Missing required poster debug steps: payload_ok=${hasPayloadOk}, card_img_probe=${hasCardProbe}, draw_text=${hasDrawText}`);
     }
+
     jsonLog('done', { ok: true, artifactsDir: path.relative(repoRoot, artifactsDir) });
   } finally {
-    await browser.close();
-    await new Promise((resolve) => server.close(resolve));
+    await browser?.close();
+    await previewServer.stop();
   }
 }
 

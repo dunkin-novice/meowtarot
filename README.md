@@ -100,3 +100,20 @@ Add a trigger button somewhere on the page:
 - On every push the workflow also runs against the default URL.
 - The Playwright job prints `SELFTEST_JSON`, target visibility, and any cross-origin image URLs to the logs.
 - Download the `export-selftest-artifacts` attachment from the workflow run to grab screenshots and the Playwright report.
+
+## Frontend regression test setup (Playwright)
+Use these commands locally/CI to run browser-based regressions reliably:
+
+```bash
+npm ci
+npm run test:install-browsers
+npx playwright test tests/lang-persistence.spec.js
+```
+
+Notes:
+- `tests/lang-persistence.spec.js` starts/stops its own ephemeral preview server, so it does not require a fixed port.
+- To run against an already deployed URL instead of local preview, set `TARGET_URL`, e.g.:
+
+```bash
+TARGET_URL="https://www.meowtarot.com" npx playwright test tests/lang-persistence.spec.js
+```

@@ -24,8 +24,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright browsers
+        id: playwright-install
+        continue-on-error: true
         run: npx playwright install --with-deps chromium
+
+      - name: Verify Playwright browser availability
+        run: |
+          if [ "${{ steps.playwright-install.outcome }}" = "success" ]; then
+            exit 0
+          fi
+          node -e "const fs=require('fs'); const {chromium}=require('playwright'); const p=chromium.executablePath(); if(!fs.existsSync(p)){console.error('::error::Playwright install failed and no cached Chromium executable was found. Run `npx playwright install --with-deps` in CI or use a Playwright Docker image fallback.'); process.exit(1);} console.log('Using cached Chromium executable at', p);"
 
       - name: Run export self-test
         env:
@@ -56,8 +73,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright browsers
+        id: playwright-install
+        continue-on-error: true
         run: npx playwright install --with-deps chromium
+
+      - name: Verify Playwright browser availability
+        run: |
+          if [ "${{ steps.playwright-install.outcome }}" = "success" ]; then
+            exit 0
+          fi
+          node -e "const fs=require('fs'); const {chromium}=require('playwright'); const p=chromium.executablePath(); if(!fs.existsSync(p)){console.error('::error::Playwright install failed and no cached Chromium executable was found. Run `npx playwright install --with-deps` in CI or use a Playwright Docker image fallback.'); process.exit(1);} console.log('Using cached Chromium executable at', p);"
 
       - name: Run poster debug CI script
         run: node scripts/debug-poster-ci.mjs
@@ -87,8 +121,25 @@ jobs:
       - name: Verify cards.json accessibility + asset pack resolution
         run: node --test tests/cards-json-access.test.js tests/asset-pack-resolution.test.js tests/poster-payload-ready.test.js
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright browsers
+        id: playwright-install
+        continue-on-error: true
         run: npx playwright install --with-deps chromium
+
+      - name: Verify Playwright browser availability
+        run: |
+          if [ "${{ steps.playwright-install.outcome }}" = "success" ]; then
+            exit 0
+          fi
+          node -e "const fs=require('fs'); const {chromium}=require('playwright'); const p=chromium.executablePath(); if(!fs.existsSync(p)){console.error('::error::Playwright install failed and no cached Chromium executable was found. Run `npx playwright install --with-deps` in CI or use a Playwright Docker image fallback.'); process.exit(1);} console.log('Using cached Chromium executable at', p);"
 
       - name: Verify share payload + poster content
         run: npx playwright test tests/share-poster-content.spec.js

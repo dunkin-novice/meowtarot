@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test": "node --test",
-    "test:export": "playwright test tests/export.spec.js"
+    "test:export": "playwright test tests/export.spec.js",
+    "test:install-browsers": "playwright install --with-deps"
   },
   "keywords": [],
   "author": "",
