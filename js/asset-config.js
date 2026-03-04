@@ -1,4 +1,4 @@
-const DEFAULT_ASSET_BASE_URL = '';
+const DEFAULT_ASSET_BASE_URL = 'https://cdn.meowtarot.com';
 const PROD_ASSET_REVISION = '2026-03';
 
 function trimSlashes(value = '') {
