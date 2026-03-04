@@ -16,6 +16,7 @@ mkdirSync('artifacts', { recursive: true });
 const debugSteps = [];
 
 
+
 function buildCasePayload({ orientation = 'upright', debugBackgroundPath } = {}) {
   const isReversed = orientation === 'reversed';
   return {
@@ -186,7 +187,16 @@ async function main() {
       }
     }
 
-    browser = await chromium.launch({ headless: true });
+    try {
+      browser = await chromium.launch({ headless: true });
+    } catch (error) {
+      const message = error?.message || String(error);
+      if (/Executable doesn't exist/i.test(message)) {
+        console.error('::error::Playwright Chromium executable is missing. Run `npx playwright install --with-deps chromium` before running scripts/debug-poster-ci.mjs.');
+      }
+      throw error;
+    }
+
     const page = await browser.newPage();
 
     page.on('console', (msg) => {

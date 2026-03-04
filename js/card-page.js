@@ -177,6 +177,7 @@ function updateSeo(baseSlug, baseCard) {
 function updateImage(card, orientation) {
   if (!dom.cardImage) return;
   const url = getCardImageUrl(card, { orientation });
+  dom.cardImage.crossOrigin = 'anonymous';
   dom.cardImage.src = url;
   const safeName = card?.card_name_en || card?.name_en || 'Tarot card';
   dom.cardImage.alt = card?.image_alt_en || `${safeName} tarot card illustration (${orientationLabel(orientation)})`;

@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --test",
     "test:export": "playwright test tests/export.spec.js",
-    "test:install-browsers": "playwright install --with-deps"
+    "test:install-browsers": "playwright install --with-deps",
+    "debug:cdn-headers": "node scripts/debug-cdn-headers.mjs"
   },
   "keywords": [],
   "author": "",

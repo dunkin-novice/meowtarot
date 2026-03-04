@@ -39,17 +39,50 @@ async function probeImageLoad(url, kind) {
   let ok = false;
   let method = 'HEAD';
   let errorMessage = null;
+  let responseMeta = null;
+
+  const pickProbeHeaders = (res) => {
+    const keys = [
+      'content-type',
+      'content-length',
+      'cache-control',
+      'access-control-allow-origin',
+      'cross-origin-resource-policy',
+      'cross-origin-opener-policy',
+      'cross-origin-embedder-policy',
+      'timing-allow-origin',
+      'cf-ray',
+      'server',
+    ];
+    return keys.reduce((acc, key) => {
+      const value = res.headers.get(key);
+      if (value != null) acc[key] = value;
+      return acc;
+    }, {});
+  };
+
+  const attachMeta = (res) => {
+    responseMeta = {
+      statusText: res.statusText,
+      redirected: res.redirected,
+      type: res.type,
+      finalUrl: res.url,
+      headers: pickProbeHeaders(res),
+    };
+  };
 
   try {
     const res = await fetch(url, { method: 'HEAD', mode: 'cors' });
     status = res.status;
     ok = res.ok;
+    attachMeta(res);
   } catch (error) {
     method = 'GET';
     try {
       const res = await fetch(url, { method: 'GET', mode: 'cors' });
       status = res.status;
       ok = res.ok;
+      attachMeta(res);
     } catch (fallbackError) {
       errorMessage = fallbackError?.message || String(fallbackError);
     }
@@ -62,6 +95,7 @@ async function probeImageLoad(url, kind) {
     status,
     method,
     error: errorMessage,
+    response: responseMeta,
   });
 }
 
