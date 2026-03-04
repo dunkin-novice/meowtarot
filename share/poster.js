@@ -1,13 +1,14 @@
 import {
   getActiveDeck,
+  getCardBackUrl,
   getCardImageUrl,
-  joinAssetPath,
   loadTarotData,
   meowTarotCards,
   normalizeId,
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
+import { buildAssetUrl } from '../js/asset-config.js';
 
 const POSTER_WEBP_QUALITY = 0.78;
 const POSTER_RETRY_WEBP_QUALITY = 0.72;
@@ -211,6 +212,28 @@ function getDailyStrings(lang = 'en') {
   };
 }
 
+
+function getPosterBackgroundPath(payload) {
+  return payload?.mode === 'daily' ? 'backgrounds/bg-daily.webp' : 'backgrounds/bg-full.webp';
+}
+
+async function drawPosterBackground(ctx, width, height, payload) {
+  const bgUrl = buildAssetUrl(getPosterBackgroundPath(payload));
+  try {
+    const bg = await imageManager.loadImage(bgUrl, { crossOrigin: 'anonymous' });
+    ctx.drawImage(bg, 0, 0, width, height);
+    return bgUrl;
+  } catch (error) {
+    console.warn('[Poster] Failed to load poster background image', bgUrl, error);
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#0b1020');
+    gradient.addColorStop(1, '#141c33');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    drawStarfield(ctx, width, height);
+    return null;
+  }
+}
 function isDailySingle(payload) {
   const spread = String(payload?.spread || '').toLowerCase();
   return payload?.mode === 'daily' && (spread === 'quick' || spread === 'single' || spread === 'one');
@@ -298,12 +321,8 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     ctx.fillText(' ', 0, 0);
   });
 
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, '#0b1020');
-  gradient.addColorStop(1, '#141c33');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-  drawStarfield(ctx, width, height);
+  const backgroundUrl = await drawPosterBackground(ctx, width, height, payload);
+  console.log('[Poster] Background resolved', backgroundUrl || 'fallback-gradient');
 
   if (isDailySingle(payload) && preset === 'story') {
     const safeMargin = 72;
@@ -382,9 +401,15 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
       const orientedId = `${baseId}-${cardEntry.orientation}`;
       const uprightId = `${baseId}-upright`;
       const cleanBase = getCleanAssetsBase();
-      const primary = joinAssetPath(cleanBase, `${orientedId}.webp`);
-      const upright = joinAssetPath(cleanBase, `${uprightId}.webp`);
-      const back = joinAssetPath(cleanBase, '00-back.webp');
+      const primary = getCardImageUrl(
+        { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId },
+        { orientation: cardEntry.orientation, assetsBase: cleanBase },
+      );
+      const upright = getCardImageUrl(
+        { ...cardEntry.card, id: uprightId, card_id: uprightId, image_id: uprightId },
+        { orientation: 'upright', assetsBase: cleanBase },
+      );
+      const back = getCardBackUrl();
       return imageManager.loadWithFallback(primary, [upright, back]);
     };
 
