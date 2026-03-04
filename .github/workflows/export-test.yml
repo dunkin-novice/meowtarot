@@ -93,21 +93,33 @@ jobs:
           fi
           node -e "const fs=require('fs'); const {chromium}=require('playwright'); const p=chromium.executablePath(); if(!fs.existsSync(p)){console.error('::error::Playwright install failed and no cached Chromium executable was found. Run `npx playwright install --with-deps` in CI or use a Playwright Docker image fallback.'); process.exit(1);} console.log('Using cached Chromium executable at', p);"
 
-      - name: CDN smoke check (non-blocking)
+      - name: CDN debug script (non-blocking)
+        continue-on-error: true
         run: |
-          check_url() {
-            local url="$1"
-            local status
-            status=$(curl -s -o /dev/null -w "%{http_code}" -I "$url" || echo "000")
-            if [ "$status" != "200" ]; then
-              echo "::warning::CDN smoke check non-200 for $url (status=$status). Continuing with offline fixtures."
-            else
-              echo "CDN smoke check OK: $url"
-            fi
-          }
-          check_url "https://cdn.meowtarot.com/backgrounds/bg-000.webp"
-          check_url "https://cdn.meowtarot.com/assets/meow-v1/01-the-fool-upright.webp"
+          mkdir -p artifacts
+          node scripts/debug-cdn-headers.mjs | tee artifacts/cdn-headers-debug.log
 
+      - name: CDN evidence via curl (non-blocking)
+        continue-on-error: true
+        run: |
+          mkdir -p artifacts
+          urls=(
+            "https://cdn.meowtarot.com/assets/meow-v2/00-back.webp"
+            "https://cdn.meowtarot.com/assets/meow-v1/01-the-fool-upright.webp"
+            "https://cdn.meowtarot.com/backgrounds/bg-000.webp"
+          )
+
+          {
+            for url in "${urls[@]}"; do
+              echo ""
+              echo "===== HEAD $url ====="
+              curl -sS -I "$url" | sed -n '/^HTTP\//p; /^content-type:/Ip; /^cache-control:/Ip; /^access-control-allow-origin:/Ip; /^cross-origin-resource-policy:/Ip; /^cf-ray:/Ip; /^server:/Ip'
+
+              echo ""
+              echo "===== RANGE GET $url ====="
+              curl -sS -D - -o /dev/null -r 0-1023 "$url" | sed -n '/^HTTP\//p; /^content-type:/Ip; /^cache-control:/Ip; /^access-control-allow-origin:/Ip; /^cross-origin-resource-policy:/Ip; /^cf-ray:/Ip; /^server:/Ip'
+            done
+          } | tee artifacts/cdn-curl-evidence.log
 
       - name: Generate offline fixture images (32x32 PNG)
         run: node scripts/gen-ci-fixtures.mjs
@@ -125,7 +137,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: poster-debug-artifacts
-          path: artifacts/*.webp
+          path: |
+            artifacts/*.webp
+            artifacts/cdn-headers-debug.log
+            artifacts/cdn-curl-evidence.log
           if-no-files-found: error
 
   share-integrity:

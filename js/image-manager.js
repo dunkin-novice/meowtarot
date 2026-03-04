@@ -53,6 +53,33 @@ function buildCdnFallbacks(src) {
     .map((base) => joinPath(base, path));
 }
 
+function shouldTryPngFallback() {
+  if (typeof window === 'undefined') return false;
+  if (window.MEOWTAROT_ENABLE_WEBP_PNG_FALLBACK !== true) return false;
+  if (window.MEOWTAROT_ASSUME_WEBP_SUPPORTED === true) return false;
+
+  if (typeof window.MEOWTAROT_WEBP_SUPPORTED === 'boolean') {
+    return window.MEOWTAROT_WEBP_SUPPORTED === false;
+  }
+
+  try {
+    const canvas = document.createElement('canvas');
+    if (!canvas?.toDataURL) return true;
+    const data = canvas.toDataURL('image/webp');
+    return !data.startsWith('data:image/webp');
+  } catch (error) {
+    return true;
+  }
+}
+
+function buildFormatFallbacks(src) {
+  if (!shouldTryPngFallback()) return [];
+  if (!src || /^(data|blob):/i.test(src) || !/\.webp($|[?#])/i.test(src)) return [];
+  const asPng = src.replace(/\.webp(?=($|[?#]))/i, '.png');
+  if (asPng === src) return [];
+  return [asPng];
+}
+
 function uniqueSources(sources) {
   const seen = new Set();
   return sources.filter((source) => {
@@ -106,7 +133,8 @@ function createImageManager() {
   }
 
   function buildSourceList(primary, fallbacks = []) {
-    const sources = [primary, ...fallbacks].filter(Boolean);
+    const seeds = [primary, ...fallbacks].filter(Boolean);
+    const sources = seeds.flatMap((src) => [src, ...buildFormatFallbacks(src)]);
     const expanded = sources.flatMap((src) => [src, ...buildCdnFallbacks(src)]);
     return uniqueSources(expanded);
   }
