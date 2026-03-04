@@ -20,6 +20,7 @@ export function renderNavbar(container, onLangToggle) {
         </div>
       </div>
       <a href="index.html" class="logo-text nav-logo" data-logo aria-label="Go to home">✦</a>
+      <button class="nav-backdrop" type="button" aria-hidden="true" tabindex="-1"></button>
       <nav class="nav-panel page-card" id="primary-nav-panel" aria-label="Primary">
         <div class="nav-links">
           <a href="index.html" class="nav-link" data-page="home" data-i18n="navHome"></a>
@@ -41,6 +42,7 @@ export function renderNavbar(container, onLangToggle) {
 
   const toggleBtn = container.querySelector('.mobile-menu-toggle');
   const navPanel = container.querySelector('.nav-panel');
+  const backdrop = container.querySelector('.nav-backdrop');
   let scrollCloseTimer = null;
 
   const updateNavHeight = () => {
@@ -53,6 +55,7 @@ export function renderNavbar(container, onLangToggle) {
   const closeMenu = () => {
     if (!navPanel.classList.contains('is-open')) return;
     navPanel.classList.remove('is-open');
+    backdrop?.classList.remove('is-open');
     toggleBtn.setAttribute('aria-expanded', 'false');
     document.body.classList.remove('nav-open');
     updateNavHeight();
@@ -60,6 +63,7 @@ export function renderNavbar(container, onLangToggle) {
 
   const handleToggleClick = () => {
     const isOpen = navPanel.classList.toggle('is-open');
+    backdrop?.classList.toggle('is-open', isOpen);
     toggleBtn.setAttribute('aria-expanded', String(isOpen));
     document.body.classList.toggle('nav-open', isOpen);
     updateNavHeight();
@@ -80,7 +84,14 @@ export function renderNavbar(container, onLangToggle) {
     }, 120);
   };
 
+  const handleEscapeKey = (event) => {
+    if (event.key === 'Escape') {
+      closeMenu();
+    }
+  };
+
   toggleBtn.addEventListener('click', handleToggleClick);
+  backdrop?.addEventListener('click', closeMenu);
 
   container.querySelectorAll('.nav-link').forEach((link) => {
     link.addEventListener('click', closeMenu);
@@ -98,6 +109,7 @@ export function renderNavbar(container, onLangToggle) {
   window.addEventListener('scroll', handleScroll, { passive: true });
   document.addEventListener('pointerdown', handleOutsideInteraction);
   document.addEventListener('focusin', handleOutsideInteraction);
+  document.addEventListener('keydown', handleEscapeKey);
 
   updateNavHeight();
   window.addEventListener('load', updateNavHeight);
@@ -111,9 +123,11 @@ export function renderNavbar(container, onLangToggle) {
       scrollCloseTimer = null;
     }
     toggleBtn.removeEventListener('click', handleToggleClick);
+    backdrop?.removeEventListener('click', closeMenu);
     window.removeEventListener('scroll', handleScroll);
     document.removeEventListener('pointerdown', handleOutsideInteraction);
     document.removeEventListener('focusin', handleOutsideInteraction);
+    document.removeEventListener('keydown', handleEscapeKey);
     window.removeEventListener('load', updateNavHeight);
     window.removeEventListener('resize', updateNavHeight);
   };

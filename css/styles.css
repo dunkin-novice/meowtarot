@@ -3483,15 +3483,28 @@ header {
   outline-offset: 2px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .header-menu-toggle {
     display: inline-flex;
   }
 
   .nav-panel {
     display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 12px;
+    z-index: 70;
     border-top: 1px solid rgba(168, 137, 196, 0.24);
-    padding-top: 10px;
+    padding: 10px;
+    background: var(--mystic-card);
+    border: 1px solid rgba(197, 177, 220, 0.4);
+    border-radius: var(--mystic-radius);
+    box-shadow: var(--mystic-shadow);
+    max-height: calc(100vh - var(--nav-height, 72px) - 24px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .nav-panel.is-open {
@@ -3503,7 +3516,7 @@ header {
   }
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1024px) {
   .header-menu-toggle {
     display: none;
   }
@@ -3529,33 +3542,31 @@ header {
   flex-direction: column;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .nav-panel {
-    position: static !important;
-    inset: auto !important;
+    inset: auto;
     width: 100%;
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .site-header {
+    position: relative;
+    z-index: 60;
     grid-template-columns: none;
   }
 
   .nav-panel,
   .nav-panel.is-open {
-    left: auto;
-    right: auto;
     transform: none;
     max-width: none;
-    max-height: none;
     opacity: 1;
     pointer-events: auto;
     transition: none;
   }
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1024px) {
   .site-header {
     max-width: none;
     width: min(1200px, calc(100vw - 32px));
@@ -3855,7 +3866,7 @@ html[lang='th'] .topic-copy-lead {
 }
 
 /* mobile navbar compaction + always-visible language switcher */
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .site-header {
     padding: 10px 12px;
     gap: 8px;
@@ -3911,9 +3922,23 @@ html[lang='th'] .topic-copy-lead {
   .language-toggle--menu {
     display: none;
   }
+
+  .nav-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    border: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.15);
+    z-index: 55;
+  }
+
+  .nav-backdrop.is-open {
+    display: block;
+  }
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1024px) {
   .language-toggle--mobile {
     display: none;
   }
@@ -4028,6 +4053,10 @@ body[data-page='overall'] #overall-counter {
   display: inline-flex;
   align-items: center;
   gap: 0;
+}
+
+.nav-backdrop {
+  display: none;
 }
 
 .nav-meta {
