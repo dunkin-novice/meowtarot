@@ -962,16 +962,6 @@ function renderFull(cards, dict) {
     orientation.textContent = getOrientationLabel(toOrientation(card), state.currentLang);
     caption.appendChild(orientation);
 
-    const archetype = document.createElement('div');
-    archetype.className = 'spread-archetype';
-    archetype.textContent = getText(card, 'archetype');
-    caption.appendChild(archetype);
-
-    const imply = document.createElement('div');
-    imply.className = 'spread-imply';
-    imply.textContent = getText(card, 'tarot_imply');
-    caption.appendChild(imply);
-
     cardWrap.appendChild(caption);
     cardWrap.addEventListener('click', () => openCardSheet(card));
     spreadGrid.appendChild(cardWrap);
@@ -998,12 +988,49 @@ function renderFull(cards, dict) {
   summaryGrid.className = 'full-summary-grid';
 
   summaries.forEach((summary, idx) => {
+    const card = cards[idx];
+    const fallbackName = state.currentLang === 'th'
+      ? (card?.alias_th || card?.name_th || card?.id || '')
+      : (payloadReading[`card_name_${positions[idx]}`] || payloadReading.subHeading || '');
+    const cardName = state.currentLang === 'th'
+      ? (card?.alias_th || card?.name_th || fallbackName || '')
+      : (card?.card_name_en || card?.name_en || card?.name || fallbackName || card?.id || '');
+    const orientationLabel = getOrientationLabel(toOrientation(card), state.currentLang);
+    const fallbackArchetype = payloadReading[`archetype_${positions[idx]}`] || payloadReading.archetype || '';
+    const archetypeText = getText(card, 'archetype') || fallbackArchetype;
+    const fallbackImply = payloadReading[`tarot_imply_${positions[idx]}`] || payloadReading.summary || '';
+    const implyText = getText(card, 'tarot_imply') || fallbackImply;
+
     const box = document.createElement('article');
     box.className = 'full-summary-box';
 
     const h3 = document.createElement('h3');
     h3.textContent = dict[positions[idx]] || positions[idx];
     box.appendChild(h3);
+
+    const meta = document.createElement('div');
+    meta.className = 'full-summary-meta';
+
+    const nameLine = document.createElement('p');
+    nameLine.className = 'full-summary-meta__name';
+    nameLine.textContent = cardName ? `${cardName} (${orientationLabel})` : orientationLabel;
+    meta.appendChild(nameLine);
+
+    if (archetypeText) {
+      const archetypeLine = document.createElement('p');
+      archetypeLine.className = 'full-summary-meta__archetype';
+      archetypeLine.textContent = archetypeText;
+      meta.appendChild(archetypeLine);
+    }
+
+    if (implyText) {
+      const implyLine = document.createElement('p');
+      implyLine.className = 'full-summary-meta__imply';
+      implyLine.textContent = implyText;
+      meta.appendChild(implyLine);
+    }
+
+    box.appendChild(meta);
 
     const body = document.createElement('p');
     body.textContent = summary || '';
