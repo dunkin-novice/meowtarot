@@ -6,6 +6,7 @@ import {
 import { imageManager } from '../js/image-manager.js';
 import { normalizePayload } from './normalize-payload.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
+import { getLocalizedField, getOrientationLabel } from '../js/tarot-format.js';
 import {
   resolveCardBackFallbackPath,
   resolveCardBackPath,
@@ -361,13 +362,6 @@ function isDailySingle(payload) {
   return posterMode === 'daily';
 }
 
-function getOrientationLabel(lang, orientation) {
-  if (lang === 'th') {
-    return orientation === 'reversed' ? 'กลับหัว' : 'ตั้งตรง';
-  }
-  return orientation === 'reversed' ? 'Reversed' : 'Upright';
-}
-
 function getCardName(card, lang) {
   if (!card) return '';
   if (lang === 'th') {
@@ -379,12 +373,12 @@ function getCardName(card, lang) {
 function buildDailyReadingFromCard(card, orientation, lang) {
   if (!card) return null;
   const name = getCardName(card, lang);
-  const orient = getOrientationLabel(lang, orientation);
+  const orient = getOrientationLabel(orientation, lang);
   return {
     heading: name,
     subHeading: orient,
-    archetype: lang === 'th' ? card.archetype_th : card.archetype_en,
-    keywords: lang === 'th' ? card.tarot_imply_th : card.tarot_imply_en,
+    archetype: getLocalizedField(card, 'archetype', lang),
+    keywords: getLocalizedField(card, 'tarot_imply', lang),
   };
 }
 
@@ -398,6 +392,18 @@ function resolveDailyReading(payload, cardEntry, lang) {
     keywords: payloadReading.keywords || cardReading.keywords || '',
     summary: payloadReading.summary || '',
   };
+}
+
+
+
+function resolveFullSummaries(payload, cardEntries, lang) {
+  const reading = payload?.reading || {};
+  const getCard = (idx) => cardEntries[idx]?.card || null;
+  return [
+    getLocalizedField(getCard(0), 'reading_summary_past', lang) || reading.reading_summary_past || '',
+    getLocalizedField(getCard(1), 'reading_summary_present', lang) || reading.reading_summary_present || '',
+    getLocalizedField(getCard(2), 'reading_summary_future', lang) || reading.reading_summary_future || '',
+  ];
 }
 
 function resolveLuckyInfo(payload, cardEntry) {
@@ -458,6 +464,118 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
   const backgroundUrl = await drawPosterBackground(ctx, width, height, payload);
   console.log('[Poster] Background resolved', backgroundUrl || 'fallback-gradient');
+
+  if (String(payload?.mode || '').toLowerCase() === 'full' && preset === 'story') {
+    const lang = payload?.lang || 'en';
+    const cardEntries = (await buildCardEntries(payload)).slice(0, 3);
+    const summaries = resolveFullSummaries(payload, cardEntries, lang);
+    const labels = lang === 'th' ? ['อดีต', 'ปัจจุบัน', 'อนาคต'] : ['Past', 'Present', 'Future'];
+
+    const topStripHeight = 170;
+    const bottomStripHeight = 560;
+    const topGrad = ctx.createLinearGradient(0, 0, 0, topStripHeight);
+    topGrad.addColorStop(0, 'rgba(5,10,25,0.85)');
+    topGrad.addColorStop(1, 'rgba(5,10,25,0.25)');
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, 0, width, topStripHeight);
+
+    const bottomY = height - bottomStripHeight;
+    const bottomGrad = ctx.createLinearGradient(0, bottomY, 0, height);
+    bottomGrad.addColorStop(0, 'rgba(5,10,25,0.15)');
+    bottomGrad.addColorStop(1, 'rgba(5,10,25,0.92)');
+    ctx.fillStyle = bottomGrad;
+    ctx.fillRect(0, bottomY, width, bottomStripHeight);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f8d77a';
+    ctx.font = '700 62px "Poppins", "Space Grotesk", sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.65)';
+    ctx.shadowBlur = 14;
+    ctx.fillText('MeowTarot', width / 2, 100);
+    ctx.shadowBlur = 0;
+
+    const cardW = 220;
+    const cardH = Math.round(cardW * 1.55);
+    const gap = 24;
+    const totalW = cardW * 3 + gap * 2;
+    const startX = (width - totalW) / 2;
+    const cardY = 190;
+
+    for (let i = 0; i < 3; i += 1) {
+      const entry = cardEntries[i];
+      const x = startX + i * (cardW + gap);
+      ctx.save();
+      ctx.fillStyle = 'rgba(15, 20, 41, 0.9)';
+      ctx.fillRect(x, cardY, cardW, cardH);
+      ctx.restore();
+
+      if (entry?.card) {
+        const baseId = baseCardId(entry.card.id || entry.card.card_id || entry.card.image_id);
+        const orientedId = `${baseId}-${entry.orientation}`;
+        const uprightId = `${baseId}-upright`;
+        const facePack = payload?.poster?.assetPack || 'meow-v1';
+        const backPack = payload?.poster?.backPack || 'meow-v2';
+        const primary = toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
+        const fallback = entry.orientation === 'reversed'
+          ? toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }))
+          : null;
+        const finalFallback = toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
+        try {
+          const img = await imageManager.loadImageWithFallback(primary, [fallback, finalFallback].filter(Boolean));
+          ctx.drawImage(img, x, cardY, cardW, cardH);
+        } catch (error) {
+          console.warn('[Poster] card image failed', { url: primary, reason: error?.message || String(error) });
+        }
+      }
+
+      const orientationText = getOrientationLabel(entry?.orientation || 'upright', lang);
+      const archetypeText = getLocalizedField(entry?.card, 'archetype', lang);
+      const implyText = getLocalizedField(entry?.card, 'tarot_imply', lang);
+
+      const textY = cardY + cardH + 28;
+      ctx.fillStyle = '#d8dbe6';
+      ctx.font = '500 18px "Space Grotesk", sans-serif';
+      wrapText(ctx, orientationText, x + cardW / 2, textY, cardW, 24, 1);
+      ctx.fillStyle = '#f7f4ee';
+      ctx.font = '600 20px "Space Grotesk", sans-serif';
+      wrapText(ctx, archetypeText, x + cardW / 2, textY + 30, cardW, 24, 2);
+      ctx.fillStyle = '#bfc5dd';
+      ctx.font = '400 16px "Space Grotesk", sans-serif';
+      wrapText(ctx, implyText, x + cardW / 2, textY + 82, cardW, 21, 3);
+    }
+
+    const boxTop = height - 330;
+    const boxW = 220;
+    const boxH = 220;
+    for (let i = 0; i < 3; i += 1) {
+      const x = startX + i * (boxW + gap);
+      ctx.save();
+      ctx.fillStyle = 'rgba(20, 28, 51, 0.72)';
+      drawRoundedRect(ctx, x, boxTop, boxW, boxH, 16);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = '#f8d77a';
+      ctx.font = '600 20px "Space Grotesk", sans-serif';
+      wrapText(ctx, labels[i], x + boxW / 2, boxTop + 34, boxW - 16, 22, 1);
+      ctx.fillStyle = '#f1f3fa';
+      ctx.font = '400 15px "Space Grotesk", sans-serif';
+      wrapText(ctx, summaries[i], x + boxW / 2, boxTop + 62, boxW - 18, 20, 7);
+    }
+
+    ctx.fillStyle = '#aab0c9';
+    ctx.font = '500 28px "Space Grotesk", sans-serif';
+    ctx.fillText('meowtarot.com', width / 2, height - 36);
+
+    const exportStart = performance.now();
+    perf.captureCount += 1;
+    console.info('[share-export] captureCount:', perf.captureCount);
+    const blob = await canvasToBlob(canvas, POSTER_WEBP_QUALITY);
+    perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
+    perf.exportMs = performance.now() - exportStart;
+    if (!blob) throw new Error('Failed to build poster blob');
+    return { blob, width, height, perf };
+  }
 
   if (isDailySingle(payload) && preset === 'story') {
     const safeMargin = 72;

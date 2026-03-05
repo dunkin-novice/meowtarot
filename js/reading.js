@@ -20,6 +20,7 @@ import {
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
 import { resolvePosterBackgroundPath } from './asset-resolver.js';
+import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 
 const params = new URLSearchParams(window.location.search);
 const hasUrlSelection = ['cards', 'card', 'id', 'mode', 'topic', 'spread'].some((key) => params.has(key));
@@ -75,9 +76,6 @@ const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
 const saveBtn = document.getElementById('saveBtn');
 const resultsSection = document.querySelector('.section-block.results');
-const meaningToggle = document.getElementById('meaningToggle');
-const meaningCard = document.querySelector('.meaning-accordion');
-const meaningBody = document.getElementById('meaningBody');
 const backLink = document.querySelector('.back-link');
 
 const cardSheetState = {
@@ -115,18 +113,7 @@ function shareCiLog(step, payload = {}) {
 const isMobile = () => window.innerWidth <= 768;
 
 function getText(card, keyBase, lang = state.currentLang) {
-  if (!card) return '';
-  const suffix = lang === 'en' ? '_en' : '_th';
-  const orientation = toOrientation(card);
-  const orientedKey = orientation === 'reversed' ? `${keyBase}_reversed${suffix}` : `${keyBase}_upright${suffix}`;
-  const orientedBaseKey = orientation === 'reversed' ? `${keyBase}_reversed` : `${keyBase}_upright`;
-  return (
-    card[orientedKey]
-    || card[orientedBaseKey]
-    || card[`${keyBase}${suffix}`]
-    || card[keyBase]
-    || ''
-  );
+  return getLocalizedField(card, keyBase, lang);
 }
 
 function getName(card, lang = state.currentLang) {
@@ -141,7 +128,7 @@ function getName(card, lang = state.currentLang) {
 }
 
 function getOrientationEnglish(card) {
-  return toOrientation(card) === 'reversed' ? 'Reversed' : 'Upright';
+  return getOrientationLabel(toOrientation(card), state.currentLang);
 }
 
 function getCardBaseSlug(card) {
@@ -461,7 +448,7 @@ function ensureOrientation(card, targetOrientation = toOrientation(card)) {
     image_id: orientedId,
     orientation: targetOrientation,
     orientation_label_th: card.orientation_label_th
-      || (targetOrientation === 'reversed' ? 'ไพ่กลับหัว' : 'ไพ่ปกติ'),
+      || getOrientationLabel(targetOrientation, 'th'),
   };
 }
 
@@ -963,50 +950,70 @@ function renderFull(cards, dict) {
     const cardWrap = document.createElement('button');
     cardWrap.className = 'reading-spread-card';
     cardWrap.type = 'button';
-    cardWrap.setAttribute('aria-label', `${getName(card)} ${dict[positions[idx]] || positions[idx]}`);
+    cardWrap.setAttribute('aria-label', `${dict[positions[idx]] || positions[idx]}`);
 
     cardWrap.appendChild(buildCardArt(card, 'thumb'));
 
-    const label = document.createElement('div');
-    label.className = 'spread-label';
-    label.textContent = dict[positions[idx]] || positions[idx];
-    cardWrap.appendChild(label);
+    const caption = document.createElement('div');
+    caption.className = 'spread-caption';
 
-    const cardName = document.createElement('div');
-    cardName.className = 'spread-name';
-    cardName.textContent = getName(card);
-    cardWrap.appendChild(cardName);
+    const orientation = document.createElement('div');
+    orientation.className = 'spread-orientation';
+    orientation.textContent = getOrientationLabel(toOrientation(card), state.currentLang);
+    caption.appendChild(orientation);
 
+    const archetype = document.createElement('div');
+    archetype.className = 'spread-archetype';
+    archetype.textContent = getText(card, 'archetype');
+    caption.appendChild(archetype);
+
+    const imply = document.createElement('div');
+    imply.className = 'spread-imply';
+    imply.textContent = getText(card, 'tarot_imply');
+    caption.appendChild(imply);
+
+    cardWrap.appendChild(caption);
     cardWrap.addEventListener('click', () => openCardSheet(card));
-
     spreadGrid.appendChild(cardWrap);
   });
 
   spreadPanel.appendChild(spreadGrid);
   readingContent.appendChild(spreadPanel);
 
-  const summaries = cards
-    .slice(0, 3)
-    .map((card, idx) => getText(card, `reading_summary_${positions[idx]}`))
-    .filter(Boolean);
+  const payloadReading = buildSharePayload()?.reading || {};
 
-  if (summaries.length) {
-    const panel = document.createElement('div');
-    panel.className = 'panel';
+  const summaries = [
+    getText(cards[0], 'reading_summary_past') || payloadReading.reading_summary_past || '',
+    getText(cards[1], 'reading_summary_present') || payloadReading.reading_summary_present || '',
+    getText(cards[2], 'reading_summary_future') || payloadReading.reading_summary_future || '',
+  ];
+
+  if (summaries.some((item) => !item)) {
+    console.warn('[Full] missing reading_summary fields');
+  }
+
+  const summaryPanel = document.createElement('div');
+  summaryPanel.className = 'panel full-summary-panel';
+  const summaryGrid = document.createElement('div');
+  summaryGrid.className = 'full-summary-grid';
+
+  summaries.forEach((summary, idx) => {
+    const box = document.createElement('article');
+    box.className = 'full-summary-box';
 
     const h3 = document.createElement('h3');
-    h3.textContent = dict.yourFortuneTitle || (state.currentLang === 'th' ? 'ดวงของคุณ' : 'Your Fortune');
-    panel.appendChild(h3);
+    h3.textContent = dict[positions[idx]] || positions[idx];
+    box.appendChild(h3);
 
-    summaries.forEach((summary, idx) => {
-      const label = dict[positions[idx]] || positions[idx];
-      const p = document.createElement('p');
-      p.innerHTML = `<strong>${label}:</strong> ${summary}`;
-      panel.appendChild(p);
-    });
+    const body = document.createElement('p');
+    body.textContent = summary || '';
+    box.appendChild(body);
 
-    readingContent.appendChild(panel);
-  }
+    summaryGrid.appendChild(box);
+  });
+
+  summaryPanel.appendChild(summaryGrid);
+  readingContent.appendChild(summaryPanel);
 
   const deeperPanel = document.createElement('div');
   deeperPanel.className = 'panel';
@@ -1037,21 +1044,15 @@ function renderFull(cards, dict) {
     deeperHasContent = true;
   });
 
-  if (meaningCard && meaningBody) {
-    meaningCard.hidden = !deeperHasContent;
-    meaningBody.innerHTML = '';
-    if (deeperHasContent) {
-      meaningBody.appendChild(deeperPanel);
-      const shouldOpenByDefault = !isMobile();
-      meaningToggle?.setAttribute('aria-expanded', String(shouldOpenByDefault));
-      meaningCard.classList.toggle('is-open', shouldOpenByDefault);
-    }
-  } else if (deeperHasContent) {
+  if (deeperHasContent) {
     readingContent.appendChild(deeperPanel);
   }
 
   const energyPanel = buildEnergyPanel(cards, dict);
-  if (energyPanel) readingContent.appendChild(energyPanel);
+  if (energyPanel) {
+    energyPanel.classList.add('energy-panel--subtle');
+    readingContent.appendChild(energyPanel);
+  }
 }
 
 function renderQuestion(cards, dict) {
@@ -1112,13 +1113,11 @@ function renderReading(dict) {
   }
 
   if (state.mode === 'daily') {
-    if (meaningCard) meaningCard.hidden = true;
     renderDaily(cards[0], dict);
     return;
   }
 
   if (state.mode === 'question') {
-    if (meaningCard) meaningCard.hidden = true;
     renderQuestion(cards, dict);
     return;
   }
@@ -1238,6 +1237,9 @@ function buildSharePayload() {
     archetype: primaryCard?.archetype || '',
     keywords: primaryCard?.keywords || '',
     summary: primaryCard?.summary || '',
+    reading_summary_past: getText(findCard(state.selectedIds[0]), 'reading_summary_past'),
+    reading_summary_present: getText(findCard(state.selectedIds[1]), 'reading_summary_present'),
+    reading_summary_future: getText(findCard(state.selectedIds[2]), 'reading_summary_future'),
   });
 
   const poster = buildPosterConfig({
@@ -1492,12 +1494,6 @@ function init() {
       event.preventDefault();
       window.history.back();
     }
-  });
-
-  meaningToggle?.addEventListener('click', () => {
-    if (!meaningCard || meaningCard.hidden) return;
-    const isOpen = meaningCard.classList.toggle('is-open');
-    meaningToggle.setAttribute('aria-expanded', String(isOpen));
   });
 
   document.addEventListener('keydown', (event) => {
