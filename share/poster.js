@@ -30,6 +30,14 @@ function isPosterCiDebugEnabled() {
   return Boolean(window.DEBUG_POSTER_CI);
 }
 
+function isPosterDebugEnabled() {
+  const runtimeEnv = (typeof globalThis !== 'undefined' && globalThis.process?.env) ? globalThis.process.env : null;
+  const envFlag = runtimeEnv?.POSTER_DEBUG;
+  if (String(envFlag || '').trim() === '1') return true;
+  if (typeof window === 'undefined') return false;
+  return String(window.POSTER_DEBUG || '').trim() === '1';
+}
+
 function posterCiLog(step, payload = {}) {
   if (!isPosterCiDebugEnabled()) return;
   console.log(JSON.stringify({ step, ...payload }));
@@ -298,17 +306,15 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 function getDailyStrings(lang = 'en') {
   if (lang === 'th') {
     return {
-      title: 'MEOW TAROT',
+      title: 'MeowTarot',
       subtitle: 'คำทำนายรายวัน',
       luckyColors: 'สีมงคลวันนี้',
-      archetypeLabel: 'THE ARCHETYPE',
     };
   }
   return {
-    title: 'MEOW TAROT',
+    title: 'MeowTarot',
     subtitle: 'Daily Reading',
     luckyColors: 'Lucky Colors',
-    archetypeLabel: 'THE ARCHETYPE',
   };
 }
 
@@ -318,6 +324,13 @@ function resolveDailyOrientation(payload) {
   if (payloadOrientation) return toOrientation(payloadOrientation);
   const firstCardOrientation = Array.isArray(payload?.cards) ? payload.cards[0]?.orientation : null;
   return toOrientation(firstCardOrientation || 'upright');
+}
+
+function resolveDailyReadingOrientation(payload, cardEntry) {
+  const readingOrientation = payload?.reading?.orientation;
+  if (readingOrientation) return toOrientation(readingOrientation);
+  if (cardEntry?.orientation) return toOrientation(cardEntry.orientation);
+  return toOrientation('upright');
 }
 
 
@@ -362,36 +375,55 @@ function isDailySingle(payload) {
   return posterMode === 'daily';
 }
 
-function getCardName(card, lang) {
-  if (!card) return '';
-  if (lang === 'th') {
-    return card.alias_th || card.card_name_th || card.name_th || card.name || '';
-  }
-  return card.card_name_en || card.name_en || card.name || '';
-}
-
 function buildDailyReadingFromCard(card, orientation, lang) {
   if (!card) return null;
-  const name = getCardName(card, lang);
   const orient = getOrientationLabel(orientation, lang);
   return {
-    heading: name,
-    subHeading: orient,
+    orientation: orient,
     archetype: getLocalizedField(card, 'archetype', lang),
+    actionPrompt: getLocalizedField(card, 'action_prompt', lang),
     keywords: getLocalizedField(card, 'tarot_imply', lang),
   };
 }
 
 function resolveDailyReading(payload, cardEntry, lang) {
   const payloadReading = payload?.reading || {};
-  const cardReading = buildDailyReadingFromCard(cardEntry?.card, cardEntry?.orientation, lang) || {};
+  const resolvedOrientation = resolveDailyReadingOrientation(payload, cardEntry);
+  const cardReading = buildDailyReadingFromCard(cardEntry?.card, resolvedOrientation, lang) || {};
+  const fallbackOrientation = getOrientationLabel(resolvedOrientation || resolveDailyOrientation(payload), lang);
+  const localizedActionPrompt = payloadReading[`action_prompt_${lang}`] || payloadReading.action_prompt || '';
+  const actionPrompt = localizedActionPrompt || cardReading.actionPrompt || '';
+  const readingResult = payloadReading.readingResult || payloadReading.result || payloadReading.summary || '';
+  const mainQuoteText = actionPrompt || readingResult || '';
+  const mainQuoteSource = actionPrompt ? 'action_prompt' : (readingResult ? 'reading_result' : 'none');
   return {
-    heading: payloadReading.heading || payload?.heading || cardReading.heading || '',
-    subHeading: payloadReading.subHeading || cardReading.subHeading || '',
-    archetype: payloadReading.archetype || cardReading.archetype || '',
-    keywords: payloadReading.keywords || cardReading.keywords || '',
+    orientation: getOrientationLabel(resolvedOrientation, lang) || cardReading.orientation || fallbackOrientation,
+    archetype: cardReading.archetype || '',
+    readingResult,
+    mainQuoteText,
+    mainQuoteSource,
+    implyLineText: '',
+    supportingLineSource: 'none',
     summary: payloadReading.summary || '',
   };
+}
+
+function resolveLuckyColorDot(color) {
+  const raw = String(color?.hex || color?.label || color?.name || color || '').trim();
+  if (!raw) return '#d8c7f2';
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) return raw;
+
+  const key = raw.toLowerCase();
+  const map = {
+    'sky blue': '#9fd8ff',
+    cream: '#f7ebc9',
+    lavender: '#cbb7ff',
+    pink: '#f6b8d0',
+    mint: '#bcefdc',
+    lilac: '#d6b8ff',
+    peach: '#ffc6a8',
+  };
+  return map[key] || '#d8c7f2';
 }
 
 
@@ -587,7 +619,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const lucky = resolveLuckyInfo(payload, cardEntry);
     const luckyColors = (lucky.colors || []).slice(0, 4);
     const hasLuckyRow = luckyColors.length > 0;
-    const hasReadingPanel = Boolean(reading.heading || reading.subHeading || reading.archetype || reading.keywords);
+    const luckyDotColors = luckyColors.map(resolveLuckyColorDot).filter(Boolean).slice(0, 3);
+    const mainQuoteText = reading.mainQuoteText || '';
+    const archetypeText = reading.archetype || '';
+    const hasReadingPanel = Boolean(archetypeText || mainQuoteText);
     const layout = {
       headerTop: 160,
       logoY: 80,
@@ -596,7 +631,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       panelTop: 1400,
       panelHeight: 400,
       panelPadding: 40,
-      luckyRowY: 1780,
+      luckyRowY: 1724,
       footerY: 1880,
     };
 
@@ -606,46 +641,24 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const panelTop = layout.panelTop;
     const panelHeight = layout.panelHeight;
 
-    const drawBrandMark = () => {
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#f8d77a';
-      ctx.font = '700 78px "Poppins", "Space Grotesk", sans-serif';
-      ctx.fillText('M', width / 2, layout.logoY);
-      const textWidth = ctx.measureText('M').width;
-      const earWidth = 18;
-      const earHeight = 16;
-      const leftEarX = width / 2 - textWidth / 2 + 6;
-      const rightEarX = width / 2 + textWidth / 2 - earWidth - 6;
-      const earBaseY = layout.logoY - 46;
-      ctx.beginPath();
-      ctx.moveTo(leftEarX, earBaseY);
-      ctx.lineTo(leftEarX + earWidth / 2, earBaseY - earHeight);
-      ctx.lineTo(leftEarX + earWidth, earBaseY);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(rightEarX, earBaseY);
-      ctx.lineTo(rightEarX + earWidth / 2, earBaseY - earHeight);
-      ctx.lineTo(rightEarX + earWidth, earBaseY);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    };
-
     const drawHeader = () => {
       const maxWidth = width - safeMargin * 2;
       let cursorY = layout.headerTop;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = '#f8d77a';
-      ctx.font = '600 48px "Poppins", "Space Grotesk", sans-serif';
+      ctx.font = '600 62px "Poppins", "Space Grotesk", sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.78)';
+      ctx.shadowBlur = 16;
       wrapText(ctx, strings.title, width / 2, cursorY, maxWidth, 54, 1);
+      ctx.shadowBlur = 0;
       cursorY += 62;
       ctx.fillStyle = '#d8dbe6';
-      ctx.font = '500 30px "Space Grotesk", sans-serif';
+      ctx.font = '500 36px "Space Grotesk", sans-serif';
+      ctx.shadowColor = 'rgba(0,0,0,0.72)';
+      ctx.shadowBlur = 10;
       wrapText(ctx, strings.subtitle, width / 2, cursorY, maxWidth, 36, 1);
+      ctx.shadowBlur = 0;
     };
 
     const resolveCardImage = async () => {
@@ -709,106 +722,109 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       let panelCursorY = panelTop + 60;
       const panelCenterX = width / 2;
       const panelTextWidth = panelWidth - 80;
+      let quoteY = null;
 
       ctx.textAlign = 'center';
 
-      ctx.fillStyle = '#f8d77a';
-      ctx.font = '600 42px "Prata", serif';
-      const heading = reading.heading ? reading.heading.toUpperCase() : '';
-      panelCursorY = wrapText(
-        ctx,
-        heading,
-        panelCenterX,
-        panelCursorY,
-        panelTextWidth,
-        48,
-        1,
-      );
-
-      if (reading.subHeading) {
-        ctx.fillStyle = 'rgba(181, 184, 197, 0.8)';
-        ctx.font = '500 24px "Space Grotesk", sans-serif';
+      if (archetypeText) {
+        ctx.fillStyle = '#f5df8f';
+        ctx.font = '500 28px "Space Grotesk", sans-serif';
         panelCursorY = wrapText(
           ctx,
-          reading.subHeading,
+          archetypeText,
           panelCenterX,
-          panelCursorY + 10,
-          panelTextWidth,
-          30,
-          1,
-        );
-      }
-
-      if (reading.archetype) {
-        ctx.fillStyle = '#f7f4ee';
-        ctx.font = 'italic 500 38px "Prata", serif';
-        panelCursorY = wrapText(
-          ctx,
-          `“${reading.archetype}”`,
-          panelCenterX,
-          panelCursorY + 40,
-          panelTextWidth,
-          54,
-          2,
-        );
-      }
-
-      if (reading.keywords) {
-        ctx.fillStyle = 'rgba(216, 219, 230, 0.9)';
-        ctx.font = '400 26px "Space Grotesk", sans-serif';
-        panelCursorY = wrapText(
-          ctx,
-          reading.keywords,
-          panelCenterX,
-          panelCursorY + 20,
+          panelCursorY,
           panelTextWidth,
           34,
           2,
         );
       }
+
+      if (mainQuoteText) {
+        const quoteLineHeight = 52;
+        const quoteMaxLines = 2;
+        const quoteBlockHeight = quoteLineHeight * quoteMaxLines;
+        const availableTop = panelCursorY + 18;
+        const availableBottom = Math.min(panelTop + panelHeight - 28, layout.luckyRowY - 52);
+        quoteY = Math.max(availableTop, availableTop + (availableBottom - availableTop - quoteBlockHeight) / 2);
+        ctx.save();
+        ctx.fillStyle = '#f7f4ee';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+        ctx.shadowBlur = 10;
+        ctx.font = 'italic 600 48px "Prata", serif';
+        panelCursorY = wrapText(
+          ctx,
+          `“${mainQuoteText}”`,
+          panelCenterX,
+          quoteY,
+          panelTextWidth,
+          quoteLineHeight,
+          quoteMaxLines,
+        );
+        ctx.restore();
+      }
+
+      return { quoteY };
     };
+
+    const drawOrientationLabel = () => {
+      if (!reading.orientation) return;
+      const cardBottomY = cardY + cardHeight;
+      const panelLabelY = panelTop - 18;
+      const minGapY = cardBottomY + 44;
+      const orientationY = Math.min(panelLabelY, minGapY);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'rgba(244, 248, 255, 0.98)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
+      ctx.shadowBlur = 12;
+      ctx.font = '500 30px "Space Grotesk", sans-serif';
+      wrapText(ctx, reading.orientation, width / 2, orientationY, width - safeMargin * 2, 34, 1);
+      ctx.shadowBlur = 0;
+    };
+
+    let quoteY = null;
 
     const drawLuckyRow = () => {
       if (!hasLuckyRow) return;
-      const minLuckyY = cardY + cardHeight + 80;
-      const rowY = Math.max(layout.luckyRowY, minLuckyY);
-      const dotSize = 32;
-      const dotGap = 10;
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'left';
+      const minLuckyY = cardY + cardHeight + 24;
+      const maxLuckyY = panelTop + panelHeight - 52;
+      const rowY = Math.min(Math.max(layout.luckyRowY, minLuckyY), maxLuckyY);
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'center';
       ctx.fillStyle = '#f7f4ee';
       ctx.font = '500 26px "Space Grotesk", sans-serif';
-      const labelWidth = ctx.measureText(strings.luckyColors).width;
-      const dotsWidth = luckyColors.length
-        ? luckyColors.length * dotSize + (luckyColors.length - 1) * dotGap
-        : 0;
-      const groupWidth = labelWidth + 20 + dotsWidth;
-      const startX = (width - groupWidth) / 2;
-      let x = startX;
-      ctx.fillText(strings.luckyColors, x, rowY);
-      x += ctx.measureText(strings.luckyColors).width + 20;
+      ctx.fillText(strings.luckyColors, width / 2, rowY);
 
-      luckyColors.forEach((color) => {
-        const hex = color?.hex || color || '#ffffff';
+      const dotRadius = 13;
+      const dotGap = 20;
+      const count = luckyDotColors.length;
+      const totalWidth = count * (dotRadius * 2) + (count - 1) * dotGap;
+      let dotX = (width - totalWidth) / 2 + dotRadius;
+      const dotY = rowY + 34;
+      luckyDotColors.forEach((hex) => {
         ctx.save();
         ctx.fillStyle = hex;
         ctx.beginPath();
-        ctx.arc(x + 16, rowY, 16, 0, Math.PI * 2);
+        ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
-        x += 42;
+        dotX += dotRadius * 2 + dotGap;
       });
     };
 
     const drawFooter = () => {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#aab0c9';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = '#f8fbff';
       ctx.font = '500 28px "Space Grotesk", sans-serif';
-      ctx.fillText('meowtarot.com', width / 2, footerY);
+      const safeFooterY = Math.min(footerY, height - safeMargin * 0.6);
+      ctx.fillText('meowtarot.com', width / 2, safeFooterY);
+      ctx.shadowBlur = 0;
     };
 
-    drawBrandMark();
     drawHeader();
 
     const cardTopY = layout.cardTop;
@@ -858,17 +874,34 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       });
     }
     const textBlocks = {
-      heading: Boolean(reading.heading),
-      subHeading: Boolean(reading.subHeading),
-      archetype: Boolean(reading.archetype),
-      keywords: Boolean(reading.keywords),
+      orientationOutsidePanel: Boolean(reading.orientation),
+      archetypeText: Boolean(archetypeText),
+      mainQuoteText: Boolean(mainQuoteText),
+      supportingLine: false,
     };
     posterCiLog('draw_text', {
       executed: hasReadingPanel,
       blocks: Object.values(textBlocks).filter(Boolean).length,
       detail: textBlocks,
     });
-    drawReadingPanel();
+    ({ quoteY } = drawReadingPanel() || { quoteY: null });
+    if (isPosterDebugEnabled()) {
+      console.info('[poster-debug][daily]', {
+        lang,
+        orientationLabel: reading.orientation,
+        outsidePanelOrientation: true,
+        archetypeText,
+        tarotImplyUsed: false,
+        mainQuoteSource: reading.mainQuoteSource,
+        mainQuoteText,
+        quoteY,
+        supportingLineSource: reading.supportingLineSource,
+        supportLineText: '',
+        luckyColorsLength: luckyColors.length,
+        luckyDotColors,
+      });
+    }
+    drawOrientationLabel();
     drawLuckyRow();
     drawFooter();
     console.log('[Poster] Canvas drawn');
