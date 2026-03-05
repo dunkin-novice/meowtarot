@@ -6,9 +6,9 @@ function stripVersion(url = '') {
   return String(url).replace(/[?&]v=[^&]+/g, '').replace(/[?&]$/, '');
 }
 
-test('card image URLs resolve to meow-v1 by default', () => {
+test('card image URLs resolve to meow-v2 by default', () => {
   const url = stripVersion(getCardImageUrl({ id: '01-the-fool-upright', orientation: 'upright' }));
-  assert.match(url, /assets\/meow-v1\/01-the-fool-upright\.webp$/);
+  assert.match(url, /assets\/meow-v2\/01-the-fool-upright\.webp$/);
 });
 
 test('card back URL resolves to supported back deck', () => {

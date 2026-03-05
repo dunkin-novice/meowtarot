@@ -2,7 +2,7 @@
 
 const DEFAULT_URLS = {
   working: 'https://cdn.meowtarot.com/assets/meow-v2/00-back.webp',
-  suspect: 'https://cdn.meowtarot.com/assets/meow-v1/01-the-fool-upright.webp',
+  suspect: 'https://cdn.meowtarot.com/assets/meow-v2/01-the-fool-upright.webp',
   background: 'https://cdn.meowtarot.com/backgrounds/bg-000.webp',
 };
 

@@ -4,7 +4,7 @@ function toText(value) {
   return value ? String(value) : '';
 }
 
-export function buildPosterConfig({ mode = 'full', orientation = 'upright', backgroundPath, assetPack = 'meow-v1', backPack = 'meow-v2' } = {}) {
+export function buildPosterConfig({ mode = 'full', orientation = 'upright', backgroundPath, assetPack = 'meow-v2', backPack = 'meow-v2' } = {}) {
   return {
     mode: mode === 'daily' ? 'daily' : 'full',
     orientation: orientation === 'reversed' ? 'reversed' : 'upright',
