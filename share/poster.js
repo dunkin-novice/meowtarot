@@ -8,9 +8,9 @@ import { normalizePayload } from './normalize-payload.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
 import { getLocalizedField, getOrientationLabel } from '../js/tarot-format.js';
 import {
+  buildCardImageUrls,
   resolveCardBackFallbackPath,
-  resolveCardBackPath,
-  resolveCardFacePath,
+  resolveCardImageUrl,
   resolvePosterBackgroundPath,
   toAssetUrl,
 } from '../js/asset-resolver.js';
@@ -545,18 +545,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         const baseId = baseCardId(entry.card.id || entry.card.card_id || entry.card.image_id);
         const orientedId = `${baseId}-${entry.orientation}`;
         const uprightId = `${baseId}-upright`;
-        const facePack = payload?.poster?.assetPack || 'meow-v1';
-        const backPack = payload?.poster?.backPack || 'meow-v2';
-        const primary = toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
-        const fallback = entry.orientation === 'reversed'
-          ? toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }))
-          : null;
-        const finalFallback = toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
+        const cardIdentity = { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
+        const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, entry.orientation);
+        const resolvedPrimary = await resolveCardImageUrl(cardIdentity, entry.orientation);
+        const fallback = entry.orientation === 'reversed' ? uprightUrl : null;
+        const finalFallback = backUrl;
         try {
-          const img = await imageManager.loadImageWithFallback(primary, [fallback, finalFallback].filter(Boolean));
+          const img = await imageManager.loadImageWithFallback(resolvedPrimary || reversedUrl || uprightUrl || backUrl, [fallback, finalFallback].filter(Boolean));
           ctx.drawImage(img, x, cardY, cardW, cardH);
         } catch (error) {
-          console.warn('[Poster] card image failed', { url: primary, reason: error?.message || String(error) });
+          console.warn('[Poster] card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
         }
       }
 
@@ -665,15 +663,15 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       if (!cardEntry?.card) return null;
       const baseId = baseCardId(cardEntry.card.id || cardEntry.card.card_id || cardEntry.card.image_id);
       const orientedId = `${baseId}-${cardEntry.orientation}`;
-      const uprightId = `${baseId}-upright`;
-      const facePack = payload?.poster?.assetPack || 'meow-v1';
-      const backPack = payload?.poster?.backPack || 'meow-v2';
       const localPrimary = resolveLocalPosterFixtureUrl('card', cardEntry.orientation);
       const localUpright = resolveLocalPosterFixtureUrl('card', 'upright');
       const localBack = resolveLocalPosterFixtureUrl('back');
-      const primary = localPrimary || toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
-      const upright = localUpright || toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }));
-      const back = localBack || toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
+      const cardIdentity = { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, cardEntry.orientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, cardEntry.orientation);
+      const primary = localPrimary || resolvedPrimary || (cardEntry.orientation === 'reversed' ? reversedUrl : uprightUrl) || backUrl;
+      const upright = localUpright || uprightUrl;
+      const back = localBack || backUrl;
       posterCiLog('card_urls', { primary, upright, back });
       if (isPosterCiDebugEnabled()) {
         const backFallback = localBack || toAssetUrl(resolveCardBackFallbackPath());
@@ -971,18 +969,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const baseId = baseCardId(entry.card.id || entry.card.card_id || entry.card.image_id);
       const orientedId = `${baseId}-${entry.orientation}`;
       const uprightId = `${baseId}-upright`;
-      const facePack = payload?.poster?.assetPack || 'meow-v1';
-      const backPack = payload?.poster?.backPack || 'meow-v2';
-      const primary = toAssetUrl(resolveCardFacePath({ id: orientedId, pack: facePack }));
-      const fallback = entry.orientation === 'reversed'
-        ? toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }))
-        : null;
-      const finalFallback = toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
+      const cardIdentity = { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, entry.orientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, entry.orientation);
+      const fallback = entry.orientation === 'reversed' ? uprightUrl : null;
+      const finalFallback = backUrl;
       try {
-        const img = await imageManager.loadImageWithFallback(primary, [fallback, finalFallback].filter(Boolean));
+        const img = await imageManager.loadImageWithFallback(resolvedPrimary || reversedUrl || uprightUrl || backUrl, [fallback, finalFallback].filter(Boolean));
         ctx.drawImage(img, x, y, cardWidth, cardHeight);
       } catch (error) {
-        console.warn('[Poster] card image failed', { url: primary, reason: error?.message || String(error) });
+        console.warn('[Poster] card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
       }
     }
   }

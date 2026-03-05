@@ -19,7 +19,7 @@ import {
 } from './data.js';
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
-import { resolvePosterBackgroundPath } from './asset-resolver.js';
+import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath } from './asset-resolver.js';
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -195,6 +195,12 @@ function openCardSheet(card) {
   cardSheetState.src = src;
 
   applyImgFallback(cardSheetEls.image, src, candidates);
+  resolveCardImageUrl(card, toOrientation(card)).then((resolvedSrc) => {
+    if (resolvedSrc && resolvedSrc !== cardSheetEls.image.src) {
+      cardSheetEls.image.src = resolvedSrc;
+      cardSheetState.src = resolvedSrc;
+    }
+  }).catch(() => {});
   cardSheetEls.image.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   cardSheetEls.title.textContent = getName(card);
   cardSheetEls.meaningBtn.href = buildCardMeaningUrl(card) || '#';
@@ -502,34 +508,19 @@ function resolveImageIds(card, targetOrientation = toOrientation(card)) {
 }
 
 function getCardImageUrlWithFallback(card) {
-  const backSrc = getCardBackUrl();
-  const backFallback = getCardBackFallbackUrl();
-  if (!card) return { src: backSrc, fallback: backFallback };
+  const orientation = toOrientation(card);
+  const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
 
-  const { orientedId, uprightId, orientation } = resolveImageIds(card, toOrientation(card));
-  if (!orientedId) return { src: backSrc, fallback: backFallback };
-
-  const orientedCard = { ...card, id: orientedId, card_id: orientedId, image_id: orientedId, orientation };
-  const uprightCard = { ...card, id: uprightId, card_id: uprightId, image_id: uprightId, orientation: 'upright' };
-
-  const src = getCardImageUrl(orientedCard, { orientation });
-  const fallback = orientation === 'reversed'
-    ? getCardImageUrl(uprightCard, { orientation: 'upright' })
-    : null;
-  const deckFallback = getCardImageFallbackUrl(orientedCard, { orientation });
-  const backstopFallback = backFallback || backSrc;
-
-  const uprightDeckFallback = orientation === 'reversed'
-    ? getCardImageFallbackUrl(uprightCard, { orientation: 'upright' })
-    : null;
-
-  const preferFallbackDeck = activeDeckId === 'meow-v2' && deckFallback;
+  if (orientation === 'reversed') {
+    return {
+      src: reversedUrl || uprightUrl || backUrl,
+      candidates: [uprightUrl, backUrl].filter(Boolean),
+    };
+  }
 
   return {
-    src: preferFallbackDeck ? deckFallback : src,
-    candidates: preferFallbackDeck
-      ? [src, fallback, uprightDeckFallback, backstopFallback]
-      : [deckFallback, fallback, uprightDeckFallback, backstopFallback],
+    src: uprightUrl || backUrl,
+    candidates: [backUrl].filter(Boolean),
   };
 }
 
@@ -548,26 +539,43 @@ function getStableCardImageSources(card) {
   return stable;
 }
 
-function preloadImageSources(src, candidates = []) {
-  const key = [src, ...candidates].filter(Boolean).join('|');
+function preloadImageSources(card, src, candidates = []) {
+  const key = [card?.id || '', src, ...candidates].filter(Boolean).join('|');
   if (!key) return Promise.resolve();
   if (imagePreloadCache.has(key)) return imagePreloadCache.get(key);
 
   const promise = new Promise((resolve) => {
     const probe = new Image();
-    applyImgFallback(probe, src, candidates);
+    const finalCandidates = Array.from(new Set([src, ...candidates].filter(Boolean)));
 
-    if (probe.complete && probe.naturalWidth > 0) {
-      imageLoadedCache.add(key);
-      resolve();
-      return;
-    }
+    resolveCardImageUrl(card, toOrientation(card))
+      .then((finalUrl) => {
+        if (finalUrl) {
+          const idx = finalCandidates.indexOf(finalUrl);
+          if (idx > 0) {
+            finalCandidates.splice(idx, 1);
+            finalCandidates.unshift(finalUrl);
+          } else if (idx < 0) {
+            finalCandidates.unshift(finalUrl);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        applyImgFallback(probe, finalCandidates[0], finalCandidates.slice(1));
 
-    probe.onload = () => {
-      imageLoadedCache.add(key);
-      resolve();
-    };
-    probe.onerror = () => resolve();
+        if (probe.complete && probe.naturalWidth > 0) {
+          imageLoadedCache.add(key);
+          resolve();
+          return;
+        }
+
+        probe.onload = () => {
+          imageLoadedCache.add(key);
+          resolve();
+        };
+        probe.onerror = () => resolve();
+      });
   });
 
   imagePreloadCache.set(key, promise);
@@ -585,14 +593,20 @@ function buildCardArt(card, variant = 'hero') {
   img.crossOrigin = 'anonymous';
 
   const { src, candidates = [] } = getStableCardImageSources(card);
-  const sourceKey = [src, ...candidates].filter(Boolean).join('|');
+  const sourceKey = [card?.id || '', src, ...candidates].filter(Boolean).join('|');
 
   if (imageLoadedCache.has(sourceKey)) {
     applyImgFallback(img, src, candidates);
+    resolveCardImageUrl(card, toOrientation(card)).then((resolvedSrc) => {
+      if (resolvedSrc && resolvedSrc !== img.src) img.src = resolvedSrc;
+    }).catch(() => {});
   } else {
     img.style.visibility = 'hidden';
-    preloadImageSources(src, candidates).finally(() => {
+    preloadImageSources(card, src, candidates).finally(() => {
       applyImgFallback(img, src, candidates);
+      resolveCardImageUrl(card, toOrientation(card)).then((resolvedSrc) => {
+        if (resolvedSrc && resolvedSrc !== img.src) img.src = resolvedSrc;
+      }).catch(() => {});
       img.style.visibility = 'visible';
     });
   }
@@ -1277,7 +1291,7 @@ function buildSharePayload() {
     backgroundPath: resolvePosterBackgroundPath({
       payload: { mode: state.mode, cards: cards.map(({ id, orientation }) => ({ id, orientation })) },
     }),
-    assetPack: 'meow-v1',
+    assetPack: 'meow-v2',
     backPack: 'meow-v2',
   });
   poster.title = modeTitle;

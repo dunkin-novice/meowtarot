@@ -27,7 +27,7 @@ function buildCasePayload({ orientation = 'upright', debugBackgroundPath } = {})
     poster: {
       mode: 'daily',
       orientation,
-      assetPack: 'meow-v1',
+      assetPack: 'meow-v2',
       backPack: 'meow-v2',
       backgroundPath: isReversed ? 'backgrounds/bg-daily-reversed-v2.webp' : 'backgrounds/bg-daily-upright-v2.webp',
       revision: 'ci-debug',

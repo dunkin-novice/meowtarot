@@ -229,7 +229,7 @@ test('share payload and poster render include card + reading content', async ({ 
     poster: {
       mode: 'daily',
       orientation: 'upright',
-      assetPack: 'meow-v1',
+      assetPack: 'meow-v2',
       backPack: 'meow-v2',
       backgroundPath: 'backgrounds/bg-daily-upright-v2.webp',
       revision: 'ci-debug',
@@ -282,7 +282,7 @@ test('share payload and poster render include card + reading content', async ({ 
     assert.ok(typeof decodedPayload.reading.subHeading === 'string', 'Expected payload.reading.subHeading string');
     assert.ok(typeof decodedPayload.reading.keywords === 'string', 'Expected payload.reading.keywords string');
     assert.ok(typeof decodedPayload.reading.summary === 'string', 'Expected payload.reading.summary string');
-    assert.ok(decodedPayload.poster && decodedPayload.poster.assetPack === 'meow-v1', 'Expected payload.poster.assetPack to be meow-v1');
+    assert.ok(decodedPayload.poster && decodedPayload.poster.assetPack === 'meow-v2', 'Expected payload.poster.assetPack to be meow-v2');
     assert.ok(decodedPayload.poster.backPack === 'meow-v2', 'Expected payload.poster.backPack to be meow-v2');
     assert.ok(decodedPayload.poster.mode === 'daily', 'Expected payload.poster.mode to be daily');
     assert.ok(decodedPayload.cards[0] && typeof decodedPayload.cards[0] === 'object', 'Expected payload.cards entries to be objects');

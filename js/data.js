@@ -2,7 +2,7 @@ import { buildAssetUrl, resolveDeckAssetBase } from './asset-config.js';
 import {
   resolveCardBackFallbackPath,
   resolveCardBackPath,
-  resolveCardFacePath,
+  buildCardImageUrls,
 } from './asset-resolver.js';
 
 // Deck configuration (for future multi-deck support)
@@ -13,18 +13,10 @@ export const DECKS = {
     assetsBase: resolveDeckAssetBase('assets/meow-v2'),
     backImage: buildAssetUrl('assets/meow-v2/00-back.webp'),
   },
-  'meow-v1': {
-    id: 'meow-v1',
-    name: 'MeowTarot v1',
-    assetsBase: resolveDeckAssetBase('assets/meow-v1'),
-    backImage: buildAssetUrl('assets/meow-v1/00-back.webp'),
-    // future: pattern for card faces, e.g.
-    // cardImagePattern: 'assets/meow-v1/{imageId}.webp',
-  },
 };
 
-export const DEFAULT_DECK_ID = 'meow-v1';
-export const FALLBACK_DECK_ID = 'meow-v1';
+export const DEFAULT_DECK_ID = 'meow-v2';
+export const FALLBACK_DECK_ID = 'meow-v2';
 
 export let activeDeckId = DEFAULT_DECK_ID;
 
@@ -69,31 +61,22 @@ function joinAssetPathSingleSlash(base = '', subpath = '') {
   return joinAssetPath(base, subpath);
 }
 
-// Placeholder for future card images (do NOT use it yet in the UI)
+// Card images resolve via meow-v2 with runtime existence fallback.
 export function getCardImageUrl(card, options = {}) {
-  const deck = getActiveDeck();
   const orientation = options.orientation || card.orientation || 'upright';
-
   const baseId = normalizeId(
     String(card.image_id || card.card_id || card.id || '').replace(/-(upright|reversed)$/i, ''),
   );
-
-  const finalId = baseId ? `${baseId}-${orientation}` : card.image_id || card.card_id || card.id;
-  const pack = options.pack || deck?.id || DEFAULT_DECK_ID;
-  const explicitPath = options.assetsBase
-    ? joinAssetPathSingleSlash(options.assetsBase, `${finalId}.webp`)
-    : resolveCardFacePath({ id: finalId, pack });
-
-  return buildAssetUrl(explicitPath);
+  const orientedCard = baseId
+    ? { ...card, id: `${baseId}-${orientation}`, card_id: `${baseId}-${orientation}`, image_id: `${baseId}-${orientation}` }
+    : card;
+  const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(orientedCard, orientation);
+  if (orientation === 'reversed') return reversedUrl || uprightUrl || backUrl;
+  return uprightUrl || backUrl;
 }
 
-export function getCardImageFallbackUrl(card, options = {}) {
-  const fallbackDeck = getFallbackDeck();
-  if (!fallbackDeck) return null;
-  return getCardImageUrl(card, {
-    ...options,
-    pack: fallbackDeck.id,
-  });
+export function getCardImageFallbackUrl() {
+  return null;
 }
 
 export function applyImageFallback(imgEl, primarySrc, fallbackSources = []) {
