@@ -110,6 +110,7 @@ function createImageManager() {
       const img = new Image();
       img.decoding = 'async';
       if (crossOrigin) {
+        // NOTE: cdn.meowtarot.com must return Access-Control-Allow-Origin: * for cross-origin canvas/image usage.
         img.crossOrigin = crossOrigin;
       }
       img.src = absolute;
@@ -147,6 +148,7 @@ function createImageManager() {
         return await loadImage(source, options);
       } catch (error) {
         lastError = error;
+        console.warn('[Image] failed', { url: source, reason: error?.message || String(error) });
       }
     }
     if (lastError) {
@@ -158,6 +160,7 @@ function createImageManager() {
   return {
     loadImage,
     loadWithFallback,
+    loadImageWithFallback: loadWithFallback,
     buildSourceList,
   };
 }

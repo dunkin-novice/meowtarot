@@ -15,7 +15,7 @@ import {
   getCardImageFallbackUrl,
   getCardBackUrl,
   getCardBackFallbackUrl,
-  applyImageFallback,
+  applyImgFallback,
 } from './data.js';
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
@@ -201,11 +201,11 @@ async function saveCardImageFromSheet() {
 function openCardSheet(card) {
   if (!card || !cardSheetEls.overlay || !cardSheetEls.image) return;
 
-  const { src } = getCardImageUrlWithFallback(card);
+  const { src, candidates = [] } = getCardImageUrlWithFallback(card);
   cardSheetState.card = card;
   cardSheetState.src = src;
 
-  cardSheetEls.image.src = src;
+  applyImgFallback(cardSheetEls.image, src, candidates);
   cardSheetEls.image.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   cardSheetEls.title.textContent = getName(card);
   cardSheetEls.meaningBtn.href = buildCardMeaningUrl(card) || '#';
@@ -566,7 +566,7 @@ function preloadImageSources(src, candidates = []) {
 
   const promise = new Promise((resolve) => {
     const probe = new Image();
-    applyImageFallback(probe, src, candidates);
+    applyImgFallback(probe, src, candidates);
 
     if (probe.complete && probe.naturalWidth > 0) {
       imageLoadedCache.add(key);
@@ -599,11 +599,11 @@ function buildCardArt(card, variant = 'hero') {
   const sourceKey = [src, ...candidates].filter(Boolean).join('|');
 
   if (imageLoadedCache.has(sourceKey)) {
-    applyImageFallback(img, src, candidates);
+    applyImgFallback(img, src, candidates);
   } else {
     img.style.visibility = 'hidden';
     preloadImageSources(src, candidates).finally(() => {
-      applyImageFallback(img, src, candidates);
+      applyImgFallback(img, src, candidates);
       img.style.visibility = 'visible';
     });
   }
@@ -1042,8 +1042,9 @@ function renderFull(cards, dict) {
     meaningBody.innerHTML = '';
     if (deeperHasContent) {
       meaningBody.appendChild(deeperPanel);
-      meaningToggle?.setAttribute('aria-expanded', 'false');
-      meaningCard.classList.remove('is-open');
+      const shouldOpenByDefault = !isMobile();
+      meaningToggle?.setAttribute('aria-expanded', String(shouldOpenByDefault));
+      meaningCard.classList.toggle('is-open', shouldOpenByDefault);
     }
   } else if (deeperHasContent) {
     readingContent.appendChild(deeperPanel);
@@ -1248,6 +1249,9 @@ function buildSharePayload() {
     assetPack: 'meow-v1',
     backPack: 'meow-v2',
   });
+  poster.title = modeTitle;
+  poster.subtitle = modeSubtitle;
+  poster.footer = 'meowtarot.com';
 
   const payload = {
     version: 1,
