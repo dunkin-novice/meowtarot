@@ -1,4 +1,5 @@
 import { buildPoster } from './poster.js';
+import { normalizePayload } from './normalize-payload.js';
 
 const previewEl = document.getElementById('posterPreview');
 const loadingEl = document.getElementById('posterLoading');
@@ -118,7 +119,7 @@ function resolvePayload() {
   const raw = params.get('d');
   if (raw) {
     try {
-      const payload = base64UrlDecode(raw);
+      const payload = normalizePayload(base64UrlDecode(raw));
       storePayload(payload);
       return payload;
     } catch (_) {
@@ -128,11 +129,19 @@ function resolvePayload() {
 
   try {
     const stored = sessionStorage.getItem(SHARE_STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) return normalizePayload(JSON.parse(stored));
   } catch (_) {
     return null;
   }
   return null;
+}
+
+
+function logFullPayload(payload) {
+  if (!payload || payload.mode !== 'full') return;
+  console.log('[Full] payload keys', Object.keys(payload));
+  console.log('[Full] reading keys', Object.keys(payload.reading || {}));
+  console.log('[Full] cards length', Array.isArray(payload.cards) ? payload.cards.length : 0);
 }
 
 function setPosterBlob(blob) {
@@ -185,6 +194,7 @@ async function ensureFontsReady() {
 
 async function ensurePoster() {
   if (!currentPayload) return null;
+  currentPayload = normalizePayload(currentPayload);
   if (currentBlob) return currentBlob;
   if (posterPromise) return posterPromise;
 
@@ -196,7 +206,9 @@ async function ensurePoster() {
     const startedAt = performance.now();
     try {
       await ensureFontsReady();
-      const result = await buildPoster(currentPayload, { preset: 'story' });
+      const normalizedPayload = normalizePayload(currentPayload);
+      currentPayload = normalizedPayload;
+      const result = await buildPoster(normalizedPayload, { preset: 'story' });
       if (result.width !== 1080 || result.height !== 1920) {
         throw new Error('Unexpected poster size');
       }
@@ -269,9 +281,11 @@ function applyActionFocus() {
 
 async function init() {
   console.info('Initializing share page');
-  currentPayload = resolvePayload();
+  currentPayload = normalizePayload(resolvePayload());
   const lang = currentPayload?.lang || 'en';
   const strings = getStrings(lang);
+
+  logFullPayload(currentPayload);
 
   if (!currentPayload) {
     showToast(strings.missing, { tone: 'error', persist: true });

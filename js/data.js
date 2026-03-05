@@ -103,16 +103,31 @@ export function applyImageFallback(imgEl, primarySrc, fallbackSources = []) {
   if (!uniqueCandidates.length) return;
 
   let index = 0;
-  imgEl.onerror = () => {
+  imgEl.onerror = (event) => {
+    const failedSrc = event?.currentTarget?.currentSrc || imgEl.currentSrc || imgEl.src || uniqueCandidates[index];
+    const reason = event?.type || 'error';
+    console.warn('[Image] failed', { url: failedSrc, reason });
+
     index += 1;
     if (index >= uniqueCandidates.length) {
       imgEl.onerror = null;
+      imgEl.dataset.imgFallbackFailed = '1';
       return;
     }
+
+    if (imgEl.dataset.imgFallbackLocked === '1') return;
+    imgEl.dataset.imgFallbackLocked = '1';
     imgEl.src = uniqueCandidates[index];
+    const unlock = () => {
+      delete imgEl.dataset.imgFallbackLocked;
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(unlock);
+    else setTimeout(unlock, 0);
   };
   imgEl.src = uniqueCandidates[index];
 }
+
+export const applyImgFallback = applyImageFallback;
 
 // Dynamic deck used by the app
 export let meowTarotCards = [];

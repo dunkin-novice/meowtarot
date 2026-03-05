@@ -4,6 +4,7 @@ import {
   normalizeId,
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
+import { normalizePayload } from './normalize-payload.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
 import {
   resolveCardBackFallbackPath,
@@ -145,6 +146,11 @@ async function canvasToBlob(canvas, quality = POSTER_WEBP_QUALITY) {
 
 function baseCardId(id = '') {
   return normalizeId(String(id).replace(/-(upright|reversed)$/i, '')) || normalizeId(id);
+}
+
+function toSafeText(value, fallback = '') {
+  if (value == null) return fallback;
+  return String(value);
 }
 
 async function buildCardEntries(payload) {
@@ -409,7 +415,8 @@ function resolveLuckyInfo(payload, cardEntry) {
   };
 }
 
-export async function buildPoster(payload, { preset = 'story' } = {}) {
+export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
+  const payload = normalizePayload(rawPayload) || normalizePayload({});
   const perf = {
     startedAt: performance.now(),
     preloadMs: 0,
@@ -429,6 +436,10 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     cards: Array.isArray(payload?.cards)
       ? payload.cards.map((card) => card?.id || card?.cardId || card?.card_id).filter(Boolean)
       : [],
+  });
+  const missingPosterFields = ['title', 'subtitle', 'footer'].filter((key) => !toSafeText(payload?.poster?.[key]).trim());
+  missingPosterFields.forEach((field) => {
+    console.warn(`[Poster] missing poster.${field}`);
   });
   if (document.fonts?.ready) {
     await document.fonts.ready;
@@ -763,8 +774,8 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
     return { blob, width, height, perf };
   }
 
-  const title = payload?.title || 'MeowTarot Reading';
-  const subtitle = payload?.subtitle || '';
+  const title = toSafeText(payload?.poster?.title ?? payload?.title, 'MeowTarot Reading');
+  const subtitle = toSafeText(payload?.poster?.subtitle ?? payload?.subtitle, '');
   const keywords = Array.isArray(payload?.keywords) ? payload.keywords.filter(Boolean).slice(0, 3) : [];
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f8d77a';
@@ -816,19 +827,28 @@ export async function buildPoster(payload, { preset = 'story' } = {}) {
         ? toAssetUrl(resolveCardFacePath({ id: uprightId, pack: facePack }))
         : null;
       const finalFallback = toAssetUrl(resolveCardBackPath({ preferredPack: backPack }));
-      const img = await imageManager.loadWithFallback(primary, [fallback, finalFallback].filter(Boolean));
-      ctx.drawImage(img, x, y, cardWidth, cardHeight);
+      try {
+        const img = await imageManager.loadImageWithFallback(primary, [fallback, finalFallback].filter(Boolean));
+        ctx.drawImage(img, x, y, cardWidth, cardHeight);
+      } catch (error) {
+        console.warn('[Poster] card image failed', { url: primary, reason: error?.message || String(error) });
+      }
     }
   }
   console.log('[Poster] Images resolved');
 
   ctx.fillStyle = '#f7f4ee';
   ctx.font = '500 30px "Space Grotesk", sans-serif';
-  drawTextBlock(ctx, payload?.headline || '', width / 2, height * 0.73, width * 0.78, 38);
+  const headline = toSafeText(payload?.headline, '');
+  if (!headline.trim()) {
+    console.warn('[Poster] missing headline text');
+  }
+  drawTextBlock(ctx, headline, width / 2, height * 0.73, width * 0.78, 38);
 
   ctx.fillStyle = '#aab0c9';
   ctx.font = '500 28px "Space Grotesk", sans-serif';
-  ctx.fillText('meowtarot.com', width / 2, height - 90);
+  const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
+  ctx.fillText(footerText, width / 2, height - 90);
   console.log('[Poster] Canvas drawn');
 
   const exportStart = performance.now();
