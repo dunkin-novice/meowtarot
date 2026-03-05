@@ -13,6 +13,7 @@ const retryBtn = document.getElementById('retryPoster');
 const backToReading = document.getElementById('backToReading');
 
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
+const POSTER_DEBUG_STORAGE_KEY = 'POSTER_DEBUG';
 let currentBlob = null;
 let currentUrl = null;
 let revokeTimer = null;
@@ -103,12 +104,22 @@ function isEmbeddedWebView() {
 
 function isPosterDebugEnabled() {
   const params = new URLSearchParams(window.location.search || '');
-  return params.get('poster_debug') === '1' || params.get('debug') === '1' || String(window.POSTER_DEBUG || '').trim() === '1';
+  if (params.get('poster_debug') === '1') return true;
+  try {
+    return String(window.localStorage?.getItem(POSTER_DEBUG_STORAGE_KEY) || '').trim() === '1';
+  } catch (_) {
+    return false;
+  }
 }
 
 function setupPosterDebugMode() {
   if (!isPosterDebugEnabled()) return;
   window.POSTER_DEBUG = '1';
+}
+
+function debugLog(method = 'info', ...args) {
+  if (!isPosterDebugEnabled()) return;
+  (console[method] || console.info).call(console, ...args);
 }
 
 function ensureDebugOverlay() {
@@ -352,9 +363,9 @@ function resolvePayload() {
 
 function logFullPayload(payload) {
   if (!payload || payload.mode !== 'full') return;
-  console.log('[Full] payload keys', Object.keys(payload));
-  console.log('[Full] reading keys', Object.keys(payload.reading || {}));
-  console.log('[Full] cards length', Array.isArray(payload.cards) ? payload.cards.length : 0);
+  debugLog('log', '[Full] payload keys', Object.keys(payload));
+  debugLog('log', '[Full] reading keys', Object.keys(payload.reading || {}));
+  debugLog('log', '[Full] cards length', Array.isArray(payload.cards) ? payload.cards.length : 0);
 }
 
 function setPosterBlob(blob) {
@@ -407,7 +418,7 @@ async function ensureFontsReady() {
   if (!document.fonts?.ready) return;
   if (!fontsReadyPromise) {
     fontsReadyPromise = document.fonts.ready.catch((error) => {
-      console.warn('Font readiness check failed', error);
+      debugLog('warn', 'Font readiness check failed', error);
     });
   }
   await fontsReadyPromise;
@@ -460,7 +471,7 @@ async function ensurePoster() {
       lastFailedAssetUrl = null;
       posterFailureReason = null;
       setRetryVisible(false, strings);
-      console.info('Poster generation timings', { totalMs: Number((performance.now() - startedAt).toFixed(1)), ...(result.perf || {}) });
+      debugLog('info', 'Poster generation timings', { totalMs: Number((performance.now() - startedAt).toFixed(1)), ...(result.perf || {}) });
       updatePipelineStage('done');
       showToast(strings.ready);
       updateOpenInBrowserBanner();
@@ -493,7 +504,7 @@ async function ensurePoster() {
 async function handleShare() {
   if (!currentPayload) return;
   const strings = getStrings(currentPayload.lang);
-  console.info('Share action triggered');
+  debugLog('info', 'Share action triggered');
   showToast(strings.preparing);
   let blob = null;
   try {
@@ -571,16 +582,16 @@ async function handleShare() {
     if (result.shared) return;
     fallbackDownload();
     const copied = await copyShareLink();
-    showToast(copied ? 'Saved image + copied link.' : 'Saved image. Use browser share options to continue.', { tone: 'warning', persist: true });
+    showToast(copied ? 'Saved image + copied link.' : 'Saved image. Copy link unavailable in this browser.', { tone: 'warning', persist: true });
   } catch (err) {
-    console.warn('[Poster] share_error', err);
+    debugLog('warn', '[Poster] share_error', err);
     pushDebugOverlay({ stage: 'share_error', error: err?.message || String(err) });
     fallbackDownload();
-    await copyShareLink();
+    const copied = await copyShareLink();
     if (isEmbeddedWebView() || isInstagramWebView()) {
       updateOpenInBrowserBanner('Sharing is blocked in this in-app browser. Open in Safari/Chrome.');
     }
-    showToast('Sharing failed. Downloaded image instead.', { tone: 'warning', persist: true });
+    showToast(copied ? 'Sharing failed. Downloaded image + copied link.' : 'Sharing failed. Downloaded image instead.', { tone: 'warning', persist: true });
   } finally {
     setActionLoading(false, strings);
   }
@@ -595,14 +606,14 @@ function applyActionFocus() {
 }
 
 async function init() {
-  console.info('Initializing share page');
+  debugLog('info', 'Initializing share page');
   setupPosterDebugMode();
   updateOpenInBrowserBanner();
   updatePipelineStage('init');
   if (isPosterDebugEnabled()) {
     const h = window.location.hash || '';
     const clean = h.replace(/^#/, '');
-    console.info('[Share] incoming_hash', clean.length, clean.slice(0, 60));
+    debugLog('info', '[Share] incoming_hash', clean.length, clean.slice(0, 60));
   }
   currentPayload = normalizePayload(resolvePayload());
   if (currentPayload) updatePipelineStage('loaded_payload');
@@ -680,6 +691,7 @@ async function init() {
   });
 
   window.addEventListener('beforeunload', cleanupPosterUrl, { once: true });
+  window.addEventListener('pagehide', cleanupPosterUrl, { once: true });
 }
 
 document.addEventListener('DOMContentLoaded', init);
