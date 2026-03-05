@@ -101,6 +101,10 @@ let newReadingButtonHandler = null;
 const HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 let html2CanvasPromise = null;
 
+function isPosterDebugEnabled() {
+  return new URLSearchParams(window.location.search).get('poster_debug') === '1';
+}
+
 function isShareCiDebugEnabled() {
   if (typeof window === 'undefined') return false;
   if (window.DEBUG_SHARE_CI) return true;
@@ -1332,16 +1336,28 @@ function buildSharePayload() {
 
 async function buildSharePageUrl({ action } = {}) {
   const payload = buildSharePayload();
-  sessionStorage.setItem(SHARE_STORAGE_KEY, JSON.stringify(payload));
-  const encoded = base64UrlEncode(JSON.stringify(payload));
+  const hasCards = Array.isArray(payload?.cards) && payload.cards.length > 0;
+  if (!hasCards) {
+    throw new Error('Share payload missing cards');
+  }
+
+  const payloadJson = JSON.stringify(payload);
+  sessionStorage.setItem(SHARE_STORAGE_KEY, payloadJson);
+  const encoded = base64UrlEncode(payloadJson);
   const url = new URL('/share/', window.location.origin);
-  if (encoded) url.searchParams.set('d', encoded);
+  if (encoded) url.hash = `p=${encoded}`;
   if (action) url.searchParams.set('action', action);
+  if (isPosterDebugEnabled()) url.searchParams.set('poster_debug', '1');
+
+  if (isPosterDebugEnabled()) {
+    console.info('[Share] outgoing_url', url.toString());
+    console.info('[Share] payload_bytes', payloadJson.length, 'encoded_head', encoded.slice(0, 60));
+  }
 
   return url.toString();
 }
 
-async function openSharePageInNewTab({ action } = {}) {
+async function openSharePage({ action } = {}) {
   setShareButtonLoading(true);
   try {
     await waitForShareReady();
@@ -1351,8 +1367,13 @@ async function openSharePageInNewTab({ action } = {}) {
     setShareButtonLoading(false);
   }
 
-  const shareUrl = await buildSharePageUrl({ action });
-  window.open(shareUrl, '_blank', 'noopener,noreferrer');
+  try {
+    const shareUrl = await buildSharePageUrl({ action });
+    window.location.href = shareUrl;
+  } catch (error) {
+    console.error('Failed to build share URL', error);
+    alert(state.currentLang === 'th' ? 'ยังไม่พบผลการเปิดไพ่สำหรับการแชร์' : 'Missing reading data for sharing.');
+  }
 }
 
 function updateContextCopy(dict = translations[state.currentLang]) {
@@ -1477,7 +1498,7 @@ function configureSaveButton(dict = translations[state.currentLang]) {
 
   if (isMobile()) {
     saveBtn.textContent = state.currentLang === 'th' ? 'แชร์' : 'Share';
-    saveButtonHandler = () => openSharePageInNewTab();
+    saveButtonHandler = () => openSharePage();
   } else {
     saveBtn.textContent = dict.save || saveBtn.textContent;
     saveButtonHandler = saveImage;
@@ -1503,6 +1524,7 @@ function configureActionButtons(dict = translations[state.currentLang]) {
         ? 'แชร์คำทำนายอย่างละเอียด'
         : 'Share detailed result'
       : (dict.share || shareBtn.textContent);
+    shareBtn.disabled = state.selectedIds.length === 0;
   }
 
   if (newReadingBtn) {
@@ -1515,7 +1537,7 @@ function configureActionButtons(dict = translations[state.currentLang]) {
 
   configureSaveButton(dict);
 
-  shareButtonHandler = mobile ? shareReadingLink : () => openSharePageInNewTab();
+  shareButtonHandler = () => openSharePage();
   shareBtn?.addEventListener('click', shareButtonHandler);
 
   newReadingButtonHandler = () => {

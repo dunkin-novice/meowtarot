@@ -38,10 +38,15 @@
     <div class="poster-loading" id="posterLoading" aria-live="polite" hidden>Generating poster…</div>
     <div class="sr-only" id="posterHint">กดค้างที่รูปเพื่อบันทึก</div>
     <div class="share-toast" id="shareStatus" aria-live="polite" hidden></div>
+    <div class="ig-open-banner" id="igOpenBanner" hidden>
+      <span id="igOpenText">For best sharing results, open in Safari/Chrome.</span>
+      <button class="action-btn ghost ig-open-btn" id="igOpenBtn" type="button">Open in browser</button>
+    </div>
 
     <nav class="action-bar" aria-label="Share actions">
       <button class="action-btn primary" id="shareAction">Share</button>
       <button class="action-btn" id="retryPoster" type="button" hidden>Retry</button>
+      <a class="action-link" id="backToReading" href="/reading.html" hidden>Back to reading</a>
       <a class="action-link" id="openPosterLink" href="#" target="_blank" rel="noopener" hidden>Open poster image</a>
     </nav>
   </main>

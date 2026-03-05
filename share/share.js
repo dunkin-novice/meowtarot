@@ -5,9 +5,12 @@ const previewEl = document.getElementById('posterPreview');
 const loadingEl = document.getElementById('posterLoading');
 const hintEl = document.getElementById('posterHint');
 const statusEl = document.getElementById('shareStatus');
+const igOpenBanner = document.getElementById('igOpenBanner');
+const igOpenBtn = document.getElementById('igOpenBtn');
 const shareBtn = document.getElementById('shareAction');
 const openLink = document.getElementById('openPosterLink');
 const retryBtn = document.getElementById('retryPoster');
+const backToReading = document.getElementById('backToReading');
 
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 let currentBlob = null;
@@ -18,6 +21,15 @@ let currentPayload = null;
 let toastTimer = null;
 let fontsReadyPromise = null;
 let lastPosterError = null;
+let posterFailed = false;
+let lastFailedAssetUrl = null;
+let posterFailureReason = null;
+let payloadSource = 'none';
+let payloadBytes = 0;
+let payloadParseError = null;
+let payloadKeys = [];
+let payloadKeySummary = {};
+let pipelineStage = 'init';
 const actionLabels = {
   share: shareBtn?.textContent || 'Share',
 };
@@ -63,6 +75,128 @@ function isIOS() {
   return isIOSDevice && isWebKit && !isMacDesktop;
 }
 
+
+function detectWebViewContext() {
+  const ua = navigator.userAgent || '';
+  const embeddedMatch = ua.match(/FBAN|FBAV|Instagram|Line|Twitter|TikTok|Snapchat/i);
+  const instagramMatch = ua.match(/Instagram/i);
+  const looksLikeHeadless = /HeadlessChrome/i.test(ua);
+  const hasBrowserTokens = /Chrome|Safari/i.test(ua);
+  const embeddedByToken = Boolean(embeddedMatch) && !looksLikeHeadless;
+  const isInstagram = Boolean(instagramMatch) && !looksLikeHeadless;
+  const isEmbedded = (embeddedByToken && !hasBrowserTokens) || isInstagram;
+  return {
+    ua,
+    isInstagramWebView: isInstagram,
+    isEmbeddedWebView: isEmbedded,
+    matchSource: instagramMatch?.[0] || embeddedMatch?.[0] || null,
+  };
+}
+
+function isInstagramWebView() {
+  return detectWebViewContext().isInstagramWebView;
+}
+
+function isEmbeddedWebView() {
+  return detectWebViewContext().isEmbeddedWebView;
+}
+
+function isPosterDebugEnabled() {
+  const params = new URLSearchParams(window.location.search || '');
+  return params.get('poster_debug') === '1' || params.get('debug') === '1' || String(window.POSTER_DEBUG || '').trim() === '1';
+}
+
+function setupPosterDebugMode() {
+  if (!isPosterDebugEnabled()) return;
+  window.POSTER_DEBUG = '1';
+}
+
+function ensureDebugOverlay() {
+  if (!isPosterDebugEnabled()) return null;
+  let overlay = document.getElementById('posterDebugOverlay');
+  if (overlay) return overlay;
+  overlay = document.createElement('pre');
+  overlay.id = 'posterDebugOverlay';
+  Object.assign(overlay.style, {
+    position: 'fixed',
+    left: '8px',
+    right: '8px',
+    bottom: 'calc(env(safe-area-inset-bottom) + 8px)',
+    maxHeight: '38dvh',
+    overflow: 'auto',
+    zIndex: '40',
+    background: 'rgba(0,0,0,0.8)',
+    color: '#98f7b3',
+    border: '1px solid rgba(152,247,179,0.45)',
+    borderRadius: '10px',
+    fontSize: '11px',
+    lineHeight: '1.35',
+    padding: '8px',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+  });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function pushDebugOverlay(extra = {}) {
+  const overlay = ensureDebugOverlay();
+  if (!overlay) return;
+  const entries = Array.isArray(window.__MEOW_POSTER_DEBUG) ? window.__MEOW_POSTER_DEBUG.slice(-24) : [];
+  const imgLogs = entries.filter((item) => ['preload', 'img_probe'].includes(item?.step)).map((item) => ({
+    step: item.step,
+    kind: item.kind,
+    status: item.status || (item.ok ? 'ok' : 'error'),
+    url: item.url,
+    err: item.err || item.error || null,
+  }));
+  const exportEvent = [...entries].reverse().find((item) => item?.step === 'export_attempt' || item?.step === 'export_error') || null;
+  const webView = detectWebViewContext();
+  const payload = {
+    ua: webView.ua,
+    isInstagramWebView: webView.isInstagramWebView,
+    isEmbeddedWebView: webView.isEmbeddedWebView,
+    matchSource: webView.matchSource,
+    posterFailed,
+    lastPosterError: lastPosterError ? (lastPosterError.stack || lastPosterError.message || String(lastPosterError)) : null,
+    lastFailedAssetUrl,
+    posterFailureReason,
+    exportMethod: window.__MEOW_POSTER_EXPORT_METHOD || exportEvent?.method || null,
+    exportBytes: window.__MEOW_POSTER_EXPORT_BYTES || null,
+    exportBlobType: window.__MEOW_POSTER_EXPORT_BLOB_TYPE || null,
+    taintedCanvas: Boolean(window.__MEOW_POSTER_TAINTED || exportEvent?.tainted),
+    posterStage: window.__MEOW_POSTER_STAGE || null,
+    canvasSize: window.__MEOW_POSTER_CANVAS_SIZE || null,
+    scaledCanvasSize: window.__MEOW_POSTER_SCALED_CANVAS_SIZE || null,
+    exportAttempt: Array.isArray(window.__MEOW_POSTER_EXPORT_ATTEMPTS) ? window.__MEOW_POSTER_EXPORT_ATTEMPTS : [],
+    payloadSource,
+    payloadBytes,
+    payloadParseError,
+    payloadKeys,
+    payloadKeySummary,
+    pipelineStage,
+    imageLogs: imgLogs,
+    ...extra,
+  };
+  overlay.textContent = JSON.stringify(payload, null, 2);
+}
+
+function shouldShowOpenInBrowserBanner() {
+  const webView = detectWebViewContext();
+  return posterFailed === true && (webView.isInstagramWebView || webView.isEmbeddedWebView);
+}
+
+function updateOpenInBrowserBanner(reason = '') {
+  if (!igOpenBanner) return;
+  const shouldShow = shouldShowOpenInBrowserBanner();
+  igOpenBanner.hidden = !shouldShow;
+  if (!shouldShow) return;
+  const text = document.getElementById('igOpenText');
+  if (text && reason) {
+    text.textContent = reason;
+  }
+}
+
 function getStrings(lang) {
   return STRINGS[lang] || STRINGS.en;
 }
@@ -71,6 +205,24 @@ function base64UrlDecode(input = '') {
   const padded = input.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((input.length + 3) % 4);
   const json = decodeURIComponent(escape(atob(padded)));
   return JSON.parse(json);
+}
+
+
+function base64UrlDecodeRaw(input = '') {
+  const padded = input.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((input.length + 3) % 4);
+  return decodeURIComponent(escape(atob(padded)));
+}
+
+function readHashPayload() {
+  const hash = String(window.location.hash || '').replace(/^#/, '');
+  if (!hash) return null;
+  const hashParams = new URLSearchParams(hash);
+  return hashParams.get('p');
+}
+
+function updatePipelineStage(nextStage) {
+  pipelineStage = nextStage;
+  pushDebugOverlay({ stage: pipelineStage });
 }
 
 function showToast(message, { tone = 'info', persist = false } = {}) {
@@ -108,7 +260,9 @@ function setActionLoading(isLoading, strings) {
 
 function storePayload(payload) {
   try {
-    sessionStorage.setItem(SHARE_STORAGE_KEY, JSON.stringify(payload));
+    const data = JSON.stringify(payload);
+    sessionStorage.setItem(SHARE_STORAGE_KEY, data);
+    localStorage.setItem(SHARE_STORAGE_KEY, data);
   } catch (_) {
     // ignore storage errors
   }
@@ -116,23 +270,82 @@ function storePayload(payload) {
 
 function resolvePayload() {
   const params = new URLSearchParams(window.location.search);
-  const raw = params.get('d');
-  if (raw) {
+  const hashRaw = readHashPayload();
+  const queryRaw = params.get('d');
+
+  const parseEncodedPayload = (raw, sourceLabel) => {
+    if (!raw) return null;
     try {
-      const payload = normalizePayload(base64UrlDecode(raw));
-      storePayload(payload);
-      return payload;
-    } catch (_) {
-      // ignore decode errors
+      const rawJson = base64UrlDecodeRaw(raw);
+      payloadBytes = rawJson.length;
+      const parsed = normalizePayload(JSON.parse(rawJson));
+      payloadSource = sourceLabel;
+      payloadParseError = null;
+      payloadKeys = Object.keys(parsed || {});
+      payloadKeySummary = {
+        cardKeys: Object.keys(parsed?.cards?.[0] || {}),
+        readingKeys: Object.keys(parsed?.reading || {}),
+        luckyKeys: Object.keys(parsed?.lucky || {}),
+      };
+      storePayload(parsed);
+      return parsed;
+    } catch (error) {
+      payloadParseError = error?.message || String(error);
+      return null;
     }
+  };
+
+  const fromHash = parseEncodedPayload(hashRaw, 'hash');
+  if (fromHash) return fromHash;
+
+  const fromQuery = parseEncodedPayload(queryRaw, 'query');
+  if (fromQuery) return fromQuery;
+
+  try {
+    const historyPayload = window.history?.state?.meowtarotSharePayload;
+    if (historyPayload) {
+      const parsed = normalizePayload(historyPayload);
+      payloadSource = 'history';
+      payloadParseError = null;
+      const rawJson = JSON.stringify(parsed);
+      payloadBytes = rawJson.length;
+      payloadKeys = Object.keys(parsed || {});
+      payloadKeySummary = {
+        cardKeys: Object.keys(parsed?.cards?.[0] || {}),
+        readingKeys: Object.keys(parsed?.reading || {}),
+        luckyKeys: Object.keys(parsed?.lucky || {}),
+      };
+      storePayload(parsed);
+      return parsed;
+    }
+  } catch (error) {
+    payloadParseError = error?.message || String(error);
   }
 
   try {
-    const stored = sessionStorage.getItem(SHARE_STORAGE_KEY);
-    if (stored) return normalizePayload(JSON.parse(stored));
-  } catch (_) {
+    const stored = sessionStorage.getItem(SHARE_STORAGE_KEY) || localStorage.getItem(SHARE_STORAGE_KEY);
+    if (stored) {
+      const parsed = normalizePayload(JSON.parse(stored));
+      payloadSource = 'storage';
+      payloadParseError = null;
+      payloadBytes = stored.length;
+      payloadKeys = Object.keys(parsed || {});
+      payloadKeySummary = {
+        cardKeys: Object.keys(parsed?.cards?.[0] || {}),
+        readingKeys: Object.keys(parsed?.reading || {}),
+        luckyKeys: Object.keys(parsed?.lucky || {}),
+      };
+      return parsed;
+    }
+  } catch (error) {
+    payloadParseError = error?.message || String(error);
     return null;
   }
+
+  payloadSource = 'none';
+  payloadKeys = [];
+  payloadKeySummary = {};
+  payloadBytes = 0;
   return null;
 }
 
@@ -171,6 +384,14 @@ function scheduleRevoke() {
   }, 60000);
 }
 
+function cleanupPosterUrl() {
+  if (revokeTimer) clearTimeout(revokeTimer);
+  if (currentUrl) {
+    URL.revokeObjectURL(currentUrl);
+    currentUrl = null;
+  }
+}
+
 function ensurePosterUrl() {
   if (!currentBlob) return null;
   if (currentUrl) {
@@ -205,27 +426,60 @@ async function ensurePoster() {
   posterPromise = (async () => {
     const startedAt = performance.now();
     try {
-      await ensureFontsReady();
+      updatePipelineStage('preloading');
+      await Promise.race([
+        ensureFontsReady(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout at preloading')), 6000)),
+      ]);
       const normalizedPayload = normalizePayload(currentPayload);
       currentPayload = normalizedPayload;
-      const result = await buildPoster(normalizedPayload, { preset: 'story' });
+      const timeoutMs = 15000;
+      updatePipelineStage('rendering');
+      const posterPromiseOp = buildPoster(normalizedPayload, { preset: 'story' });
+      const stageWatcher = setInterval(() => {
+        if (window.__MEOW_POSTER_STAGE === 'exporting' && pipelineStage !== 'exporting') {
+          updatePipelineStage('exporting');
+        }
+      }, 150);
+      const result = await Promise.race([
+        posterPromiseOp,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`timeout at ${window.__MEOW_POSTER_STAGE || pipelineStage || 'rendering'} after ${timeoutMs}ms`)), timeoutMs)),
+      ]).finally(() => clearInterval(stageWatcher));
       if (result.width !== 1080 || result.height !== 1920) {
         throw new Error('Unexpected poster size');
       }
+      if (!result.blob) {
+        throw new Error('Poster blob is missing');
+      }
       setPosterBlob(result.blob);
+      window.__MEOW_POSTER_STAGE = 'done';
+      window.__MEOW_POSTER_EXPORT_BYTES = result.blob?.size || 0;
+      window.__MEOW_POSTER_EXPORT_BLOB_TYPE = result.blob?.type || null;
       lastPosterError = null;
+      posterFailed = false;
+      lastFailedAssetUrl = null;
+      posterFailureReason = null;
       setRetryVisible(false, strings);
-      setLoading(false, strings);
-      setActionLoading(false, strings);
       console.info('Poster generation timings', { totalMs: Number((performance.now() - startedAt).toFixed(1)), ...(result.perf || {}) });
+      updatePipelineStage('done');
       showToast(strings.ready);
+      updateOpenInBrowserBanner();
+      pushDebugOverlay({ stage: 'ensurePoster.success', blobType: result.blob?.type, blobSize: result.blob?.size });
       return result.blob;
     } catch (err) {
-      lastPosterError = err;
+      posterFailureReason = window.__MEOW_POSTER_FAILURE_REASON || (/timeout/i.test(String(err?.message || '')) ? 'timeout' : 'memory/export failure');
+      lastPosterError = new Error(`${posterFailureReason}: ${err?.message || String(err)}`);
+      window.__MEOW_POSTER_STAGE = 'fail';
+      posterFailed = true;
+      lastFailedAssetUrl = window.__MEOW_POSTER_LAST_FAILED_ASSET_URL || null;
+      updatePipelineStage('fail');
+      pushDebugOverlay({ stage: 'ensurePoster.catch', error: err?.message || String(err), failureReason: posterFailureReason, timeout: /timeout/i.test(String(err?.message || '')) });
       setRetryVisible(true, strings);
+      updateOpenInBrowserBanner('Poster generation failed in in-app browser. Open in Safari/Chrome.');
+      throw err;
+    } finally {
       setLoading(false, strings);
       setActionLoading(false, strings);
-      throw err;
     }
   })();
 
@@ -247,28 +501,89 @@ async function handleShare() {
   } catch (err) {
     const reason = err?.message || String(err);
     console.error('Failed to generate poster for sharing', reason, err);
-    showToast(strings.posterFail, { tone: 'error', persist: true });
+    pushDebugOverlay({ stage: 'handleShare.catch', error: reason });
+    updateOpenInBrowserBanner('Poster generation failed in in-app browser. Open in Safari/Chrome.');
+    showToast("Couldn't generate image in this in-app browser. Open in Safari/Chrome.", { tone: 'error', persist: true });
     return;
   }
   if (!blob) {
-    showToast(strings.posterFail, { tone: 'error', persist: true });
+    showToast("Couldn't generate image in this in-app browser. Open in Safari/Chrome.", { tone: 'error', persist: true });
     return;
   }
 
+  const sharePageUrl = window.location.href;
   const isWebp = blob.type === 'image/webp';
   const fileName = isWebp ? 'meowtarot.webp' : 'meowtarot.png';
-  const file = new File([blob], fileName, { type: blob.type || 'image/png' });
-  if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-    try {
-      showToast(strings.sharing);
-      await navigator.share({ files: [file], title: currentPayload.title || 'MeowTarot' });
-      return;
-    } catch (err) {
-      console.warn('File share failed', err);
-    }
-  }
 
-  showToast(strings.shareFail, { tone: 'warning', persist: true });
+  const fallbackDownload = () => {
+    const blobUrl = ensurePosterUrl();
+    if (!blobUrl) return;
+    if (openLink) {
+      openLink.hidden = false;
+      openLink.href = blobUrl;
+      openLink.download = fileName;
+    }
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const copyShareLink = async () => {
+    if (!navigator.clipboard?.writeText) return false;
+    try {
+      await navigator.clipboard.writeText(sharePageUrl);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const sharePoster = async () => {
+    const file = new File([blob], fileName, { type: blob.type || 'image/png' });
+    const canNativeShare = Boolean(
+      navigator.share
+      && (!navigator.canShare || navigator.canShare({ files: [file] })),
+    );
+    pushDebugOverlay({
+      stage: 'share_attempt',
+      shareAvailable: Boolean(navigator.share),
+      canShareFiles: canNativeShare,
+      fileType: file.type,
+      fileBytes: file.size,
+    });
+
+    if (canNativeShare) {
+      showToast(strings.sharing);
+      await navigator.share({ files: [file], title: currentPayload.title || 'MeowTarot', text: 'My daily reading' });
+      return { shared: true };
+    }
+
+    return { shared: false };
+  };
+
+  setActionLoading(true, strings);
+  try {
+    const result = await sharePoster();
+    if (result.shared) return;
+    fallbackDownload();
+    const copied = await copyShareLink();
+    showToast(copied ? 'Saved image + copied link.' : 'Saved image. Use browser share options to continue.', { tone: 'warning', persist: true });
+  } catch (err) {
+    console.warn('[Poster] share_error', err);
+    pushDebugOverlay({ stage: 'share_error', error: err?.message || String(err) });
+    fallbackDownload();
+    await copyShareLink();
+    if (isEmbeddedWebView() || isInstagramWebView()) {
+      updateOpenInBrowserBanner('Sharing is blocked in this in-app browser. Open in Safari/Chrome.');
+    }
+    showToast('Sharing failed. Downloaded image instead.', { tone: 'warning', persist: true });
+  } finally {
+    setActionLoading(false, strings);
+  }
 }
 
 function applyActionFocus() {
@@ -281,14 +596,28 @@ function applyActionFocus() {
 
 async function init() {
   console.info('Initializing share page');
+  setupPosterDebugMode();
+  updateOpenInBrowserBanner();
+  updatePipelineStage('init');
+  if (isPosterDebugEnabled()) {
+    const h = window.location.hash || '';
+    const clean = h.replace(/^#/, '');
+    console.info('[Share] incoming_hash', clean.length, clean.slice(0, 60));
+  }
   currentPayload = normalizePayload(resolvePayload());
+  if (currentPayload) updatePipelineStage('loaded_payload');
   const lang = currentPayload?.lang || 'en';
   const strings = getStrings(lang);
 
   logFullPayload(currentPayload);
 
   if (!currentPayload) {
+    updatePipelineStage('fail');
     showToast(strings.missing, { tone: 'error', persist: true });
+    if (backToReading) {
+      backToReading.hidden = false;
+      backToReading.href = '/reading.html';
+    }
     setLoading(false, strings);
     setActionLoading(false, strings);
     shareBtn.disabled = true;
@@ -296,6 +625,10 @@ async function init() {
   }
 
   document.title = `${currentPayload.title || 'MeowTarot'} – Share`;
+  if (backToReading) {
+    backToReading.hidden = true;
+    backToReading.href = currentPayload.canonicalUrl || '/reading.html';
+  }
   if (!isIOS()) {
     hintEl.hidden = true;
   }
@@ -308,6 +641,8 @@ async function init() {
     await ensurePoster();
   } catch (err) {
     console.error('Poster generation failed', err);
+    pushDebugOverlay({ stage: 'init.ensurePoster.catch', error: err?.message || String(err) });
+    updateOpenInBrowserBanner('Poster generation failed in in-app browser. Open in Safari/Chrome.');
     showToast(strings.posterFail, { tone: 'error', persist: true });
     setLoading(false, strings);
     setActionLoading(false, strings);
@@ -330,6 +665,11 @@ async function init() {
     }
   });
 
+  igOpenBtn?.addEventListener('click', () => {
+    const current = window.location.href;
+    window.open(current, '_blank', 'noopener');
+  });
+
   openLink?.addEventListener('click', async (event) => {
     event.preventDefault();
     const blob = await ensurePoster();
@@ -338,6 +678,8 @@ async function init() {
     if (!url) return;
     window.open(url, '_blank', 'noopener');
   });
+
+  window.addEventListener('beforeunload', cleanupPosterUrl, { once: true });
 }
 
 document.addEventListener('DOMContentLoaded', init);
