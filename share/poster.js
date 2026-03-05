@@ -15,9 +15,6 @@ import {
   toAssetUrl,
 } from '../js/asset-resolver.js';
 
-const POSTER_WEBP_QUALITY = 0.78;
-const POSTER_RETRY_WEBP_QUALITY = 0.72;
-const POSTER_WARN_MAX_BYTES = 600 * 1024;
 
 const PRESETS = {
   story: { width: 1080, height: 1920 },
@@ -31,11 +28,46 @@ function isPosterCiDebugEnabled() {
 }
 
 function isPosterDebugEnabled() {
+  if (typeof window !== 'undefined') {
+    const search = new URLSearchParams(window.location.search || '');
+    if (search.get('poster_debug') === '1' || search.get('debug') === '1') return true;
+  }
   const runtimeEnv = (typeof globalThis !== 'undefined' && globalThis.process?.env) ? globalThis.process.env : null;
   const envFlag = runtimeEnv?.POSTER_DEBUG;
   if (String(envFlag || '').trim() === '1') return true;
   if (typeof window === 'undefined') return false;
   return String(window.POSTER_DEBUG || '').trim() === '1';
+}
+
+function emitPosterDebug(step, payload = {}) {
+  if (!isPosterDebugEnabled()) return;
+  const event = {
+    ts: Date.now(),
+    step,
+    stage: step,
+    ...payload,
+  };
+  console.info('[Poster]', event);
+  if (typeof window !== 'undefined') {
+    window.__MEOW_POSTER_DEBUG = Array.isArray(window.__MEOW_POSTER_DEBUG) ? window.__MEOW_POSTER_DEBUG : [];
+    window.__MEOW_POSTER_DEBUG.push(event);
+    if (window.__MEOW_POSTER_DEBUG.length > 120) {
+      window.__MEOW_POSTER_DEBUG = window.__MEOW_POSTER_DEBUG.slice(-120);
+    }
+  }
+}
+
+function withTimeout(promise, timeoutMs, label = 'timeout') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} after ${timeoutMs}ms`)), timeoutMs)),
+  ]);
+}
+
+
+function setPosterRuntimeFlag(key, value) {
+  if (typeof window === 'undefined') return;
+  window[key] = value;
 }
 
 function posterCiLog(step, payload = {}) {
@@ -44,7 +76,7 @@ function posterCiLog(step, payload = {}) {
 }
 
 async function probeImageLoad(url, kind) {
-  if (!isPosterCiDebugEnabled() || !url || typeof fetch !== 'function') return;
+  if ((!isPosterCiDebugEnabled() && !isPosterDebugEnabled()) || !url || typeof fetch !== 'function') return;
   let status = null;
   let ok = false;
   let method = 'HEAD';
@@ -82,14 +114,20 @@ async function probeImageLoad(url, kind) {
   };
 
   try {
-    const res = await fetch(url, { method: 'HEAD', mode: 'cors' });
+    const headAbort = new AbortController();
+    const headTimer = setTimeout(() => headAbort.abort('head-timeout'), 5000);
+    const res = await fetch(url, { method: 'HEAD', mode: 'cors', signal: headAbort.signal });
+    clearTimeout(headTimer);
     status = res.status;
     ok = res.ok;
     attachMeta(res);
   } catch (error) {
     method = 'GET';
     try {
-      const res = await fetch(url, { method: 'GET', mode: 'cors' });
+      const getAbort = new AbortController();
+      const getTimer = setTimeout(() => getAbort.abort('get-timeout'), 5000);
+      const res = await fetch(url, { method: 'GET', mode: 'cors', signal: getAbort.signal });
+      clearTimeout(getTimer);
       status = res.status;
       ok = res.ok;
       attachMeta(res);
@@ -98,7 +136,7 @@ async function probeImageLoad(url, kind) {
     }
   }
 
-  posterCiLog('img_probe', {
+  const probePayload = {
     kind,
     url,
     ok,
@@ -106,7 +144,51 @@ async function probeImageLoad(url, kind) {
     method,
     error: errorMessage,
     response: responseMeta,
+  };
+  posterCiLog('img_probe', probePayload);
+  emitPosterDebug('img_probe', probePayload);
+}
+
+async function preloadImages(items = []) {
+  const unique = [];
+  const seen = new Set();
+  items.forEach((item) => {
+    const url = item?.url;
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    unique.push({ kind: item?.kind || 'image', url });
   });
+
+  const results = await Promise.all(unique.map(async ({ kind, url }) => {
+    const startedAt = performance.now();
+    try {
+      await withTimeout(probeImageLoad(url, kind), 6000, 'img_probe_timeout');
+      const img = await withTimeout(imageManager.loadImage(url, { crossOrigin: 'anonymous' }), 6000, 'img_load_timeout');
+      const result = {
+        kind,
+        url,
+        status: 'loaded',
+        naturalWidth: img?.naturalWidth || 0,
+        naturalHeight: img?.naturalHeight || 0,
+        ms: Number((performance.now() - startedAt).toFixed(1)),
+      };
+      emitPosterDebug('preload', result);
+      return { ...result, img };
+    } catch (error) {
+      const result = {
+        kind,
+        url,
+        status: 'error',
+        err: error?.message || String(error),
+        ms: Number((performance.now() - startedAt).toFixed(1)),
+      };
+      setPosterRuntimeFlag('__MEOW_POSTER_LAST_FAILED_ASSET_URL', url);
+      emitPosterDebug('preload', result);
+      return result;
+    }
+  }));
+
+  return results;
 }
 
 
@@ -132,25 +214,192 @@ function createCanvas(width, height) {
   return canvas;
 }
 
-async function canvasToBlob(canvas, quality = POSTER_WEBP_QUALITY) {
-  const primary = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
-  if (primary && primary.type === 'image/webp') {
-    if (primary.size > POSTER_WARN_MAX_BYTES) {
-      console.warn('[share] Poster blob size high:', primary.size, 'bytes');
-      const retry = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', POSTER_RETRY_WEBP_QUALITY));
-      if (retry && retry.type === 'image/webp') {
-        if (retry.size > POSTER_WARN_MAX_BYTES) {
-          console.warn('[share] Poster blob still high after retry:', retry.size, 'bytes');
-        }
-        return retry.size <= primary.size ? retry : primary;
-      }
-    }
+function isEmbeddedWebViewForExport() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  if (/HeadlessChrome/i.test(ua)) return false;
+  return /(FBAN|FBAV|Instagram|Line|Twitter|TikTok|Snapchat)/i.test(ua);
+}
 
-    return primary;
+function probeCanvasTaint(canvas) {
+  try {
+    const ctx = canvas?.getContext('2d');
+    if (!ctx) return { taintedCanvas: false, errName: null, errMsg: null };
+    ctx.getImageData(0, 0, 1, 1);
+    emitPosterDebug('canvas_probe', { taintedCanvas: false, errName: null, errMsg: null });
+    setPosterRuntimeFlag('__MEOW_POSTER_TAINTED', false);
+    return { taintedCanvas: false, errName: null, errMsg: null };
+  } catch (error) {
+    const payload = {
+      taintedCanvas: true,
+      errName: error?.name || 'Error',
+      errMsg: error?.message || String(error),
+    };
+    emitPosterDebug('canvas_probe', payload);
+    setPosterRuntimeFlag('__MEOW_POSTER_TAINTED', true);
+    return payload;
+  }
+}
+
+function blobFromDataUrl(dataUrl, fallbackMime = 'image/jpeg') {
+  const [meta, body = ''] = String(dataUrl || '').split(',');
+  const mimeMatch = /data:([^;]+)/.exec(meta || '');
+  const mime = mimeMatch?.[1] || fallbackMime;
+  const bytes = atob(body);
+  const buffer = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i += 1) buffer[i] = bytes.charCodeAt(i);
+  return new Blob([buffer], { type: mime });
+}
+
+async function toBlobWithTimeout(targetCanvas, mime, quality, timeoutMs = 4500) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`toBlob timeout (${mime})`));
+    }, timeoutMs);
+
+    try {
+      targetCanvas.toBlob((blob) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (!blob) {
+          reject(new Error(`toBlob returned null (${mime})`));
+          return;
+        }
+        resolve(blob);
+      }, mime, quality);
+    } catch (error) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(error);
+    }
+  });
+}
+
+function maybeScaleCanvasForExport(canvas, targetWidth = 1080) {
+  if (!canvas?.width || !canvas?.height) return canvas;
+  if (canvas.width <= targetWidth) return canvas;
+  const ratio = targetWidth / canvas.width;
+  const w = targetWidth;
+  const h = Math.max(1, Math.round(canvas.height * ratio));
+  const scaled = createCanvas(w, h);
+  const scaledCtx = scaled.getContext('2d');
+  scaledCtx.drawImage(canvas, 0, 0, w, h);
+  emitPosterDebug('export_scaled', { from: { w: canvas.width, h: canvas.height }, to: { w, h } });
+  return scaled;
+}
+
+function buildExportTargets(canvas) {
+  const targets = [];
+  const pushTarget = (label, targetCanvas) => {
+    if (!targetCanvas) return;
+    const exists = targets.some((entry) => entry.canvas?.width === targetCanvas.width && entry.canvas?.height === targetCanvas.height);
+    if (exists) return;
+    targets.push({ label, canvas: targetCanvas });
+  };
+
+  pushTarget('original', canvas);
+
+  const embedded = isEmbeddedWebViewForExport();
+  if (!embedded) return targets;
+
+  // Clamp for embedded webviews; keep 1080 for quality, then 900 as memory fallback.
+  const clamp1080 = maybeScaleCanvasForExport(canvas, 1080);
+  pushTarget('clamp_1080', clamp1080);
+  const clamp900 = maybeScaleCanvasForExport(canvas, 900);
+  pushTarget('clamp_900', clamp900);
+  return targets;
+}
+
+async function exportPoster(canvas) {
+  setPosterRuntimeFlag('__MEOW_POSTER_STAGE', 'exporting');
+  const { taintedCanvas, errName, errMsg } = probeCanvasTaint(canvas);
+  const canvasSize = { w: canvas?.width || 0, h: canvas?.height || 0 };
+  setPosterRuntimeFlag('__MEOW_POSTER_CANVAS_SIZE', canvasSize);
+  setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_ATTEMPTS', []);
+
+  if (taintedCanvas) {
+    const err = new Error(`CORS/tainted canvas: ${errName || 'SecurityError'} ${errMsg || ''}`.trim());
+    setPosterRuntimeFlag('__MEOW_POSTER_FAILURE_REASON', 'CORS/tainted canvas');
+    setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_ATTEMPTS', []);
+    throw err;
   }
 
-  const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
-  return pngBlob;
+  const targets = buildExportTargets(canvas);
+  const scaledTarget = targets.find((entry) => entry.label !== 'original');
+  setPosterRuntimeFlag('__MEOW_POSTER_SCALED_CANVAS_SIZE', scaledTarget ? { w: scaledTarget.canvas.width, h: scaledTarget.canvas.height } : null);
+
+  const attempts = [
+    { method: 'toBlob', mime: 'image/png', quality: 0.92 },
+    { method: 'toBlob', mime: 'image/jpeg', quality: 0.92 },
+    { method: 'toDataURL', mime: 'image/jpeg', quality: 0.92 },
+  ];
+
+  const exportAttempts = [];
+  let lastError = null;
+  for (const target of targets) {
+    const targetCanvas = target.canvas;
+    for (const attempt of attempts) {
+      const startedAt = performance.now();
+      try {
+        let blob = null;
+        if (attempt.method === 'toBlob') {
+          setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_METHOD', `toBlob:${attempt.mime}`);
+          blob = await toBlobWithTimeout(targetCanvas, attempt.mime, attempt.quality, 4500);
+        } else {
+          setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_METHOD', `toDataURL:${attempt.mime}`);
+          const dataUrl = targetCanvas.toDataURL(attempt.mime, attempt.quality);
+          blob = blobFromDataUrl(dataUrl, attempt.mime);
+        }
+
+        const row = {
+          method: attempt.method,
+          mime: attempt.mime,
+          ok: Boolean(blob),
+          bytes: blob?.size || 0,
+          ms: Number((performance.now() - startedAt).toFixed(1)),
+          canvas: { w: targetCanvas.width, h: targetCanvas.height },
+          target: target.label,
+          err: null,
+        };
+        exportAttempts.push(row);
+        setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_ATTEMPTS', exportAttempts);
+        emitPosterDebug('export_attempt', row);
+        if (blob) {
+          setPosterRuntimeFlag('__MEOW_POSTER_STAGE', 'done');
+          setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_BYTES', blob.size || 0);
+          setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_BLOB_TYPE', blob.type || attempt.mime);
+          return blob;
+        }
+      } catch (error) {
+        lastError = error;
+        const message = error?.message || String(error);
+        const tainted = /tainted canvas|securityerror/i.test(message);
+        if (tainted) setPosterRuntimeFlag('__MEOW_POSTER_TAINTED', true);
+        const row = {
+          method: attempt.method,
+          mime: attempt.mime,
+          ok: false,
+          bytes: 0,
+          ms: Number((performance.now() - startedAt).toFixed(1)),
+          canvas: { w: targetCanvas.width, h: targetCanvas.height },
+          target: target.label,
+          err: message,
+        };
+        exportAttempts.push(row);
+        setPosterRuntimeFlag('__MEOW_POSTER_EXPORT_ATTEMPTS', exportAttempts);
+        emitPosterDebug('export_attempt', row);
+      }
+    }
+  }
+
+  setPosterRuntimeFlag('__MEOW_POSTER_FAILURE_REASON', 'memory/export failure');
+  setPosterRuntimeFlag('__MEOW_POSTER_STAGE', 'fail');
+  throw lastError || new Error('Export failed across all methods');
 }
 
 function baseCardId(id = '') {
@@ -341,10 +590,12 @@ async function drawPosterBackground(ctx, width, height, payload) {
   const bgCandidates = [primaryBgUrl, fallbackBgUrl];
   posterCiLog('bg_url', { primary: primaryBgUrl, fallback: fallbackBgUrl });
 
-  for (const bgUrl of bgCandidates) {
+  const preloadResults = await preloadImages(bgCandidates.map((url) => ({ kind: 'background', url })));
+  for (const item of preloadResults) {
+    const bgUrl = item?.url;
     try {
-      await probeImageLoad(bgUrl, 'background');
-      const bg = await imageManager.loadImage(bgUrl, { crossOrigin: 'anonymous' });
+      if (item?.status !== 'loaded' || !item?.img) continue;
+      const bg = item.img;
       ctx.drawImage(bg, 0, 0, width, height);
       posterCiLog('bg_draw', { executed: true, chosen: bgUrl });
       return bgUrl;
@@ -600,7 +851,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const exportStart = performance.now();
     perf.captureCount += 1;
     console.info('[share-export] captureCount:', perf.captureCount);
-    const blob = await canvasToBlob(canvas, POSTER_WEBP_QUALITY);
+    const blob = await exportPoster(canvas);
     perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
     perf.exportMs = performance.now() - exportStart;
     if (!blob) throw new Error('Failed to build poster blob');
@@ -673,35 +924,21 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const upright = localUpright || uprightUrl;
       const back = localBack || backUrl;
       posterCiLog('card_urls', { primary, upright, back });
-      if (isPosterCiDebugEnabled()) {
-        const backFallback = localBack || toAssetUrl(resolveCardBackFallbackPath());
-        for (const url of [primary, upright, back, backFallback]) {
-          await probeImageLoad(url, 'card');
-          try {
-            const img = await imageManager.loadImage(url, { crossOrigin: 'anonymous' });
-            if (img) {
-              posterCiLog('img_probe', {
-                kind: 'card',
-                url,
-                ok: true,
-                status: 'loaded',
-                method: 'loadImage',
-              });
-              return img;
-            }
-          } catch (error) {
-            posterCiLog('img_probe', {
-              kind: 'card',
-              url,
-              ok: false,
-              status: null,
-              method: 'loadImage',
-              error: error?.message || String(error),
-            });
-          }
-        }
-        return null;
+      const backFallback = localBack || toAssetUrl(resolveCardBackFallbackPath());
+      const preloadResults = await preloadImages([
+        { kind: 'card', url: primary },
+        { kind: 'card', url: upright },
+        { kind: 'card', url: back },
+        { kind: 'card', url: backFallback },
+      ]);
+      const loaded = preloadResults.find((entry) => entry.status === 'loaded' && entry.img);
+      if (loaded?.img) return loaded.img;
+      const failedUrls = preloadResults.filter((entry) => entry.status !== 'loaded').map((entry) => entry.url).filter(Boolean);
+      if (failedUrls.length) {
+        setPosterRuntimeFlag('__MEOW_POSTER_LAST_FAILED_ASSET_URL', failedUrls[0] || null);
+        throw new Error(`asset load failure: ${failedUrls.join(', ')}`);
       }
+      if (isPosterCiDebugEnabled() || isPosterDebugEnabled()) return null;
       return imageManager.loadWithFallback(primary, [upright, back]);
     };
 
@@ -907,7 +1144,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const exportStart = performance.now();
     perf.captureCount += 1;
     console.info('[share-export] captureCount:', perf.captureCount);
-    const blob = await canvasToBlob(canvas, POSTER_WEBP_QUALITY);
+    const blob = await exportPoster(canvas);
     perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
     perf.exportMs = performance.now() - exportStart;
     if (!blob) throw new Error('Failed to build poster blob');
@@ -1001,7 +1238,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const exportStart = performance.now();
   perf.captureCount += 1;
   console.info('[share-export] captureCount:', perf.captureCount);
-  const blob = await canvasToBlob(canvas, POSTER_WEBP_QUALITY);
+  const blob = await exportPoster(canvas);
   perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
   perf.exportMs = performance.now() - exportStart;
   if (!blob) throw new Error('Failed to build poster blob');

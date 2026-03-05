@@ -180,3 +180,31 @@ body {
     border-radius: 18px 18px 0 0;
   }
 }
+
+.ig-open-banner {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 10px);
+  transform: translateX(-50%);
+  width: min(94vw, 460px);
+  border-radius: 12px;
+  background: rgba(11, 16, 32, 0.94);
+  border: 1px solid rgba(248, 215, 122, 0.28);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  z-index: 25;
+}
+
+.ig-open-btn {
+  min-width: auto;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+}
+
+.ig-open-banner[hidden] {
+  display: none !important;
+}
