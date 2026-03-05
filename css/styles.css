@@ -3140,6 +3140,53 @@ body[data-page='reading'] .ghost {
   background: rgba(255, 255, 255, 0.7);
 }
 
+@media (max-width: 768px) {
+  body[data-page='reading'] .full-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page='reading'] .action-row {
+    justify-items: stretch;
+  }
+
+  body[data-page='reading'] #saveBtn {
+    order: 1;
+  }
+
+  body[data-page='reading'] #shareBtn {
+    order: 2;
+  }
+
+  body[data-page='reading'] #newReadingBtn {
+    order: 3;
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+    margin: 4px auto 0;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #3A2E1F;
+    border: 1px solid #DCC8A7;
+    background: #F4E7D3;
+    box-shadow:
+      0 6px 16px rgba(0, 0, 0, 0.10),
+      0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  body[data-page='reading'] #newReadingBtn:hover:not(:disabled) {
+    background: #EFE0C6;
+  }
+
+  body[data-page='reading'] #newReadingBtn:active:not(:disabled) {
+    background: #E7D5B6;
+  }
+}
+
 @keyframes readingFadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

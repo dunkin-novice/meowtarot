@@ -96,6 +96,8 @@ const SHARE_POSTER_SELECTOR = '#share-poster-root';
 const SHARE_READY_TIMEOUT_MS = 8000;
 let energyChart = null;
 let saveButtonHandler = null;
+let shareButtonHandler = null;
+let newReadingButtonHandler = null;
 const HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 let html2CanvasPromise = null;
 
@@ -1314,7 +1316,18 @@ function buildSharePayload() {
   return payload;
 }
 
-async function openSharePage({ action } = {}) {
+async function buildSharePageUrl({ action } = {}) {
+  const payload = buildSharePayload();
+  sessionStorage.setItem(SHARE_STORAGE_KEY, JSON.stringify(payload));
+  const encoded = base64UrlEncode(JSON.stringify(payload));
+  const url = new URL('/share/', window.location.origin);
+  if (encoded) url.searchParams.set('d', encoded);
+  if (action) url.searchParams.set('action', action);
+
+  return url.toString();
+}
+
+async function openSharePageInNewTab({ action } = {}) {
   setShareButtonLoading(true);
   try {
     await waitForShareReady();
@@ -1324,13 +1337,8 @@ async function openSharePage({ action } = {}) {
     setShareButtonLoading(false);
   }
 
-  const payload = buildSharePayload();
-  sessionStorage.setItem(SHARE_STORAGE_KEY, JSON.stringify(payload));
-  const encoded = base64UrlEncode(JSON.stringify(payload));
-  const url = new URL('/share/', window.location.origin);
-  if (encoded) url.searchParams.set('d', encoded);
-  if (action) url.searchParams.set('action', action);
-  window.location.href = url.toString();
+  const shareUrl = await buildSharePageUrl({ action });
+  window.open(shareUrl, '_blank', 'noopener,noreferrer');
 }
 
 function updateContextCopy(dict = translations[state.currentLang]) {
@@ -1454,8 +1462,8 @@ function configureSaveButton(dict = translations[state.currentLang]) {
   }
 
   if (isMobile()) {
-    saveBtn.textContent = state.currentLang === 'th' ? 'แชร์ลิงก์' : 'Share Link';
-    saveButtonHandler = shareReadingLink;
+    saveBtn.textContent = state.currentLang === 'th' ? 'แชร์' : 'Share';
+    saveButtonHandler = () => openSharePageInNewTab();
   } else {
     saveBtn.textContent = dict.save || saveBtn.textContent;
     saveButtonHandler = saveImage;
@@ -1464,11 +1472,56 @@ function configureSaveButton(dict = translations[state.currentLang]) {
   saveBtn.addEventListener('click', saveButtonHandler);
 }
 
+function configureActionButtons(dict = translations[state.currentLang]) {
+  const mobile = isMobile();
+
+  if (shareBtn && shareButtonHandler) {
+    shareBtn.removeEventListener('click', shareButtonHandler);
+  }
+
+  if (newReadingBtn && newReadingButtonHandler) {
+    newReadingBtn.removeEventListener('click', newReadingButtonHandler);
+  }
+
+  if (shareBtn) {
+    shareBtn.textContent = mobile
+      ? state.currentLang === 'th'
+        ? 'แชร์คำทำนายอย่างละเอียด'
+        : 'Share detailed result'
+      : (dict.share || shareBtn.textContent);
+  }
+
+  if (newReadingBtn) {
+    newReadingBtn.textContent = mobile
+      ? state.currentLang === 'th'
+        ? 'เปิดไพ่อีกครั้ง'
+        : 'Re-draw'
+      : (dict.newReading || newReadingBtn.textContent);
+  }
+
+  configureSaveButton(dict);
+
+  shareButtonHandler = mobile ? shareReadingLink : () => openSharePageInNewTab();
+  shareBtn?.addEventListener('click', shareButtonHandler);
+
+  newReadingButtonHandler = () => {
+    const target =
+      state.mode === 'question'
+        ? '/question.html'
+        : state.mode === 'full'
+          ? '/full.html'
+          : '/daily.html';
+
+    window.location.href = localizePath(target, state.currentLang);
+  };
+  newReadingBtn?.addEventListener('click', newReadingButtonHandler);
+}
+
 function handleTranslations(dict) {
   activeDict = dict;
   translationsReady = true;
   updateContextCopy(dict);
-  configureSaveButton(dict);
+  configureActionButtons(dict);
 
   if (readingTitle) {
     if (state.mode === 'question') readingTitle.textContent = dict.questionTitle;
@@ -1527,24 +1580,12 @@ function init() {
     if (event.key === 'Escape') closeCardSheet();
   });
 
-  newReadingBtn?.addEventListener('click', () => {
-    const target =
-      state.mode === 'question'
-        ? '/question.html'
-        : state.mode === 'full'
-          ? '/full.html'
-          : '/daily.html';
-
-    window.location.href = localizePath(target, state.currentLang);
-  });
-
-  shareBtn?.addEventListener('click', () => openSharePage());
-  configureSaveButton(translations[state.currentLang] || translations.en);
+  configureActionButtons(translations[state.currentLang] || translations.en);
 
   window.addEventListener('resize', () => {
     const dict = translations[state.currentLang] || translations.en;
     updateContextCopy(dict);
-    configureSaveButton(dict);
+    configureActionButtons(dict);
   });
 
   loadTarotData()
