@@ -94,6 +94,7 @@ const cardSheetEls = {
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 const SHARE_POSTER_SELECTOR = '#share-poster-root';
 const SHARE_READY_TIMEOUT_MS = 8000;
+const SHARE_HASH_MAX_CHARS = 8000;
 let energyChart = null;
 let saveButtonHandler = null;
 let shareButtonHandler = null;
@@ -102,7 +103,13 @@ const HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.
 let html2CanvasPromise = null;
 
 function isPosterDebugEnabled() {
-  return new URLSearchParams(window.location.search).get('poster_debug') === '1';
+  const params = new URLSearchParams(window.location.search || '');
+  if (params.get('poster_debug') === '1') return true;
+  try {
+    return String(window.localStorage?.getItem('POSTER_DEBUG') || '').trim() === '1';
+  } catch (_) {
+    return false;
+  }
 }
 
 function isShareCiDebugEnabled() {
@@ -1345,7 +1352,8 @@ async function buildSharePageUrl({ action } = {}) {
   sessionStorage.setItem(SHARE_STORAGE_KEY, payloadJson);
   const encoded = base64UrlEncode(payloadJson);
   const url = new URL('/share/', window.location.origin);
-  if (encoded) url.hash = `p=${encoded}`;
+  const oversizedHash = encoded.length > SHARE_HASH_MAX_CHARS;
+  if (encoded && !oversizedHash) url.hash = `p=${encoded}`;
   if (action) url.searchParams.set('action', action);
   if (isPosterDebugEnabled()) url.searchParams.set('poster_debug', '1');
 
@@ -1354,7 +1362,7 @@ async function buildSharePageUrl({ action } = {}) {
     console.info('[Share] payload_bytes', payloadJson.length, 'encoded_head', encoded.slice(0, 60));
   }
 
-  return url.toString();
+  return { url: url.toString(), oversizedHash, encodedLength: encoded.length };
 }
 
 async function openSharePage({ action } = {}) {
@@ -1368,7 +1376,17 @@ async function openSharePage({ action } = {}) {
   }
 
   try {
-    const shareUrl = await buildSharePageUrl({ action });
+    const { url: shareUrl, oversizedHash, encodedLength } = await buildSharePageUrl({ action });
+    if (oversizedHash) {
+      try {
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(shareUrl);
+      } catch (_) {
+        // ignore clipboard errors
+      }
+      alert(state.currentLang === 'th'
+        ? `ข้อมูลแชร์ยาวเกินไป (${encodedLength} ตัวอักษร) ระบบจะใช้ลิงก์สำรองและคัดลอกลิงก์ให้แล้ว`
+        : `Share data is too large (${encodedLength} chars). Using fallback link and copying it for you.`);
+    }
     window.location.href = shareUrl;
   } catch (error) {
     console.error('Failed to build share URL', error);

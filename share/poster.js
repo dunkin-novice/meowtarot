@@ -30,13 +30,23 @@ function isPosterCiDebugEnabled() {
 function isPosterDebugEnabled() {
   if (typeof window !== 'undefined') {
     const search = new URLSearchParams(window.location.search || '');
-    if (search.get('poster_debug') === '1' || search.get('debug') === '1') return true;
+    if (search.get('poster_debug') === '1') return true;
+    try {
+      if (String(window.localStorage?.getItem('POSTER_DEBUG') || '').trim() === '1') return true;
+    } catch (_) {
+      // ignore storage errors
+    }
+    if (String(window.POSTER_DEBUG || '').trim() === '1') return true;
   }
   const runtimeEnv = (typeof globalThis !== 'undefined' && globalThis.process?.env) ? globalThis.process.env : null;
   const envFlag = runtimeEnv?.POSTER_DEBUG;
-  if (String(envFlag || '').trim() === '1') return true;
-  if (typeof window === 'undefined') return false;
-  return String(window.POSTER_DEBUG || '').trim() === '1';
+  return String(envFlag || '').trim() === '1';
+}
+
+
+function posterDebugLog(method = 'info', ...args) {
+  if (!isPosterDebugEnabled()) return;
+  (console[method] || console.info).call(console, ...args);
 }
 
 function emitPosterDebug(step, payload = {}) {
@@ -76,7 +86,7 @@ function posterCiLog(step, payload = {}) {
 }
 
 async function probeImageLoad(url, kind) {
-  if ((!isPosterCiDebugEnabled() && !isPosterDebugEnabled()) || !url || typeof fetch !== 'function') return;
+  if (!isPosterDebugEnabled() || !url || typeof fetch !== 'function') return;
   let status = null;
   let ok = false;
   let method = 'HEAD';
@@ -136,6 +146,8 @@ async function probeImageLoad(url, kind) {
     }
   }
 
+  const acao = responseMeta?.headers?.['access-control-allow-origin'] || null;
+  const acaoOk = !acao || acao === '*' || (typeof window !== 'undefined' && acao === window.location.origin);
   const probePayload = {
     kind,
     url,
@@ -143,6 +155,8 @@ async function probeImageLoad(url, kind) {
     status,
     method,
     error: errorMessage,
+    acao,
+    acaoOk,
     response: responseMeta,
   };
   posterCiLog('img_probe', probePayload);
@@ -412,13 +426,13 @@ function toSafeText(value, fallback = '') {
 }
 
 async function buildCardEntries(payload) {
-  console.log('[Poster] buildCardEntries: meowTarotCards length', meowTarotCards.length);
+  posterDebugLog('log', '[Poster] buildCardEntries: meowTarotCards length', meowTarotCards.length);
   if (meowTarotCards.length < 150) {
     await ensureTarotData();
-    console.log('[Poster] tarot deck ensured', {
+    posterDebugLog('log', '[Poster] tarot deck ensured', {
       size: Array.isArray(meowTarotCards) ? meowTarotCards.length : 0,
     });
-    console.log('[Poster] buildCardEntries: reloaded tarot data', meowTarotCards.length);
+    posterDebugLog('log', '[Poster] buildCardEntries: reloaded tarot data', meowTarotCards.length);
   }
   const cards = Array.isArray(payload?.cards) ? payload.cards : [];
   return cards
@@ -734,7 +748,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     await document.fonts.ready;
   }
   perf.preloadMs = performance.now() - preloadStart;
-  console.log('[Poster] Data loaded', { preloadMs: Number(perf.preloadMs.toFixed(1)) });
+  posterDebugLog('log', '[Poster] Data loaded', { preloadMs: Number(perf.preloadMs.toFixed(1)) });
 
   const { width, height } = PRESETS[preset] || PRESETS.story;
   const canvas = createCanvas(width, height);
@@ -746,7 +760,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   });
 
   const backgroundUrl = await drawPosterBackground(ctx, width, height, payload);
-  console.log('[Poster] Background resolved', backgroundUrl || 'fallback-gradient');
+  posterDebugLog('log', '[Poster] Background resolved', backgroundUrl || 'fallback-gradient');
 
   if (String(payload?.mode || '').toLowerCase() === 'full' && preset === 'story') {
     const lang = payload?.lang || 'en';
@@ -850,7 +864,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     const exportStart = performance.now();
     perf.captureCount += 1;
-    console.info('[share-export] captureCount:', perf.captureCount);
+    posterDebugLog('info', '[share-export] captureCount:', perf.captureCount);
     const blob = await exportPoster(canvas);
     perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
     perf.exportMs = performance.now() - exportStart;
@@ -1082,7 +1096,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       posterCiLog('exception', { stage: 'resolveCardImage', message: error?.message || String(error) });
       console.warn('Poster image failed to load, continuing without card art.', error);
     }
-    console.log('[Poster] Images resolved');
+    posterDebugLog('log', '[Poster] Images resolved');
     const imgWidth = cardImg?.naturalWidth || cardWidth || 560;
     const imgHeight = cardImg?.naturalHeight || cardHeight || Math.round(560 * 1.5);
     const heightScale = maxCardHeight ? maxCardHeight / imgHeight : 1;
@@ -1121,7 +1135,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     });
     ({ quoteY } = drawReadingPanel() || { quoteY: null });
     if (isPosterDebugEnabled()) {
-      console.info('[poster-debug][daily]', {
+      posterDebugLog('info', '[poster-debug][daily]', {
         lang,
         orientationLabel: reading.orientation,
         outsidePanelOrientation: true,
@@ -1139,16 +1153,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     drawOrientationLabel();
     drawLuckyRow();
     drawFooter();
-    console.log('[Poster] Canvas drawn');
+    posterDebugLog('log', '[Poster] Canvas drawn');
 
     const exportStart = performance.now();
     perf.captureCount += 1;
-    console.info('[share-export] captureCount:', perf.captureCount);
+    posterDebugLog('info', '[share-export] captureCount:', perf.captureCount);
     const blob = await exportPoster(canvas);
     perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
     perf.exportMs = performance.now() - exportStart;
     if (!blob) throw new Error('Failed to build poster blob');
-    console.info('[Poster] Performance', {
+    posterDebugLog('info', '[Poster] Performance', {
       preloadMs: Number(perf.preloadMs.toFixed(1)),
       captureMs: Number(perf.captureMs.toFixed(1)),
       exportMs: Number(perf.exportMs.toFixed(1)),
@@ -1219,7 +1233,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       }
     }
   }
-  console.log('[Poster] Images resolved');
+  posterDebugLog('log', '[Poster] Images resolved');
 
   ctx.fillStyle = '#f7f4ee';
   ctx.font = '500 30px "Space Grotesk", sans-serif';
@@ -1233,16 +1247,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   ctx.font = '500 28px "Space Grotesk", sans-serif';
   const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
   ctx.fillText(footerText, width / 2, height - 90);
-  console.log('[Poster] Canvas drawn');
+  posterDebugLog('log', '[Poster] Canvas drawn');
 
   const exportStart = performance.now();
   perf.captureCount += 1;
-  console.info('[share-export] captureCount:', perf.captureCount);
+  posterDebugLog('info', '[share-export] captureCount:', perf.captureCount);
   const blob = await exportPoster(canvas);
   perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
   perf.exportMs = performance.now() - exportStart;
   if (!blob) throw new Error('Failed to build poster blob');
-  console.info('[Poster] Performance', {
+  posterDebugLog('info', '[Poster] Performance', {
     preloadMs: Number(perf.preloadMs.toFixed(1)),
     captureMs: Number(perf.captureMs.toFixed(1)),
     exportMs: Number(perf.exportMs.toFixed(1)),
