@@ -1779,6 +1779,12 @@ details summary::-webkit-details-marker {
   padding-inline: 2px;
 }
 
+@media (max-width: 768px) {
+  .full-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .reading-spread-card {
   text-align: center;
   display: flex;
@@ -1794,22 +1800,28 @@ details summary::-webkit-details-marker {
   margin: 0;
 }
 
-.spread-label,
-.spread-name {
-  line-height: 1.2;
+.spread-caption {
+  display: grid;
+  gap: 4px;
+  text-align: center;
 }
 
-.spread-label {
+.spread-orientation {
   font-size: 12px;
   color: var(--muted);
 }
 
-.spread-name {
+.spread-archetype {
+  font-size: 14px;
+  color: #4a3f60;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.spread-imply {
   font-size: 11px;
   color: #58536a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
 }
 
 .reading-card-hero,
@@ -2954,6 +2966,48 @@ body[data-page='reading'] .primary:active:not(:disabled) {
 
 .panel--spread {
   padding-inline: 10px;
+}
+
+
+.full-summary-panel {
+  padding-inline: 10px;
+}
+
+.full-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.full-summary-box {
+  border: 1px solid rgba(197, 177, 220, 0.4);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.full-summary-box h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.full-summary-box p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.energy-panel--subtle {
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.energy-panel--subtle .energy-chart {
+  width: 100%;
+  max-width: 300px;
+  max-height: 220px;
+  margin-inline: auto;
+  display: block;
 }
 
 .deeper-section + .deeper-section {

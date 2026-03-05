@@ -22,6 +22,9 @@ export function buildReadingPayload(reading = {}) {
     archetype: toText(reading.archetype),
     keywords: toText(reading.keywords),
     summary: toText(reading.summary),
+    reading_summary_past: toText(reading.reading_summary_past),
+    reading_summary_present: toText(reading.reading_summary_present),
+    reading_summary_future: toText(reading.reading_summary_future),
   };
 }
 
