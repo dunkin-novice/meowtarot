@@ -127,6 +127,9 @@ jobs:
       - name: Verify generated fixtures
         run: ls -l tests/fixtures
 
+      - name: Ensure Playwright browsers before poster debug
+        run: npx playwright install --with-deps chromium
+
       - name: Run poster debug CI script
         env:
           USE_LOCAL_ASSETS: '1'
@@ -201,6 +204,9 @@ jobs:
 
       - name: Verify generated fixtures
         run: ls -l tests/fixtures
+
+      - name: Ensure Playwright browsers before share integrity test
+        run: npx playwright install --with-deps chromium
 
       - name: Verify share payload + poster content
         env:
