@@ -678,6 +678,52 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = Infinity) {
   return y + lines.length * lineHeight;
 }
 
+function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
+  const quoteText = String(text || '').trim();
+  if (!quoteText) {
+    return {
+      fontSize: 58,
+      lineHeight: 72,
+      lines: [],
+      isTruncated: false,
+    };
+  }
+
+  // Keep the premium display style, then progressively shrink only as needed.
+  const defaultFontSize = 58;
+  const minimumFontSize = 46;
+  const fontStep = 2;
+  const quote = `“${quoteText}”`;
+
+  for (let fontSize = defaultFontSize; fontSize >= minimumFontSize; fontSize -= fontStep) {
+    const lineHeight = fontSize + 14;
+    ctx.font = `italic 500 ${fontSize}px "Prata", serif`;
+    const lines = wrapTextLines(ctx, quote, maxWidth, Number.POSITIVE_INFINITY);
+    const blockHeight = lines.length * lineHeight;
+    if (blockHeight <= maxHeight) {
+      return {
+        fontSize,
+        lineHeight,
+        lines,
+        isTruncated: false,
+      };
+    }
+  }
+
+  // If the minimum readable size still overflows, clamp lines and rely on ellipsis.
+  const fontSize = minimumFontSize;
+  const lineHeight = fontSize + 14;
+  ctx.font = `italic 500 ${fontSize}px "Prata", serif`;
+  const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+  const lines = wrapTextLines(ctx, quote, maxWidth, maxLines);
+  return {
+    fontSize,
+    lineHeight,
+    lines,
+    isTruncated: true,
+  };
+}
+
 function drawTextBlock(ctx, text, x, y, maxWidth, lineHeight) {
   return wrapText(ctx, text, x, y, maxWidth, lineHeight);
 }
@@ -1309,9 +1355,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const mainQuoteText = reading.mainQuoteText || '';
     const archetypeText = reading.archetype || '';
     const hasReadingPanel = Boolean(mainQuoteText);
-    const quoteIsCompact = mainQuoteText.length > 72;
-    const quoteLineHeight = quoteIsCompact ? 66 : 72;
-    const quoteMaxLines = quoteIsCompact ? 3 : 2;
     const isUprightTone = resolvedOrientation === 'upright';
     const textPalette = isUprightTone
       ? {
@@ -1430,24 +1473,21 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.textAlign = 'center';
 
       if (mainQuoteText) {
-        const quoteBlockHeight = quoteLineHeight * quoteMaxLines;
         const availableTop = panelCursorY;
         const availableBottom = panelTop + panelHeight - 30;
+        const quoteMaxHeight = Math.max(0, availableBottom - availableTop);
+        const fit = fitDailyQuoteText(ctx, mainQuoteText, panelTextWidth, quoteMaxHeight);
+        const quoteBlockHeight = fit.lines.length * fit.lineHeight;
         quoteY = Math.max(availableTop, availableTop + (availableBottom - availableTop - quoteBlockHeight) / 2);
         ctx.save();
         ctx.fillStyle = textPalette.primary;
         ctx.shadowColor = quoteShadow;
         ctx.shadowBlur = 14;
-        ctx.font = quoteIsCompact ? 'italic 500 52px "Prata", serif' : 'italic 500 58px "Prata", serif';
-        panelCursorY = wrapText(
-          ctx,
-          `“${mainQuoteText}”`,
-          panelCenterX,
-          quoteY,
-          panelTextWidth,
-          quoteLineHeight,
-          quoteMaxLines,
-        );
+        ctx.font = `italic 500 ${fit.fontSize}px "Prata", serif`;
+        fit.lines.forEach((line, index) => {
+          ctx.fillText(line, panelCenterX, quoteY + index * fit.lineHeight);
+        });
+        panelCursorY = quoteY + quoteBlockHeight;
         ctx.restore();
       }
 
