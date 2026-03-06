@@ -68,6 +68,7 @@ let activeDict = translations[state.currentLang] || translations.en;
 const imageSourceCache = new Map();
 const imagePreloadCache = new Map();
 const imageLoadedCache = new Set();
+const resolvedResultCardSrcByKey = new Map();
 
 const readingContent = document.getElementById('reading-content');
 const contextCopy = document.getElementById('reading-context');
@@ -123,6 +124,53 @@ function shareCiLog(step, payload = {}) {
   console.log(JSON.stringify({ step, ...payload }));
 }
 
+const probedResultCardUrls = new Set();
+
+function resultCardDebugLog(label, payload = {}) {
+  if (!isPosterDebugEnabled()) return;
+  console.info(label, payload);
+}
+
+async function probeResultCardUrl(url) {
+  if (!isPosterDebugEnabled() || !url || probedResultCardUrls.has(url) || typeof fetch !== 'function') return;
+  probedResultCardUrls.add(url);
+
+  const probeHeaders = (res) => ({
+    'content-type': res.headers.get('content-type'),
+    'access-control-allow-origin': res.headers.get('access-control-allow-origin'),
+    'cache-control': res.headers.get('cache-control'),
+  });
+
+  const requestWithTimeout = async (method) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(`${method}-timeout`), 5000);
+    try {
+      const res = await fetch(url, { method, mode: 'cors', signal: controller.signal });
+      resultCardDebugLog('[ResultCard] probe', {
+        method,
+        url,
+        status: res.status,
+        finalUrl: res.url,
+        redirected: res.redirected,
+        headers: probeHeaders(res),
+      });
+      return true;
+    } catch (error) {
+      resultCardDebugLog('[ResultCard] probe_error', {
+        method,
+        url,
+        message: error?.message || String(error),
+      });
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const headOk = await requestWithTimeout('HEAD');
+  if (!headOk) await requestWithTimeout('GET');
+}
+
 const isMobile = () => window.innerWidth <= 768;
 
 function getText(card, keyBase, lang = state.currentLang) {
@@ -147,6 +195,12 @@ function getOrientationEnglish(card) {
 function getCardBaseSlug(card) {
   const slug = normalizeId(card?.seo_slug_en || card?.card_id || card?.id || card?.name_en || card?.name || '');
   return slug.replace(/-reversed$/, '').replace(/-upright$/, '');
+}
+
+function getResultCardCacheKey(cardId = '', orientation = 'upright') {
+  const baseId = getBaseCardId(cardId, normalizeId) || normalizeId(cardId);
+  const safeOrientation = orientation === 'reversed' ? 'reversed' : 'upright';
+  return `${baseId}:${safeOrientation}`;
 }
 
 function buildCardMeaningUrl(card) {
@@ -210,6 +264,7 @@ function openCardSheet(card) {
     if (resolvedSrc && resolvedSrc !== cardSheetEls.image.src) {
       cardSheetEls.image.src = resolvedSrc;
       cardSheetState.src = resolvedSrc;
+      probeResultCardUrl(resolvedSrc);
     }
   }).catch(() => {});
   cardSheetEls.image.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
@@ -601,26 +656,65 @@ function buildCardArt(card, variant = 'hero') {
   img.className = 'card-art-img';
   img.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   img.loading = 'eager';
+  // Must be set before src for cross-origin draw/share paths.
   img.crossOrigin = 'anonymous';
 
-  const { src, candidates = [] } = getStableCardImageSources(card);
-  const sourceKey = [card?.id || '', src, ...candidates].filter(Boolean).join('|');
+  const orientation = toOrientation(card);
+  const { src } = getStableCardImageSources(card);
+  const { backUrl } = buildCardImageUrls(card, orientation);
+  const webpUrl = src || backUrl;
+  const jpgUrl = webpUrl.replace(/\.webp(?=\?|$)/i, '.jpg');
 
-  if (imageLoadedCache.has(sourceKey)) {
-    applyImgFallback(img, src, candidates);
-    resolveCardImageUrl(card, toOrientation(card)).then((resolvedSrc) => {
-      if (resolvedSrc && resolvedSrc !== img.src) img.src = resolvedSrc;
-    }).catch(() => {});
-  } else {
-    img.style.visibility = 'hidden';
-    preloadImageSources(card, src, candidates).finally(() => {
-      applyImgFallback(img, src, candidates);
-      resolveCardImageUrl(card, toOrientation(card)).then((resolvedSrc) => {
-        if (resolvedSrc && resolvedSrc !== img.src) img.src = resolvedSrc;
-      }).catch(() => {});
-      img.style.visibility = 'visible';
+  // Deterministic fallback chain: WebP -> JPG -> card back.
+  const fallbackChain = [webpUrl, jpgUrl, backUrl].filter(Boolean);
+  let index = 0;
+
+  resultCardDebugLog('[ResultCard] urls', {
+    webpUrl,
+    jpgUrl,
+    chosenUrl: fallbackChain[0] || null,
+  });
+  probeResultCardUrl(webpUrl);
+
+  const cacheKey = getResultCardCacheKey(card?.id || card?.card_id || card?.image_id || '', orientation);
+
+  const stepToNextFallback = (reason = 'error') => {
+    if (index >= fallbackChain.length - 1) return;
+    index += 1;
+    const nextUrl = fallbackChain[index];
+    if (!nextUrl || nextUrl === img.src) return;
+    resultCardDebugLog('[ResultCard] fallback', { reason, nextUrl, step: index });
+    img.src = nextUrl;
+    probeResultCardUrl(nextUrl);
+  };
+
+  img.addEventListener('load', () => {
+    // WebKit edge-case guard: onload can fire with naturalWidth=0 when decode fails.
+    if (!img.naturalWidth || !img.naturalHeight) {
+      resultCardDebugLog('[ResultCard] onload_decode_fail', { url: img.currentSrc || img.src });
+      stepToNextFallback('decode-fail');
+      return;
+    }
+
+    const loadedUrl = img.currentSrc || img.src;
+    resolvedResultCardSrcByKey.set(cacheKey, loadedUrl);
+    resultCardDebugLog('[ResultCard] onload', {
+      url: loadedUrl,
+      naturalWidth: img.naturalWidth,
+      naturalHeight: img.naturalHeight,
     });
-  }
+  });
+
+  img.addEventListener('error', (event) => {
+    const failedUrl = img.currentSrc || img.src || fallbackChain[index];
+    resultCardDebugLog('[ResultCard] onerror', {
+      url: failedUrl,
+      message: event?.message || event?.type || 'error',
+    });
+    stepToNextFallback('error');
+  });
+
+  img.src = fallbackChain[0] || backUrl;
 
   wrap.appendChild(img);
   return wrap;
@@ -1281,6 +1375,7 @@ function buildSharePayload() {
       keywords: card ? getText(card, 'keywords') : '',
       summary,
       archetype: card ? getText(card, 'affirmation') : '',
+      resolvedImageUrl: resolvedResultCardSrcByKey.get(getResultCardCacheKey(baseId, orientation)) || '',
     };
   });
 
@@ -1323,6 +1418,10 @@ function buildSharePayload() {
     reading,
     poster,
     keywords: cards.map((card) => card.name).filter(Boolean).slice(0, 3),
+    lucky: {
+      colors: normalizeColorArray(findCard(state.selectedIds[0])?.color_palette).slice(0, 6),
+      avoidColors: normalizeColorArray(findCard(state.selectedIds[0])?.avoid_color_palette).slice(0, 6),
+    },
     canonicalUrl: window.location.href,
   };
 
@@ -1363,6 +1462,58 @@ async function buildSharePageUrl({ action } = {}) {
   }
 
   return { url: url.toString(), oversizedHash, encodedLength: encoded.length };
+}
+
+function showTemporaryToast(message = '') {
+  if (!message || typeof document === 'undefined') return;
+  const existing = document.getElementById('readingToast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'readingToast';
+  toast.textContent = message;
+  Object.assign(toast.style, {
+    position: 'fixed',
+    left: '50%',
+    bottom: '24px',
+    transform: 'translateX(-50%)',
+    background: 'rgba(7,10,25,0.92)',
+    color: '#f8f8ff',
+    padding: '10px 14px',
+    borderRadius: '10px',
+    fontSize: '14px',
+    zIndex: '9999',
+    boxShadow: '0 6px 16px rgba(0,0,0,0.35)',
+  });
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 1800);
+}
+
+async function copyTextWithFallback(text) {
+  if (!text) return false;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (_error) {
+    // fallback below
+  }
+
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.pointerEvents = 'none';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    textarea.remove();
+    return Boolean(copied);
+  } catch (_error) {
+    return false;
+  }
 }
 
 async function openSharePage({ action } = {}) {
@@ -1494,18 +1645,18 @@ async function saveImage() {
 }
 
 async function shareReadingLink() {
-  const successMessage = 'Copy Reading link สำเร็จ';
   try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(window.location.href);
-      alert(successMessage);
+    const { url: shareUrl } = await buildSharePageUrl();
+    const copied = await copyTextWithFallback(shareUrl);
+    if (copied) {
+      showTemporaryToast(state.currentLang === 'th' ? 'คัดลอกลิงก์แล้ว ส่งให้เพื่อนอ่านคำทำนายของคุณ 🔮' : 'Link copied! Send it to a friend to read your tarot reading 🔮');
       return;
     }
   } catch (error) {
     console.error('Copy reading link failed', error);
   }
 
-  window.prompt(successMessage, window.location.href);
+  showTemporaryToast(state.currentLang === 'th' ? 'คัดลอกลิงก์ไม่สำเร็จ' : 'Unable to copy link');
 }
 
 function configureSaveButton(dict = translations[state.currentLang]) {
@@ -1555,7 +1706,9 @@ function configureActionButtons(dict = translations[state.currentLang]) {
 
   configureSaveButton(dict);
 
-  shareButtonHandler = () => openSharePage();
+  shareButtonHandler = () => {
+    shareReadingLink();
+  };
   shareBtn?.addEventListener('click', shareButtonHandler);
 
   newReadingButtonHandler = () => {

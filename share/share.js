@@ -31,6 +31,7 @@ let payloadParseError = null;
 let payloadKeys = [];
 let payloadKeySummary = {};
 let pipelineStage = 'init';
+let pipelineHeartbeatTimer = null;
 const actionLabels = {
   share: shareBtn?.textContent || 'Share',
 };
@@ -233,6 +234,7 @@ function readHashPayload() {
 
 function updatePipelineStage(nextStage) {
   pipelineStage = nextStage;
+  debugLog('info', `[Poster] stage=${pipelineStage}`);
   pushDebugOverlay({ stage: pipelineStage });
 }
 
@@ -267,6 +269,19 @@ function setActionLoading(isLoading, strings) {
     shareBtn.disabled = isLoading;
     shareBtn.textContent = isLoading ? strings.generating : actionLabels.share;
   }
+}
+
+function startPipelineHeartbeat() {
+  if (!isPosterDebugEnabled() || pipelineHeartbeatTimer) return;
+  pipelineHeartbeatTimer = setInterval(() => {
+    debugLog('info', `[Poster] heartbeat stage=${window.__MEOW_POSTER_STAGE || pipelineStage || 'unknown'}`);
+  }, 2000);
+}
+
+function stopPipelineHeartbeat() {
+  if (!pipelineHeartbeatTimer) return;
+  clearInterval(pipelineHeartbeatTimer);
+  pipelineHeartbeatTimer = null;
 }
 
 function storePayload(payload) {
@@ -608,6 +623,7 @@ function applyActionFocus() {
 async function init() {
   debugLog('info', 'Initializing share page');
   setupPosterDebugMode();
+  startPipelineHeartbeat();
   updateOpenInBrowserBanner();
   updatePipelineStage('init');
   if (isPosterDebugEnabled()) {
@@ -690,8 +706,8 @@ async function init() {
     window.open(url, '_blank', 'noopener');
   });
 
-  window.addEventListener('beforeunload', cleanupPosterUrl, { once: true });
-  window.addEventListener('pagehide', cleanupPosterUrl, { once: true });
+  window.addEventListener('beforeunload', () => { stopPipelineHeartbeat(); cleanupPosterUrl(); }, { once: true });
+  window.addEventListener('pagehide', () => { stopPipelineHeartbeat(); cleanupPosterUrl(); }, { once: true });
 }
 
 document.addEventListener('DOMContentLoaded', init);
