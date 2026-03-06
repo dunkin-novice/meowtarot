@@ -10,8 +10,6 @@ import {
   loadTarotData,
   meowTarotCards,
   normalizeId,
-  activeDeckId,
-  getCardImageUrl,
   getCardImageFallbackUrl,
   getCardBackUrl,
   getCardBackFallbackUrl,
@@ -19,7 +17,7 @@ import {
 } from './data.js';
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
-import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath } from './asset-resolver.js';
+import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -576,11 +574,12 @@ function resolveImageIds(card, targetOrientation = toOrientation(card)) {
 function getCardImageUrlWithFallback(card) {
   const orientation = toOrientation(card);
   const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
+  const globalSiteFallbackUrl = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
 
   if (orientation === 'reversed') {
     return {
-      src: reversedUrl || uprightUrl || backUrl,
-      candidates: [uprightUrl, backUrl].filter(Boolean),
+      src: reversedUrl || uprightUrl || backUrl || globalSiteFallbackUrl,
+      candidates: [uprightUrl, backUrl, globalSiteFallbackUrl].filter(Boolean),
     };
   }
 
@@ -588,6 +587,37 @@ function getCardImageUrlWithFallback(card) {
     src: uprightUrl || backUrl,
     candidates: [backUrl].filter(Boolean),
   };
+}
+
+async function resolveReadingResultRuntimeImageUrl(card) {
+  const orientation = toOrientation(card);
+  if (orientation !== 'reversed') return resolveCardImageUrl(card, orientation);
+
+  const cardSlug = getCardBaseSlug(card) || normalizeId(card?.id || card?.card_id || card?.image_id || 'unknown-card');
+  const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
+  const globalSiteFallbackUrl = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
+  const candidates = [reversedUrl, uprightUrl, backUrl, globalSiteFallbackUrl].filter(Boolean);
+  let chosenFinalFallbackUrl = globalSiteFallbackUrl || backUrl || uprightUrl || reversedUrl || '';
+
+  for (const requestedImageUrl of candidates) {
+    const assetExists = await exists(requestedImageUrl);
+
+    if (assetExists) {
+      chosenFinalFallbackUrl = requestedImageUrl;
+    }
+
+    console.debug('[ReadingResult] runtime-image-resolver', {
+      cardSlug,
+      orientation,
+      requestedImageUrl,
+      assetExists,
+      chosenFinalFallbackUrl,
+    });
+
+    if (assetExists) break;
+  }
+
+  return chosenFinalFallbackUrl;
 }
 
 function getStableCardImageSources(card) {
@@ -614,7 +644,7 @@ function preloadImageSources(card, src, candidates = []) {
     const probe = new Image();
     const finalCandidates = Array.from(new Set([src, ...candidates].filter(Boolean)));
 
-    resolveCardImageUrl(card, toOrientation(card))
+    resolveReadingResultRuntimeImageUrl(card)
       .then((finalUrl) => {
         if (finalUrl) {
           const idx = finalCandidates.indexOf(finalUrl);
@@ -660,13 +690,14 @@ function buildCardArt(card, variant = 'hero') {
   img.crossOrigin = 'anonymous';
 
   const orientation = toOrientation(card);
-  const { src } = getStableCardImageSources(card);
+  const { src, candidates = [] } = getStableCardImageSources(card);
   const { backUrl } = buildCardImageUrls(card, orientation);
   const webpUrl = src || backUrl;
   const jpgUrl = webpUrl.replace(/\.webp(?=\?|$)/i, '.jpg');
+  const fallbackCandidates = [jpgUrl, ...candidates, backUrl].filter(Boolean);
 
   // Deterministic fallback chain: WebP -> JPG -> card back.
-  const fallbackChain = [webpUrl, jpgUrl, backUrl].filter(Boolean);
+  const fallbackChain = [webpUrl, ...fallbackCandidates].filter(Boolean);
   let index = 0;
 
   resultCardDebugLog('[ResultCard] urls', {
@@ -715,6 +746,12 @@ function buildCardArt(card, variant = 'hero') {
   });
 
   img.src = fallbackChain[0] || backUrl;
+
+  resolveReadingResultRuntimeImageUrl(card).then((resolvedSrc) => {
+    if (!resolvedSrc || resolvedSrc === img.src) return;
+    img.src = resolvedSrc;
+    probeResultCardUrl(resolvedSrc);
+  }).catch(() => {});
 
   wrap.appendChild(img);
   return wrap;
