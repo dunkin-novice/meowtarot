@@ -2,6 +2,9 @@ import {
   loadTarotData,
   meowTarotCards,
   normalizeId,
+  getCardBackFallbackUrl,
+  getCardBackUrl,
+  getCardImageFallbackUrl,
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { normalizePayload } from './normalize-payload.js';
@@ -457,6 +460,81 @@ function baseCardId(id = '') {
   return normalizeId(String(id).replace(/-(upright|reversed)$/i, '')) || normalizeId(id);
 }
 
+export function resolvePosterCardImageSources(cardEntry, { resolvedPrimary, uprightUrl, reversedUrl, backUrl, lang } = {}) {
+  const card = cardEntry?.card || {};
+  const orientation = toOrientation(cardEntry?.orientation || card?.orientation || 'upright');
+  const cardSlug = normalizeId(card?.slug || card?.name_en || card?.card_name_en || card?.id || card?.card_id || card?.image_id || 'unknown-card');
+  const fromEntry = {
+    default: cardEntry?.preferredImageUrl || cardEntry?.image || cardEntry?.imageUrl || cardEntry?.resolvedImageUrl || '',
+    upright: cardEntry?.image_upright || cardEntry?.imageUpright || '',
+    reversed: cardEntry?.image_reversed || cardEntry?.imageReversed || '',
+  };
+  const fromCard = {
+    default: card?.image || card?.image_url || '',
+    upright: card?.image_upright || card?.imageUpright || '',
+    reversed: card?.image_reversed || card?.imageReversed || '',
+  };
+
+  const globalSiteFallback = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
+
+  const primary = orientation === 'reversed'
+    ? (
+      fromEntry.reversed
+      || fromCard.reversed
+      || reversedUrl
+      || fromEntry.upright
+      || fromCard.upright
+      || uprightUrl
+      || fromEntry.default
+      || fromCard.default
+      || resolvedPrimary
+      || backUrl
+      || globalSiteFallback
+    )
+    : (
+      fromEntry.upright
+      || fromCard.upright
+      || uprightUrl
+      || fromEntry.default
+      || fromCard.default
+      || resolvedPrimary
+      || backUrl
+      || globalSiteFallback
+    );
+
+  const fallbackCandidates = orientation === 'reversed'
+    ? [
+      fromEntry.upright,
+      fromCard.upright,
+      uprightUrl,
+      fromEntry.default,
+      fromCard.default,
+      resolvedPrimary,
+      backUrl,
+      globalSiteFallback,
+    ]
+    : [
+      fromEntry.default,
+      fromCard.default,
+      resolvedPrimary,
+      backUrl,
+      globalSiteFallback,
+    ];
+
+  const fallbackChain = [...new Set(fallbackCandidates.filter(Boolean).filter((item) => item !== primary))];
+
+  console.log('[Poster] card image resolved', {
+    cardSlug,
+    orientation,
+    reversedAsset: fromEntry.reversed || fromCard.reversed || reversedUrl || null,
+    uprightAsset: fromEntry.upright || fromCard.upright || uprightUrl || null,
+    finalImage: primary || null,
+    lang: lang || null,
+  });
+
+  return { primary, fallbackChain, cardSlug, orientation };
+}
+
 function toSafeText(value, fallback = '') {
   if (value == null) return fallback;
   return String(value);
@@ -483,12 +561,22 @@ async function buildCardEntries(payload) {
           orientation,
           name: entry?.name || hit.card_name_en || hit.name_en || hit.name_th || hit.name || targetId,
           preferredImageUrl: entry?.resolvedImageUrl || entry?.imageUrl || '',
+          image: entry?.image || '',
+          resolvedImageUrl: entry?.resolvedImageUrl || '',
+          imageUrl: entry?.imageUrl || '',
+          image_upright: entry?.image_upright || entry?.imageUpright || '',
+          image_reversed: entry?.image_reversed || entry?.imageReversed || '',
         }
         : {
           card: null,
           orientation,
           name: entry?.name || targetId,
           preferredImageUrl: entry?.resolvedImageUrl || entry?.imageUrl || '',
+          image: entry?.image || '',
+          resolvedImageUrl: entry?.resolvedImageUrl || '',
+          imageUrl: entry?.imageUrl || '',
+          image_upright: entry?.image_upright || entry?.imageUpright || '',
+          image_reversed: entry?.image_reversed || entry?.imageReversed || '',
         };
     })
     .filter((entry) => entry.card || entry.name);
@@ -1012,12 +1100,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         const cardIdentity = { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
         const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, entry.orientation);
         const resolvedPrimary = await resolveCardImageUrl(cardIdentity, entry.orientation);
-        const fallback = entry.orientation === 'reversed' ? uprightUrl : null;
-        const finalFallback = backUrl;
         try {
-          const selectedUrl = entry?.preferredImageUrl || resolvedPrimary || reversedUrl || uprightUrl || backUrl;
+          const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources(entry, {
+            resolvedPrimary,
+            uprightUrl,
+            reversedUrl,
+            backUrl,
+            lang,
+          });
           emitPosterDebug('waiting_for_card', { url: selectedUrl });
-          const img = await loadPosterCardImageWithTimeout(selectedUrl, [fallback, finalFallback].filter(Boolean));
+          const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
           emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardW, h: img?.naturalHeight || cardH });
           ctx.drawImage(img, x, cardY, cardW, cardH);
         } catch (error) {
@@ -1208,6 +1300,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const strings = getDailyStrings(lang);
     const cardEntries = (await buildCardEntries(payload)).slice(0, 1);
     const cardEntry = cardEntries[0];
+    const resolvedOrientation = resolveDailyReadingOrientation(payload, cardEntry);
     const reading = resolveDailyReading(payload, cardEntry, lang);
     const lucky = resolveLuckyInfo(payload, cardEntry);
     const luckyColors = (lucky.colors || []).slice(0, 4);
@@ -1215,17 +1308,33 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const luckyDotColors = luckyColors.map(resolveLuckyColorDot).filter(Boolean).slice(0, 3);
     const mainQuoteText = reading.mainQuoteText || '';
     const archetypeText = reading.archetype || '';
-    const hasReadingPanel = Boolean(archetypeText || mainQuoteText);
+    const hasReadingPanel = Boolean(mainQuoteText);
+    const quoteIsCompact = mainQuoteText.length > 72;
+    const quoteLineHeight = quoteIsCompact ? 66 : 72;
+    const quoteMaxLines = quoteIsCompact ? 3 : 2;
+    const isUprightTone = resolvedOrientation === 'upright';
+    const textPalette = isUprightTone
+      ? {
+        primary: '#2A3556',
+        secondary: '#364063',
+        muted: 'rgba(60,70,90,0.72)',
+      }
+      : {
+        primary: '#F8F5EF',
+        secondary: 'rgba(235,245,255,0.92)',
+        muted: 'rgba(245,245,250,0.88)',
+      };
+    const readingPanelFill = isUprightTone ? 'rgba(255,255,255,0.55)' : 'rgba(32,44,80,0.72)';
+    const quoteShadow = isUprightTone ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.32)';
+    const orientationShadow = isUprightTone ? 'rgba(255, 255, 255, 0.28)' : 'rgba(0, 0, 0, 0.22)';
     const layout = {
-      headerTop: 160,
-      logoY: 80,
-      cardTop: 260,
-      cardMaxHeight: 1100,
-      panelTop: 1400,
-      panelHeight: 400,
-      panelPadding: 40,
-      luckyRowY: 1724,
-      footerY: 1880,
+      headerTop: 144,
+      cardTop: 276,
+      cardMaxHeight: 900,
+      panelTop: 1320,
+      panelHeight: 320,
+      luckyRowY: 1760,
+      footerY: 1860,
     };
 
     const footerY = layout.footerY;
@@ -1239,15 +1348,15 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       let cursorY = layout.headerTop;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#f8d77a';
-      ctx.font = '600 62px "Poppins", "Space Grotesk", sans-serif';
+      ctx.fillStyle = textPalette.primary;
+      ctx.font = '700 72px "Poppins", "Space Grotesk", sans-serif';
       ctx.shadowColor = 'rgba(0,0,0,0.78)';
       ctx.shadowBlur = 16;
       wrapText(ctx, strings.title, width / 2, cursorY, maxWidth, 54, 1);
       ctx.shadowBlur = 0;
-      cursorY += 62;
-      ctx.fillStyle = '#d8dbe6';
-      ctx.font = '500 36px "Space Grotesk", sans-serif';
+      cursorY += 54;
+      ctx.fillStyle = textPalette.secondary;
+      ctx.font = '500 38px "Space Grotesk", sans-serif';
       ctx.shadowColor = 'rgba(0,0,0,0.72)';
       ctx.shadowBlur = 10;
       wrapText(ctx, strings.subtitle, width / 2, cursorY, maxWidth, 36, 1);
@@ -1264,16 +1373,21 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const cardIdentity = { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
       const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, cardEntry.orientation);
       const resolvedPrimary = await resolveCardImageUrl(cardIdentity, cardEntry.orientation);
-      const primary = cardEntry?.preferredImageUrl || localPrimary || resolvedPrimary || (cardEntry.orientation === 'reversed' ? reversedUrl : uprightUrl) || backUrl;
+      const { primary: resolvedAssetPrimary, fallbackChain } = resolvePosterCardImageSources(cardEntry, {
+        resolvedPrimary,
+        uprightUrl,
+        reversedUrl,
+        backUrl,
+        lang,
+      });
+      const primary = localPrimary || resolvedAssetPrimary;
       emitPosterDebug('waiting_for_card', { url: primary });
-      const upright = localUpright || uprightUrl;
-      const back = localBack || backUrl;
-      posterCiLog('card_urls', { primary, upright, back });
+      const fallbackUrls = [...new Set([...(localUpright ? [localUpright] : []), ...fallbackChain, localBack || backUrl].filter(Boolean).filter((item) => item !== primary))];
+      posterCiLog('card_urls', { primary, fallbackUrls });
       const backFallback = localBack || toAssetUrl(resolveCardBackFallbackPath());
       const preloadResults = await preloadImages([
         { kind: 'card', url: primary },
-        { kind: 'card', url: upright },
-        { kind: 'card', url: back },
+        ...fallbackUrls.map((url) => ({ kind: 'card', url })),
         { kind: 'card', url: backFallback },
       ]);
       const loaded = preloadResults.find((entry) => entry.status === 'loaded' && entry.img);
@@ -1293,54 +1407,38 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         throw new Error(`asset load failure: ${failedUrls.join(', ')}`);
       }
       if (isPosterCiDebugEnabled() || isPosterDebugEnabled()) return null;
-      return loadPosterCardImageWithTimeout(primary, [upright, back]);
+      return loadPosterCardImageWithTimeout(primary, fallbackUrls);
     };
 
     const drawReadingPanel = () => {
       if (!hasReadingPanel) return;
 
       ctx.save();
-      ctx.fillStyle = 'rgba(20, 28, 51, 0.4)';
-      drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 32);
+      ctx.fillStyle = readingPanelFill;
+      drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 36);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(248, 215, 122, 0.15)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      ctx.shadowColor = 'rgba(29, 38, 70, 0.18)';
+      ctx.shadowBlur = 40;
+      ctx.shadowOffsetY = 16;
       ctx.restore();
 
-      let panelCursorY = panelTop + 60;
+      let panelCursorY = panelTop + 66;
       const panelCenterX = width / 2;
-      const panelTextWidth = panelWidth - 80;
+      const panelTextWidth = panelWidth - 120;
       let quoteY = null;
 
       ctx.textAlign = 'center';
 
-      if (archetypeText) {
-        ctx.fillStyle = '#f5df8f';
-        ctx.font = '500 23px "Space Grotesk", sans-serif';
-        panelCursorY = wrapText(
-          ctx,
-          archetypeText,
-          panelCenterX,
-          panelCursorY,
-          panelTextWidth,
-          34,
-          2,
-        );
-      }
-
       if (mainQuoteText) {
-        const quoteLineHeight = 52;
-        const quoteMaxLines = 2;
         const quoteBlockHeight = quoteLineHeight * quoteMaxLines;
-        const availableTop = panelCursorY + 18;
-        const availableBottom = Math.min(panelTop + panelHeight - 28, layout.luckyRowY - 52);
+        const availableTop = panelCursorY;
+        const availableBottom = panelTop + panelHeight - 30;
         quoteY = Math.max(availableTop, availableTop + (availableBottom - availableTop - quoteBlockHeight) / 2);
         ctx.save();
-        ctx.fillStyle = '#f7f4ee';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
-        ctx.shadowBlur = 10;
-        ctx.font = 'italic 600 48px "Prata", serif';
+        ctx.fillStyle = textPalette.primary;
+        ctx.shadowColor = quoteShadow;
+        ctx.shadowBlur = 14;
+        ctx.font = quoteIsCompact ? 'italic 500 52px "Prata", serif' : 'italic 500 58px "Prata", serif';
         panelCursorY = wrapText(
           ctx,
           `“${mainQuoteText}”`,
@@ -1359,41 +1457,57 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const drawOrientationLabel = () => {
       if (!reading.orientation) return;
       const cardBottomY = cardY + cardHeight;
-      const panelLabelY = panelTop - 18;
-      const minGapY = cardBottomY + 44;
+      const panelLabelY = panelTop - 76;
+      const minGapY = cardBottomY + 56;
       const orientationY = Math.min(panelLabelY, minGapY);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = 'rgba(244, 248, 255, 0.98)';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
-      ctx.shadowBlur = 12;
+      ctx.fillStyle = textPalette.muted;
+      ctx.shadowColor = orientationShadow;
+      ctx.shadowBlur = 8;
       ctx.font = '500 30px "Space Grotesk", sans-serif';
       wrapText(ctx, reading.orientation, width / 2, orientationY, width - safeMargin * 2, 34, 1);
       ctx.shadowBlur = 0;
+      return orientationY;
+    };
+
+    const drawArchetypeLabel = (orientationY) => {
+      if (!archetypeText) return null;
+      const fallbackY = cardY + cardHeight + 114;
+      const archetypeY = Math.min(panelTop - 26, (orientationY || fallbackY - 44) + 56);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = textPalette.primary;
+      ctx.font = '600 42px "Space Grotesk", sans-serif';
+      wrapText(ctx, archetypeText, width / 2, archetypeY, width - safeMargin * 2, 48, 2);
+      return archetypeY;
     };
 
     let quoteY = null;
 
     const drawLuckyRow = () => {
       if (!hasLuckyRow) return;
-      const minLuckyY = cardY + cardHeight + 24;
-      const maxLuckyY = panelTop + panelHeight - 52;
+      const minLuckyY = panelTop + panelHeight + 58;
+      const maxLuckyY = footerY - 80;
       const rowY = Math.min(Math.max(layout.luckyRowY, minLuckyY), maxLuckyY);
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#f7f4ee';
-      ctx.font = '500 22px "Space Grotesk", sans-serif';
+      ctx.fillStyle = textPalette.secondary;
+      ctx.font = '700 26px "Space Grotesk", sans-serif';
       ctx.fillText(strings.luckyColors, width / 2, rowY);
 
-      const dotRadius = 13;
-      const dotGap = 20;
+      const dotRadius = 24;
+      const dotGap = 32;
       const count = luckyDotColors.length;
       const totalWidth = count * (dotRadius * 2) + (count - 1) * dotGap;
       let dotX = (width - totalWidth) / 2 + dotRadius;
-      const dotY = rowY + 34;
+      const dotY = rowY + 42;
       luckyDotColors.forEach((hex) => {
         ctx.save();
         ctx.fillStyle = hex;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.10)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 4;
         ctx.beginPath();
         ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2);
         ctx.fill();
@@ -1407,8 +1521,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.textBaseline = 'alphabetic';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
       ctx.shadowBlur = 12;
-      ctx.fillStyle = '#f8fbff';
-      ctx.font = '500 23px "Space Grotesk", sans-serif';
+      ctx.fillStyle = textPalette.muted;
+      ctx.font = '400 28px "Space Grotesk", sans-serif';
       const safeFooterY = Math.min(footerY, height - safeMargin * 0.6);
       ctx.fillText('meowtarot.com', width / 2, safeFooterY);
       ctx.shadowBlur = 0;
@@ -1417,8 +1531,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     drawHeader();
 
     const cardTopY = layout.cardTop;
-    const gapBeforePanel = 48;
-    const maxCardWidth = Math.min(720, width - safeMargin * 2);
+    const gapBeforePanel = 64;
+    const maxCardWidth = Math.min(690, width - safeMargin * 2);
     const maxCardHeight = Math.min(layout.cardMaxHeight, Math.max(0, panelTop - gapBeforePanel - cardTopY));
     const fallbackAspect = 2 / 3;
     const fallbackWidth = Math.min(
@@ -1446,15 +1560,27 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const cardX = (width - cardWidth) / 2;
 
     if (cardWidth && cardHeight) {
-      ctx.save();
-      ctx.shadowColor = 'rgba(248, 215, 122, 0.4)';
-      ctx.shadowBlur = 60;
-      ctx.shadowOffsetY = 12;
-      ctx.fillStyle = '#0f1429';
-      ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
-      ctx.restore();
+      const cardRadius = 28;
+      const drawCardGlow = (blur, alpha) => {
+        ctx.save();
+        ctx.shadowColor = `rgba(255, 245, 220, ${alpha})`;
+        ctx.shadowBlur = blur;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, cardRadius);
+        ctx.fillStyle = 'rgba(255, 245, 220, 0.02)';
+        ctx.fill();
+        ctx.restore();
+      };
+      drawCardGlow(18, 0.42);
+      drawCardGlow(42, 0.30);
+      drawCardGlow(70, 0.18);
       if (cardImg) {
+        ctx.save();
+        drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, cardRadius);
+        ctx.clip();
         ctx.drawImage(cardImg, cardX, cardY, cardWidth, cardHeight);
+        ctx.restore();
       }
       posterCiLog('draw_card', {
         executed: Boolean(cardImg),
@@ -1473,6 +1599,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       blocks: Object.values(textBlocks).filter(Boolean).length,
       detail: textBlocks,
     });
+    const orientationY = drawOrientationLabel();
+    drawArchetypeLabel(orientationY);
     ({ quoteY } = drawReadingPanel() || { quoteY: null });
     if (isPosterDebugEnabled()) {
       posterDebugLog('info', '[poster-debug][daily]', {
@@ -1490,7 +1618,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         luckyDotColors,
       });
     }
-    drawOrientationLabel();
     drawLuckyRow();
     drawFooter();
     posterDebugLog('log', '[Poster] Canvas drawn');
@@ -1563,12 +1690,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const cardIdentity = { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
       const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, entry.orientation);
       const resolvedPrimary = await resolveCardImageUrl(cardIdentity, entry.orientation);
-      const fallback = entry.orientation === 'reversed' ? uprightUrl : null;
-      const finalFallback = backUrl;
       try {
-        const selectedUrl = entry?.preferredImageUrl || resolvedPrimary || reversedUrl || uprightUrl || backUrl;
+        const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources(entry, {
+          resolvedPrimary,
+          uprightUrl,
+          reversedUrl,
+          backUrl,
+          lang: payload?.lang || 'en',
+        });
         emitPosterDebug('waiting_for_card', { url: selectedUrl });
-        const img = await loadPosterCardImageWithTimeout(selectedUrl, [fallback, finalFallback].filter(Boolean));
+        const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
         emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardWidth, h: img?.naturalHeight || cardHeight });
         ctx.drawImage(img, x, y, cardWidth, cardHeight);
       } catch (error) {

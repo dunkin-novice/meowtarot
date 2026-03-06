@@ -3035,12 +3035,30 @@ body[data-page='reading'] .primary:active:not(:disabled) {
   margin-inline: auto;
 }
 
+.energy-panel--subtle > h3 {
+  margin: 0 0 20px;
+}
+
 .energy-panel--subtle .energy-chart {
-  width: 100%;
-  max-width: 300px;
-  max-height: 220px;
+  width: min(100%, 460px);
+  height: min(72vw, 360px);
+  max-height: 360px;
   margin-inline: auto;
   display: block;
+}
+
+.energy-panel--subtle .energy-interpretation {
+  max-width: 360px;
+  min-height: 2.8em;
+  margin: 22px auto 8px;
+  text-align: center;
+  color: #726d88;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.energy-panel--subtle .energy-interpretation:empty::before {
+  content: '\00a0';
 }
 
 .deeper-section + .deeper-section {
