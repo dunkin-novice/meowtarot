@@ -539,11 +539,11 @@ async function handleShare() {
 
   const sharePageUrl = window.location.href;
   const isWebp = blob.type === 'image/webp';
-  const fileName = isWebp ? 'meowtarot.webp' : 'meowtarot.png';
+  const fileName = isWebp ? 'meowtarot.webp' : 'meowtarot-daily-reading.png';
 
   const fallbackDownload = () => {
-    const blobUrl = ensurePosterUrl();
-    if (!blobUrl) return;
+    if (!blob) return;
+    const blobUrl = URL.createObjectURL(blob);
     if (openLink) {
       openLink.hidden = false;
       openLink.href = blobUrl;
@@ -553,9 +553,11 @@ async function handleShare() {
     a.href = blobUrl;
     a.download = fileName;
     a.rel = 'noopener';
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
   };
 
   const copyShareLink = async () => {
