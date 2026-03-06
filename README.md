@@ -119,3 +119,13 @@ TARGET_URL="https://www.meowtarot.com" npx playwright test tests/lang-persistenc
 ```
 
 Note: CI poster/share jobs generate tiny `tests/fixtures/*.png` images at runtime (via Node + canvas in Playwright) so binary fixture assets are not committed to the repository.
+
+## WebP compatibility build note
+
+For embedded WebViews (e.g., Instagram in-app browser), re-encode card WebP assets without metadata to reduce decode failures:
+
+```bash
+cwebp -q 85 -metadata none input.png -o output.webp
+```
+
+Keep WebP as primary delivery format, with runtime JPG/back-image fallback where needed.

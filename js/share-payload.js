@@ -36,5 +36,6 @@ export function buildPosterCardPayload(card = {}) {
     keywords: toText(card.keywords),
     summary: toText(card.summary),
     archetype: toText(card.archetype),
+    resolvedImageUrl: toText(card.resolvedImageUrl || card.imageUrl),
   };
 }
