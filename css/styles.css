@@ -3037,10 +3037,24 @@ body[data-page='reading'] .primary:active:not(:disabled) {
 
 .energy-panel--subtle .energy-chart {
   width: 100%;
-  max-width: 300px;
-  max-height: 220px;
+  max-width: 380px;
+  max-height: 280px;
   margin-inline: auto;
   display: block;
+}
+
+.energy-panel--subtle .energy-interpretation {
+  max-width: 360px;
+  min-height: 2.8em;
+  margin: 14px auto 8px;
+  text-align: center;
+  color: #726d88;
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+.energy-panel--subtle .energy-interpretation:empty::before {
+  content: '\00a0';
 }
 
 .deeper-section + .deeper-section {

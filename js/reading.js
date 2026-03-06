@@ -1026,6 +1026,11 @@ function buildEnergyPanel(cards, dict) {
   canvas.className = 'energy-chart';
   panel.appendChild(canvas);
 
+  const interpretation = document.createElement('div');
+  interpretation.className = 'energy-interpretation';
+  interpretation.setAttribute('aria-live', 'polite');
+  panel.appendChild(interpretation);
+
   const elements = ['fire', 'water', 'air', 'earth'];
   const averages = elements.map((key) => {
     const sum = cards.slice(0, 3).reduce((acc, card) => {
@@ -1035,37 +1040,105 @@ function buildEnergyPanel(cards, dict) {
     return Math.round(sum / 3);
   });
 
-  const labels = [
-    dict.energyFire || 'Fire',
-    dict.energyWater || 'Water',
-    dict.energyAir || 'Air',
-    dict.energyEarth || 'Earth',
+  const labels = ['Action', 'Emotion', 'Thinking', 'Stability'];
+
+  const createPastelGradient = (chart, alpha = 0.28) => {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return `rgba(173, 162, 255, ${alpha})`;
+    const gradient = ctx.createLinearGradient(chartArea.left, chartArea.top, chartArea.right, chartArea.bottom);
+    gradient.addColorStop(0, `rgba(198, 183, 255, ${alpha})`); // lavender
+    gradient.addColorStop(0.26, `rgba(255, 196, 225, ${alpha})`); // blush pink
+    gradient.addColorStop(0.52, `rgba(189, 220, 255, ${alpha})`); // baby blue
+    gradient.addColorStop(0.76, `rgba(188, 236, 218, ${alpha})`); // mint
+    gradient.addColorStop(1, `rgba(255, 244, 216, ${alpha})`); // soft cream
+    return gradient;
+  };
+
+  const pointPalette = [
+    'rgba(199, 184, 255, 0.98)',
+    'rgba(255, 201, 227, 0.98)',
+    'rgba(191, 223, 255, 0.98)',
+    'rgba(194, 239, 220, 0.98)',
   ];
+
+  const energyPointGlowPlugin = {
+    id: 'energyPointGlow',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const datasetMeta = chart.getDatasetMeta(0);
+      if (!datasetMeta?.data?.length) return;
+
+      ctx.save();
+      datasetMeta.data.forEach((point, idx) => {
+        const color = pointPalette[idx % pointPalette.length];
+        ctx.beginPath();
+        ctx.fillStyle = color.replace('0.98', '0.4');
+        ctx.shadowColor = color.replace('0.98', '0.62');
+        ctx.shadowBlur = 10;
+        ctx.arc(point.x, point.y, 5.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    },
+  };
 
   loadChartJs().then((Chart) => {
     if (!Chart || !canvas) return;
     if (energyChart) energyChart.destroy();
     energyChart = new Chart(canvas, {
       type: 'radar',
+      plugins: [energyPointGlowPlugin],
       data: {
         labels,
         datasets: [
           {
             label: dict.energyTitle || 'Energy',
             data: averages,
-            backgroundColor: 'rgba(120, 107, 255, 0.2)',
-            borderColor: 'rgba(120, 107, 255, 0.9)',
-            pointBackgroundColor: 'rgba(120, 107, 255, 0.9)',
+            backgroundColor: (context) => createPastelGradient(context.chart, 0.3),
+            borderColor: (context) => createPastelGradient(context.chart, 0.82),
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 4.8,
+            pointBackgroundColor: pointPalette,
+            pointBorderColor: 'rgba(255, 255, 255, 0.95)',
+            pointBorderWidth: 1.2,
+            pointHoverBorderWidth: 1.2,
+            pointHitRadius: 10,
           },
         ],
       },
       options: {
         responsive: true,
+        layout: {
+          padding: {
+            top: 16,
+            right: 26,
+            bottom: 14,
+            left: 26,
+          },
+        },
         scales: {
           r: {
             beginAtZero: true,
             max: 100,
             ticks: { display: false },
+            grid: {
+              color: 'rgba(172, 167, 196, 0.24)',
+              lineWidth: 1,
+            },
+            angleLines: {
+              color: 'rgba(172, 167, 196, 0.2)',
+              lineWidth: 1,
+            },
+            pointLabels: {
+              color: '#4f4a66',
+              font: {
+                family: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                size: 12,
+                weight: '600',
+              },
+              padding: 10,
+            },
           },
         },
         plugins: {
@@ -1757,6 +1830,30 @@ function downscaleCanvas(canvas, maxWidth = 1080) {
   return c;
 }
 
+async function downloadPoster(canvas, fileName = 'meowtarot-daily-reading.png') {
+  if (!canvas || typeof canvas.toBlob !== 'function') {
+    throw new Error('Poster canvas is unavailable for download');
+  }
+
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob((result) => {
+      if (result) resolve(result);
+      else reject(new Error('Failed to create poster blob'));
+    }, 'image/png', 0.95);
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 async function loadHtml2Canvas() {
   if (typeof window === 'undefined') return null;
   if (typeof window.html2canvas === 'function') return window.html2canvas;
@@ -1812,24 +1909,19 @@ async function saveImage() {
     });
     const downscaled = downscaleCanvas(canvas);
 
-    const openImage = (href) => {
-      const opened = window.open(href, '_blank', 'noopener');
-      if (!opened) {
-        window.location.href = href;
-      }
-    };
-
     if (downscaled.toBlob) {
-      downscaled.toBlob((blob) => {
-        if (blob) {
-          openImage(URL.createObjectURL(blob));
-        } else {
-          openImage(downscaled.toDataURL('image/png'));
-        }
-      }, 'image/png');
-    } else {
-      openImage(downscaled.toDataURL('image/png'));
+      await downloadPoster(downscaled, 'meowtarot-daily-reading.png');
+      return;
     }
+
+    const fallbackLink = document.createElement('a');
+    fallbackLink.href = downscaled.toDataURL('image/png');
+    fallbackLink.download = 'meowtarot-daily-reading.png';
+    fallbackLink.rel = 'noopener';
+    fallbackLink.style.display = 'none';
+    document.body.appendChild(fallbackLink);
+    fallbackLink.click();
+    fallbackLink.remove();
   } catch (error) {
     console.error('Save as image failed', error);
   }
