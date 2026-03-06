@@ -1303,7 +1303,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const resolvedOrientation = resolveDailyReadingOrientation(payload, cardEntry);
     const reading = resolveDailyReading(payload, cardEntry, lang);
     const lucky = resolveLuckyInfo(payload, cardEntry);
-    const luckyColors = (lucky.colors || []).slice(0, 4);
+    const luckyColors = (lucky.colors || []).slice(0, 3);
     const hasLuckyRow = luckyColors.length > 0;
     const luckyDotColors = luckyColors.map(resolveLuckyColorDot).filter(Boolean).slice(0, 3);
     const mainQuoteText = reading.mainQuoteText || '';
