@@ -43,11 +43,13 @@ function buildCasePayload({ orientation = 'upright', debugBackgroundPath } = {})
       {
         id: isReversed ? '01-the-fool-reversed' : '01-the-fool-upright',
         card_id: isReversed ? '01-the-fool-reversed' : '01-the-fool-upright',
+        image: '/assets/cards/01-the-fool.jpg',
         orientation,
         title: 'The Fool',
+        archetype: 'The Fool',
+        imply: isReversed ? 'release, reset, trust' : 'new beginning, curiosity, trust',
         keywords: isReversed ? 'release, reset' : 'new beginning, curiosity',
         summary: isReversed ? 'Pause before the leap and regroup.' : 'A leap into the unknown.',
-        archetype: 'The Fool',
       },
     ],
   };
