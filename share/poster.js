@@ -685,6 +685,7 @@ function buildDailyReadingFromCard(card, orientation, lang) {
   return {
     orientation: orient,
     archetype: getLocalizedField(card, 'archetype', lang),
+    hook: getLocalizedField(card, 'hook', lang),
     actionPrompt: getLocalizedField(card, 'action_prompt', lang),
     keywords: getLocalizedField(card, 'tarot_imply', lang),
   };
@@ -695,11 +696,13 @@ function resolveDailyReading(payload, cardEntry, lang) {
   const resolvedOrientation = resolveDailyReadingOrientation(payload, cardEntry);
   const cardReading = buildDailyReadingFromCard(cardEntry?.card, resolvedOrientation, lang) || {};
   const fallbackOrientation = getOrientationLabel(resolvedOrientation || resolveDailyOrientation(payload), lang);
+  const localizedHook = payloadReading[`hook_${lang}`] || payloadReading.hook || '';
   const localizedActionPrompt = payloadReading[`action_prompt_${lang}`] || payloadReading.action_prompt || '';
   const actionPrompt = localizedActionPrompt || cardReading.actionPrompt || '';
+  const hook = localizedHook || cardReading.hook || '';
   const readingResult = payloadReading.readingResult || payloadReading.result || payloadReading.summary || '';
-  const mainQuoteText = actionPrompt || readingResult || '';
-  const mainQuoteSource = actionPrompt ? 'action_prompt' : (readingResult ? 'reading_result' : 'none');
+  const mainQuoteText = hook || actionPrompt || readingResult || '';
+  const mainQuoteSource = hook ? 'hook' : (actionPrompt ? 'action_prompt' : (readingResult ? 'reading_result' : 'none'));
   return {
     orientation: getOrientationLabel(resolvedOrientation, lang) || cardReading.orientation || fallbackOrientation,
     archetype: cardReading.archetype || '',

@@ -838,40 +838,45 @@ function buildTopicPanel(title, text) {
   return panel;
 }
 
-function buildMetaPanel(card) {
+function buildMetaPanel(card, options = {}) {
   if (!card) return null;
 
+  const { onlyLuckyColors = false } = options;
   const meta = [];
 
-  const element = getText(card, 'element') || card.element;
-  const planet = getText(card, 'planet') || card.planet;
+  if (!onlyLuckyColors) {
+    const element = getText(card, 'element') || card.element;
+    const planet = getText(card, 'planet') || card.planet;
 
-  // ✅ FIX: support numerology_value (your JSON uses numerology_value)
-  const numerology =
-    card.numerology
-    ?? card.numerology_value
-    ?? getText(card, 'numerology')
-    ?? '';
+    // ✅ FIX: support numerology_value (your JSON uses numerology_value)
+    const numerology =
+      card.numerology
+      ?? card.numerology_value
+      ?? getText(card, 'numerology')
+      ?? '';
 
-  const zodiac =
-    getText(card, 'zodiac_sign')
-    || card.zodiac_sign
-    || card.astrology_sign;
+    const zodiac =
+      getText(card, 'zodiac_sign')
+      || card.zodiac_sign
+      || card.astrology_sign;
 
-  if (element) meta.push({ label: state.currentLang === 'th' ? 'ธาตุ' : 'Element', value: element });
-  if (planet) meta.push({ label: state.currentLang === 'th' ? 'ดาว' : 'Planet', value: planet });
-  if (numerology !== undefined && numerology !== null && numerology !== '') {
-    meta.push({ label: state.currentLang === 'th' ? 'เลข' : 'Numerology', value: numerology });
-  }
-  if (zodiac) {
-    meta.push({ label: (translations[state.currentLang] || translations.en).metaZodiac || (state.currentLang === 'th' ? 'ราศี' : 'Zodiac'), value: zodiac });
+    if (element) meta.push({ label: state.currentLang === 'th' ? 'ธาตุ' : 'Element', value: element });
+    if (planet) meta.push({ label: state.currentLang === 'th' ? 'ดาว' : 'Planet', value: planet });
+    if (numerology !== undefined && numerology !== null && numerology !== '') {
+      meta.push({ label: state.currentLang === 'th' ? 'เลข' : 'Numerology', value: numerology });
+    }
+    if (zodiac) {
+      meta.push({ label: (translations[state.currentLang] || translations.en).metaZodiac || (state.currentLang === 'th' ? 'ราศี' : 'Zodiac'), value: zodiac });
+    }
   }
 
   // ✅ Lucky colors: use color_palette (show NAME not hex)
   const luckyPalette = normalizeColorArray(card.color_palette).filter(Boolean).slice(0, 6);
 
   // ✅ Avoid colors: use avoid_color_palette
-  const avoidPalette = normalizeColorArray(card.avoid_color_palette).filter(Boolean).slice(0, 6);
+  const avoidPalette = onlyLuckyColors
+    ? []
+    : normalizeColorArray(card.avoid_color_palette).filter(Boolean).slice(0, 6);
 
   if (!meta.length && !luckyPalette.length && !avoidPalette.length) return null;
 
@@ -895,26 +900,52 @@ function buildMetaPanel(card) {
     row.appendChild(identityGroup);
   }
 
-  function buildColorGroup(label, colors, groupClassName) {
+  function buildColorGroup(label, colors, groupClassName, options = {}) {
     if (!colors.length) return null;
 
+    const { circlesOnly = false } = options;
     const group = document.createElement('div');
     group.className = `meta-group ${groupClassName}`;
+    if (circlesOnly) {
+      group.style.justifyContent = 'center';
+      group.style.width = '100%';
+    }
 
     const labelChip = document.createElement('span');
     labelChip.className = 'meta-badge';
     labelChip.textContent = label;
+    if (circlesOnly) {
+      labelChip.style.width = '100%';
+      labelChip.style.justifyContent = 'center';
+      labelChip.style.textAlign = 'center';
+    }
     group.appendChild(labelChip);
 
-    colors.forEach((c) => {
-      const chip = document.createElement('span');
-      chip.className = 'meta-badge';
+    const circlesRow = circlesOnly ? document.createElement('div') : null;
+    if (circlesRow) {
+      circlesRow.style.display = 'flex';
+      circlesRow.style.justifyContent = 'center';
+      circlesRow.style.gap = '10px';
+      circlesRow.style.width = '100%';
+    }
 
+    colors.forEach((c) => {
       const swatch = document.createElement('span');
       swatch.className = 'swatch';
 
       const cssColor = resolveCssColor(c);
       if (cssColor) swatch.style.background = cssColor;
+
+      if (circlesOnly) {
+        swatch.style.width = '22px';
+        swatch.style.height = '22px';
+        swatch.style.borderRadius = '999px';
+        circlesRow.appendChild(swatch);
+        return;
+      }
+
+      const chip = document.createElement('span');
+      chip.className = 'meta-badge';
 
       const txt = document.createElement('span');
 
@@ -929,13 +960,15 @@ function buildMetaPanel(card) {
       group.appendChild(chip);
     });
 
+    if (circlesRow) group.appendChild(circlesRow);
     return group;
   }
 
   const luckyGroup = buildColorGroup(
     state.currentLang === 'th' ? 'สีมงคลประจำวัน' : "Today's lucky colors",
     luckyPalette,
-    'meta-group--lucky'
+    'meta-group--lucky',
+    { circlesOnly: onlyLuckyColors }
   );
   if (luckyGroup) row.appendChild(luckyGroup);
 
@@ -1045,6 +1078,129 @@ function buildEnergyPanel(cards, dict) {
   return panel;
 }
 
+
+function buildDailyTextPanel(text, options = {}) {
+  if (!text) return null;
+
+  const { emphasize = false, subtle = false } = options;
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+
+  const p = document.createElement('p');
+  if (subtle) p.className = 'topic-copy';
+  if (emphasize) {
+    p.innerHTML = `<em>"${String(text).trim()}"</em>`;
+  } else {
+    p.textContent = text;
+  }
+  panel.appendChild(p);
+
+  return panel;
+}
+
+function buildDailyGuidancePanel(card, hook = '') {
+  if (!card) return null;
+
+  const reflection = getText(card, 'reflection_question');
+  const action = getText(card, 'action_prompt');
+  const affirmation = getText(card, 'affirmation');
+  if (!hook && !reflection && !action && !affirmation) return null;
+
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+
+  if (hook) {
+    const p = document.createElement('p');
+    p.className = 'lede';
+    p.style.fontSize = '1.04em';
+    p.style.fontWeight = '600';
+    p.style.color = '#2f2940';
+    p.style.textAlign = 'center';
+    p.textContent = hook;
+    panel.appendChild(p);
+  }
+
+  if (reflection) {
+    const p = document.createElement('p');
+    p.style.textAlign = 'left';
+    p.textContent = reflection;
+    panel.appendChild(p);
+  }
+
+  if (action) {
+    const p = document.createElement('p');
+    p.style.textAlign = 'left';
+    p.textContent = action;
+    panel.appendChild(p);
+  }
+
+  if (affirmation) {
+    const p = document.createElement('p');
+    p.style.textAlign = 'left';
+    p.innerHTML = `<em>"${String(affirmation).trim()}"</em>`;
+    panel.appendChild(p);
+  }
+
+  return panel;
+}
+
+function buildDailyAdvicePanel(card) {
+  if (!card) return null;
+
+  const ritual = getText(card, 'ritual_2min');
+  const luckyPalette = normalizeColorArray(card.color_palette).filter(Boolean).slice(0, 6);
+  if (!ritual && !luckyPalette.length) return null;
+
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  panel.style.textAlign = 'center';
+
+  const title = document.createElement('h3');
+  title.textContent = state.currentLang === 'th' ? 'คำแนะนำวันนี้' : "Today's Advice";
+  title.style.textAlign = 'center';
+  panel.appendChild(title);
+
+  if (ritual) {
+    const ritualText = document.createElement('p');
+    ritualText.className = 'topic-copy';
+    ritualText.textContent = ritual;
+    panel.appendChild(ritualText);
+  }
+
+  if (luckyPalette.length) {
+    const luckyLabel = document.createElement('p');
+    luckyLabel.className = 'meta-badge';
+    luckyLabel.style.display = 'inline-flex';
+    luckyLabel.style.justifyContent = 'center';
+    luckyLabel.style.width = '100%';
+    luckyLabel.style.textAlign = 'center';
+    luckyLabel.style.marginTop = ritual ? '6px' : '0';
+    luckyLabel.textContent = state.currentLang === 'th' ? 'สีมงคลวันนี้' : "Today's lucky colors";
+    panel.appendChild(luckyLabel);
+
+    const circles = document.createElement('div');
+    circles.style.display = 'flex';
+    circles.style.justifyContent = 'center';
+    circles.style.gap = '10px';
+    circles.style.marginTop = '4px';
+
+    luckyPalette.forEach((c) => {
+      const swatch = document.createElement('span');
+      swatch.className = 'swatch';
+      const cssColor = resolveCssColor(c);
+      if (cssColor) swatch.style.background = cssColor;
+      swatch.style.width = '22px';
+      swatch.style.height = '22px';
+      swatch.style.borderRadius = '999px';
+      circles.appendChild(swatch);
+    });
+
+    panel.appendChild(circles);
+  }
+
+  return panel;
+}
+
 function renderDaily(card, dict) {
   if (!readingContent || !card) return;
 
@@ -1057,39 +1213,37 @@ function renderDaily(card, dict) {
 
   const h2 = document.createElement('h2');
   h2.textContent = `${getName(card)} — ${getOrientationEnglish(card)}`;
+  h2.style.textAlign = 'center';
   panel.appendChild(h2);
 
-  const imply = getText(card, 'tarot_imply');
-  if (imply) {
+  const archetype = getText(card, 'archetype');
+  if (archetype) {
     const p = document.createElement('p');
     p.className = 'keywords';
-    p.textContent = imply;
+    p.style.textAlign = 'center';
+    p.textContent = archetype;
     panel.appendChild(p);
   }
 
-  const main = getText(card, 'standalone_present');
-  if (main) {
-    const p = document.createElement('p');
-    p.className = 'lede';
-    p.textContent = main;
-    panel.appendChild(p);
+  const tarotImply = getText(card, 'tarot_imply');
+  if (tarotImply) {
+    const implyText = document.createElement('p');
+    implyText.className = 'keywords';
+    implyText.style.textAlign = 'center';
+    implyText.style.fontStyle = 'italic';
+    implyText.textContent = tarotImply;
+    panel.appendChild(implyText);
   }
+
+  const hook = getText(card, 'hook') || getText(card, 'action_prompt') || getText(card, 'standalone_present');
 
   readingContent.appendChild(panel);
 
-  getTopicConfig().forEach((topic) => {
-    const text = getText(card, topic.singleKey);
-    const title = getTopicTitle(dict, topic.titleKey);
-    const topicPanel = buildTopicPanel(title, text);
-    if (topicPanel) readingContent.appendChild(topicPanel);
-  });
+  const guidance = buildDailyGuidancePanel(card, hook);
+  if (guidance) readingContent.appendChild(guidance);
 
-  const suggestionHeading = state.currentLang === 'th' ? 'คำแนะนำวันนี้' : (dict.suggestionTitle || 'Suggestion');
-  const suggestion = buildSuggestionPanel(card, dict, suggestionHeading);
-  if (suggestion) readingContent.appendChild(suggestion);
-
-  const meta = buildMetaPanel(card);
-  if (meta) readingContent.appendChild(meta);
+  const advice = buildDailyAdvicePanel(card);
+  if (advice) readingContent.appendChild(advice);
 }
 
 function renderFull(cards, dict) {
@@ -1771,6 +1925,7 @@ function handleTranslations(dict) {
     if (state.mode === 'question') readingTitle.textContent = dict.questionTitle;
     else if (state.mode === 'full') readingTitle.textContent = dict.overallTitle;
     else readingTitle.textContent = dict.dailyTitle;
+    readingTitle.style.textAlign = state.mode === 'daily' ? 'center' : '';
   }
 
   if (dataLoaded) {
