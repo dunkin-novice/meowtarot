@@ -95,6 +95,8 @@ const SHARE_POSTER_SELECTOR = '#share-poster-root';
 const SHARE_READY_TIMEOUT_MS = 8000;
 const SHARE_HASH_MAX_CHARS = 8000;
 let energyChart = null;
+const ENERGY_BALANCE_CONFIG_URL = new URL('../data/energy-balance-interpretations.json', import.meta.url).toString();
+let energyBalanceInterpretationsPromise = null;
 let saveButtonHandler = null;
 let shareButtonHandler = null;
 let newReadingButtonHandler = null;
@@ -1013,6 +1015,171 @@ function loadChartJs() {
     .catch(() => window.Chart || null);
 }
 
+function isEnergyBalanceDebugEnabled() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search || '');
+  if (params.get('energy_debug') === '1') return true;
+  try {
+    return String(window.localStorage?.getItem('ENERGY_DEBUG') || '').trim() === '1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function energyDebugLog(message, payload = {}) {
+  if (!isEnergyBalanceDebugEnabled()) return;
+  console.info(`[EnergyBalance] ${message}`, payload);
+}
+
+function loadEnergyBalanceInterpretations() {
+  if (energyBalanceInterpretationsPromise) return energyBalanceInterpretationsPromise;
+
+  energyBalanceInterpretationsPromise = fetch(ENERGY_BALANCE_CONFIG_URL, { cache: 'force-cache' })
+    .then((res) => {
+      if (!res.ok) throw new Error(`Failed to load interpretations (${res.status})`);
+      return res.json();
+    })
+    .catch((error) => {
+      energyBalanceInterpretationsPromise = null;
+      throw error;
+    });
+
+  return energyBalanceInterpretationsPromise;
+}
+
+function normalizeEnergyBalanceValues(values = {}) {
+  const keys = ['A', 'E', 'T', 'S'];
+  const parsed = keys.map((key) => {
+    const value = Number(values[key]);
+    return Number.isFinite(value) ? value : 0;
+  });
+
+  const maxValue = Math.max(...parsed);
+  const scale = maxValue <= 1 ? 100 : 1;
+  const toRange = (value) => Math.max(0, Math.min(100, Math.round(value * scale)));
+
+  return {
+    A: toRange(parsed[0]),
+    E: toRange(parsed[1]),
+    T: toRange(parsed[2]),
+    S: toRange(parsed[3]),
+  };
+}
+
+function buildEnergyMatcherById(id, thresholds = {}) {
+  const BAL = Number(thresholds.BAL ?? 8);
+  const GAP = Number(thresholds.GAP ?? 10);
+  const LOW = Number(thresholds.LOW ?? 30);
+
+  const abs = Math.abs;
+  const max = (...nums) => Math.max(...nums);
+  const min = (...nums) => Math.min(...nums);
+  const avg = (...nums) => nums.reduce((sum, value) => sum + value, 0) / nums.length;
+  const parseAxis = (axis) => ['A', 'E', 'T', 'S'].includes(axis) ? axis : null;
+  const otherAxes = (axis) => ['A', 'E', 'T', 'S'].filter((key) => key !== axis);
+
+  if (id === 'balanced_all') {
+    return ({ A, E, T, S }) => max(A, E, T, S) - min(A, E, T, S) <= BAL;
+  }
+
+  if (id === 'muted_all') {
+    return ({ A, E, T, S }) => max(A, E, T, S) <= LOW && (max(A, E, T, S) - min(A, E, T, S)) <= BAL;
+  }
+
+  const tripleMatch = /^triple_([AETS]{3})_low_([AETS])$/.exec(id);
+  if (tripleMatch) {
+    const tripleAxes = tripleMatch[1].split('').map(parseAxis);
+    const lowAxis = parseAxis(tripleMatch[2]);
+    if (!lowAxis || tripleAxes.some((axis) => !axis)) return () => false;
+    return (values) => {
+      const [x, y, z] = tripleAxes.map((axis) => values[axis]);
+      return abs(x - y) <= BAL && abs(x - z) <= BAL && abs(y - z) <= BAL && (avg(x, y, z) - values[lowAxis]) >= GAP;
+    };
+  }
+
+  const pairMatch = /^pair_([AETS]{2})$/.exec(id);
+  if (pairMatch) {
+    const pairAxes = pairMatch[1].split('').map(parseAxis);
+    if (pairAxes.some((axis) => !axis)) return () => false;
+    const [a1, a2] = pairAxes;
+    const rest = ['A', 'E', 'T', 'S'].filter((axis) => !pairAxes.includes(axis));
+    return (values) => abs(values[a1] - values[a2]) <= BAL
+      && values[a1] - values[rest[0]] >= GAP
+      && values[a1] - values[rest[1]] >= GAP
+      && values[a2] - values[rest[0]] >= GAP
+      && values[a2] - values[rest[1]] >= GAP;
+  }
+
+  const domWeakMatch = /^dom_([AETS])_weak_([AETS])$/.exec(id);
+  if (domWeakMatch) {
+    const domAxis = parseAxis(domWeakMatch[1]);
+    const weakAxis = parseAxis(domWeakMatch[2]);
+    if (!domAxis || !weakAxis || domAxis === weakAxis) return () => false;
+    const rest = otherAxes(domAxis);
+    return (values) => values[domAxis] >= values[rest[0]]
+      && values[domAxis] >= values[rest[1]]
+      && values[domAxis] >= values[rest[2]]
+      && (values[domAxis] - max(values[rest[0]], values[rest[1]], values[rest[2]])) >= BAL
+      && min(values.A, values.E, values.T, values.S) === values[weakAxis];
+  }
+
+  const domMatch = /^dom_([AETS])$/.exec(id);
+  if (domMatch) {
+    const domAxis = parseAxis(domMatch[1]);
+    if (!domAxis) return () => false;
+    const rest = otherAxes(domAxis);
+    return (values) => (values[domAxis] - max(values[rest[0]], values[rest[1]], values[rest[2]])) >= GAP
+      && (max(values[rest[0]], values[rest[1]], values[rest[2]]) - min(values[rest[0]], values[rest[1]], values[rest[2]])) < BAL;
+  }
+
+  const weakMatch = /^weak_([AETS])$/.exec(id);
+  if (weakMatch) {
+    const weakAxis = parseAxis(weakMatch[1]);
+    if (!weakAxis) return () => false;
+    const rest = otherAxes(weakAxis);
+    return (values) => (min(values[rest[0]], values[rest[1]], values[rest[2]]) - values[weakAxis]) >= GAP
+      && (max(values[rest[0]], values[rest[1]], values[rest[2]]) - min(values[rest[0]], values[rest[1]], values[rest[2]])) < BAL;
+  }
+
+  return () => false;
+}
+
+function resolveEnergyBalanceInterpretation(values, config = {}) {
+  const normalized = normalizeEnergyBalanceValues(values);
+  const conditions = Array.isArray(config.conditions) ? config.conditions : [];
+  const fallback = conditions.find((condition) => condition?.id === 'mixed_transition')
+    || conditions.find((condition) => String(condition?.rule || '').toUpperCase() === 'ELSE')
+    || conditions[conditions.length - 1]
+    || null;
+
+  for (const condition of conditions) {
+    if (!condition?.id || String(condition.rule || '').toUpperCase() === 'ELSE') continue;
+    const matcher = buildEnergyMatcherById(condition.id, config.thresholds || {});
+    if (matcher(normalized)) {
+      energyDebugLog('matched', {
+        values: normalized,
+        id: condition.id,
+        group: condition.group,
+        fallbackUsed: false,
+      });
+      return condition;
+    }
+  }
+
+  energyDebugLog('fallback', {
+    values: normalized,
+    id: fallback?.id || null,
+    group: fallback?.group || null,
+    fallbackUsed: true,
+  });
+  return fallback;
+}
+
+function renderEnergyBalanceInterpretation(target, interpretation) {
+  if (!target) return;
+  target.textContent = interpretation?.sentence || '';
+}
+
 // Energy Balance radar chart (full/life reading only).
 function buildEnergyPanel(cards, dict) {
   const panel = document.createElement('div');
@@ -1041,6 +1208,22 @@ function buildEnergyPanel(cards, dict) {
   });
 
   const labels = ['Action', 'Emotion', 'Thinking', 'Stability'];
+  const energyValues = {
+    A: averages[0],
+    E: averages[1],
+    T: averages[2],
+    S: averages[3],
+  };
+
+  loadEnergyBalanceInterpretations()
+    .then((config) => {
+      const selected = resolveEnergyBalanceInterpretation(energyValues, config);
+      renderEnergyBalanceInterpretation(interpretation, selected);
+    })
+    .catch((error) => {
+      energyDebugLog('config_load_error', { message: error?.message || String(error) });
+      renderEnergyBalanceInterpretation(interpretation, null);
+    });
 
   const createPastelGradient = (chart, alpha = 0.28) => {
     const { ctx, chartArea } = chart;
@@ -1094,7 +1277,7 @@ function buildEnergyPanel(cards, dict) {
           {
             label: dict.energyTitle || 'Energy',
             data: averages,
-            backgroundColor: (context) => createPastelGradient(context.chart, 0.3),
+            backgroundColor: (context) => createPastelGradient(context.chart, 0.36),
             borderColor: (context) => createPastelGradient(context.chart, 0.82),
             borderWidth: 2.5,
             pointRadius: 4,
@@ -1109,6 +1292,7 @@ function buildEnergyPanel(cards, dict) {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         layout: {
           padding: {
             top: 16,
