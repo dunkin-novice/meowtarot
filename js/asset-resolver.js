@@ -3,6 +3,7 @@ import { ASSET_BASE_URL, buildAssetUrl } from './asset-config.js';
 const DEFAULT_FACE_PACK = 'meow-v2';
 const DEFAULT_BACK_PACK = 'meow-v2';
 const FALLBACK_BACK_PACK = 'meow-v2';
+const GLOBAL_SITE_FALLBACK_PATH = 'assets/meowtarot-og.jpg';
 const CARD_EXISTS_CACHE = new Map();
 const FALLBACK_LOG_CACHE = new Set();
 let didLogAssetBase = false;
@@ -139,6 +140,61 @@ export async function resolveCardImageUrl(card = {}, orientation = 'upright') {
   if (uprightUrl && await exists(uprightUrl)) return uprightUrl;
   debugFallbackOnce(`up:${card?.id || card?.slug || ''}`, '[Assets] upright missing → fallback to back', card);
   return backUrl;
+}
+
+export function getGlobalSiteFallbackImageUrl() {
+  return buildAssetUrl(GLOBAL_SITE_FALLBACK_PATH, { versioned: true });
+}
+
+export async function resolveCardShareImageUrl(card = {}, orientation = 'upright') {
+  const normalizedOrientation = orientation === 'reversed' ? 'reversed' : 'upright';
+  const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, normalizedOrientation);
+  const cardSlug = card?.seo_slug_en || card?.slug || card?.card_id || card?.id || 'unknown-card';
+  const globalFallbackUrl = getGlobalSiteFallbackImageUrl();
+
+  const steps = normalizedOrientation === 'reversed'
+    ? [
+      { label: 'reversed uploaded image', url: reversedUrl },
+      { label: 'upright uploaded image', url: uprightUrl },
+      { label: 'card-level default fallback image', url: backUrl },
+      { label: 'global site fallback image', url: globalFallbackUrl, skipExistsCheck: true },
+    ]
+    : [
+      { label: 'upright uploaded image', url: uprightUrl },
+      { label: 'card-level default fallback image', url: backUrl },
+      { label: 'global site fallback image', url: globalFallbackUrl, skipExistsCheck: true },
+    ];
+
+  for (const step of steps) {
+    const requestedImageUrl = step.url || null;
+    if (!requestedImageUrl) {
+      console.info('[Assets][share-image]', {
+        cardSlug,
+        orientation: normalizedOrientation,
+        requestedImageUrl,
+        assetExists: false,
+        chosenFinalFallbackUrl: null,
+        step: step.label,
+      });
+      continue;
+    }
+
+    const assetExists = step.skipExistsCheck ? true : await exists(requestedImageUrl);
+    const chosenFinalFallbackUrl = assetExists ? requestedImageUrl : null;
+
+    console.info('[Assets][share-image]', {
+      cardSlug,
+      orientation: normalizedOrientation,
+      requestedImageUrl,
+      assetExists,
+      chosenFinalFallbackUrl,
+      step: step.label,
+    });
+
+    if (assetExists) return requestedImageUrl;
+  }
+
+  return globalFallbackUrl;
 }
 
 export function resolveCardBackPath({ preferredPack = DEFAULT_BACK_PACK } = {}) {

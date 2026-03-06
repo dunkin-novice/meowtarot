@@ -1,5 +1,6 @@
 import { initShell } from './common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
+import { resolveCardShareImageUrl } from './asset-resolver.js';
 
 const TARGET_CARD_ID = '01-the-fool-upright';
 
@@ -11,6 +12,8 @@ const metaFields = {
   ogUrl: document.querySelector('[data-card-meta="og-url"]'),
   twitterTitle: document.querySelector('[data-card-meta="twitter-title"]'),
   twitterDescription: document.querySelector('[data-card-meta="twitter-description"]'),
+  ogImage: document.querySelector('meta[property="og:image"]'),
+  twitterImage: document.querySelector('meta[name="twitter:image"]'),
   canonical: document.querySelector('[data-card-meta="canonical"]'),
   hreflangEn: document.querySelector('[data-card-meta="hreflang-en"]'),
   hreflangTh: document.querySelector('[data-card-meta="hreflang-th"]'),
@@ -154,12 +157,14 @@ function buildCardUrl(baseSlug, langPrefix = '') {
   return `https://www.meowtarot.com${prefix}/tarot-card-meanings/${baseSlug}/`;
 }
 
-function updateSeo(baseSlug, baseCard) {
+async function updateSeo(baseSlug, baseCard, orientation = 'upright') {
   if (!baseSlug || !baseCard) return;
   const name = baseCard.card_name_en || baseCard.name_en || 'Tarot card';
   const title = `${name} Tarot Meaning | Upright & Reversed | MeowTarot`;
   const description = baseCard.meta_description_en || chooseOverview(baseCard) || `${name} tarot meaning`;
   const url = buildCardUrl(baseSlug);
+  const orientedCard = state.orientedCards?.[orientation] || baseCard;
+  const shareImageUrl = await resolveCardShareImageUrl(orientedCard, orientation);
 
   if (metaFields.title) metaFields.title.textContent = title;
   if (metaFields.description) metaFields.description.setAttribute('content', description);
@@ -168,6 +173,8 @@ function updateSeo(baseSlug, baseCard) {
   if (metaFields.ogUrl) metaFields.ogUrl.setAttribute('content', url);
   if (metaFields.twitterTitle) metaFields.twitterTitle.setAttribute('content', title);
   if (metaFields.twitterDescription) metaFields.twitterDescription.setAttribute('content', description);
+  if (metaFields.ogImage) metaFields.ogImage.setAttribute('content', shareImageUrl);
+  if (metaFields.twitterImage) metaFields.twitterImage.setAttribute('content', shareImageUrl);
   if (metaFields.canonical) metaFields.canonical.setAttribute('href', url);
   if (metaFields.hreflangEn) metaFields.hreflangEn.setAttribute('href', url);
   if (metaFields.hreflangTh) metaFields.hreflangTh.setAttribute('href', buildCardUrl(baseSlug, 'th'));
@@ -211,6 +218,7 @@ function renderOrientation(card, orientation) {
   setText(dom.spreadFuture, card?.reading_summary_future_en || '');
   updateImage(card, orientation);
   buildFaq(card);
+  void updateSeo(state.baseSlug, state.baseCard || card, orientation);
 }
 
 function buildRelatedCards(baseCard) {
@@ -342,7 +350,7 @@ function setOrientationAvailability() {
   }
 }
 
-function hydratePage() {
+async function hydratePage() {
   const requestedId = resolveRequestedId();
   const requestedOrientation = deriveOrientationFromId(requestedId);
   state.baseSlug = extractSlug();
@@ -353,7 +361,6 @@ function hydratePage() {
   if (!state.baseCard) return;
 
   hydrateBaseCard(state.baseCard);
-  updateSeo(state.baseSlug, state.baseCard);
   buildRelatedCards(state.baseCard);
   setOrientationAvailability();
   const initialOrientation = state.orientedCards[requestedOrientation]
@@ -362,13 +369,14 @@ function hydratePage() {
       ? 'upright'
       : 'reversed';
   const initialCard = state.orientedCards[initialOrientation] || state.baseCard;
+  await updateSeo(state.baseSlug, state.baseCard, initialOrientation);
   renderOrientation(initialCard, initialOrientation);
 }
 
 function init() {
   initShell();
-  loadTarotData().then(() => {
-    hydratePage();
+  loadTarotData().then(async () => {
+    await hydratePage();
     bindOrientationToggle();
   });
 }
