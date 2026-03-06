@@ -682,6 +682,24 @@ function drawTextBlock(ctx, text, x, y, maxWidth, lineHeight) {
   return wrapText(ctx, text, x, y, maxWidth, lineHeight);
 }
 
+function drawTrackingText(ctx, text, x, y, tracking = 0) {
+  const value = String(text || '');
+  if (!value) return;
+  if (!tracking) {
+    ctx.fillText(value, x, y);
+    return;
+  }
+  const chars = Array.from(value);
+  const textWidth = chars.reduce((sum, ch) => sum + ctx.measureText(ch).width, 0);
+  const totalTracking = tracking * Math.max(chars.length - 1, 0);
+  let cursor = x - (textWidth + totalTracking) / 2;
+  chars.forEach((ch, index) => {
+    ctx.fillText(ch, cursor, y);
+    cursor += ctx.measureText(ch).width;
+    if (index < chars.length - 1) cursor += tracking;
+  });
+}
+
 function drawRoundedRect(ctx, x, y, width, height, radius) {
   const r = Math.min(radius, width / 2, height / 2);
   ctx.beginPath();
@@ -726,10 +744,20 @@ function resolveDailyReadingOrientation(payload, cardEntry) {
 
 async function drawPosterBackground(ctx, width, height, payload) {
   const localBgUrl = resolveLocalPosterFixtureUrl('background');
-  const primaryBgUrl = localBgUrl || toAssetUrl(resolvePosterBackgroundPath({ payload }));
+  const mode = String(payload?.poster?.mode || payload?.mode || '').toLowerCase();
+  const preferredBgPath = resolvePosterBackgroundPath({ payload });
+  const fullPrimaryBgUrl = toAssetUrl('backgrounds/bg-full-v2.webp');
+  const primaryBgUrl = localBgUrl || (mode === 'full' || mode === 'question' ? fullPrimaryBgUrl : toAssetUrl(preferredBgPath));
+  const previousBgUrl = localBgUrl || toAssetUrl(preferredBgPath);
   const fallbackBgUrl = localBgUrl || toAssetUrl('backgrounds/bg-000.webp');
-  const bgCandidates = [primaryBgUrl, fallbackBgUrl];
-  posterCiLog('bg_url', { primary: primaryBgUrl, fallback: fallbackBgUrl });
+  const bgCandidates = [...new Set([primaryBgUrl, previousBgUrl, fallbackBgUrl].filter(Boolean))];
+  posterCiLog('bg_url', {
+    mode,
+    primary: primaryBgUrl,
+    previous: previousBgUrl,
+    fallback: fallbackBgUrl,
+    candidates: bgCandidates,
+  });
 
   const preloadResults = await preloadImages(bgCandidates.map((url) => ({ kind: 'background', url })));
   for (const item of preloadResults) {
@@ -754,8 +782,9 @@ async function drawPosterBackground(ctx, width, height, payload) {
   }
 
   const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, '#0b1020');
-  gradient.addColorStop(1, '#141c33');
+  gradient.addColorStop(0, '#6f5ca8');
+  gradient.addColorStop(0.45, '#d9a7c7');
+  gradient.addColorStop(1, '#9fb8e6');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
   drawStarfield(ctx, width, height);
@@ -823,14 +852,116 @@ function resolveLuckyColorDot(color) {
 
 
 
-function resolveFullSummaries(payload, cardEntries, lang) {
+function resolveFullSummaries(payload, cardEntries) {
   const reading = payload?.reading || {};
-  const getCard = (idx) => cardEntries[idx]?.card || null;
-  return [
-    getLocalizedField(getCard(0), 'reading_summary_past', lang) || reading.reading_summary_past || '',
-    getLocalizedField(getCard(1), 'reading_summary_present', lang) || reading.reading_summary_present || '',
-    getLocalizedField(getCard(2), 'reading_summary_future', lang) || reading.reading_summary_future || '',
+  const slots = ['past', 'present', 'future'];
+  const pickFirst = (candidates = []) => {
+    for (const item of candidates) {
+      const text = toSafeText(item?.value, '').trim();
+      if (text) return { text, sourceTier: item?.tier || 99 };
+    }
+    return { text: '', sourceTier: 99 };
+  };
+
+  return slots.map((slot, idx) => {
+    const card = cardEntries[idx]?.card || {};
+    return pickFirst([
+      { value: card[`reflection_question_${slot}`], tier: 1 },
+      { value: card.reflection_question_en, tier: 2 },
+      { value: card.action_prompt_en, tier: 3 },
+      { value: card.hook_en, tier: 4 },
+      { value: card.affirmation_en, tier: 5 },
+      { value: card[`standalone_${slot}_en`], tier: 6 },
+      { value: card[`reading_summary_${slot}_en`], tier: 7 },
+      { value: reading[`reading_summary_${slot}_en`], tier: 8 },
+      { value: reading[`reading_summary_${slot}`], tier: 9 },
+    ]);
+  });
+}
+
+function resolveSymbolicMetadata(cardEntries) {
+  const cards = cardEntries.map((entry) => entry?.card || {});
+  const presentCard = cards[1] || {};
+
+  const elementVotes = cards
+    .map((card) => toSafeText(card?.element, '').trim())
+    .filter(Boolean);
+  const voteCounts = elementVotes.reduce((acc, value) => {
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
+  const bestVote = Object.values(voteCounts).length ? Math.max(...Object.values(voteCounts)) : 0;
+  const topElements = Object.entries(voteCounts)
+    .filter(([, count]) => count === bestVote)
+    .map(([value]) => value);
+  const presentElement = toSafeText(presentCard?.element, '').trim();
+  const element = topElements.length > 1 && presentElement
+    ? (topElements.includes(presentElement) ? presentElement : topElements[0])
+    : (topElements[0] || presentElement);
+
+  const planet = toSafeText(presentCard?.planet, '').trim();
+
+  const numerology = cards.reduce((sum, card) => {
+    const raw = toSafeText(card?.numerology_value, '').trim();
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) ? sum + parsed : sum;
+  }, 0);
+  const numerologyValue = Number.isFinite(numerology) ? String(Math.round(numerology)) : '';
+
+  return {
+    element,
+    planet,
+    numerology: numerologyValue,
+  };
+}
+
+
+function resolveEnergyBalance(cardEntries, summaries) {
+  const cards = cardEntries.map((entry) => entry?.card || {});
+  const scores = { action: 52, emotion: 52, thinking: 52, stability: 52 };
+  const boostByElement = {
+    fire: { action: 12, emotion: 2, thinking: 0, stability: -2 },
+    water: { action: -2, emotion: 12, thinking: 2, stability: 0 },
+    air: { action: 1, emotion: 0, thinking: 12, stability: -1 },
+    earth: { action: 0, emotion: -1, thinking: 2, stability: 12 },
+  };
+
+  cards.forEach((card, idx) => {
+    const element = toSafeText(card?.element, '').trim().toLowerCase();
+    const boost = boostByElement[element] || {};
+    scores.action += boost.action || 0;
+    scores.emotion += boost.emotion || 0;
+    scores.thinking += boost.thinking || 0;
+    scores.stability += boost.stability || 0;
+
+    const num = Number.parseFloat(toSafeText(card?.numerology_value, '').trim());
+    if (Number.isFinite(num)) {
+      scores.action += num % 2 === 0 ? 1 : 2;
+      scores.thinking += num >= 10 ? 2 : 1;
+      scores.stability += idx === 1 ? 2 : 1;
+    }
+  });
+
+  const presentTier = summaries?.[1]?.sourceTier || 99;
+  if (presentTier <= 3) scores.action += 6;
+  if (presentTier === 4 || presentTier === 5) scores.emotion += 4;
+  if (presentTier >= 6) scores.thinking += 5;
+
+  Object.keys(scores).forEach((key) => {
+    scores[key] = Math.max(28, Math.min(92, Math.round(scores[key])));
+  });
+
+  const ordered = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const axisTitle = { action: 'action', emotion: 'emotion', thinking: 'thinking', stability: 'stability' };
+  const dominant = axisTitle[ordered[0]?.[0] || 'action'];
+  const support = axisTitle[ordered[1]?.[0] || 'stability'];
+
+  const interpretation = [
+    `Your energy is currently led by ${dominant}, with strong support from ${support}.`,
+    'Keep this momentum balanced with gentle reflection to stay grounded and clear.',
   ];
+
+  return { scores, interpretation };
 }
 
 function resolveLuckyInfo(payload, cardEntry) {
@@ -850,6 +981,16 @@ function resolveLuckyInfo(payload, cardEntry) {
 
 export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const payload = normalizePayload(rawPayload) || normalizePayload({});
+  if (Array.isArray(payload?.cards) && payload.cards.length) {
+    console.log('[Poster][CI] card payload summary',
+      payload.cards.map((c) => ({
+        id: c?.id,
+        orientation: c?.orientation,
+        hasImage: !!c?.image,
+        hasArchetype: !!c?.archetype,
+        hasImply: !!c?.imply,
+      })));
+  }
   const perf = {
     startedAt: performance.now(),
     preloadMs: 0,
@@ -895,11 +1036,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   if (String(payload?.mode || '').toLowerCase() === 'full' && preset === 'story') {
     const lang = payload?.lang || 'en';
     const cardEntries = (await buildCardEntries(payload)).slice(0, 3);
-    const summaries = resolveFullSummaries(payload, cardEntries, lang);
-    const labels = lang === 'th' ? ['อดีต', 'ปัจจุบัน', 'อนาคต'] : ['Past', 'Present', 'Future'];
+    const summaries = resolveFullSummaries(payload, cardEntries);
+    const labels = lang === 'th'
+      ? ['อะไรที่คุณเจอมาก่อน', 'สิ่งที่คุณกำลังเจอ', 'อะไรที่คุณกำลังจะเจอ']
+      : ['What still affects you', 'What you need now', 'Where this is going'];
+    const symbolic = resolveSymbolicMetadata(cardEntries);
 
     const topStripHeight = 170;
-    const bottomStripHeight = 560;
+    const bottomStripHeight = 420;
     const topGrad = ctx.createLinearGradient(0, 0, 0, topStripHeight);
     topGrad.addColorStop(0, 'rgba(5,10,25,0.85)');
     topGrad.addColorStop(1, 'rgba(5,10,25,0.25)');
@@ -909,7 +1053,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const bottomY = height - bottomStripHeight;
     const bottomGrad = ctx.createLinearGradient(0, bottomY, 0, height);
     bottomGrad.addColorStop(0, 'rgba(5,10,25,0.15)');
-    bottomGrad.addColorStop(1, 'rgba(5,10,25,0.92)');
+    bottomGrad.addColorStop(1, 'rgba(5,10,25,0.72)');
     ctx.fillStyle = bottomGrad;
     ctx.fillRect(0, bottomY, width, bottomStripHeight);
 
@@ -920,17 +1064,30 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.shadowBlur = 14;
     ctx.fillText('MeowTarot', width / 2, 100);
     ctx.shadowBlur = 0;
+    ctx.fillStyle = '#efe4c2';
+    ctx.font = '500 24px "Space Grotesk", sans-serif';
+    drawTrackingText(ctx, 'Your Tarot Reading', width / 2, 142, 0.8);
 
-    const cardW = 220;
-    const cardH = Math.round(cardW * 1.55);
-    const gap = 24;
-    const totalW = cardW * 3 + gap * 2;
+    const sideCardW = 240;
+    const presentCardW = 310;
+    const sideCardH = Math.round(sideCardW * 1.5);
+    const presentCardH = Math.round(presentCardW * 1.5);
+    const gap = 20;
+    const totalW = sideCardW * 2 + presentCardW + gap * 2;
     const startX = (width - totalW) / 2;
-    const cardY = 190;
+    const cardY = 214;
+    const cardLayouts = [
+      { x: startX, w: sideCardW, h: sideCardH },
+      { x: startX + sideCardW + gap, w: presentCardW, h: presentCardH },
+      { x: startX + sideCardW + gap + presentCardW + gap, w: sideCardW, h: sideCardH },
+    ];
 
     for (let i = 0; i < 3; i += 1) {
       const entry = cardEntries[i];
-      const x = startX + i * (cardW + gap);
+      const layout = cardLayouts[i];
+      const x = layout.x;
+      const cardW = layout.w;
+      const cardH = layout.h;
       ctx.save();
       ctx.fillStyle = 'rgba(15, 20, 41, 0.9)';
       ctx.fillRect(x, cardY, cardW, cardH);
@@ -963,41 +1120,168 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
       const orientationText = getOrientationLabel(entry?.orientation || 'upright', lang);
       const archetypeText = getLocalizedField(entry?.card, 'archetype', lang);
-      const implyText = getLocalizedField(entry?.card, 'tarot_imply', lang);
 
-      const textY = cardY + cardH + 28;
-      ctx.fillStyle = '#d8dbe6';
-      ctx.font = '500 18px "Space Grotesk", sans-serif';
+      const textY = cardY + cardH + 14;
+      ctx.fillStyle = 'rgba(226, 230, 242, 0.92)';
+      ctx.font = '500 22px "Space Grotesk", sans-serif';
       wrapText(ctx, orientationText, x + cardW / 2, textY, cardW, 24, 1);
-      ctx.fillStyle = '#f7f4ee';
-      ctx.font = '600 20px "Space Grotesk", sans-serif';
-      wrapText(ctx, archetypeText, x + cardW / 2, textY + 30, cardW, 24, 2);
-      ctx.fillStyle = '#bfc5dd';
-      ctx.font = '400 16px "Space Grotesk", sans-serif';
-      wrapText(ctx, implyText, x + cardW / 2, textY + 82, cardW, 21, 3);
+      ctx.fillStyle = '#fbf8f2';
+      ctx.font = i === 1 ? '650 27px "Space Grotesk", sans-serif' : '650 23px "Space Grotesk", sans-serif';
+      wrapText(ctx, archetypeText, x + cardW / 2, textY + 32, cardW, i === 1 ? 30 : 27, 2);
     }
 
-    const boxTop = height - 330;
-    const boxW = 220;
-    const boxH = 220;
-    for (let i = 0; i < 3; i += 1) {
-      const x = startX + i * (boxW + gap);
-      ctx.save();
-      ctx.fillStyle = 'rgba(20, 28, 51, 0.72)';
-      drawRoundedRect(ctx, x, boxTop, boxW, boxH, 16);
+    const cardCenters = cardLayouts.map((layout) => layout.x + layout.w / 2);
+    const maxCardBottom = Math.max(...cardLayouts.map((layout) => cardY + layout.h));
+    const cardsRowBottom = maxCardBottom + 14 + 32 + 30 * 2;
+
+    const darkLabelColor = '#342b57';
+    const darkTextColor = '#27233f';
+    const darkMetaColor = '#403860';
+
+    const presentSummary = summaries[1] || { text: '', sourceTier: 99 };
+    const presentShort = presentSummary.sourceTier <= 5;
+    const presentLabelY = cardsRowBottom + 40;
+    const presentTextY = presentLabelY + 52;
+    const presentTextSize = presentShort ? 43 : 34;
+    const presentLineHeight = presentShort ? 48 : 40;
+    const presentMaxLines = presentShort ? 4 : 5;
+
+    ctx.fillStyle = darkLabelColor;
+    ctx.font = '650 36px "Space Grotesk", sans-serif';
+    wrapText(ctx, labels[1], cardCenters[1], presentLabelY, presentCardW + 100, 40, 2);
+
+    ctx.fillStyle = darkTextColor;
+    ctx.font = `560 ${presentTextSize}px "Space Grotesk", sans-serif`;
+    const presentEndY = wrapText(ctx, presentSummary.text || '', cardCenters[1], presentTextY, presentCardW + 90, presentLineHeight, presentMaxLines);
+
+    const sideBaseY = presentEndY + 28;
+    let sideBottom = sideBaseY;
+    for (const i of [0, 2]) {
+      const summary = summaries[i] || { text: '', sourceTier: 99 };
+      const shortReflection = summary.sourceTier <= 5;
+      const labelY = sideBaseY;
+      const textY = labelY + 38;
+      const fontSize = shortReflection ? 22 : 20;
+      const lineHeight = shortReflection ? 28 : 26;
+      const maxLines = shortReflection ? 3 : 4;
+
+      ctx.fillStyle = darkLabelColor;
+      ctx.font = '620 23px "Space Grotesk", sans-serif';
+      wrapText(ctx, labels[i], cardCenters[i], labelY, sideCardW + 52, 28, 2);
+
+      ctx.fillStyle = darkTextColor;
+      ctx.font = `500 ${fontSize}px "Space Grotesk", sans-serif`;
+      const endY = wrapText(ctx, summary.text || '', cardCenters[i], textY, sideCardW + 40, lineHeight, maxLines);
+      sideBottom = Math.max(sideBottom, endY);
+    }
+
+    const readingBottom = Math.max(sideBottom, presentEndY);
+    const symbolicTop = readingBottom + 32;
+    const symbolicLines = [
+      symbolic.element ? `Element: ${symbolic.element} 🌿` : '',
+      symbolic.planet ? `Planet: ${symbolic.planet} 🌙` : '',
+      symbolic.numerology ? `Numerology: ${symbolic.numerology}` : '',
+    ].filter(Boolean);
+
+    ctx.fillStyle = darkMetaColor;
+    ctx.font = '500 22px "Space Grotesk", sans-serif';
+    let symbolicY = symbolicTop;
+    symbolicLines.forEach((line) => {
+      wrapText(ctx, line, width / 2, symbolicY, width - 180, 28, 1);
+      symbolicY += 28;
+    });
+
+    const { scores, interpretation } = resolveEnergyBalance(cardEntries, summaries);
+    const graphTop = symbolicY + 2;
+    const graphCenterX = width / 2;
+    const graphCenterY = graphTop + 130;
+    const graphRadius = 115;
+
+    const axis = [
+      { key: 'action', label: 'Action', angle: -Math.PI / 2 },
+      { key: 'emotion', label: 'Emotion', angle: 0 },
+      { key: 'thinking', label: 'Thinking', angle: Math.PI / 2 },
+      { key: 'stability', label: 'Stability', angle: Math.PI },
+    ];
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100, 100, 150, 0.2)';
+    ctx.lineWidth = 2;
+    for (let level = 1; level <= 4; level += 1) {
+      const r = graphRadius * (level / 4);
+      ctx.beginPath();
+      axis.forEach((entry, idx) => {
+        const px = graphCenterX + Math.cos(entry.angle) * r;
+        const py = graphCenterY + Math.sin(entry.angle) * r;
+        if (idx === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(90, 88, 140, 0.28)';
+    axis.forEach((entry) => {
+      ctx.beginPath();
+      ctx.moveTo(graphCenterX, graphCenterY);
+      ctx.lineTo(graphCenterX + Math.cos(entry.angle) * graphRadius, graphCenterY + Math.sin(entry.angle) * graphRadius);
+      ctx.stroke();
+    });
+
+    const points = axis.map((entry) => {
+      const ratio = Math.max(0, Math.min(1, (scores[entry.key] || 0) / 100));
+      return {
+        x: graphCenterX + Math.cos(entry.angle) * graphRadius * ratio,
+        y: graphCenterY + Math.sin(entry.angle) * graphRadius * ratio,
+      };
+    });
+
+    const energyGrad = ctx.createLinearGradient(graphCenterX - graphRadius, graphCenterY - graphRadius, graphCenterX + graphRadius, graphCenterY + graphRadius);
+    energyGrad.addColorStop(0, 'rgba(181, 223, 238, 0.5)');
+    energyGrad.addColorStop(0.5, 'rgba(245, 216, 232, 0.45)');
+    energyGrad.addColorStop(1, 'rgba(186, 194, 245, 0.48)');
+
+    ctx.beginPath();
+    points.forEach((p, idx) => {
+      if (idx === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = energyGrad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(124, 111, 170, 0.46)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    const nodeColors = ['#f3d8ea', '#f6e0d0', '#efe5c8', '#c9f0de'];
+    points.forEach((p, idx) => {
+      ctx.beginPath();
+      ctx.fillStyle = nodeColors[idx % nodeColors.length];
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
+      ctx.strokeStyle = 'rgba(88, 78, 126, 0.42)';
+      ctx.stroke();
+    });
 
-      ctx.fillStyle = '#f8d77a';
-      ctx.font = '600 20px "Space Grotesk", sans-serif';
-      wrapText(ctx, labels[i], x + boxW / 2, boxTop + 34, boxW - 16, 22, 1);
-      ctx.fillStyle = '#f1f3fa';
-      ctx.font = '400 15px "Space Grotesk", sans-serif';
-      wrapText(ctx, summaries[i], x + boxW / 2, boxTop + 62, boxW - 18, 20, 7);
-    }
+    ctx.fillStyle = darkLabelColor;
+    ctx.font = '500 22px "Space Grotesk", sans-serif';
+    axis.forEach((entry) => {
+      const labelR = graphRadius + 34;
+      const lx = graphCenterX + Math.cos(entry.angle) * labelR;
+      const ly = graphCenterY + Math.sin(entry.angle) * labelR;
+      wrapText(ctx, entry.label, lx, ly, 230, 32, 1);
+    });
+    ctx.restore();
 
-    ctx.fillStyle = '#aab0c9';
-    ctx.font = '500 28px "Space Grotesk", sans-serif';
+    const interpretationY = graphCenterY + graphRadius + 52;
+    ctx.fillStyle = darkLabelColor;
+    ctx.font = '500 24px "Space Grotesk", sans-serif';
+    wrapText(ctx, interpretation[0], width / 2, interpretationY, width - 150, 29, 1);
+    ctx.font = '500 22px "Space Grotesk", sans-serif';
+    wrapText(ctx, interpretation[1], width / 2, interpretationY + 29, width - 150, 27, 1);
+
+    ctx.fillStyle = '#8f96b5';
+    ctx.font = '500 23px "Space Grotesk", sans-serif';
     ctx.fillText('meowtarot.com', width / 2, height - 36);
 
     const exportStart = performance.now();

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MeowTarot Premium Reading Poster</title>
+
+  <!-- Website font pairing -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Prata&display=swap"
+  />
+
+  <link rel="stylesheet" href="./full-reading-poster.css" />
+</head>
+<body>
+  <main class="poster" aria-label="MeowTarot premium reading share poster">
+    <div class="poster-background" aria-hidden="true"></div>
+
+    <div class="poster-safe-area">
+      <!-- 1) Header -->
+      <header class="poster-header">
+        <h1 class="type-display">
+          <span class="sparkle" aria-hidden="true">✦</span>
+          <span>MeowTarot</span>
+          <span class="sparkle" aria-hidden="true">✦</span>
+        </h1>
+        <h2 class="type-subtitle">Your Tarot Reading</h2>
+      </header>
+
+      <!-- 2) 3-card spread -->
+      <section class="poster-spread" aria-label="Three-card spread">
+        <article class="card-column side-column card-column--past">
+          <figure class="card-frame">
+            <img
+              class="card-image"
+              src="https://cdn.meowtarot.com/assets/meow-v2/01-the-fool-upright.webp"
+              alt="Past card — The Fool"
+              loading="eager"
+              decoding="sync"
+              onerror="this.onerror=null; this.alt=''; this.classList.add('card-image--hidden'); this.closest('.card-frame')?.classList.add('card-frame--fallback');"
+            />
+            <figcaption class="card-title">The Fool</figcaption>
+          </figure>
+
+          <div class="card-interpretation">
+            <span class="type-label-muted">Upright</span>
+            <span class="type-heading-sm">The Cosmic<br />Wanderer</span>
+          </div>
+        </article>
+
+        <article class="card-column center-column card-column--present">
+          <figure class="card-frame card-frame--hero">
+            <img
+              class="card-image"
+              src="https://cdn.meowtarot.com/assets/meow-v2/02-the-magician-upright.webp"
+              alt="Present card — The Magician"
+              loading="eager"
+              decoding="sync"
+              onerror="this.onerror=null; this.alt=''; this.classList.add('card-image--hidden'); this.closest('.card-frame')?.classList.add('card-frame--fallback');"
+            />
+            <figcaption class="card-title">The Magician</figcaption>
+          </figure>
+
+          <div class="card-interpretation">
+            <span class="type-label-muted">Upright</span>
+            <span class="type-heading-md">The Manifestor</span>
+          </div>
+        </article>
+
+        <article class="card-column side-column card-column--future">
+          <figure class="card-frame">
+            <img
+              class="card-image"
+              src="https://cdn.meowtarot.com/assets/meow-v2/03-the-high-priestess-reversed.webp"
+              alt="Future card — The High Priestess"
+              loading="eager"
+              decoding="sync"
+              onerror="this.onerror=null; this.alt=''; this.classList.add('card-image--hidden'); this.closest('.card-frame')?.classList.add('card-frame--fallback');"
+            />
+            <figcaption class="card-title">The High Priestess</figcaption>
+          </figure>
+
+          <div class="card-interpretation">
+            <span class="type-label-muted">Reversed</span>
+            <span class="type-heading-sm">The Oracle</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- 3) Main heading + 4) 3-column insights -->
+      <section class="poster-insights" aria-label="Reading insights">
+        <h3 class="type-heading-lg">What you need now</h3>
+
+        <div class="insights-grid">
+          <article class="insight-column side-insight">
+            <h4 class="type-heading-sm">What still<br />affects you</h4>
+            <p class="type-body-sm">If you knew you wouldn't get hurt falling, what would you dare to do?</p>
+          </article>
+
+          <article class="insight-column center-insight">
+            <p class="type-body-lg">What hidden talent do you possess but are still hesitant to use?</p>
+          </article>
+
+          <article class="insight-column side-insight">
+            <h4 class="type-heading-sm">Where this<br />is going</h4>
+            <p class="type-body-sm">What truth do you know deep down but are pretending not to see?</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 5) Analysis section with radar chart -->
+      <section class="poster-analysis" aria-label="Energy balance analysis">
+        <figure class="chart-wrapper" role="group" aria-label="Energy balance chart">
+          <span class="chart-label top">Action</span>
+          <span class="chart-label right">Emotion</span>
+          <span class="chart-label bottom">Thinking</span>
+          <span class="chart-label left">Stability</span>
+
+          <!-- Asset hook: keep inline for export reliability, OR replace with external image in .chart-image -->
+          <svg class="chart-svg" viewBox="-20 -20 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#F5A9C6" />
+                <stop offset="35%" stop-color="#E7B5E6" />
+                <stop offset="65%" stop-color="#AEE6D2" />
+                <stop offset="100%" stop-color="#F5D98A" />
+              </linearGradient>
+            </defs>
+
+            <line x1="100" y1="10" x2="100" y2="190" stroke="rgba(27, 18, 54, 0.15)" stroke-width="1" />
+            <line x1="10" y1="100" x2="190" y2="100" stroke="rgba(27, 18, 54, 0.15)" stroke-width="1" />
+
+            <polygon points="100,10 190,100 100,190 10,100" fill="none" stroke="rgba(27, 18, 54, 0.1)" stroke-width="1" />
+            <polygon points="100,32.5 167.5,100 100,167.5 32.5,100" fill="none" stroke="rgba(27, 18, 54, 0.1)" stroke-width="1" />
+            <polygon points="100,55 145,100 100,145 55,100" fill="none" stroke="rgba(27, 18, 54, 0.1)" stroke-width="1" />
+            <polygon points="100,77.5 122.5,100 100,122.5 77.5,100" fill="none" stroke="rgba(27, 18, 54, 0.1)" stroke-width="1" />
+
+            <polygon
+              points="100,10 167.5,100 100,167.5 32.5,100"
+              fill="url(#energyGradient)"
+              stroke="rgba(255,255,255,0.9)"
+              stroke-width="1.5"
+            />
+          </svg>
+        </figure>
+      </section>
+
+      <!-- 6) Summary text -->
+      <section class="poster-summary" aria-label="Energy interpretation summary">
+        <p class="type-body-sm summary-text">
+          Your current energy is highly driven by proactive steps.<br />
+          Balance this momentum with thoughtful reflection to<br />
+          ensure long-term stability.
+        </p>
+      </section>
+
+      <!-- 7) Footer -->
+      <footer class="poster-footer">
+        <span class="type-label-muted">MeowTarot.com</span>
+      </footer>
+    </div>
+  </main>
+</body>
+</html>
