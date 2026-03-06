@@ -2242,6 +2242,11 @@ function init() {
   initShell(state, handleTranslations, 'reading', {
     onLangToggle: switchLanguageInPlace,
   });
+
+  if (document.body) {
+    document.body.setAttribute('data-reading-mode', state.mode || 'daily');
+  }
+
   ensureCardSheet();
 
   backLink?.addEventListener('click', (event) => {
