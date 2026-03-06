@@ -3170,20 +3170,29 @@ body[data-page='reading'] .ghost {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #3A2E1F;
-    border: 1px solid #DCC8A7;
-    background: #F4E7D3;
+
+    color: #4f4566;
+    border: 1px solid rgba(188, 158, 220, 0.45);
+    background: linear-gradient(135deg, #e8efff 0%, #eddfff 52%, #ffdced 100%);
     box-shadow:
-      0 6px 16px rgba(0, 0, 0, 0.10),
-      0 1px 2px rgba(0, 0, 0, 0.06);
+      0 10px 22px rgba(126, 96, 170, 0.14),
+      0 2px 6px rgba(255, 255, 255, 0.35) inset;
   }
 
   body[data-page='reading'] #newReadingBtn:hover:not(:disabled) {
-    background: #EFE0C6;
+    background: linear-gradient(135deg, #edf3ff 0%, #f1e5ff 52%, #ffe3f1 100%);
+    box-shadow:
+      0 12px 24px rgba(126, 96, 170, 0.18),
+      0 2px 6px rgba(255, 255, 255, 0.42) inset;
+    transform: translateY(-1px);
   }
 
   body[data-page='reading'] #newReadingBtn:active:not(:disabled) {
-    background: #E7D5B6;
+    background: linear-gradient(135deg, #dde7ff 0%, #e6d6fb 52%, #ffd3e8 100%);
+    box-shadow:
+      0 6px 14px rgba(126, 96, 170, 0.14),
+      0 1px 3px rgba(255, 255, 255, 0.28) inset;
+    transform: scale(0.97);
   }
 }
 
