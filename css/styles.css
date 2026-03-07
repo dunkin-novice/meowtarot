@@ -2874,6 +2874,16 @@ body[data-page='reading'] > .page-shell {
   flex: 1 0 auto;
 }
 
+body[data-page='reading'] .section-block.results {
+  display: block;
+  grid-template-columns: none;
+}
+
+body[data-page='reading'] .reading-content {
+  width: 100%;
+  min-width: 0;
+}
+
 body[data-page='reading'] > #site-footer {
   margin-top: auto;
 }
@@ -4493,6 +4503,140 @@ body[data-page='overall'] #overall-counter {
   min-width: 250px;
   font-size: 1.08rem;
   padding: 14px 28px;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell {
+  display: grid;
+  justify-items: stretch;
+  gap: 20px;
+  margin: 8px auto 14px;
+  padding: 18px 14px 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-deck-stack,
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-deal-btn {
+  justify-self: center;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-deck-stack {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  width: min(44vw, 190px);
+  aspect-ratio: 1568 / 2720;
+  min-width: 118px;
+  transition: transform 0.14s ease, filter 0.18s ease;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-deck-trigger:focus-visible {
+  outline: 2px solid rgba(124, 167, 255, 0.86);
+  outline-offset: 6px;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-deck-trigger.is-pressed {
+  transform: translateY(2px) scale(0.988);
+  filter: saturate(0.96) brightness(0.985);
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-deck-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--dr, 0deg));
+  z-index: var(--z, 1);
+  background:
+    radial-gradient(130% 95% at 20% 16%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04) 35%, transparent 66%),
+    var(--daily-deck-back-url, linear-gradient(160deg, rgba(35, 46, 85, 0.92), rgba(52, 44, 86, 0.95)));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 10px 24px rgba(10, 16, 42, 0.25),
+    0 3px 10px rgba(10, 16, 42, 0.2);
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-helper {
+  margin: 0;
+  text-align: center;
+  color: rgba(58, 56, 92, 0.8);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 8px;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='predeal'] .action-row,
+body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='dealing'] .action-row {
+  display: none;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-deal-btn {
+  width: min(100%, 320px);
+  min-width: 0;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-reading-stage {
+  display: grid;
+  gap: 12px;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-board-panel .daily-result-art {
+  min-height: clamp(220px, 54vw, 360px);
+  margin: 4px 0 10px;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-board-panel .daily-result-art .card-art-img {
+  width: min(320px, 100%);
+  aspect-ratio: 1568 / 2720;
+  object-fit: cover;
+  background: rgba(26, 33, 67, 0.12);
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-reading-details {
+  display: grid;
+  gap: 12px;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer {
+  animation: readingDealLift 0.92s cubic-bezier(0.22, 0.65, 0.18, 1) both;
+}
+
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer:nth-child(2) { animation-delay: 0.04s; }
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer:nth-child(3) { animation-delay: 0.08s; }
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer:nth-child(4) { animation-delay: 0.12s; }
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer:nth-child(5) { animation-delay: 0.16s; }
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer:nth-child(6) { animation-delay: 0.2s; }
+body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer:nth-child(7) { animation-delay: 0.24s; }
+
+@keyframes readingDealLift {
+  0% {
+    opacity: 1;
+    transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--dr, 0deg)) scale(1);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(calc(var(--dx, 0) * 2.2), calc(var(--dy, 0) - 28px)) rotate(calc(var(--dr, 0deg) + 2deg)) scale(1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dx, 0) * 3.4), calc(var(--dy, 0) - 68px)) rotate(calc(var(--dr, 0deg) + 3.8deg)) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer {
+    animation: none;
+  }
 }
 
 body[data-page='daily'] .board-topbar {

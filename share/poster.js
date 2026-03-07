@@ -555,7 +555,8 @@ async function buildCardEntries(payload) {
     .map((entry) => {
       const orientation = toOrientation(entry?.orientation || entry?.id || 'upright');
       const targetId = baseCardId(entry?.id || entry?.cardId || entry?.card_id);
-      const hit = findCardById(meowTarotCards, targetId, normalizeId);
+      const orientedLookupId = targetId ? `${targetId}-${orientation}` : targetId;
+      const hit = findCardById(meowTarotCards, orientedLookupId, normalizeId);
       return hit
         ? {
           card: hit,
@@ -865,9 +866,13 @@ function isDailySingle(payload) {
 function buildDailyReadingFromCard(card, orientation, lang) {
   if (!card) return null;
   const orient = getOrientationLabel(orientation, lang);
+  const meaning = getLocalizedField(card, 'reading_summary_preview', lang)
+    || getLocalizedField(card, 'tarot_imply', lang)
+    || '';
   return {
     orientation: orient,
     archetype: getLocalizedField(card, 'archetype', lang),
+    meaning,
     hook: getLocalizedField(card, 'hook', lang),
     actionPrompt: getLocalizedField(card, 'action_prompt', lang),
     keywords: getLocalizedField(card, 'tarot_imply', lang),
@@ -883,9 +888,14 @@ function resolveDailyReading(payload, cardEntry, lang) {
   const localizedActionPrompt = payloadReading[`action_prompt_${lang}`] || payloadReading.action_prompt || '';
   const actionPrompt = localizedActionPrompt || cardReading.actionPrompt || '';
   const hook = localizedHook || cardReading.hook || '';
-  const readingResult = payloadReading.readingResult || payloadReading.result || payloadReading.summary || '';
-  const mainQuoteText = hook || actionPrompt || readingResult || '';
-  const mainQuoteSource = hook ? 'hook' : (actionPrompt ? 'action_prompt' : (readingResult ? 'reading_result' : 'none'));
+  const orientedMeaning = cardReading.meaning || '';
+  const readingResult = payloadReading.readingResult || payloadReading.result || payloadReading.heading || payloadReading.summary || '';
+  const mainQuoteText = readingResult || orientedMeaning || hook || actionPrompt || '';
+  const mainQuoteSource = readingResult
+    ? 'reading_result'
+    : (orientedMeaning
+      ? 'card_meaning_oriented'
+      : (hook ? 'hook' : (actionPrompt ? 'action_prompt' : 'none')));
   return {
     orientation: getOrientationLabel(resolvedOrientation, lang) || cardReading.orientation || fallbackOrientation,
     archetype: cardReading.archetype || '',

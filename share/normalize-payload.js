@@ -31,11 +31,30 @@ function resolveCards(raw, reading) {
   return [];
 }
 
+function normalizeOrientation(value) {
+  return String(value || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright';
+}
+
+function normalizeCards(cards = []) {
+  return cards
+    .filter((item) => item && typeof item === 'object')
+    .map((item) => ({
+      ...item,
+      id: asString(item.id || item.card_id || item.cardId || item.image_id),
+      orientation: normalizeOrientation(item.orientation || item.id),
+      image: asString(item.image),
+      image_upright: asString(item.image_upright || item.imageUpright),
+      image_reversed: asString(item.image_reversed || item.imageReversed),
+      resolvedImageUrl: asString(item.resolvedImageUrl || item.imageUrl),
+    }))
+    .filter((item) => item.id);
+}
+
 export function normalizePayload(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const source = asObject(raw);
   const reading = resolveReading(source);
-  const cards = resolveCards(source, reading);
+  const cards = normalizeCards(resolveCards(source, reading));
   const posterSource = asObject(source.poster);
 
   const title = asString(posterSource.title ?? source.title, 'MeowTarot Reading');
