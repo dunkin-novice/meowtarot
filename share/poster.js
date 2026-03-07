@@ -687,8 +687,21 @@ function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
       lineHeight: 72,
       lines: [],
       isTruncated: false,
+      ascent: 46,
+      descent: 14,
+      occupiedHeight: 0,
     };
   }
+
+  const quoteRenderSafety = 8;
+  const measureQuoteMetrics = (fontSize) => {
+    ctx.font = `italic 500 ${fontSize}px "Prata", serif`;
+    const metrics = ctx.measureText('“Ag”');
+    const ascent = Math.max(metrics.actualBoundingBoxAscent || 0, Math.round(fontSize * 0.82));
+    const descent = Math.max(metrics.actualBoundingBoxDescent || 0, Math.round(fontSize * 0.24));
+    const lineHeight = Math.max(fontSize + 14, Math.ceil(ascent + descent + 10));
+    return { ascent, descent, lineHeight };
+  };
 
   // Keep the premium display style, then progressively shrink only as needed.
   const defaultFontSize = 58;
@@ -697,31 +710,37 @@ function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
   const quote = `“${quoteText}”`;
 
   for (let fontSize = defaultFontSize; fontSize >= minimumFontSize; fontSize -= fontStep) {
-    const lineHeight = fontSize + 14;
-    ctx.font = `italic 500 ${fontSize}px "Prata", serif`;
+    const { ascent, descent, lineHeight } = measureQuoteMetrics(fontSize);
     const lines = wrapTextLines(ctx, quote, maxWidth, Number.POSITIVE_INFINITY);
-    const blockHeight = lines.length * lineHeight;
-    if (blockHeight <= maxHeight) {
+    const occupiedHeight = ascent + descent + Math.max(0, lines.length - 1) * lineHeight + quoteRenderSafety;
+    if (occupiedHeight <= maxHeight) {
       return {
         fontSize,
         lineHeight,
         lines,
         isTruncated: false,
+        ascent,
+        descent,
+        occupiedHeight,
       };
     }
   }
 
   // If the minimum readable size still overflows, clamp lines and rely on ellipsis.
   const fontSize = minimumFontSize;
-  const lineHeight = fontSize + 14;
-  ctx.font = `italic 500 ${fontSize}px "Prata", serif`;
-  const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+  const { ascent, descent, lineHeight } = measureQuoteMetrics(fontSize);
+  const usableHeight = Math.max(0, maxHeight - ascent - descent - quoteRenderSafety);
+  const maxLines = Math.max(1, Math.floor(usableHeight / lineHeight) + 1);
   const lines = wrapTextLines(ctx, quote, maxWidth, maxLines);
+  const occupiedHeight = ascent + descent + Math.max(0, lines.length - 1) * lineHeight + quoteRenderSafety;
   return {
     fontSize,
     lineHeight,
     lines,
     isTruncated: true,
+    ascent,
+    descent,
+    occupiedHeight,
   };
 }
 
@@ -1372,10 +1391,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const quoteShadow = isUprightTone ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.32)';
     const orientationShadow = isUprightTone ? 'rgba(255, 255, 255, 0.28)' : 'rgba(0, 0, 0, 0.22)';
     const layout = {
-      headerTop: 144,
-      cardTop: 276,
+      headerTop: 136,
+      cardTop: 248,
       cardMaxHeight: 900,
-      panelTop: 1320,
+      panelTop: 1272,
       panelHeight: 320,
       luckyRowY: 1760,
       footerY: 1860,
@@ -1394,17 +1413,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.primary;
       ctx.font = '700 72px "Poppins", "Space Grotesk", sans-serif';
-      ctx.shadowColor = 'rgba(0,0,0,0.78)';
-      ctx.shadowBlur = 16;
       wrapText(ctx, strings.title, width / 2, cursorY, maxWidth, 54, 1);
-      ctx.shadowBlur = 0;
       cursorY += 54;
       ctx.fillStyle = textPalette.secondary;
       ctx.font = '500 38px "Space Grotesk", sans-serif';
-      ctx.shadowColor = 'rgba(0,0,0,0.72)';
-      ctx.shadowBlur = 10;
       wrapText(ctx, strings.subtitle, width / 2, cursorY, maxWidth, 36, 1);
-      ctx.shadowBlur = 0;
     };
 
     const resolveCardImage = async () => {
@@ -1466,20 +1479,30 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.shadowOffsetY = 16;
       ctx.restore();
 
-      let panelCursorY = panelTop + 66;
+      const quotePaddingTop = 84;
+      const quotePaddingBottom = 42;
+      const quoteEdgeSafety = 6;
+      let panelCursorY = panelTop + quotePaddingTop;
       const panelCenterX = width / 2;
-      const panelTextWidth = panelWidth - 120;
+      const panelTextWidth = panelWidth - 136;
       let quoteY = null;
 
       ctx.textAlign = 'center';
 
       if (mainQuoteText) {
-        const availableTop = panelCursorY;
-        const availableBottom = panelTop + panelHeight - 30;
+        const availableTop = panelCursorY + quoteEdgeSafety;
+        const availableBottom = panelTop + panelHeight - quotePaddingBottom - quoteEdgeSafety;
         const quoteMaxHeight = Math.max(0, availableBottom - availableTop);
         const fit = fitDailyQuoteText(ctx, mainQuoteText, panelTextWidth, quoteMaxHeight);
-        const quoteBlockHeight = fit.lines.length * fit.lineHeight;
-        quoteY = Math.max(availableTop, availableTop + (availableBottom - availableTop - quoteBlockHeight) / 2);
+        const quoteOccupiedHeight = fit.occupiedHeight || (fit.lines.length * fit.lineHeight);
+        const centeredTop = availableTop + (quoteMaxHeight - quoteOccupiedHeight) / 2;
+        const centeredY = centeredTop + fit.ascent;
+        const opticalLift = fit.lines.length >= 3
+          ? Math.min(14, Math.max(6, Math.round(fit.lineHeight * 0.14)))
+          : 0;
+        const minQuoteY = availableTop + fit.ascent;
+        const maxQuoteY = availableBottom - fit.descent - Math.max(0, fit.lines.length - 1) * fit.lineHeight;
+        quoteY = Math.min(maxQuoteY, Math.max(minQuoteY, centeredY - opticalLift));
         ctx.save();
         ctx.fillStyle = textPalette.primary;
         ctx.shadowColor = quoteShadow;
@@ -1488,7 +1511,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         fit.lines.forEach((line, index) => {
           ctx.fillText(line, panelCenterX, quoteY + index * fit.lineHeight);
         });
-        panelCursorY = quoteY + quoteBlockHeight;
+        panelCursorY = quoteY + fit.descent + Math.max(0, fit.lines.length - 1) * fit.lineHeight;
         ctx.restore();
       }
 
@@ -1498,9 +1521,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const drawOrientationLabel = () => {
       if (!reading.orientation) return;
       const cardBottomY = cardY + cardHeight;
-      const panelLabelY = panelTop - 76;
-      const minGapY = cardBottomY + 56;
-      const orientationY = Math.min(panelLabelY, minGapY);
+      const panelLabelY = panelTop - 34;
+      const minGapY = cardBottomY + 36;
+      const orientationY = Math.max(minGapY, panelLabelY);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.muted;
@@ -1583,7 +1606,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     drawHeader();
 
     const cardTopY = layout.cardTop;
-    const gapBeforePanel = 64;
+    const gapBeforePanel = 48;
     const maxCardWidth = Math.min(690, width - safeMargin * 2);
     const maxCardHeight = Math.min(layout.cardMaxHeight, Math.max(0, panelTop - gapBeforePanel - cardTopY));
     const fallbackAspect = 2 / 3;
