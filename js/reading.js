@@ -19,6 +19,7 @@ import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
 import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
+import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 
 const params = new URLSearchParams(window.location.search);
 const hasUrlSelection = ['cards', 'card', 'id', 'mode', 'topic', 'spread'].some((key) => params.has(key));
@@ -939,8 +940,8 @@ function buildMetaPanel(card, options = {}) {
       if (cssColor) swatch.style.background = cssColor;
 
       if (circlesOnly) {
-        swatch.style.width = '22px';
-        swatch.style.height = '22px';
+        swatch.style.width = '16px';
+        swatch.style.height = '16px';
         swatch.style.borderRadius = '999px';
         circlesRow.appendChild(swatch);
         return;
@@ -1511,15 +1512,18 @@ function buildDailyAdvicePanel(card) {
     circles.style.justifyContent = 'center';
     circles.style.gap = '10px';
     circles.style.marginTop = '4px';
+    const panelSurface = window.getComputedStyle(panel).backgroundColor || 'rgba(255, 255, 255, 0.05)';
 
     luckyPalette.forEach((c) => {
       const swatch = document.createElement('span');
       swatch.className = 'swatch';
       const cssColor = resolveCssColor(c);
       if (cssColor) swatch.style.background = cssColor;
-      swatch.style.width = '22px';
-      swatch.style.height = '22px';
+      const visibility = getLuckyColorVisibilityStyle(cssColor, panelSurface);
+      swatch.style.width = '16px';
+      swatch.style.height = '16px';
       swatch.style.borderRadius = '999px';
+      swatch.style.border = `${visibility.ringWidth}px solid ${visibility.ringColor}`;
       circles.appendChild(swatch);
     });
 
