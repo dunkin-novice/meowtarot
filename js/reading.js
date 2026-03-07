@@ -94,7 +94,7 @@ const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 const SHARE_POSTER_SELECTOR = '#share-poster-root';
 const SHARE_READY_TIMEOUT_MS = 8000;
 const SHARE_HASH_MAX_CHARS = 8000;
-let energyChart = null;
+let energyRadarController = null;
 const ENERGY_BALANCE_CONFIG_URL = new URL('../data/energy-balance-interpretations.json', import.meta.url).toString();
 let energyBalanceInterpretationsPromise = null;
 let saveButtonHandler = null;
@@ -1007,14 +1007,6 @@ function getTopicTitle(dict, titleKey) {
     || titleKey;
 }
 
-function loadChartJs() {
-  if (typeof window === 'undefined') return Promise.resolve(null);
-  if (window.Chart) return Promise.resolve(window.Chart);
-  return import('https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js')
-    .then((mod) => mod.Chart || mod.default || window.Chart)
-    .catch(() => window.Chart || null);
-}
-
 function isEnergyBalanceDebugEnabled() {
   if (typeof window === 'undefined') return false;
   const params = new URLSearchParams(window.location.search || '');
@@ -1182,21 +1174,54 @@ function renderEnergyBalanceInterpretation(target, interpretation) {
 
 // Energy Balance radar chart (full/life reading only).
 function buildEnergyPanel(cards, dict) {
-  const panel = document.createElement('div');
-  panel.className = 'panel';
+  const panel = document.createElement('section');
+  panel.className = 'panel energy-balance';
 
-  const heading = document.createElement('h3');
+  const heading = document.createElement('h2');
+  heading.className = 'energy-balance__title';
   heading.textContent = dict.energyTitle || (state.currentLang === 'th' ? 'สมดุลพลังงาน' : 'Energy Balance');
   panel.appendChild(heading);
 
-  const canvas = document.createElement('canvas');
-  canvas.className = 'energy-chart';
-  panel.appendChild(canvas);
+  const chartCard = document.createElement('div');
+  chartCard.className = 'energy-balance__chart-card';
+
+  const chartWrap = document.createElement('div');
+  chartWrap.className = 'energy-balance__chart-wrap';
+  chartWrap.innerHTML = `
+    <svg class="energy-radar" viewBox="0 0 400 400" aria-label="Energy balance radar chart" role="img">
+      <defs>
+        <linearGradient id="energyRadarFillGradient" x1="20%" y1="15%" x2="86%" y2="88%">
+          <stop offset="0%" stop-color="#d8fff2" stop-opacity="0.9"></stop>
+          <stop offset="33%" stop-color="#ffe7a8" stop-opacity="0.86"></stop>
+          <stop offset="67%" stop-color="#ffd3eb" stop-opacity="0.84"></stop>
+          <stop offset="100%" stop-color="#dccbff" stop-opacity="0.88"></stop>
+        </linearGradient>
+        <filter id="energyRadarBlur" x="-28%" y="-28%" width="156%" height="156%">
+          <feGaussianBlur stdDeviation="10"></feGaussianBlur>
+        </filter>
+      </defs>
+
+      <g id="energyRadarGrid"></g>
+      <g id="energyRadarAxes"></g>
+
+      <polygon id="energyRadarGlow"></polygon>
+      <polygon id="energyRadarShape"></polygon>
+
+      <g id="energyRadarDots"></g>
+    </svg>
+
+    <div class="energy-radar__label energy-radar__label--top">Action</div>
+    <div class="energy-radar__label energy-radar__label--right">Emotion</div>
+    <div class="energy-radar__label energy-radar__label--bottom">Thinking</div>
+    <div class="energy-radar__label energy-radar__label--left">Stability</div>
+  `;
+  chartCard.appendChild(chartWrap);
 
   const interpretation = document.createElement('div');
-  interpretation.className = 'energy-interpretation';
+  interpretation.className = 'energy-balance__interpretation';
   interpretation.setAttribute('aria-live', 'polite');
-  panel.appendChild(interpretation);
+  chartCard.appendChild(interpretation);
+  panel.appendChild(chartCard);
 
   const elements = ['fire', 'water', 'air', 'earth'];
   const averages = elements.map((key) => {
@@ -1207,7 +1232,6 @@ function buildEnergyPanel(cards, dict) {
     return Math.round(sum / 3);
   });
 
-  const labels = ['Action', 'Emotion', 'Thinking', 'Stability'];
   const energyValues = {
     A: averages[0],
     E: averages[1],
@@ -1225,112 +1249,159 @@ function buildEnergyPanel(cards, dict) {
       renderEnergyBalanceInterpretation(interpretation, null);
     });
 
-  const createPastelGradient = (chart, alpha = 0.28) => {
-    const { ctx, chartArea } = chart;
-    if (!chartArea) return `rgba(173, 162, 255, ${alpha})`;
-    const gradient = ctx.createLinearGradient(chartArea.left, chartArea.top, chartArea.right, chartArea.bottom);
-    gradient.addColorStop(0, `rgba(198, 183, 255, ${alpha})`); // lavender
-    gradient.addColorStop(0.26, `rgba(255, 196, 225, ${alpha})`); // blush pink
-    gradient.addColorStop(0.52, `rgba(189, 220, 255, ${alpha})`); // baby blue
-    gradient.addColorStop(0.76, `rgba(188, 236, 218, ${alpha})`); // mint
-    gradient.addColorStop(1, `rgba(255, 244, 216, ${alpha})`); // soft cream
-    return gradient;
-  };
+  const svg = chartWrap.querySelector('.energy-radar');
+  const gridGroup = svg?.querySelector('#energyRadarGrid');
+  const axesGroup = svg?.querySelector('#energyRadarAxes');
+  const shape = svg?.querySelector('#energyRadarShape');
+  const glow = svg?.querySelector('#energyRadarGlow');
+  const dotsGroup = svg?.querySelector('#energyRadarDots');
 
-  const pointPalette = [
-    'rgba(199, 184, 255, 0.98)',
-    'rgba(255, 201, 227, 0.98)',
-    'rgba(191, 223, 255, 0.98)',
-    'rgba(194, 239, 220, 0.98)',
-  ];
-
-  const energyPointGlowPlugin = {
-    id: 'energyPointGlow',
-    afterDatasetsDraw(chart) {
-      const { ctx } = chart;
-      const datasetMeta = chart.getDatasetMeta(0);
-      if (!datasetMeta?.data?.length) return;
-
-      ctx.save();
-      datasetMeta.data.forEach((point, idx) => {
-        const color = pointPalette[idx % pointPalette.length];
-        ctx.beginPath();
-        ctx.fillStyle = color.replace('0.98', '0.4');
-        ctx.shadowColor = color.replace('0.98', '0.62');
-        ctx.shadowBlur = 10;
-        ctx.arc(point.x, point.y, 5.2, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.restore();
+  const chartConfig = {
+    centerX: 200,
+    centerY: 200,
+    maxRadius: 132,
+    axisOrder: ['action', 'emotion', 'thinking', 'stability'],
+    angles: {
+      action: -Math.PI / 2,
+      emotion: 0,
+      thinking: Math.PI / 2,
+      stability: Math.PI,
     },
+    gridRings: [1, 0.75, 0.5, 0.25],
   };
 
-  loadChartJs().then((Chart) => {
-    if (!Chart || !canvas) return;
-    if (energyChart) energyChart.destroy();
-    energyChart = new Chart(canvas, {
-      type: 'radar',
-      plugins: [energyPointGlowPlugin],
-      data: {
-        labels,
-        datasets: [
-          {
-            label: dict.energyTitle || 'Energy',
-            data: averages,
-            backgroundColor: (context) => createPastelGradient(context.chart, 0.36),
-            borderColor: (context) => createPastelGradient(context.chart, 0.82),
-            borderWidth: 2.5,
-            pointRadius: 4,
-            pointHoverRadius: 4.8,
-            pointBackgroundColor: pointPalette,
-            pointBorderColor: 'rgba(255, 255, 255, 0.95)',
-            pointBorderWidth: 1.2,
-            pointHoverBorderWidth: 1.2,
-            pointHitRadius: 10,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: {
-          padding: {
-            top: 16,
-            right: 26,
-            bottom: 14,
-            left: 26,
-          },
-        },
-        scales: {
-          r: {
-            beginAtZero: true,
-            max: 100,
-            ticks: { display: false },
-            grid: {
-              color: 'rgba(172, 167, 196, 0.24)',
-              lineWidth: 1,
-            },
-            angleLines: {
-              color: 'rgba(172, 167, 196, 0.2)',
-              lineWidth: 1,
-            },
-            pointLabels: {
-              color: '#4f4a66',
-              font: {
-                family: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
-                size: 12,
-                weight: '600',
-              },
-              padding: 10,
-            },
-          },
-        },
-        plugins: {
-          legend: { display: false },
-        },
-      },
+  const clampUnit = (value) => Math.max(0, Math.min(1, Number(value) || 0));
+  const toRadius = (value) => clampUnit(value / 100) * chartConfig.maxRadius;
+  const toPoint = (axis, value) => {
+    const radius = toRadius(value);
+    const angle = chartConfig.angles[axis];
+    return {
+      x: chartConfig.centerX + Math.cos(angle) * radius,
+      y: chartConfig.centerY + Math.sin(angle) * radius,
+    };
+  };
+  const buildPolygonPoints = (values) => chartConfig.axisOrder
+    .map((axis) => {
+      const point = toPoint(axis, values[axis]);
+      return `${point.x.toFixed(2)},${point.y.toFixed(2)}`;
+    })
+    .join(' ');
+
+  const renderGrid = () => {
+    if (!gridGroup) return;
+    gridGroup.textContent = '';
+    chartConfig.gridRings.forEach((ring) => {
+      const radius = chartConfig.maxRadius * ring;
+      const points = [
+        `${chartConfig.centerX},${(chartConfig.centerY - radius).toFixed(2)}`,
+        `${(chartConfig.centerX + radius).toFixed(2)},${chartConfig.centerY}`,
+        `${chartConfig.centerX},${(chartConfig.centerY + radius).toFixed(2)}`,
+        `${(chartConfig.centerX - radius).toFixed(2)},${chartConfig.centerY}`,
+      ].join(' ');
+      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      polygon.setAttribute('points', points);
+      polygon.setAttribute('class', 'energy-radar__grid-ring');
+      gridGroup.appendChild(polygon);
     });
+  };
+
+  const renderAxes = () => {
+    if (!axesGroup) return;
+    axesGroup.textContent = '';
+    chartConfig.axisOrder.forEach((axis) => {
+      const endpoint = toPoint(axis, 100);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', String(chartConfig.centerX));
+      line.setAttribute('y1', String(chartConfig.centerY));
+      line.setAttribute('x2', endpoint.x.toFixed(2));
+      line.setAttribute('y2', endpoint.y.toFixed(2));
+      line.setAttribute('class', 'energy-radar__axis');
+      axesGroup.appendChild(line);
+    });
+  };
+
+  const renderDots = (values) => {
+    if (!dotsGroup) return;
+    dotsGroup.textContent = '';
+    chartConfig.axisOrder.forEach((axis) => {
+      const point = toPoint(axis, values[axis]);
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('class', 'energy-radar__dot');
+      dot.setAttribute('r', '5.2');
+      dot.setAttribute('cx', point.x.toFixed(2));
+      dot.setAttribute('cy', point.y.toFixed(2));
+      dotsGroup.appendChild(dot);
+    });
+  };
+
+  let animatedValues = {
+    action: 0,
+    emotion: 0,
+    thinking: 0,
+    stability: 0,
+  };
+  let animationFrame = null;
+
+  const renderRadarShape = (values) => {
+    const points = buildPolygonPoints(values);
+    if (shape) shape.setAttribute('points', points);
+    if (glow) glow.setAttribute('points', points);
+    renderDots(values);
+  };
+
+  const renderEnergyRadar = (values) => {
+    const next = {
+      action: Number(values?.action) || 0,
+      emotion: Number(values?.emotion) || 0,
+      thinking: Number(values?.thinking) || 0,
+      stability: Number(values?.stability) || 0,
+    };
+    const start = { ...animatedValues };
+    const startedAt = performance.now();
+    const duration = 520;
+
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+
+    const animate = (now) => {
+      const elapsed = now - startedAt;
+      const t = clampUnit(elapsed / duration);
+      const eased = 1 - (1 - t) ** 3;
+
+      animatedValues = {
+        action: start.action + ((next.action - start.action) * eased),
+        emotion: start.emotion + ((next.emotion - start.emotion) * eased),
+        thinking: start.thinking + ((next.thinking - start.thinking) * eased),
+        stability: start.stability + ((next.stability - start.stability) * eased),
+      };
+
+      renderRadarShape(animatedValues);
+
+      if (t < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        animationFrame = null;
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+  };
+
+  renderGrid();
+  renderAxes();
+  renderEnergyRadar({
+    action: averages[0],
+    emotion: averages[1],
+    thinking: averages[2],
+    stability: averages[3],
   });
+
+  energyRadarController = { renderEnergyRadar };
+  panel.renderEnergyRadar = renderEnergyRadar;
+  if (typeof window !== 'undefined') {
+    window.renderEnergyRadar = (values) => {
+      energyRadarController?.renderEnergyRadar(values || {});
+    };
+  }
 
   return panel;
 }
