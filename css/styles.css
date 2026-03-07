@@ -2856,6 +2856,8 @@ body[data-page='reading'] {
     linear-gradient(180deg, #cfa5e5 0%, #e7a7c8 52%, #a8c6f0 100%);
   background-size: auto, auto, auto, auto, auto;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 body[data-page='reading']::before {
@@ -2866,6 +2868,14 @@ body[data-page='reading']::before {
   opacity: 0.075;
   background-image: radial-gradient(rgba(255, 255, 255, 0.9) 0.5px, transparent 0.5px);
   background-size: 3px 3px;
+}
+
+body[data-page='reading'] > .page-shell {
+  flex: 1 0 auto;
+}
+
+body[data-page='reading'] > #site-footer {
+  margin-top: auto;
 }
 
 .reading-experience {
@@ -3180,17 +3190,15 @@ body[data-page='reading'] .primary:active:not(:disabled) {
   transform: translate(0, -50%);
 }
 
-.energy-balance__interpretation {
-  max-width: 500px;
-  min-height: 3em;
-  margin: 20px auto 0;
+.energy-interpretation {
+  margin-top: 18px;
   text-align: center;
-  color: #5e5879;
-  line-height: 1.6;
-}
-
-.energy-balance__interpretation:empty::before {
-  content: '\00a0';
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(40, 35, 70, 0.75);
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @media (max-width: 560px) {
