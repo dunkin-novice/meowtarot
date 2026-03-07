@@ -890,12 +890,14 @@ function resolveDailyReading(payload, cardEntry, lang) {
   const hook = localizedHook || cardReading.hook || '';
   const orientedMeaning = cardReading.meaning || '';
   const readingResult = payloadReading.readingResult || payloadReading.result || payloadReading.heading || payloadReading.summary || '';
-  const mainQuoteText = readingResult || orientedMeaning || hook || actionPrompt || '';
-  const mainQuoteSource = readingResult
-    ? 'reading_result'
-    : (orientedMeaning
-      ? 'card_meaning_oriented'
-      : (hook ? 'hook' : (actionPrompt ? 'action_prompt' : 'none')));
+  const mainQuoteText = hook || actionPrompt || readingResult || orientedMeaning || '';
+  const mainQuoteSource = hook
+    ? 'hook'
+    : (actionPrompt
+      ? 'action_prompt'
+      : (readingResult
+        ? 'reading_result'
+        : (orientedMeaning ? 'card_meaning_oriented' : 'none')));
   return {
     orientation: getOrientationLabel(resolvedOrientation, lang) || cardReading.orientation || fallbackOrientation,
     archetype: cardReading.archetype || '',

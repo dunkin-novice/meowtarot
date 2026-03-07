@@ -1456,6 +1456,12 @@ body[data-page='home'] .section-block {
   z-index: 7;
 }
 
+.card-slot.is-dimmed {
+  opacity: 0.28;
+  transform: scale(0.95);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
 @keyframes selectedPulse {
   0%   { opacity: 0.65; transform: scale(1); }
   50%  { opacity: 1;    transform: scale(1.02); }
@@ -4673,7 +4679,10 @@ body[data-page='reading'][data-reading-mode='daily'] .daily-entry-helper {
 }
 
 body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='predeal'] .action-row,
-body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='dealing'] .action-row {
+body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='dealing'] .action-row,
+body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='spread'] .action-row,
+body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='selected'] .action-row,
+body[data-page='reading'][data-reading-mode='daily'][data-daily-phase='revealed'] .action-row {
   display: none;
 }
 
@@ -4702,10 +4711,11 @@ body[data-page='reading'][data-reading-mode='daily'] .daily-board-panel .daily-r
 body[data-page='reading'][data-reading-mode='daily'] .daily-reading-details {
   display: grid;
   gap: 12px;
+  animation: dailyReadingFadeIn 0.15s ease both;
 }
 
 body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer {
-  animation: readingDealLift 0.92s cubic-bezier(0.22, 0.65, 0.18, 1) both;
+  animation: readingDealLift 0.32s cubic-bezier(0.22, 0.65, 0.18, 1) both;
 }
 
 body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-dealing .daily-deck-layer:nth-child(2) { animation-delay: 0.04s; }
@@ -4727,6 +4737,17 @@ body[data-page='reading'][data-reading-mode='daily'] .daily-entry-shell.is-deali
   100% {
     opacity: 0;
     transform: translate(calc(var(--dx, 0) * 3.4), calc(var(--dy, 0) - 68px)) rotate(calc(var(--dr, 0deg) + 3.8deg)) scale(0.98);
+  }
+}
+
+@keyframes dailyReadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

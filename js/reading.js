@@ -69,9 +69,14 @@ const imagePreloadCache = new Map();
 const imageLoadedCache = new Set();
 const resolvedResultCardSrcByKey = new Map();
 const dailyUiState = {
-  phase: 'preDeal',
+  phase: 'predeal',
   isAnimating: false,
+  spreadCards: [],
+  selectedCardId: '',
 };
+const DAILY_DECK_TO_SPREAD_MS = 300;
+const DAILY_SELECTION_REVEAL_MS = 240;
+const DAILY_READING_RENDER_MS = 240;
 
 function setDailyPhaseAttr(phase = '') {
   if (!document.body) return;
@@ -215,6 +220,11 @@ function getResultCardCacheKey(cardId = '', orientation = 'upright') {
   const baseId = getBaseCardId(cardId, normalizeId) || normalizeId(cardId);
   const safeOrientation = orientation === 'reversed' ? 'reversed' : 'upright';
   return `${baseId}:${safeOrientation}`;
+}
+
+function getCardSelectionId(card) {
+  if (!card) return '';
+  return String(card.id || card.card_id || card.image_id || '').trim();
 }
 
 function buildCardMeaningUrl(card) {
@@ -1537,9 +1547,47 @@ function buildDailyAdvicePanel(card) {
 }
 
 function resetDailyUiState() {
-  dailyUiState.phase = 'preDeal';
+  dailyUiState.phase = 'predeal';
   dailyUiState.isAnimating = false;
+  dailyUiState.spreadCards = [];
+  dailyUiState.selectedCardId = '';
   setDailyPhaseAttr('predeal');
+}
+
+function stripOrientationSuffix(value = '') {
+  return String(value || '').replace(/-(upright|reversed)$/i, '');
+}
+
+function pickDailyOrientation(probabilityReversed = 0.5) {
+  const safeProb = Math.min(1, Math.max(0, probabilityReversed));
+  return Math.random() < safeProb ? 'reversed' : 'upright';
+}
+
+function getDailySpreadCandidates(size = 6) {
+  const cards = Array.isArray(meowTarotCards) ? meowTarotCards : [];
+  if (!cards.length) return [];
+
+  const seen = new Set();
+  const pool = cards
+    .filter((card) => {
+      const baseId = stripOrientationSuffix(card?.card_id || card?.id || card?.image_id || '');
+      if (!baseId || seen.has(baseId)) return false;
+      seen.add(baseId);
+      return true;
+    })
+    .map((card) => {
+      const baseId = normalizeId(stripOrientationSuffix(card?.card_id || card?.id || card?.image_id || ''));
+      const orientation = pickDailyOrientation();
+      return findCard(`${baseId}-${orientation}`) || ensureOrientation(card, orientation);
+    })
+    .filter(Boolean);
+
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  return pool.slice(0, Math.min(size, pool.length));
 }
 
 function prefersReducedMotion() {
@@ -1657,13 +1705,19 @@ async function runDailyDealAnimation(container) {
   }
 
   container.classList.add('is-dealing');
-  await new Promise((resolve) => window.setTimeout(resolve, 900));
+  await new Promise((resolve) => window.setTimeout(resolve, DAILY_DECK_TO_SPREAD_MS));
   container.classList.remove('is-dealing');
   container.classList.add('is-dealt');
 }
 
 function renderDaily(card, dict) {
-  if (!readingContent || !card) return;
+  if (!readingContent) return;
+
+  if (card && !dailyUiState.selectedCardId) {
+    dailyUiState.selectedCardId = getCardSelectionId(card);
+    dailyUiState.phase = 'dealt';
+    setDailyPhaseAttr('dealt');
+  }
 
   const strings = getDailyEntryStrings(dict);
   const renderPreDeal = () => {
@@ -1675,26 +1729,110 @@ function renderDaily(card, dict) {
       dailyUiState.phase = 'dealing';
       setDailyPhaseAttr('dealing');
       await runDailyDealAnimation(dealView);
-      dailyUiState.phase = 'dealt';
+      dailyUiState.spreadCards = getDailySpreadCandidates(6);
+      dailyUiState.phase = 'spread';
       dailyUiState.isAnimating = false;
-      setDailyPhaseAttr('dealt');
-      renderDealt();
+      setDailyPhaseAttr('spread');
+      renderSpread();
     });
     readingContent.appendChild(dealView);
   };
 
+  const renderSpread = () => {
+    setDailyPhaseAttr('spread');
+    readingContent.innerHTML = '';
+
+    const spreadStage = document.createElement('section');
+    spreadStage.className = 'daily-reading-stage';
+
+    const spreadBoard = document.createElement('div');
+    spreadBoard.className = 'card-board card-board--daily';
+
+    const cardBackUrl = getCardBackUrl() || getCardBackFallbackUrl();
+
+    dailyUiState.spreadCards.forEach((entryCard) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'card-slot card-slot--dealable card-visible';
+      btn.dataset.id = entryCard?.id || '';
+
+      const back = Object.assign(document.createElement('img'), {
+        className: 'card-back',
+        alt: '',
+      });
+      applyImgFallback(back, cardBackUrl, [getCardBackFallbackUrl()].filter(Boolean));
+      btn.appendChild(back);
+
+      btn.addEventListener('click', () => {
+        if (dailyUiState.isAnimating || !entryCard) return;
+        dailyUiState.phase = 'selected';
+        dailyUiState.isAnimating = true;
+        dailyUiState.selectedCardId = getCardSelectionId(entryCard);
+        setDailyPhaseAttr('selected');
+
+        const selectedId = getCardSelectionId(entryCard);
+
+        spreadBoard.querySelectorAll('.card-slot').forEach((slot) => {
+          if (slot.dataset.id === selectedId) {
+            slot.classList.add('is-selected');
+            return;
+          }
+          slot.classList.add('is-dimmed');
+          slot.disabled = true;
+        });
+
+        window.setTimeout(() => {
+          dailyUiState.phase = 'revealed';
+          setDailyPhaseAttr('revealed');
+          renderRevealed(entryCard);
+        }, DAILY_SELECTION_REVEAL_MS);
+      });
+
+      spreadBoard.appendChild(btn);
+    });
+
+    spreadStage.appendChild(spreadBoard);
+    readingContent.appendChild(spreadStage);
+  };
+
+  const renderRevealed = (resolvedCard) => {
+    setDailyPhaseAttr('revealed');
+    readingContent.innerHTML = '';
+
+    const boardWrap = document.createElement('section');
+    boardWrap.className = 'daily-reading-stage';
+    boardWrap.appendChild(createDailyBoardPanel(resolvedCard));
+    readingContent.appendChild(boardWrap);
+
+    window.setTimeout(() => {
+      dailyUiState.phase = 'dealt';
+      dailyUiState.isAnimating = false;
+      setDailyPhaseAttr('dealt');
+      const committedId = getCardSelectionId(resolvedCard);
+      if (committedId) state.selectedIds = [committedId];
+      configureActionButtons(activeDict);
+      renderDealt();
+    }, DAILY_READING_RENDER_MS);
+  };
+
   const renderDealt = () => {
+    const resolvedSelectedCard = findCard(dailyUiState.selectedCardId) || findCard(getCardSelectionId(card)) || card;
+    if (!resolvedSelectedCard) {
+      renderPreDeal();
+      return;
+    }
+
     setDailyPhaseAttr('dealt');
     readingContent.innerHTML = '';
     const boardWrap = document.createElement('section');
     boardWrap.className = 'daily-reading-stage';
 
-    const boardPanel = createDailyBoardPanel(card);
+    const boardPanel = createDailyBoardPanel(resolvedSelectedCard);
     boardWrap.appendChild(boardPanel);
 
     const detailsWrap = document.createElement('section');
     detailsWrap.className = 'daily-reading-details';
-    detailsWrap.appendChild(createDailyDetails(card));
+    detailsWrap.appendChild(createDailyDetails(resolvedSelectedCard));
 
     readingContent.appendChild(boardWrap);
     readingContent.appendChild(detailsWrap);
@@ -1702,6 +1840,11 @@ function renderDaily(card, dict) {
 
   if (dailyUiState.phase === 'dealt') {
     renderDealt();
+    return;
+  }
+
+  if (dailyUiState.phase === 'spread' && dailyUiState.spreadCards.length) {
+    renderSpread();
     return;
   }
 
@@ -1908,6 +2051,11 @@ function renderReading(dict) {
   const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
 
   if (!cards.length) {
+    if (state.mode === 'daily') {
+      renderDaily(null, dict);
+      return;
+    }
+
     if (state.mode !== 'daily') setDailyPhaseAttr('');
     const message = dict?.missingSelection || 'No cards found. Please draw cards first.';
     readingContent.innerHTML = `<div class="panel"><p class="lede">${message}</p></div>`;
@@ -2050,6 +2198,8 @@ function buildSharePayload() {
     archetype: primaryCard?.archetype || '',
     keywords: primaryCard?.keywords || '',
     summary: primaryCard?.summary || '',
+    hook: getText(findCard(state.selectedIds[0]), 'hook'),
+    action_prompt: getText(findCard(state.selectedIds[0]), 'action_prompt'),
     reading_summary_past: getText(findCard(state.selectedIds[0]), 'reading_summary_past'),
     reading_summary_present: getText(findCard(state.selectedIds[1]), 'reading_summary_present'),
     reading_summary_future: getText(findCard(state.selectedIds[2]), 'reading_summary_future'),

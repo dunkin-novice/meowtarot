@@ -19,6 +19,8 @@ export function buildReadingPayload(reading = {}) {
   return {
     heading: toText(reading.heading),
     subHeading: toText(reading.subHeading),
+    hook: toText(reading.hook),
+    action_prompt: toText(reading.action_prompt),
     archetype: toText(reading.archetype),
     keywords: toText(reading.keywords),
     summary: toText(reading.summary),
