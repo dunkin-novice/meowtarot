@@ -1569,6 +1569,7 @@ body[data-page='full'] {
   border: 1px solid var(--full-deal-border);
   box-shadow: var(--full-deal-shadow);
   opacity: 1;
+  transition: opacity 120ms ease;
 }
 
 .overall-deal-overlay:disabled {
@@ -1577,9 +1578,25 @@ body[data-page='full'] {
 }
 
 
+body[data-page='full'] #overall-flow[data-full-phase='preDeal'] .deck-stack#overall-hero-deck,
+body[data-page='full'] #overall-flow[data-full-phase='dealing'] .deck-stack#overall-hero-deck {
+  transform: scale(clamp(1.15, 1.12 + 0.14vw, 1.22));
+  transform-origin: center;
+}
+
+body[data-page='full'] #overall-flow[data-full-phase='dealing'] .overall-deal-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body[data-page='full'] .overall-deal-overlay:hover:not(:disabled),
+body[data-page='full'] .overall-deal-overlay:active:not(:disabled) {
+  transform: translate(-50%, -50%);
+}
+
 .deck-stack {
   position: relative;
-  width: clamp(96px, 13vw, 132px);
+  width: clamp(112px, 15vw, 156px);
   aspect-ratio: 1568 / 2720;
   isolation: isolate;
 }
@@ -4846,6 +4863,51 @@ body[data-page='full'] #overall-continue:disabled {
 body[data-page='full'] #overall-card-board {
   width: min(100%, 820px);
   margin-inline: auto;
+}
+
+
+body[data-page='full'] #overall-card-board .card-slot {
+  transform: none;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+body[data-page='full'] #overall-card-board .card-slot.card-visible {
+  transform: none;
+}
+
+body[data-page='full'] #overall-card-board .card-slot:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+body[data-page='full'] #overall-card-board .card-slot.is-selected,
+body[data-page='full'] #overall-card-board .card-slot.is-selected:hover:not(:disabled) {
+  transform: scale(1.06);
+  border-color: transparent;
+  box-shadow:
+    0 0 0 4px rgba(198, 183, 255, 0.95),
+    0 0 0 10px rgba(198, 183, 255, 0.22),
+    0 22px 60px rgba(198, 183, 255, 0.42),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+body[data-page='full'] #overall-card-board .card-slot.is-selected::after {
+  animation: none;
+}
+
+
+body[data-page='full'] #overall-card-board .card-slot.is-selected::before {
+  content: none;
+}
+
+body[data-page='full'] #overall-card-board .card-slot .selection-badge {
+  top: 8px;
+  left: 8px;
+  right: auto;
+  width: clamp(22px, 6.2vw, 28px);
+  height: clamp(22px, 6.2vw, 28px);
+  font-size: clamp(12px, 3.3vw, 14px);
+  z-index: 8;
 }
 
 /* Keep board card backs uncropped by preserving the source back-art aspect ratio. */
