@@ -9,6 +9,7 @@ import {
 import { imageManager } from '../js/image-manager.js';
 import { normalizePayload } from './normalize-payload.js';
 import { findCardById, toOrientation } from '../js/reading-helpers.js';
+import { getLuckyColorVisibilityStyle } from '../js/lucky-color-visibility.js';
 import { getLocalizedField, getOrientationLabel } from '../js/tarot-format.js';
 import {
   buildCardImageUrls,
@@ -1543,6 +1544,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       let dotX = (width - totalWidth) / 2 + dotRadius;
       const dotY = rowY + 42;
       luckyDotColors.forEach((hex) => {
+        const visibility = getLuckyColorVisibilityStyle(hex, readingPanelFill);
+
         ctx.save();
         ctx.fillStyle = hex;
         ctx.shadowColor = 'rgba(0, 0, 0, 0.10)';
@@ -1552,6 +1555,15 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = visibility.ringColor;
+        ctx.lineWidth = visibility.ringWidth;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, dotRadius - (visibility.ringWidth / 2), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
         dotX += dotRadius * 2 + dotGap;
       });
     };
