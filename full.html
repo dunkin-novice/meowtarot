@@ -40,16 +40,32 @@
       </div>
 
       <section id="overall-flow" class="full-flow">
-        <div class="overall-cta-wrapper">
-          <button id="overall-deal-shuffle" class="primary ritual-cta" type="button">Deal</button>
+        <div class="overall-entry" id="overall-entry">
+          <div class="deck-stack" id="overall-hero-deck" aria-hidden="true">
+            <span class="deck-stack-card"></span>
+            <span class="deck-stack-card"></span>
+            <span class="deck-stack-card"></span>
+            <span class="deck-stack-card"></span>
+          </div>
+          <button id="overall-deal" class="primary ritual-cta ritual-cta--deal overall-deal-overlay" type="button">Deal</button>
         </div>
 
+        <div class="deck-stack deck-stack--floating" id="overall-center-deck" hidden aria-hidden="true">
+          <span class="deck-stack-card"></span>
+          <span class="deck-stack-card"></span>
+          <span class="deck-stack-card"></span>
+          <span class="deck-stack-card"></span>
+        </div>
+
+        <div id="overall-animation-layer" hidden aria-hidden="true"></div>
+
         <div class="board-toolbar" id="overall-toolbar" hidden>
-          <span class="selection-counter" id="overall-counter">0/3</span>
+          <button id="overall-shuffle" type="button" class="secondary">Shuffle</button>
+          <button id="overall-continue" type="button" class="primary" data-i18n="continue" disabled></button>
         </div>
         <div id="overall-card-board" class="card-board card-board--three" hidden></div>
         <div class="board-actions board-actions--center" id="overall-actions" hidden>
-          <button id="overall-continue" type="button" class="primary" data-i18n="continue" disabled></button>
+          <span class="selection-counter" id="overall-counter">0/3</span>
         </div>
       </section>
     </section>

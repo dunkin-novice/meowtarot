@@ -203,7 +203,7 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     for (let i = 0; i < boardSize; i += 1) {
       const slot = document.createElement('button');
       slot.type = 'button';
-      slot.className = 'card-slot';
+      slot.className = 'card-slot card-visible';
       const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
       applyCardBackBackground(cardBack);
       slot.appendChild(cardBack);
@@ -392,67 +392,454 @@ function renderDaily() {
 }
 
 function renderOverall() {
-  const dealShuffleBtn = document.getElementById('overall-deal-shuffle');
+  const flow = document.getElementById('overall-flow');
+  const entry = document.getElementById('overall-entry');
+  const heroDeck = document.getElementById('overall-hero-deck');
+  const centerDeck = document.getElementById('overall-center-deck');
+  const animationLayer = document.getElementById('overall-animation-layer');
+  const dealBtn = document.getElementById('overall-deal');
+  const shuffleBtn = document.getElementById('overall-shuffle');
   const board = document.getElementById('overall-card-board');
   const actions = document.getElementById('overall-actions');
   const toolbar = document.getElementById('overall-toolbar');
   const counter = document.getElementById('overall-counter');
   const continueBtn = document.getElementById('overall-continue');
-  if (!dealShuffleBtn || !board || !actions || !continueBtn || !toolbar || !counter) return;
+  if (!flow || !entry || !heroDeck || !centerDeck || !animationLayer || !dealBtn || !shuffleBtn || !board || !actions || !continueBtn || !toolbar || !counter) return;
 
-  let boardApi = null;
-  let latestSelection = [];
-  let isAnimating = false;
-  let hasDealt = false;
-  setRitualCtaLabel(dealShuffleBtn, hasDealt);
-
-  const setDealShuffleDisabled = () => {
-    dealShuffleBtn.disabled = isAnimating;
+  const FULL_TIMING = {
+    dealStagger: 24,
+    dealScatterDuration: 380,
+    dealScatterHoldDuration: 210,
+    dealSettleDuration: 380,
+    collectStagger: 16,
+    collectDuration: 300,
+    centerSwishDuration: 220,
+    redealScatterDuration: 360,
+    redealScatterHoldDuration: 190,
+    redealSettleDuration: 380,
+    badgeClearDuration: 140,
   };
 
-  const updateContinue = (cards) => {
-    latestSelection = cards;
-    counter.textContent = `${cards.length}/${OVERALL_SELECTION_COUNT}`;
-    continueBtn.disabled = cards.length !== OVERALL_SELECTION_COUNT || isAnimating;
-    setDealShuffleDisabled();
+  const MOTION_PHASES = new Set(['dealing', 'shufflingCollect', 'shufflingCenter', 'shufflingRedeal']);
+
+  const isThai = state.currentLang === 'th';
+  dealBtn.textContent = isThai ? 'แจกไพ่' : 'Deal';
+  shuffleBtn.textContent = isThai ? 'สับไพ่' : 'Shuffle';
+  flow.querySelectorAll('.deck-stack-card').forEach(applyCardBackBackground);
+
+  let fullPhase = 'preDeal';
+  let selectedSlotIndices = [];
+  let slots = [];
+  let boardCards = [];
+  let isFullAnimating = false;
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const getSelectedCards = () => selectedSlotIndices.map((idx) => boardCards[idx]).filter(Boolean);
+
+  const ensureFullBoardSlots = () => {
+    if (slots.length === BOARD_CARD_COUNT) return;
+    slots = [];
+    board.textContent = '';
+    for (let i = 0; i < BOARD_CARD_COUNT; i += 1) {
+      const slot = document.createElement('button');
+      slot.type = 'button';
+      slot.className = 'card-slot card-visible';
+      slot.dataset.slotIndex = `${i}`;
+      const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
+      applyCardBackBackground(cardBack);
+      slot.appendChild(cardBack);
+      slot.onclick = () => {
+        if (fullPhase !== 'dealt' || isFullAnimating) return;
+        if (selectedSlotIndices.includes(i)) {
+          selectedSlotIndices = selectedSlotIndices.filter((idx) => idx !== i);
+        } else if (selectedSlotIndices.length < OVERALL_SELECTION_COUNT) {
+          selectedSlotIndices.push(i);
+        }
+        renderFullSelection();
+      };
+      slots.push(slot);
+      board.appendChild(slot);
+    }
   };
 
-  const triggerDeal = () => {
-    if (!state.cards.length || isAnimating) return;
+  const hydrateBoardSlots = () => {
+    slots.forEach((slot, idx) => {
+      const card = boardCards[idx];
+      slot.dataset.id = card?.id || '';
+      slot.classList.toggle('is-hidden', !card);
+      slot.classList.toggle('card-visible', !!card);
+    });
+  };
+
+  const restoreStableBoardSurface = () => {
+    ensureFullBoardSlots();
+    hydrateBoardSlots();
     board.hidden = false;
-    toolbar.hidden = false;
-    actions.hidden = false;
+    board.classList.remove('is-hidden', 'is-phase-placeholder');
+    board.style.visibility = '';
+    board.style.pointerEvents = '';
+  };
 
-    if (!boardApi) {
-      isAnimating = true;
-      setDealShuffleDisabled();
-      boardApi = setupBoard(board, BOARD_CARD_COUNT, OVERALL_SELECTION_COUNT, updateContinue, { animated: true });
-      setTimeout(() => {
-        isAnimating = false;
-        hasDealt = true;
-        setRitualCtaLabel(dealShuffleBtn, hasDealt);
-        updateContinue([]);
-      }, STACK_DURATION + BOARD_CARD_COUNT * DEAL_STAGGER + 520);
-      return;
+  const renderFullSelection = () => {
+    slots.forEach((slot) => {
+      slot.classList.remove('is-selected', 'is-clearing');
+      slot.querySelector('.selection-badge')?.remove();
+      slot.disabled = fullPhase !== 'dealt' || isFullAnimating;
+    });
+
+    selectedSlotIndices.forEach((slotIndex, order) => {
+      const slot = slots[slotIndex];
+      if (!slot) return;
+      slot.classList.add('is-selected');
+      const badge = document.createElement('span');
+      badge.className = 'selection-badge';
+      badge.textContent = `${order + 1}`;
+      slot.appendChild(badge);
+    });
+
+    if (selectedSlotIndices.length >= OVERALL_SELECTION_COUNT) {
+      slots.forEach((slot, idx) => {
+        if (!selectedSlotIndices.includes(idx)) slot.disabled = true;
+      });
     }
 
-    isAnimating = true;
-    continueBtn.disabled = true;
-    setDealShuffleDisabled();
-    boardApi.render();
-    setTimeout(() => {
-      isAnimating = false;
-      hasDealt = true;
-      setRitualCtaLabel(dealShuffleBtn, hasDealt);
-      updateContinue([]);
-    }, STACK_DURATION + BOARD_CARD_COUNT * DEAL_STAGGER + 520);
+    const selectedCount = getSelectedCards().length;
+    counter.textContent = `${selectedCount}/${OVERALL_SELECTION_COUNT}`;
+    continueBtn.disabled = fullPhase !== 'dealt' || isFullAnimating || selectedCount !== OVERALL_SELECTION_COUNT;
   };
 
-  dealShuffleBtn.onclick = triggerDeal;
-  continueBtn.onclick = () => {
-    if (latestSelection.length !== OVERALL_SELECTION_COUNT || isAnimating) return;
-    saveSelectionAndGo({ mode: 'full', spread: 'story', topic: 'generic', cards: latestSelection.map((c) => c.id) });
+  const applyDisabledState = (el, isDisabled) => {
+    el.disabled = !!isDisabled;
+    el.classList.toggle('is-disabled', !!isDisabled);
   };
+
+  let renderFullPhase = () => {};
+
+  const lockFullInteraction = () => {
+    isFullAnimating = true;
+    flow.classList.add('is-animating');
+    renderFullSelection();
+    renderFullPhase();
+  };
+
+  const unlockFullInteraction = () => {
+    isFullAnimating = false;
+    flow.classList.remove('is-animating');
+    renderFullSelection();
+    renderFullPhase();
+  };
+
+  const getDeckCenter = (deckEl) => {
+    const rect = deckEl.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  };
+
+  const computeScatterPose = (index, total = BOARD_CARD_COUNT) => {
+    const safeTotal = Math.max(1, total);
+    const t = index / safeTotal;
+
+    // radial burst: compact ring + center mass around deck origin (not lane-based)
+    const baseAngle = (-Math.PI * 0.92) + ((Math.PI * 1.84) * t);
+    const angleJitter = Math.sin((index + 1) * 1.27) * 0.19;
+    const angle = baseAngle + angleJitter;
+
+    // keep several cards near center and others farther out for readable pile density
+    const ringSelector = index % 4;
+    const radiusCore = 44 + ((index % 3) * 8);
+    const radiusOuter = 76 + ((index % 5) * 7);
+    const radius = ringSelector <= 1 ? radiusCore : radiusOuter;
+
+    const radialX = Math.cos(angle) * radius;
+    const radialY = Math.sin(angle) * radius;
+
+    // slight upward ritual bias but avoid top-heavy cluster
+    const verticalBias = -12;
+    const jitterX = Math.sin((index + 1) * 0.93) * 9;
+    const jitterY = Math.cos((index + 2) * 0.81) * 8;
+
+    const x = radialX + jitterX;
+    const y = radialY + verticalBias + jitterY;
+
+    const rotate = (Math.sin((index + 1) * 0.67) * 16) + ((index % 2 ? 1 : -1) * 4);
+    const scale = 0.958 + (Math.cos((index + 1) * 0.71) * 0.014);
+
+    // center/near-center cards slightly above for overlap pile readability
+    const z = 34 + (ringSelector <= 1 ? 10 : 3) + (safeTotal - index) * 0.06;
+
+    return { x, y, rotate, scale, z };
+  };
+
+  const toLocalRect = (rect) => {
+    const flowRect = flow.getBoundingClientRect();
+    return {
+      left: rect.left - flowRect.left,
+      top: rect.top - flowRect.top,
+      width: rect.width,
+      height: rect.height,
+      centerX: rect.left - flowRect.left + rect.width / 2,
+      centerY: rect.top - flowRect.top + rect.height / 2,
+    };
+  };
+
+  const ensureFullAnimationLayer = () => {
+    animationLayer.hidden = false;
+    animationLayer.textContent = '';
+  };
+
+  const clearOverlayCards = () => {
+    animationLayer.textContent = '';
+    animationLayer.hidden = true;
+  };
+
+  const measureSlotRects = () => {
+    const wasHidden = board.hidden;
+    const prevVisibility = board.style.visibility;
+    const prevPointer = board.style.pointerEvents;
+    if (wasHidden) {
+      board.hidden = false;
+      board.style.visibility = 'hidden';
+      board.style.pointerEvents = 'none';
+    }
+    const rects = slots.map((slot) => slot.getBoundingClientRect());
+    if (wasHidden) {
+      board.hidden = true;
+      board.style.visibility = prevVisibility;
+      board.style.pointerEvents = prevPointer;
+    }
+    return rects;
+  };
+
+  const createOverlayCards = (slotRects) => {
+    ensureFullAnimationLayer();
+    return slotRects.map((slotRect) => {
+      const local = toLocalRect(slotRect);
+      const card = document.createElement('div');
+      card.className = 'card-slot card-slot--overlay';
+      card.style.left = `${local.left}px`;
+      card.style.top = `${local.top}px`;
+      card.style.width = `${local.width}px`;
+      card.style.height = `${local.height}px`;
+      const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
+      applyCardBackBackground(cardBack);
+      card.appendChild(cardBack);
+      animationLayer.appendChild(card);
+      return card;
+    });
+  };
+
+  const animateOverlayDeal = async (deckEl, {
+    scatterDuration,
+    scatterHoldDuration = 0,
+    settleDuration,
+    stagger,
+  }) => {
+    const slotRects = measureSlotRects();
+    const cards = createOverlayCards(slotRects);
+    const origin = toLocalRect(deckEl.getBoundingClientRect());
+
+    cards.forEach((card, idx) => {
+      const rect = slotRects[idx];
+      const target = toLocalRect(rect);
+      const dx = origin.centerX - target.centerX;
+      const dy = origin.centerY - target.centerY;
+      card.style.transition = 'none';
+      card.style.opacity = '0';
+      card.style.transform = `translate(${dx}px, ${dy}px) rotate(0deg) scale(0.9)`;
+    });
+
+    requestAnimationFrame(() => {
+      cards.forEach((card, idx) => {
+        const pose = computeScatterPose(idx, cards.length);
+        setTimeout(() => {
+          card.style.transition = `transform ${scatterDuration}ms cubic-bezier(0.23, 0.89, 0.27, 1), opacity ${Math.max(240, scatterDuration - 10)}ms ease`;
+          card.style.opacity = '1';
+          card.style.transform = `translate(${pose.x}px, ${pose.y}px) rotate(${pose.rotate}deg) scale(${pose.scale})`;
+          card.style.zIndex = `${Math.round(pose.z)}`;
+        }, idx * stagger);
+      });
+    });
+
+    await wait(scatterDuration + cards.length * stagger + scatterHoldDuration + 40);
+
+    requestAnimationFrame(() => {
+      cards.forEach((card, idx) => {
+        setTimeout(() => {
+          card.style.transition = `transform ${settleDuration}ms cubic-bezier(0.18, 0.76, 0.22, 1), opacity ${settleDuration}ms ease`;
+          card.style.transform = 'translate(0, 0) rotate(0deg) scale(1)';
+          card.style.opacity = '1';
+          card.style.zIndex = '';
+        }, idx * Math.max(12, Math.floor(stagger * 0.45)));
+      });
+    });
+
+    await wait(settleDuration + cards.length * Math.max(12, Math.floor(stagger * 0.45)) + 55);
+    clearOverlayCards();
+  };
+
+  const animateOverlayCollect = async () => {
+    const slotRects = measureSlotRects();
+    const cards = createOverlayCards(slotRects);
+    const origin = toLocalRect(centerDeck.getBoundingClientRect());
+
+    cards.forEach((card, idx) => {
+      const target = toLocalRect(slotRects[idx]);
+      const dx = origin.centerX - target.centerX;
+      const dy = origin.centerY - target.centerY;
+      const drift = (idx % 2 === 0 ? -1 : 1) * (6 + (idx % 3));
+      card.classList.add('is-clearing');
+      card.style.transition = `transform ${FULL_TIMING.collectDuration}ms cubic-bezier(0.42, 0, 1, 1), opacity ${FULL_TIMING.collectDuration}ms ease`;
+      setTimeout(() => {
+        card.style.opacity = '0.74';
+        card.style.transform = `translate(${dx}px, ${dy}px) rotate(${drift}deg) scale(0.9)`;
+      }, idx * FULL_TIMING.collectStagger);
+    });
+
+    await wait(FULL_TIMING.collectDuration + cards.length * FULL_TIMING.collectStagger + 36);
+    clearOverlayCards();
+  };
+
+  const animateCenterDeckSwish = async () => {
+    centerDeck.classList.remove('is-shuffling');
+    void centerDeck.offsetWidth;
+    centerDeck.classList.add('is-shuffling');
+    await wait(FULL_TIMING.centerSwishDuration);
+    centerDeck.classList.remove('is-shuffling');
+  };
+
+  const animateOverlayRedeal = async () => {
+    await animateOverlayDeal(centerDeck, {
+      scatterDuration: FULL_TIMING.redealScatterDuration,
+      scatterHoldDuration: FULL_TIMING.redealScatterHoldDuration,
+      settleDuration: FULL_TIMING.redealSettleDuration,
+      stagger: FULL_TIMING.dealStagger,
+    });
+  };
+
+  const resetFullSelection = async ({ animateClear = false } = {}) => {
+    selectedSlotIndices = [];
+    renderFullSelection();
+    if (animateClear) {
+      await wait(FULL_TIMING.badgeClearDuration);
+      slots.forEach((slot) => slot.classList.remove('is-clearing'));
+    }
+  };
+
+  const startFullDeal = async () => {
+    if (fullPhase !== 'preDeal' || !state.cards.length || isFullAnimating) return;
+
+    boardCards = getDrawableCards(BOARD_CARD_COUNT);
+    ensureFullBoardSlots();
+    hydrateBoardSlots();
+
+    fullPhase = 'dealing';
+    lockFullInteraction();
+    renderFullPhase();
+
+    await animateOverlayDeal(heroDeck, {
+      scatterDuration: FULL_TIMING.dealScatterDuration,
+      scatterHoldDuration: FULL_TIMING.dealScatterHoldDuration,
+      settleDuration: FULL_TIMING.dealSettleDuration,
+      stagger: FULL_TIMING.dealStagger,
+    });
+
+    fullPhase = 'dealt';
+    restoreStableBoardSurface();
+    unlockFullInteraction();
+    renderFullPhase();
+    renderFullSelection();
+  };
+
+  const startFullShuffle = async () => {
+    if (fullPhase !== 'dealt' || isFullAnimating) return;
+
+    fullPhase = 'shufflingCollect';
+    lockFullInteraction();
+    renderFullPhase();
+
+    await resetFullSelection({ animateClear: true });
+    await animateOverlayCollect();
+
+    fullPhase = 'shufflingCenter';
+    renderFullPhase();
+    await animateCenterDeckSwish();
+
+    fullPhase = 'shufflingRedeal';
+    boardCards = getDrawableCards(BOARD_CARD_COUNT);
+    hydrateBoardSlots();
+    renderFullSelection();
+    renderFullPhase();
+    await animateOverlayRedeal();
+
+    fullPhase = 'dealt';
+    restoreStableBoardSurface();
+    unlockFullInteraction();
+    renderFullPhase();
+    renderFullSelection();
+  };
+
+  renderFullPhase = () => {
+    const isPreDeal = fullPhase === 'preDeal';
+    const isDealing = fullPhase === 'dealing';
+    const isDealt = fullPhase === 'dealt';
+    const isShufflePhase = fullPhase === 'shufflingCollect' || fullPhase === 'shufflingCenter' || fullPhase === 'shufflingRedeal';
+
+    entry.hidden = !(isPreDeal || isDealing);
+    heroDeck.hidden = !(isPreDeal || isDealing);
+
+    toolbar.hidden = isPreDeal || isDealing;
+    actions.hidden = isPreDeal || isDealing;
+
+    const hideBoard = isPreDeal || isDealing;
+    if (hideBoard) {
+      board.hidden = true;
+      board.classList.add('is-hidden');
+      board.classList.remove('is-phase-placeholder');
+      board.style.visibility = '';
+      board.style.pointerEvents = '';
+    } else if (isShufflePhase) {
+      board.hidden = false;
+      board.classList.remove('is-hidden');
+      board.classList.add('is-phase-placeholder');
+      board.style.visibility = 'hidden';
+      board.style.pointerEvents = 'none';
+    } else {
+      board.hidden = false;
+      board.classList.remove('is-hidden', 'is-phase-placeholder');
+      board.style.visibility = '';
+      board.style.pointerEvents = '';
+    }
+    board.classList.toggle('is-locked', fullPhase !== 'dealt' || isFullAnimating);
+
+    centerDeck.hidden = !isShufflePhase;
+    centerDeck.classList.toggle('is-hidden', centerDeck.hidden);
+
+    animationLayer.hidden = !MOTION_PHASES.has(fullPhase) && !animationLayer.childElementCount;
+
+    const toolbarDisabled = !isDealt || isFullAnimating || MOTION_PHASES.has(fullPhase);
+    applyDisabledState(shuffleBtn, toolbarDisabled);
+    applyDisabledState(continueBtn, toolbarDisabled || getSelectedCards().length !== OVERALL_SELECTION_COUNT);
+    applyDisabledState(dealBtn, !isPreDeal || isFullAnimating);
+  };
+
+  dealBtn.onclick = () => {
+    void startFullDeal();
+  };
+  shuffleBtn.onclick = () => {
+    void startFullShuffle();
+  };
+  continueBtn.onclick = () => {
+    const selectedCards = getSelectedCards();
+    if (fullPhase !== 'dealt' || isFullAnimating || selectedCards.length !== OVERALL_SELECTION_COUNT) return;
+    saveSelectionAndGo({ mode: 'full', spread: 'story', topic: 'generic', cards: selectedCards.map((c) => c.id) });
+  };
+
+  ensureFullBoardSlots();
+  hydrateBoardSlots();
+  restoreStableBoardSurface();
+  clearOverlayCards();
+  fullPhase = 'preDeal';
+  resetFullSelection();
+  renderFullPhase();
 }
 
 function renderQuestion() {
