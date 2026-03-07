@@ -407,20 +407,14 @@ function renderOverall() {
   if (!flow || !entry || !heroDeck || !centerDeck || !animationLayer || !dealBtn || !shuffleBtn || !board || !actions || !continueBtn || !toolbar || !counter) return;
 
   const FULL_TIMING = {
-    dealStagger: 24,
-    dealScatterDuration: 380,
-    dealScatterHoldDuration: 210,
-    dealSettleDuration: 380,
-    collectStagger: 16,
-    collectDuration: 300,
-    centerSwishDuration: 220,
-    redealScatterDuration: 360,
-    redealScatterHoldDuration: 190,
-    redealSettleDuration: 380,
+    dealStagger: 30,
+    dealDuration: 220,
+    collectStagger: 18,
+    collectDuration: 180,
     badgeClearDuration: 140,
   };
 
-  const MOTION_PHASES = new Set(['dealing', 'shufflingCollect', 'shufflingCenter', 'shufflingRedeal']);
+  const MOTION_PHASES = new Set(['dealing', 'shufflingCollect', 'shufflingRedeal']);
 
   const isThai = state.currentLang === 'th';
   dealBtn.textContent = isThai ? 'แจกไพ่' : 'Deal';
@@ -529,46 +523,6 @@ function renderOverall() {
     renderFullPhase();
   };
 
-  const getDeckCenter = (deckEl) => {
-    const rect = deckEl.getBoundingClientRect();
-    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-  };
-
-  const computeScatterPose = (index, total = BOARD_CARD_COUNT) => {
-    const safeTotal = Math.max(1, total);
-    const t = index / safeTotal;
-
-    // radial burst: compact ring + center mass around deck origin (not lane-based)
-    const baseAngle = (-Math.PI * 0.92) + ((Math.PI * 1.84) * t);
-    const angleJitter = Math.sin((index + 1) * 1.27) * 0.19;
-    const angle = baseAngle + angleJitter;
-
-    // keep several cards near center and others farther out for readable pile density
-    const ringSelector = index % 4;
-    const radiusCore = 44 + ((index % 3) * 8);
-    const radiusOuter = 76 + ((index % 5) * 7);
-    const radius = ringSelector <= 1 ? radiusCore : radiusOuter;
-
-    const radialX = Math.cos(angle) * radius;
-    const radialY = Math.sin(angle) * radius;
-
-    // slight upward ritual bias but avoid top-heavy cluster
-    const verticalBias = -12;
-    const jitterX = Math.sin((index + 1) * 0.93) * 9;
-    const jitterY = Math.cos((index + 2) * 0.81) * 8;
-
-    const x = radialX + jitterX;
-    const y = radialY + verticalBias + jitterY;
-
-    const rotate = (Math.sin((index + 1) * 0.67) * 16) + ((index % 2 ? 1 : -1) * 4);
-    const scale = 0.958 + (Math.cos((index + 1) * 0.71) * 0.014);
-
-    // center/near-center cards slightly above for overlap pile readability
-    const z = 34 + (ringSelector <= 1 ? 10 : 3) + (safeTotal - index) * 0.06;
-
-    return { x, y, rotate, scale, z };
-  };
-
   const toLocalRect = (rect) => {
     const flowRect = flow.getBoundingClientRect();
     return {
@@ -628,51 +582,35 @@ function renderOverall() {
   };
 
   const animateOverlayDeal = async (deckEl, {
-    scatterDuration,
-    scatterHoldDuration = 0,
-    settleDuration,
-    stagger,
-  }) => {
+    duration = FULL_TIMING.dealDuration,
+    stagger = FULL_TIMING.dealStagger,
+  } = {}) => {
     const slotRects = measureSlotRects();
     const cards = createOverlayCards(slotRects);
     const origin = toLocalRect(deckEl.getBoundingClientRect());
 
     cards.forEach((card, idx) => {
-      const rect = slotRects[idx];
-      const target = toLocalRect(rect);
+      const target = toLocalRect(slotRects[idx]);
       const dx = origin.centerX - target.centerX;
       const dy = origin.centerY - target.centerY;
       card.style.transition = 'none';
       card.style.opacity = '0';
-      card.style.transform = `translate(${dx}px, ${dy}px) rotate(0deg) scale(0.9)`;
+      card.style.transform = `translate(${dx}px, ${dy}px) scale(0.96)`;
+      card.style.zIndex = `${BOARD_CARD_COUNT - idx}`;
     });
 
     requestAnimationFrame(() => {
       cards.forEach((card, idx) => {
-        const pose = computeScatterPose(idx, cards.length);
         setTimeout(() => {
-          card.style.transition = `transform ${scatterDuration}ms cubic-bezier(0.23, 0.89, 0.27, 1), opacity ${Math.max(240, scatterDuration - 10)}ms ease`;
+          card.style.transition = `transform ${duration}ms cubic-bezier(0.22, 0.65, 0.2, 1), opacity ${duration}ms ease`;
           card.style.opacity = '1';
-          card.style.transform = `translate(${pose.x}px, ${pose.y}px) rotate(${pose.rotate}deg) scale(${pose.scale})`;
-          card.style.zIndex = `${Math.round(pose.z)}`;
+          card.style.transform = 'translate(0, 0) scale(1)';
+          card.style.zIndex = '';
         }, idx * stagger);
       });
     });
 
-    await wait(scatterDuration + cards.length * stagger + scatterHoldDuration + 40);
-
-    requestAnimationFrame(() => {
-      cards.forEach((card, idx) => {
-        setTimeout(() => {
-          card.style.transition = `transform ${settleDuration}ms cubic-bezier(0.18, 0.76, 0.22, 1), opacity ${settleDuration}ms ease`;
-          card.style.transform = 'translate(0, 0) rotate(0deg) scale(1)';
-          card.style.opacity = '1';
-          card.style.zIndex = '';
-        }, idx * Math.max(12, Math.floor(stagger * 0.45)));
-      });
-    });
-
-    await wait(settleDuration + cards.length * Math.max(12, Math.floor(stagger * 0.45)) + 55);
+    await wait(duration + cards.length * stagger + 50);
     clearOverlayCards();
   };
 
@@ -685,34 +623,16 @@ function renderOverall() {
       const target = toLocalRect(slotRects[idx]);
       const dx = origin.centerX - target.centerX;
       const dy = origin.centerY - target.centerY;
-      const drift = (idx % 2 === 0 ? -1 : 1) * (6 + (idx % 3));
       card.classList.add('is-clearing');
-      card.style.transition = `transform ${FULL_TIMING.collectDuration}ms cubic-bezier(0.42, 0, 1, 1), opacity ${FULL_TIMING.collectDuration}ms ease`;
+      card.style.transition = `transform ${FULL_TIMING.collectDuration}ms cubic-bezier(0.24, 0.62, 0.28, 1), opacity ${FULL_TIMING.collectDuration}ms ease`;
       setTimeout(() => {
-        card.style.opacity = '0.74';
-        card.style.transform = `translate(${dx}px, ${dy}px) rotate(${drift}deg) scale(0.9)`;
+        card.style.opacity = '0.88';
+        card.style.transform = `translate(${dx}px, ${dy}px) scale(0.96)`;
       }, idx * FULL_TIMING.collectStagger);
     });
 
     await wait(FULL_TIMING.collectDuration + cards.length * FULL_TIMING.collectStagger + 36);
     clearOverlayCards();
-  };
-
-  const animateCenterDeckSwish = async () => {
-    centerDeck.classList.remove('is-shuffling');
-    void centerDeck.offsetWidth;
-    centerDeck.classList.add('is-shuffling');
-    await wait(FULL_TIMING.centerSwishDuration);
-    centerDeck.classList.remove('is-shuffling');
-  };
-
-  const animateOverlayRedeal = async () => {
-    await animateOverlayDeal(centerDeck, {
-      scatterDuration: FULL_TIMING.redealScatterDuration,
-      scatterHoldDuration: FULL_TIMING.redealScatterHoldDuration,
-      settleDuration: FULL_TIMING.redealSettleDuration,
-      stagger: FULL_TIMING.dealStagger,
-    });
   };
 
   const resetFullSelection = async ({ animateClear = false } = {}) => {
@@ -735,12 +655,7 @@ function renderOverall() {
     lockFullInteraction();
     renderFullPhase();
 
-    await animateOverlayDeal(heroDeck, {
-      scatterDuration: FULL_TIMING.dealScatterDuration,
-      scatterHoldDuration: FULL_TIMING.dealScatterHoldDuration,
-      settleDuration: FULL_TIMING.dealSettleDuration,
-      stagger: FULL_TIMING.dealStagger,
-    });
+    await animateOverlayDeal(heroDeck);
 
     fullPhase = 'dealt';
     restoreStableBoardSurface();
@@ -759,16 +674,15 @@ function renderOverall() {
     await resetFullSelection({ animateClear: true });
     await animateOverlayCollect();
 
-    fullPhase = 'shufflingCenter';
-    renderFullPhase();
-    await animateCenterDeckSwish();
-
     fullPhase = 'shufflingRedeal';
     boardCards = getDrawableCards(BOARD_CARD_COUNT);
     hydrateBoardSlots();
     renderFullSelection();
     renderFullPhase();
-    await animateOverlayRedeal();
+    await animateOverlayDeal(centerDeck, {
+      duration: FULL_TIMING.dealDuration,
+      stagger: FULL_TIMING.dealStagger,
+    });
 
     fullPhase = 'dealt';
     restoreStableBoardSurface();
@@ -778,10 +692,12 @@ function renderOverall() {
   };
 
   renderFullPhase = () => {
+    flow.dataset.fullPhase = fullPhase;
+
     const isPreDeal = fullPhase === 'preDeal';
     const isDealing = fullPhase === 'dealing';
     const isDealt = fullPhase === 'dealt';
-    const isShufflePhase = fullPhase === 'shufflingCollect' || fullPhase === 'shufflingCenter' || fullPhase === 'shufflingRedeal';
+    const isShufflePhase = fullPhase === 'shufflingCollect' || fullPhase === 'shufflingRedeal';
 
     entry.hidden = !(isPreDeal || isDealing);
     heroDeck.hidden = !(isPreDeal || isDealing);
@@ -797,11 +713,10 @@ function renderOverall() {
       board.style.visibility = '';
       board.style.pointerEvents = '';
     } else if (isShufflePhase) {
-      board.hidden = false;
-      board.classList.remove('is-hidden');
-      board.classList.add('is-phase-placeholder');
-      board.style.visibility = 'hidden';
-      board.style.pointerEvents = 'none';
+      board.hidden = true;
+      board.classList.add('is-hidden', 'is-phase-placeholder');
+      board.style.visibility = '';
+      board.style.pointerEvents = '';
     } else {
       board.hidden = false;
       board.classList.remove('is-hidden', 'is-phase-placeholder');
@@ -813,6 +728,9 @@ function renderOverall() {
     centerDeck.hidden = !isShufflePhase;
     centerDeck.classList.toggle('is-hidden', centerDeck.hidden);
 
+    if (!MOTION_PHASES.has(fullPhase) && animationLayer.childElementCount) {
+      clearOverlayCards();
+    }
     animationLayer.hidden = !MOTION_PHASES.has(fullPhase) && !animationLayer.childElementCount;
 
     const toolbarDisabled = !isDealt || isFullAnimating || MOTION_PHASES.has(fullPhase);
