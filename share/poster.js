@@ -1086,22 +1086,12 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const labels = lang === 'th'
       ? ['อะไรที่คุณเจอมาก่อน', 'สิ่งที่คุณกำลังเจอ', 'อะไรที่คุณกำลังจะเจอ']
       : ['What still affects you', 'What you need now', 'Where this is going'];
-    const symbolic = resolveSymbolicMetadata(cardEntries);
-
     const topStripHeight = 170;
-    const bottomStripHeight = 420;
     const topGrad = ctx.createLinearGradient(0, 0, 0, topStripHeight);
     topGrad.addColorStop(0, 'rgba(5,10,25,0.85)');
     topGrad.addColorStop(1, 'rgba(5,10,25,0.25)');
     ctx.fillStyle = topGrad;
     ctx.fillRect(0, 0, width, topStripHeight);
-
-    const bottomY = height - bottomStripHeight;
-    const bottomGrad = ctx.createLinearGradient(0, bottomY, 0, height);
-    bottomGrad.addColorStop(0, 'rgba(5,10,25,0.15)');
-    bottomGrad.addColorStop(1, 'rgba(5,10,25,0.72)');
-    ctx.fillStyle = bottomGrad;
-    ctx.fillRect(0, bottomY, width, bottomStripHeight);
 
     ctx.textAlign = 'center';
     ctx.fillStyle = '#f8d77a';
@@ -1182,8 +1172,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     const darkLabelColor = '#342b57';
     const darkTextColor = '#27233f';
-    const darkMetaColor = '#403860';
-
     const presentSummary = summaries[1] || { text: '', sourceTier: 99 };
     const presentShort = presentSummary.sourceTier <= 5;
     const presentLabelY = cardsRowBottom + 40;
@@ -1222,23 +1210,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     }
 
     const readingBottom = Math.max(sideBottom, presentEndY);
-    const symbolicTop = readingBottom + 32;
-    const symbolicLines = [
-      symbolic.element ? `Element: ${symbolic.element} 🌿` : '',
-      symbolic.planet ? `Planet: ${symbolic.planet} 🌙` : '',
-      symbolic.numerology ? `Numerology: ${symbolic.numerology}` : '',
-    ].filter(Boolean);
-
-    ctx.fillStyle = darkMetaColor;
-    ctx.font = '500 22px "Space Grotesk", sans-serif';
-    let symbolicY = symbolicTop;
-    symbolicLines.forEach((line) => {
-      wrapText(ctx, line, width / 2, symbolicY, width - 180, 28, 1);
-      symbolicY += 28;
-    });
 
     const { scores, interpretation } = resolveEnergyBalance(cardEntries, summaries);
-    const graphTop = symbolicY + 2;
+    const graphTop = readingBottom + 34;
     const graphCenterX = width / 2;
     const graphCenterY = graphTop + 130;
     const graphRadius = 115;
@@ -1326,9 +1300,18 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.font = '500 22px "Space Grotesk", sans-serif';
     wrapText(ctx, interpretation[1], width / 2, interpretationY + 29, width - 150, 27, 1);
 
-    ctx.fillStyle = '#8f96b5';
-    ctx.font = '500 23px "Space Grotesk", sans-serif';
-    ctx.fillText('meowtarot.com', width / 2, height - 36);
+    const footerOverlayHeight = 120;
+    const footerOverlayTop = height - footerOverlayHeight;
+    const footerGrad = ctx.createLinearGradient(0, height, 0, footerOverlayTop);
+    footerGrad.addColorStop(0, 'rgba(10, 12, 35, 0.75)');
+    footerGrad.addColorStop(0.4, 'rgba(10, 12, 35, 0.35)');
+    footerGrad.addColorStop(1, 'rgba(10, 12, 35, 0)');
+    ctx.fillStyle = footerGrad;
+    ctx.fillRect(0, footerOverlayTop, width, footerOverlayHeight);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = '500 14px "Space Grotesk", sans-serif';
+    drawTrackingText(ctx, 'meowtarot.com', width / 2, height - 28, 0.56);
 
     const exportStart = performance.now();
     perf.captureCount += 1;

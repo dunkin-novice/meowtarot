@@ -1217,9 +1217,9 @@ function buildEnergyPanel(cards, dict) {
   `;
   chartCard.appendChild(chartWrap);
 
-  const interpretation = document.createElement('div');
-  interpretation.className = 'energy-balance__interpretation';
-  interpretation.setAttribute('aria-live', 'polite');
+  const interpretation = document.createElement('p');
+  interpretation.className = 'energy-interpretation';
+  interpretation.textContent = 'Your energy is currently led by emotion, with strong support from thinking. Keep this momentum balanced with gentle reflection to stay grounded and clear.';
   chartCard.appendChild(interpretation);
   panel.appendChild(chartCard);
 
@@ -1238,16 +1238,6 @@ function buildEnergyPanel(cards, dict) {
     T: averages[2],
     S: averages[3],
   };
-
-  loadEnergyBalanceInterpretations()
-    .then((config) => {
-      const selected = resolveEnergyBalanceInterpretation(energyValues, config);
-      renderEnergyBalanceInterpretation(interpretation, selected);
-    })
-    .catch((error) => {
-      energyDebugLog('config_load_error', { message: error?.message || String(error) });
-      renderEnergyBalanceInterpretation(interpretation, null);
-    });
 
   const svg = chartWrap.querySelector('.energy-radar');
   const gridGroup = svg?.querySelector('#energyRadarGrid');
