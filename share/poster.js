@@ -994,40 +994,19 @@ function resolveSymbolicMetadata(cardEntries) {
 }
 
 
-function resolveEnergyBalance(cardEntries, summaries) {
-  const cards = cardEntries.map((entry) => entry?.card || {});
-  const scores = { action: 52, emotion: 52, thinking: 52, stability: 52 };
-  const boostByElement = {
-    fire: { action: 12, emotion: 2, thinking: 0, stability: -2 },
-    water: { action: -2, emotion: 12, thinking: 2, stability: 0 },
-    air: { action: 1, emotion: 0, thinking: 12, stability: -1 },
-    earth: { action: 0, emotion: -1, thinking: 2, stability: 12 },
+function resolveEnergyBalance(energyData = {}) {
+  const toScore = (value) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    return Math.max(0, Math.min(100, Math.round(numeric)));
   };
 
-  cards.forEach((card, idx) => {
-    const element = toSafeText(card?.element, '').trim().toLowerCase();
-    const boost = boostByElement[element] || {};
-    scores.action += boost.action || 0;
-    scores.emotion += boost.emotion || 0;
-    scores.thinking += boost.thinking || 0;
-    scores.stability += boost.stability || 0;
-
-    const num = Number.parseFloat(toSafeText(card?.numerology_value, '').trim());
-    if (Number.isFinite(num)) {
-      scores.action += num % 2 === 0 ? 1 : 2;
-      scores.thinking += num >= 10 ? 2 : 1;
-      scores.stability += idx === 1 ? 2 : 1;
-    }
-  });
-
-  const presentTier = summaries?.[1]?.sourceTier || 99;
-  if (presentTier <= 3) scores.action += 6;
-  if (presentTier === 4 || presentTier === 5) scores.emotion += 4;
-  if (presentTier >= 6) scores.thinking += 5;
-
-  Object.keys(scores).forEach((key) => {
-    scores[key] = Math.max(28, Math.min(92, Math.round(scores[key])));
-  });
+  const scores = {
+    action: toScore(energyData.action),
+    emotion: toScore(energyData.emotion),
+    thinking: toScore(energyData.thinking),
+    stability: toScore(energyData.stability),
+  };
 
   const ordered = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const axisTitle = { action: 'action', emotion: 'emotion', thinking: 'thinking', stability: 'stability' };
@@ -1243,7 +1222,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     const readingBottom = Math.max(sideBottom, presentEndY);
 
-    const { scores, interpretation } = resolveEnergyBalance(cardEntries, summaries);
+    const { scores, interpretation } = resolveEnergyBalance(payload?.energyData);
     const graphTop = readingBottom + 34;
     const graphCenterX = width / 2;
     const graphCenterY = graphTop + 130;

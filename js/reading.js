@@ -1196,6 +1196,26 @@ function renderEnergyBalanceInterpretation(target, interpretation) {
   target.textContent = interpretation?.sentence || '';
 }
 
+function computeFullReadingEnergyData(cards = []) {
+  const elements = ['fire', 'water', 'air', 'earth'];
+  const selectedCards = cards.slice(0, 3);
+  const divisor = selectedCards.length || 1;
+  const averages = elements.map((key) => {
+    const sum = selectedCards.reduce((acc, card) => {
+      const value = Number(card?.energy_scores?.[key] ?? 0);
+      return acc + (Number.isFinite(value) ? value : 0);
+    }, 0);
+    return Math.round(sum / divisor);
+  });
+
+  return {
+    action: averages[0],
+    emotion: averages[1],
+    thinking: averages[2],
+    stability: averages[3],
+  };
+}
+
 // Energy Balance radar chart (full/life reading only).
 function buildEnergyPanel(cards, dict) {
   const panel = document.createElement('section');
@@ -1247,21 +1267,7 @@ function buildEnergyPanel(cards, dict) {
   chartCard.appendChild(interpretation);
   panel.appendChild(chartCard);
 
-  const elements = ['fire', 'water', 'air', 'earth'];
-  const averages = elements.map((key) => {
-    const sum = cards.slice(0, 3).reduce((acc, card) => {
-      const value = Number(card?.energy_scores?.[key] ?? 0);
-      return acc + (Number.isFinite(value) ? value : 0);
-    }, 0);
-    return Math.round(sum / 3);
-  });
-
-  const energyValues = {
-    A: averages[0],
-    E: averages[1],
-    T: averages[2],
-    S: averages[3],
-  };
+  const energyData = computeFullReadingEnergyData(cards);
 
   const svg = chartWrap.querySelector('.energy-radar');
   const gridGroup = svg?.querySelector('#energyRadarGrid');
@@ -1402,12 +1408,7 @@ function buildEnergyPanel(cards, dict) {
 
   renderGrid();
   renderAxes();
-  renderEnergyRadar({
-    action: averages[0],
-    emotion: averages[1],
-    thinking: averages[2],
-    stability: averages[3],
-  });
+  renderEnergyRadar(energyData);
 
   energyRadarController = { renderEnergyRadar };
   panel.renderEnergyRadar = renderEnergyRadar;
@@ -2238,6 +2239,12 @@ function buildSharePayload() {
     },
     canonicalUrl: window.location.href,
   };
+
+  if (state.mode === 'full') {
+    payload.energyData = computeFullReadingEnergyData(
+      state.selectedIds.map((id) => findCard(id)).filter(Boolean),
+    );
+  }
 
   payload.cards = cards.map((card) => ({ ...buildPosterCardPayload(card), id: card.id, orientation: card.orientation }));
 
