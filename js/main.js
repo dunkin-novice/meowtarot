@@ -278,17 +278,41 @@ function renderDaily() {
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
   if (!dealShuffleBtn || !board || !continueBtn || !counter) return;
-  setRitualCtaLabel(dealShuffleBtn, false);
-  counter.textContent = `0/${DAILY_SELECTION_MAX}`;
-  continueBtn.disabled = true;
-  board.textContent = '';
 
-  const goToDailyReading = () => {
-    saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: [] });
+  let selectedCards = [];
+  const updateDailySelectionUi = (cards) => {
+    selectedCards = cards;
+    counter.textContent = `${cards.length}/${DAILY_SELECTION_MAX}`;
+    continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX;
   };
 
-  dealShuffleBtn.onclick = goToDailyReading;
-  continueBtn.onclick = goToDailyReading;
+  const dailyBoard = setupBoard(
+    board,
+    DAILY_BOARD_COUNT,
+    DAILY_SELECTION_MAX,
+    updateDailySelectionUi,
+    { animated: true }
+  );
+
+  setRitualCtaLabel(dealShuffleBtn, true);
+  counter.textContent = `0/${DAILY_SELECTION_MAX}`;
+  continueBtn.disabled = true;
+
+  dealShuffleBtn.onclick = () => {
+    dailyBoard.render();
+    updateDailySelectionUi([]);
+  };
+
+  continueBtn.onclick = () => {
+    const pickedCards = selectedCards.length ? selectedCards : dailyBoard.getSelectedCards();
+    if (pickedCards.length !== DAILY_SELECTION_MAX) return;
+    const selectedIds = pickedCards
+      .map((card) => card?.id || card?.card_id)
+      .filter(Boolean);
+    if (selectedIds.length !== DAILY_SELECTION_MAX) return;
+
+    saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: selectedIds });
+  };
 }
 
 function renderOverall() {
