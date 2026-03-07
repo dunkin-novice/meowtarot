@@ -278,117 +278,17 @@ function renderDaily() {
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
   if (!dealShuffleBtn || !board || !continueBtn || !counter) return;
+  setRitualCtaLabel(dealShuffleBtn, false);
+  counter.textContent = `0/${DAILY_SELECTION_MAX}`;
+  continueBtn.disabled = true;
+  board.textContent = '';
 
-  let latestSelection = [];
-  let isAnimating = false;
-  let hasDealtOnce = false;
-  setRitualCtaLabel(dealShuffleBtn, hasDealtOnce);
-
-  const setDealShuffleDisabled = () => {
-    dealShuffleBtn.disabled = isAnimating;
+  const goToDailyReading = () => {
+    saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: [] });
   };
 
-  const updateContinue = (cards = []) => {
-    latestSelection = cards;
-    counter.textContent = `${cards.length}/${DAILY_SELECTION_MAX}`;
-    continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX || isAnimating;
-    setDealShuffleDisabled();
-  };
-
-  const resetSelection = () => {
-    latestSelection = [];
-    board.querySelectorAll('.card-slot').forEach((slot) => slot.classList.remove('is-selected'));
-    updateContinue([]);
-  };
-
-  const bindCard = (slot, card) => {
-    slot.onclick = () => {
-      if (isAnimating) return;
-      if (!card) return;
-      if (latestSelection.some((c) => c.id === card.id)) {
-        slot.classList.remove('is-selected');
-        updateContinue([]);
-      } else {
-        board.querySelectorAll('.card-slot').forEach((btn) => btn.classList.remove('is-selected'));
-        slot.classList.add('is-selected');
-        updateContinue([card]);
-      }
-    };
-  };
-
-  let slots = [];
-  const ensureSlots = (count) => {
-    if (slots.length === count) return;
-    slots = [];
-    board.textContent = '';
-    for (let i = 0; i < count; i += 1) {
-      const slot = document.createElement('button');
-      slot.type = 'button';
-      slot.className = 'card-slot card-slot--dealable';
-      const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
-      applyCardBackBackground(cardBack);
-      slot.appendChild(cardBack);
-      slots.push(slot);
-      board.appendChild(slot);
-    }
-  };
-
-  const updateSlots = (cards) => {
-    ensureSlots(cards.length);
-    slots.forEach((slot, idx) => {
-      const card = cards[idx];
-      slot.dataset.id = card?.id || '';
-      slot.classList.toggle('is-hidden', !card);
-      if (card) {
-        bindCard(slot, card);
-      } else {
-        slot.onclick = null;
-      }
-    });
-  };
-
-  const animateDeal = (nextSlots) => {
-    animateDealSlots(board, nextSlots, () => {
-      isAnimating = false;
-      hasDealtOnce = true;
-      setRitualCtaLabel(dealShuffleBtn, hasDealtOnce);
-      updateContinue(latestSelection);
-      board.classList.remove('is-locked');
-    });
-  };
-
-  const deal = () => {
-    if (!state.cards.length) return;
-    isAnimating = true;
-    board.classList.add('is-locked');
-    resetSelection();
-    const cards = getDrawableCards(DAILY_BOARD_COUNT);
-    updateSlots(cards);
-    requestAnimationFrame(() => animateDeal(slots));
-  };
-
-  dealShuffleBtn.onclick = () => {
-    if (!state.cards.length || isAnimating) return;
-    if (!hasDealtOnce) {
-      deal();
-      return;
-    }
-
-    isAnimating = true;
-    continueBtn.disabled = true;
-    setDealShuffleDisabled();
-    resetSelection();
-    const currentSlots = Array.from(board.querySelectorAll('.card-slot'));
-    animateCollectSlots(board, currentSlots);
-    setTimeout(() => {
-      deal();
-    }, STACK_DURATION);
-  };
-
-  continueBtn.onclick = () => {
-    if (!latestSelection.length || isAnimating) return;
-    saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: latestSelection.map((c) => c.id) });
-  };
+  dealShuffleBtn.onclick = goToDailyReading;
+  continueBtn.onclick = goToDailyReading;
 }
 
 function renderOverall() {

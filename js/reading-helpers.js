@@ -2,7 +2,7 @@ import { normalizeId } from './data.js';
 
 export function getBaseId(id, normalizeFn = normalizeId) {
   const normalized = normalizeFn(String(id ?? ''));
-  return normalized.replace(/-(upright|reversed)$/i, '');
+  return normalized.replace(/-(upright|reversed|u|r)$/i, '');
 }
 
 export function getBaseCardId(id, normalizeFn = normalizeId) {
@@ -21,7 +21,9 @@ export function toOrientation(input) {
   }
 
   const str = String(input ?? '');
-  return /-reversed$/i.test(str) || /reversed/i.test(str) ? 'reversed' : 'upright';
+  if (/(?:-reversed|-r)$/i.test(str) || /reversed/i.test(str)) return 'reversed';
+  if (/(?:-upright|-u)$/i.test(str) || /upright/i.test(str)) return 'upright';
+  return 'upright';
 }
 
 export function getOrientation(id) {
@@ -78,7 +80,7 @@ export function findCardById(cards, id, normalizeFn = normalizeId) {
   const idStr = String(id ?? '');
   if (!idStr) return null;
 
-  const hasOrientationSuffix = /-(upright|reversed)$/i.test(idStr);
+  const hasOrientationSuffix = /-(upright|reversed|u|r)$/i.test(idStr);
   const targetOrientation = toOrientation(idStr);
   const baseId = getBaseId(idStr, normalizeFn);
   const deck = Array.isArray(cards) ? cards : [];
