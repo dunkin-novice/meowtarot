@@ -68,6 +68,19 @@ const imageSourceCache = new Map();
 const imagePreloadCache = new Map();
 const imageLoadedCache = new Set();
 const resolvedResultCardSrcByKey = new Map();
+const dailyUiState = {
+  phase: 'preDeal',
+  isAnimating: false,
+};
+
+function setDailyPhaseAttr(phase = '') {
+  if (!document.body) return;
+  if (!phase) {
+    document.body.removeAttribute('data-daily-phase');
+    return;
+  }
+  document.body.setAttribute('data-daily-phase', phase);
+}
 
 const readingContent = document.getElementById('reading-content');
 const contextCopy = document.getElementById('reading-context');
@@ -1523,15 +1536,81 @@ function buildDailyAdvicePanel(card) {
   return panel;
 }
 
-function renderDaily(card, dict) {
-  if (!readingContent || !card) return;
+function resetDailyUiState() {
+  dailyUiState.phase = 'preDeal';
+  dailyUiState.isAnimating = false;
+  setDailyPhaseAttr('predeal');
+}
 
-  readingContent.innerHTML = '';
+function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
+function getDailyEntryStrings(dict = activeDict) {
+  if (state.currentLang === 'th') {
+    return {
+      deal: 'เปิดไพ่',
+    };
+  }
+
+  return {
+    deal: 'Deal',
+  };
+}
+
+function createDailyDealView(strings, onDeal) {
+  const shell = document.createElement('section');
+  shell.className = 'daily-entry-shell';
+
+  const deckWrap = document.createElement('button');
+  deckWrap.type = 'button';
+  deckWrap.className = 'daily-deck-stack daily-deck-trigger';
+  deckWrap.setAttribute('aria-label', strings.deal);
+  deckWrap.addEventListener('click', onDeal);
+  const setPressed = (pressed) => {
+    deckWrap.classList.toggle('is-pressed', pressed);
+  };
+  deckWrap.addEventListener('pointerdown', () => setPressed(true));
+  deckWrap.addEventListener('pointerup', () => setPressed(false));
+  deckWrap.addEventListener('pointercancel', () => setPressed(false));
+  deckWrap.addEventListener('pointerleave', () => setPressed(false));
+
+  const deckBackUrl = getCardBackUrl() || getCardBackFallbackUrl();
+  if (deckBackUrl) {
+    deckWrap.style.setProperty('--daily-deck-back-url', `url("${deckBackUrl}")`);
+  }
+
+  for (let i = 0; i < 7; i += 1) {
+    const layer = document.createElement('span');
+    layer.className = 'daily-deck-layer';
+    const offset = Math.max(0, i - 2);
+    layer.style.setProperty('--dx', `${(i % 2 === 0 ? -1 : 1) * offset * 1.6}px`);
+    layer.style.setProperty('--dy', `${-offset * 2}px`);
+    layer.style.setProperty('--dr', `${(i - 3) * 0.6}deg`);
+    layer.style.setProperty('--z', String(i + 1));
+    deckWrap.appendChild(layer);
+  }
+
+  const cta = document.createElement('button');
+  cta.type = 'button';
+  cta.className = 'primary ritual-cta ritual-cta--deal daily-entry-deal-btn';
+  cta.textContent = strings.deal;
+  cta.addEventListener('click', onDeal);
+
+  shell.appendChild(deckWrap);
+  shell.appendChild(cta);
+  return shell;
+}
+
+function createDailyBoardPanel(card) {
   const panel = document.createElement('div');
-  panel.className = 'panel';
+  panel.className = 'panel daily-board-panel';
 
-  panel.appendChild(buildCardArt(card, 'hero'));
+  const art = buildCardArt(card, 'hero');
+  art.classList.add('daily-result-art');
+  panel.appendChild(art);
 
   const h2 = document.createElement('h2');
   h2.textContent = `${getName(card)} — ${getOrientationEnglish(card)}`;
@@ -1557,15 +1636,76 @@ function renderDaily(card, dict) {
     panel.appendChild(implyText);
   }
 
+  return panel;
+}
+
+function createDailyDetails(card) {
+  const frag = document.createDocumentFragment();
   const hook = getText(card, 'hook') || getText(card, 'action_prompt') || getText(card, 'standalone_present');
-
-  readingContent.appendChild(panel);
-
   const guidance = buildDailyGuidancePanel(card, hook);
-  if (guidance) readingContent.appendChild(guidance);
-
+  if (guidance) frag.appendChild(guidance);
   const advice = buildDailyAdvicePanel(card);
-  if (advice) readingContent.appendChild(advice);
+  if (advice) frag.appendChild(advice);
+  return frag;
+}
+
+async function runDailyDealAnimation(container) {
+  if (!container) return;
+  if (prefersReducedMotion()) {
+    container.classList.add('is-dealt');
+    return;
+  }
+
+  container.classList.add('is-dealing');
+  await new Promise((resolve) => window.setTimeout(resolve, 900));
+  container.classList.remove('is-dealing');
+  container.classList.add('is-dealt');
+}
+
+function renderDaily(card, dict) {
+  if (!readingContent || !card) return;
+
+  const strings = getDailyEntryStrings(dict);
+  const renderPreDeal = () => {
+    setDailyPhaseAttr('predeal');
+    readingContent.innerHTML = '';
+    const dealView = createDailyDealView(strings, async () => {
+      if (dailyUiState.isAnimating) return;
+      dailyUiState.isAnimating = true;
+      dailyUiState.phase = 'dealing';
+      setDailyPhaseAttr('dealing');
+      await runDailyDealAnimation(dealView);
+      dailyUiState.phase = 'dealt';
+      dailyUiState.isAnimating = false;
+      setDailyPhaseAttr('dealt');
+      renderDealt();
+    });
+    readingContent.appendChild(dealView);
+  };
+
+  const renderDealt = () => {
+    setDailyPhaseAttr('dealt');
+    readingContent.innerHTML = '';
+    const boardWrap = document.createElement('section');
+    boardWrap.className = 'daily-reading-stage';
+
+    const boardPanel = createDailyBoardPanel(card);
+    boardWrap.appendChild(boardPanel);
+
+    const detailsWrap = document.createElement('section');
+    detailsWrap.className = 'daily-reading-details';
+    detailsWrap.appendChild(createDailyDetails(card));
+
+    readingContent.appendChild(boardWrap);
+    readingContent.appendChild(detailsWrap);
+  };
+
+  if (dailyUiState.phase === 'dealt') {
+    renderDealt();
+    return;
+  }
+
+  renderPreDeal();
 }
 
 function renderFull(cards, dict) {
@@ -1768,6 +1908,7 @@ function renderReading(dict) {
   const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
 
   if (!cards.length) {
+    if (state.mode !== 'daily') setDailyPhaseAttr('');
     const message = dict?.missingSelection || 'No cards found. Please draw cards first.';
     readingContent.innerHTML = `<div class="panel"><p class="lede">${message}</p></div>`;
     return;
@@ -1777,6 +1918,8 @@ function renderReading(dict) {
     renderDaily(cards[0], dict);
     return;
   }
+
+  setDailyPhaseAttr('');
 
   if (state.mode === 'question') {
     renderQuestion(cards, dict);
@@ -1879,6 +2022,11 @@ function buildSharePayload() {
     const card = findCard(id);
     const orientation = toOrientation(id);
     const baseId = getBaseCardId(id, normalizeId) || normalizeId(id);
+    const cardIdentity = card || { id: `${baseId}-${orientation}` };
+    const { uprightUrl, reversedUrl } = buildCardImageUrls(cardIdentity, orientation);
+    const imageByOrientation = orientation === 'reversed'
+      ? (reversedUrl || uprightUrl || '')
+      : (uprightUrl || reversedUrl || '');
     const summary = card ? getText(card, `${state.topic}_reading_single`) || getText(card, 'general_meaning') : '';
     return {
       id: baseId,
@@ -1888,6 +2036,9 @@ function buildSharePayload() {
       keywords: card ? getText(card, 'keywords') : '',
       summary,
       archetype: card ? getText(card, 'affirmation') : '',
+      image: imageByOrientation,
+      image_upright: uprightUrl || '',
+      image_reversed: reversedUrl || '',
       resolvedImageUrl: resolvedResultCardSrcByKey.get(getResultCardCacheKey(baseId, orientation)) || '',
     };
   });
