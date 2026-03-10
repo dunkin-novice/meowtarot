@@ -1101,9 +1101,15 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const lang = payload?.lang || 'en';
     const cardEntries = (await buildCardEntries(payload)).slice(0, 3);
     const summaries = resolveFullSummaries(payload, cardEntries);
+    posterDebugLog('info', '[Poster][full] mode + payload cards', {
+      mode: payload?.mode,
+      payloadCardsCount: Array.isArray(payload?.cards) ? payload.cards.length : 0,
+      cardEntriesCount: cardEntries.length,
+      cardEntryHits: cardEntries.map((entry) => Boolean(entry?.card)),
+    });
     const labels = lang === 'th'
-      ? ['อะไรที่คุณเจอมาก่อน', 'สิ่งที่คุณกำลังเจอ', 'อะไรที่คุณกำลังจะเจอ']
-      : ['What still affects you', 'What you need now', 'Where this is going'];
+      ? ['อะไรที่ยังส่งผลกับคุณ', 'อะไรที่นำทางคุณตอนนี้', 'สิ่งที่เรื่องนี้กำลังพาไป']
+      : ['What still affects you', 'What guides you now', 'Where this is going'];
     const topStripHeight = 170;
     const topGrad = ctx.createLinearGradient(0, 0, 0, topStripHeight);
     topGrad.addColorStop(0, 'rgba(5,10,25,0.85)');
@@ -1135,6 +1141,12 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       { x: startX + sideCardW + gap, w: presentCardW, h: presentCardH },
       { x: startX + sideCardW + gap + presentCardW + gap, w: sideCardW, h: sideCardH },
     ];
+    posterDebugLog('info', '[Poster][full] card row geometry', {
+      cardY,
+      layouts: cardLayouts,
+      canvas: { width, height },
+    });
+    let cardDrawCalls = 0;
 
     for (let i = 0; i < 3; i += 1) {
       const entry = cardEntries[i];
@@ -1147,29 +1159,34 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.fillRect(x, cardY, cardW, cardH);
       ctx.restore();
 
-      if (entry?.card) {
-        const baseId = baseCardId(entry.card.id || entry.card.card_id || entry.card.image_id);
-        const orientedId = `${baseId}-${entry.orientation}`;
-        const uprightId = `${baseId}-upright`;
-        const cardIdentity = { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
-        const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, entry.orientation);
-        const resolvedPrimary = await resolveCardImageUrl(cardIdentity, entry.orientation);
-        try {
-          const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources(entry, {
-            resolvedPrimary,
-            uprightUrl,
-            reversedUrl,
-            backUrl,
-            lang,
-          });
-          emitPosterDebug('waiting_for_card', { url: selectedUrl });
-          const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
-          emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardW, h: img?.naturalHeight || cardH });
-          ctx.drawImage(img, x, cardY, cardW, cardH);
-        } catch (error) {
-          emitLegacyCardProbe({ ok: false, url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, error: error?.message || String(error) });
-          console.warn('[Poster] card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
-        }
+      // Defensive: full-story poster rendering must remain resilient when deck lookup
+      // misses (ID/path/format mismatches). Resolve card imagery from either the
+      // canonical deck hit (entry.card) or the payload slot (payload.cards[i]).
+      const payloadCard = payload?.cards?.[i] || {};
+      const fallbackBaseId = baseCardId(payloadCard?.id || payloadCard?.card_id || payloadCard?.image_id || `slot-${i + 1}`);
+      const sourceCard = entry?.card || payloadCard;
+      const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
+      const orientation = toOrientation(entry?.orientation || payloadCard?.orientation || sourceCard?.orientation || 'upright');
+      const orientedId = `${baseId}-${orientation}`;
+      const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, orientation);
+      try {
+        const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation, card: sourceCard }, {
+          resolvedPrimary,
+          uprightUrl,
+          reversedUrl,
+          backUrl,
+          lang,
+        });
+        emitPosterDebug('waiting_for_card', { url: selectedUrl });
+        const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
+        emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardW, h: img?.naturalHeight || cardH });
+        ctx.drawImage(img, x, cardY, cardW, cardH);
+        cardDrawCalls += 1;
+      } catch (error) {
+        emitLegacyCardProbe({ ok: false, url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, error: error?.message || String(error) });
+        console.warn('[Poster] card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
       }
 
       const orientationText = getOrientationLabel(entry?.orientation || 'upright', lang);
@@ -1191,43 +1208,54 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const darkLabelColor = '#342b57';
     const darkTextColor = '#27233f';
     const presentSummary = summaries[1] || { text: '', sourceTier: 99 };
+    const guidanceLabel = lang === 'th' ? 'คำแนะนำของคุณตอนนี้' : 'YOUR GUIDANCE RIGHT NOW';
     const presentShort = presentSummary.sourceTier <= 5;
-    const presentLabelY = cardsRowBottom + 40;
-    const presentTextY = presentLabelY + 52;
-    const presentTextSize = presentShort ? 43 : 34;
-    const presentLineHeight = presentShort ? 48 : 40;
-    const presentMaxLines = presentShort ? 4 : 5;
+    const guidanceLabelY = cardsRowBottom + 28;
+    const mainMessageY = guidanceLabelY + 46;
+    const presentTextSize = presentShort ? 52 : 44;
+    const presentLineHeight = presentShort ? 56 : 48;
 
-    ctx.fillStyle = darkLabelColor;
-    ctx.font = '650 36px "Space Grotesk", sans-serif';
-    wrapText(ctx, labels[1], cardCenters[1], presentLabelY, presentCardW + 100, 40, 2);
+    ctx.fillStyle = '#51437a';
+    ctx.font = '700 18px "Space Grotesk", sans-serif';
+    wrapText(ctx, guidanceLabel, cardCenters[1], guidanceLabelY, presentCardW + 220, 24, 1);
 
     ctx.fillStyle = darkTextColor;
-    ctx.font = `560 ${presentTextSize}px "Space Grotesk", sans-serif`;
-    const presentEndY = wrapText(ctx, presentSummary.text || '', cardCenters[1], presentTextY, presentCardW + 90, presentLineHeight, presentMaxLines);
+    ctx.font = `620 ${presentTextSize}px "Space Grotesk", sans-serif`;
+    const presentEndY = wrapText(ctx, presentSummary.text || '', cardCenters[1], mainMessageY, presentCardW + 220, presentLineHeight, 3);
 
-    const sideBaseY = presentEndY + 28;
-    let sideBottom = sideBaseY;
-    for (const i of [0, 2]) {
+    const insightsTop = presentEndY + 34;
+    let insightsBottom = insightsTop;
+    for (const i of [0, 1, 2]) {
       const summary = summaries[i] || { text: '', sourceTier: 99 };
       const shortReflection = summary.sourceTier <= 5;
-      const labelY = sideBaseY;
-      const textY = labelY + 38;
-      const fontSize = shortReflection ? 22 : 20;
-      const lineHeight = shortReflection ? 28 : 26;
-      const maxLines = shortReflection ? 3 : 4;
+      const labelY = insightsTop;
+      const textY = labelY + 34;
+      const fontSize = shortReflection ? 20 : 19;
+      const lineHeight = shortReflection ? 25 : 24;
 
       ctx.fillStyle = darkLabelColor;
-      ctx.font = '620 23px "Space Grotesk", sans-serif';
-      wrapText(ctx, labels[i], cardCenters[i], labelY, sideCardW + 52, 28, 2);
+      ctx.font = '620 22px "Space Grotesk", sans-serif';
+      wrapText(ctx, labels[i], cardCenters[i], labelY, sideCardW + 86, 26, 2);
 
       ctx.fillStyle = darkTextColor;
       ctx.font = `500 ${fontSize}px "Space Grotesk", sans-serif`;
-      const endY = wrapText(ctx, summary.text || '', cardCenters[i], textY, sideCardW + 40, lineHeight, maxLines);
-      sideBottom = Math.max(sideBottom, endY);
+      const endY = wrapText(ctx, summary.text || '', cardCenters[i], textY, sideCardW + 66, lineHeight, 2);
+      insightsBottom = Math.max(insightsBottom, endY);
     }
 
-    const readingBottom = Math.max(sideBottom, presentEndY);
+    const readingBottom = Math.max(insightsBottom, presentEndY);
+    const mainTextBlockHeight = Math.max(0, presentEndY - guidanceLabelY);
+    const insightBlockHeight = Math.max(0, insightsBottom - insightsTop);
+    posterDebugLog('info', '[Poster][full] text + draw metrics', {
+      cardDrawCalls,
+      guidanceLabelY,
+      mainMessageY,
+      presentEndY,
+      insightsTop,
+      insightsBottom,
+      mainTextBlockHeight,
+      insightBlockHeight,
+    });
 
     const { scores, interpretation } = resolveEnergyBalance(payload?.energyData);
     const graphTop = readingBottom + 34;
