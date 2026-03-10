@@ -550,7 +550,9 @@ async function buildCardEntries(payload) {
     });
     posterDebugLog('log', '[Poster] buildCardEntries: reloaded tarot data', meowTarotCards.length);
   }
-  const cards = Array.isArray(payload?.cards) ? payload.cards : [];
+  const cards = Array.isArray(payload?.cards)
+    ? payload.cards
+    : (payload?.card && typeof payload.card === 'object' ? [payload.card] : []);
   return cards
     .map((entry) => {
       const orientation = toOrientation(entry?.orientation || entry?.id || 'upright');
@@ -560,6 +562,7 @@ async function buildCardEntries(payload) {
       return hit
         ? {
           card: hit,
+          id: targetId,
           orientation,
           name: entry?.name || hit.card_name_en || hit.name_en || hit.name_th || hit.name || targetId,
           preferredImageUrl: entry?.resolvedImageUrl || entry?.imageUrl || '',
@@ -571,6 +574,7 @@ async function buildCardEntries(payload) {
         }
         : {
           card: null,
+          id: targetId,
           orientation,
           name: entry?.name || targetId,
           preferredImageUrl: entry?.resolvedImageUrl || entry?.imageUrl || '',
@@ -890,17 +894,20 @@ function resolveDailyReading(payload, cardEntry, lang) {
   const hook = localizedHook || cardReading.hook || '';
   const orientedMeaning = cardReading.meaning || '';
   const readingResult = payloadReading.readingResult || payloadReading.result || payloadReading.heading || payloadReading.summary || '';
-  const mainQuoteText = hook || actionPrompt || readingResult || orientedMeaning || '';
+  const quote = payloadReading.quote || payloadReading.mainQuote || '';
+  const mainQuoteText = hook || actionPrompt || quote || readingResult || orientedMeaning || '';
   const mainQuoteSource = hook
     ? 'hook'
     : (actionPrompt
       ? 'action_prompt'
+      : (quote
+      ? 'quote'
       : (readingResult
         ? 'reading_result'
-        : (orientedMeaning ? 'card_meaning_oriented' : 'none')));
+        : (orientedMeaning ? 'card_meaning_oriented' : 'none'))));
   return {
     orientation: getOrientationLabel(resolvedOrientation, lang) || cardReading.orientation || fallbackOrientation,
-    archetype: cardReading.archetype || '',
+    archetype: payloadReading.archetype || cardReading.archetype || '',
     readingResult,
     mainQuoteText,
     mainQuoteSource,
@@ -1368,7 +1375,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       headerTop: 136,
       cardTop: 248,
       cardMaxHeight: 900,
-      panelTop: 1272,
+      panelTop: 1286,
       panelHeight: 320,
       luckyRowY: 1760,
       footerY: 1860,
@@ -1395,15 +1402,29 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     };
 
     const resolveCardImage = async () => {
-      if (!cardEntry?.card) return null;
-      const baseId = baseCardId(cardEntry.card.id || cardEntry.card.card_id || cardEntry.card.image_id);
-      const orientedId = `${baseId}-${cardEntry.orientation}`;
-      const localPrimary = resolveLocalPosterFixtureUrl('card', cardEntry.orientation);
-      const localUpright = resolveLocalPosterFixtureUrl('card', 'upright');
+      if (!cardEntry) return null;
+      const baseId = baseCardId(
+        cardEntry?.card?.id
+        || cardEntry?.card?.card_id
+        || cardEntry?.card?.image_id
+        || cardEntry?.id
+        || '',
+      );
+      const orientedId = baseId ? `${baseId}-${cardEntry.orientation}` : '';
+      const localPrimary = cardEntry?.card ? resolveLocalPosterFixtureUrl('card', cardEntry.orientation) : '';
+      const localUpright = cardEntry?.card ? resolveLocalPosterFixtureUrl('card', 'upright') : '';
       const localBack = resolveLocalPosterFixtureUrl('back');
-      const cardIdentity = { ...cardEntry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
-      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, cardEntry.orientation);
-      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, cardEntry.orientation);
+      let uprightUrl = '';
+      let reversedUrl = '';
+      let backUrl = localBack || toAssetUrl(resolveCardBackFallbackPath());
+      let resolvedPrimary = '';
+
+      if (orientedId) {
+        const cardIdentity = { ...(cardEntry.card || {}), id: orientedId, card_id: orientedId, image_id: orientedId };
+        ({ uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, cardEntry.orientation));
+        resolvedPrimary = await resolveCardImageUrl(cardIdentity, cardEntry.orientation);
+      }
+
       const { primary: resolvedAssetPrimary, fallbackChain } = resolvePosterCardImageSources(cardEntry, {
         resolvedPrimary,
         uprightUrl,
@@ -1495,9 +1516,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const drawOrientationLabel = () => {
       if (!reading.orientation) return;
       const cardBottomY = cardY + cardHeight;
-      const panelLabelY = panelTop - 34;
-      const minGapY = cardBottomY + 36;
-      const orientationY = Math.max(minGapY, panelLabelY);
+      const minGapY = cardBottomY + 60;
+      const orientationY = minGapY;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.muted;
@@ -1511,8 +1531,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     const drawArchetypeLabel = (orientationY) => {
       if (!archetypeText) return null;
-      const fallbackY = cardY + cardHeight + 114;
-      const archetypeY = Math.min(panelTop - 26, (orientationY || fallbackY - 44) + 56);
+      const fallbackY = cardY + cardHeight + 124;
+      const archetypeY = (orientationY || fallbackY - 64) + 64;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.primary;
