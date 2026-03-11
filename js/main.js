@@ -14,7 +14,7 @@ const QUESTION_SELECTION_COUNT = 1;
 const ORIENTATION_REVERSED_PROBABILITY = 0.5;
 const STORAGE_KEY = 'meowtarot_selection';
 const DAILY_SELECTION_MAX = 1;
-const DEAL_STAGGER = 180;
+const DEAL_STAGGER = 160;
 const STACK_DURATION = 520;
 const CARD_BACK_URL = getCardBackUrl();
 const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
@@ -151,6 +151,7 @@ function animateDealSlots(boardEl, slots, onDone) {
 
   requestAnimationFrame(() => {
     slots.forEach((slot, idx) => {
+      slot.classList.add('card-visible');
       slot.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
       setTimeout(() => {
         slot.style.opacity = '1';
@@ -160,6 +161,11 @@ function animateDealSlots(boardEl, slots, onDone) {
 
     const total = 350 + slots.length * DEAL_STAGGER + 120;
     setTimeout(() => {
+      slots.forEach((slot) => {
+        slot.style.transition = '';
+        slot.style.transform = '';
+        slot.style.opacity = '';
+      });
       onDone?.();
     }, total);
   });
@@ -193,6 +199,7 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
         slot.disabled = false;
       });
     }
+    boardEl.classList.toggle('has-selection', selected.length > 0);
     onSelectionChange(selected.map((idx) => cards[idx]).filter(Boolean));
   };
 
@@ -203,7 +210,7 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     for (let i = 0; i < boardSize; i += 1) {
       const slot = document.createElement('button');
       slot.type = 'button';
-      slot.className = 'card-slot card-visible';
+      slot.className = 'card-slot';
       const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
       applyCardBackBackground(cardBack);
       slot.appendChild(cardBack);

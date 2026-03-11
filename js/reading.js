@@ -207,6 +207,12 @@ function getName(card, lang = state.currentLang) {
   return thaiName || englishName || card.id;
 }
 
+function normalizeArchetypeText(text = '') {
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+  return raw.replace(/^I\s+/i, '').replace(/^(ฉัน)\s*/u, '').trim();
+}
+
 function getOrientationEnglish(card) {
   return getOrientationLabel(toOrientation(card), state.currentLang);
 }
@@ -1666,8 +1672,14 @@ function createDailyBoardPanel(card) {
   h2.style.textAlign = 'center';
   panel.appendChild(h2);
 
-  const archetype = getText(card, 'archetype');
+  const archetype = normalizeArchetypeText(getText(card, 'archetype'));
   if (archetype) {
+    const label = document.createElement('p');
+    label.className = 'meta-badge';
+    label.style.margin = '0 auto';
+    label.textContent = state.currentLang === 'th' ? 'ต้นแบบพลังงาน' : 'Archetype';
+    panel.appendChild(label);
+
     const p = document.createElement('p');
     p.className = 'keywords';
     p.style.textAlign = 'center';
@@ -2184,7 +2196,7 @@ function buildSharePayload() {
       title: card ? getText(card, 'card_title') || getName(card) : baseId,
       keywords: card ? getText(card, 'keywords') : '',
       summary,
-      archetype: card ? getText(card, 'affirmation') : '',
+      archetype: card ? normalizeArchetypeText(getText(card, 'archetype')) : '',
       image: imageByOrientation,
       image_upright: uprightUrl || '',
       image_reversed: reversedUrl || '',

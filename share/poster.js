@@ -862,6 +862,12 @@ async function drawPosterBackground(ctx, width, height, payload) {
   posterCiLog('bg_draw', { executed: false, chosen: null, fallback: 'gradient' });
   return null;
 }
+function normalizeArchetypeText(text = '') {
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+  return raw.replace(/^I\s+/i, '').replace(/^(ฉัน)\s*/u, '').trim();
+}
+
 function isDailySingle(payload) {
   const posterMode = String(payload?.poster?.mode || payload?.mode || '').toLowerCase();
   return posterMode === 'daily';
@@ -875,7 +881,7 @@ function buildDailyReadingFromCard(card, orientation, lang) {
     || '';
   return {
     orientation: orient,
-    archetype: getLocalizedField(card, 'archetype', lang),
+    archetype: normalizeArchetypeText(getLocalizedField(card, 'archetype', lang)),
     meaning,
     hook: getLocalizedField(card, 'hook', lang),
     actionPrompt: getLocalizedField(card, 'action_prompt', lang),
@@ -907,7 +913,7 @@ function resolveDailyReading(payload, cardEntry, lang) {
         : (orientedMeaning ? 'card_meaning_oriented' : 'none'))));
   return {
     orientation: getOrientationLabel(resolvedOrientation, lang) || cardReading.orientation || fallbackOrientation,
-    archetype: payloadReading.archetype || cardReading.archetype || '',
+    archetype: normalizeArchetypeText(payloadReading.archetype || cardReading.archetype || ''),
     readingResult,
     mainQuoteText,
     mainQuoteSource,
@@ -955,7 +961,7 @@ function resolveFullSummaries(payload, cardEntries) {
       { value: card.reflection_question_en, tier: 2 },
       { value: card.action_prompt_en, tier: 3 },
       { value: card.hook_en, tier: 4 },
-      { value: card.affirmation_en, tier: 5 },
+      { value: card.archetype_en, tier: 5 },
       { value: card[`standalone_${slot}_en`], tier: 6 },
       { value: card[`reading_summary_${slot}_en`], tier: 7 },
       { value: reading[`reading_summary_${slot}_en`], tier: 8 },
