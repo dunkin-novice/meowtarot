@@ -749,6 +749,36 @@ function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
   };
 }
 
+function fitMainGuidanceText(ctx, text, { maxWidth, maxLines = 3, maxHeight, startFontSize = 52, minFontSize = 40 } = {}) {
+  const safeWidth = Number.isFinite(maxWidth) && maxWidth > 0 ? maxWidth : 560;
+  const safeMaxHeight = Number.isFinite(maxHeight) && maxHeight > 0 ? maxHeight : 160;
+  const safeMaxLines = Number.isFinite(maxLines) && maxLines > 0 ? maxLines : 3;
+  const value = String(text || '').trim();
+  if (!value) {
+    return {
+      fontSize: startFontSize,
+      lineHeight: Math.round(startFontSize * 1.1),
+      lines: [],
+    };
+  }
+
+  for (let fontSize = startFontSize; fontSize >= minFontSize; fontSize -= 2) {
+    const lineHeight = Math.round(fontSize * 1.1);
+    ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+    const lines = wrapTextLines(ctx, value, safeWidth, Number.POSITIVE_INFINITY);
+    const occupiedHeight = lines.length * lineHeight;
+    if (lines.length <= safeMaxLines && occupiedHeight <= safeMaxHeight) {
+      return { fontSize, lineHeight, lines };
+    }
+  }
+
+  const fontSize = minFontSize;
+  const lineHeight = Math.round(fontSize * 1.1);
+  ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+  const lines = wrapTextLines(ctx, value, safeWidth, safeMaxLines);
+  return { fontSize, lineHeight, lines };
+}
+
 function drawTextBlock(ctx, text, x, y, maxWidth, lineHeight) {
   return wrapText(ctx, text, x, y, maxWidth, lineHeight);
 }
@@ -1128,18 +1158,21 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.font = '500 24px "Space Grotesk", sans-serif';
     drawTrackingText(ctx, 'Your Tarot Reading', width / 2, 142, 0.8);
 
-    const sideCardW = 240;
-    const presentCardW = 310;
+    const baseCardW = 290;
+    const sideCardW = Math.round(baseCardW * 0.95);
+    const presentCardW = Math.round(baseCardW * 1.15);
     const sideCardH = Math.round(sideCardW * 1.5);
     const presentCardH = Math.round(presentCardW * 1.5);
     const gap = 20;
     const totalW = sideCardW * 2 + presentCardW + gap * 2;
     const startX = (width - totalW) / 2;
-    const cardY = 214;
+    const cardY = 222;
+    const centerCardYOffset = -18;
+    const sideCardYOffset = 12;
     const cardLayouts = [
-      { x: startX, w: sideCardW, h: sideCardH },
-      { x: startX + sideCardW + gap, w: presentCardW, h: presentCardH },
-      { x: startX + sideCardW + gap + presentCardW + gap, w: sideCardW, h: sideCardH },
+      { x: startX, w: sideCardW, h: sideCardH, y: cardY + sideCardYOffset },
+      { x: startX + sideCardW + gap, w: presentCardW, h: presentCardH, y: cardY + centerCardYOffset },
+      { x: startX + sideCardW + gap + presentCardW + gap, w: sideCardW, h: sideCardH, y: cardY + sideCardYOffset },
     ];
     posterDebugLog('info', '[Poster][full] card row geometry', {
       cardY,
@@ -1154,9 +1187,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const x = layout.x;
       const cardW = layout.w;
       const cardH = layout.h;
+      const cardDrawY = layout.y;
       ctx.save();
       ctx.fillStyle = 'rgba(15, 20, 41, 0.9)';
-      ctx.fillRect(x, cardY, cardW, cardH);
+      ctx.fillRect(x, cardDrawY, cardW, cardH);
       ctx.restore();
 
       // Defensive: full-story poster rendering must remain resilient when deck lookup
@@ -1182,7 +1216,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         emitPosterDebug('waiting_for_card', { url: selectedUrl });
         const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
         emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardW, h: img?.naturalHeight || cardH });
-        ctx.drawImage(img, x, cardY, cardW, cardH);
+        ctx.drawImage(img, x, cardDrawY, cardW, cardH);
         cardDrawCalls += 1;
       } catch (error) {
         emitLegacyCardProbe({ ok: false, url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, error: error?.message || String(error) });
@@ -1192,7 +1226,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const orientationText = getOrientationLabel(entry?.orientation || 'upright', lang);
       const archetypeText = getLocalizedField(entry?.card, 'archetype', lang);
 
-      const textY = cardY + cardH + 14;
+      const textY = cardDrawY + cardH + 14;
       ctx.fillStyle = 'rgba(226, 230, 242, 0.92)';
       ctx.font = '500 22px "Space Grotesk", sans-serif';
       wrapText(ctx, orientationText, x + cardW / 2, textY, cardW, 24, 1);
@@ -1202,31 +1236,39 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     }
 
     const cardCenters = cardLayouts.map((layout) => layout.x + layout.w / 2);
-    const maxCardBottom = Math.max(...cardLayouts.map((layout) => cardY + layout.h));
+    const maxCardBottom = Math.max(...cardLayouts.map((layout) => layout.y + layout.h));
     const cardsRowBottom = maxCardBottom + 14 + 32 + 30 * 2;
 
     const darkLabelColor = '#342b57';
     const darkTextColor = '#27233f';
     const presentSummary = summaries[1] || { text: '', sourceTier: 99 };
+    const presentSummaryText = toSafeText(presentSummary.text, '');
     const guidanceLabel = lang === 'th' ? 'คำแนะนำของคุณตอนนี้' : 'YOUR GUIDANCE RIGHT NOW';
-    const presentShort = presentSummary.sourceTier <= 5;
-    const guidanceLabelY = cardsRowBottom + 28;
-    const mainMessageY = guidanceLabelY + 46;
-    const presentTextSize = presentShort ? 52 : 44;
-    const presentLineHeight = presentShort ? 56 : 48;
+    const guidanceLabelY = cardsRowBottom + 36;
+    const mainMessageY = guidanceLabelY + 62;
+    const mainQuestionWidth = presentCardW + 300;
+    const mainQuestionMaxHeight = 160;
 
-    ctx.fillStyle = '#51437a';
-    ctx.font = '700 18px "Space Grotesk", sans-serif';
-    wrapText(ctx, guidanceLabel, cardCenters[1], guidanceLabelY, presentCardW + 220, 24, 1);
+    ctx.fillStyle = '#f0ddab';
+    ctx.font = '700 22px "Space Grotesk", sans-serif';
+    drawTrackingText(ctx, guidanceLabel, cardCenters[1], guidanceLabelY, 0.9);
 
+    const fittedMainQuestion = fitMainGuidanceText(ctx, presentSummaryText, {
+      maxWidth: mainQuestionWidth,
+      maxLines: 3,
+      maxHeight: mainQuestionMaxHeight,
+      startFontSize: 52,
+      minFontSize: 40,
+    });
     ctx.fillStyle = darkTextColor;
-    ctx.font = `620 ${presentTextSize}px "Space Grotesk", sans-serif`;
-    const presentEndY = wrapText(ctx, presentSummary.text || '', cardCenters[1], mainMessageY, presentCardW + 220, presentLineHeight, 3);
+    ctx.font = `620 ${fittedMainQuestion.fontSize}px "Space Grotesk", sans-serif`;
+    const presentEndY = wrapText(ctx, presentSummaryText, cardCenters[1], mainMessageY, mainQuestionWidth, fittedMainQuestion.lineHeight, 3);
 
     const insightsTop = presentEndY + 34;
     let insightsBottom = insightsTop;
     for (const i of [0, 1, 2]) {
       const summary = summaries[i] || { text: '', sourceTier: 99 };
+      const summaryText = i === 1 ? '' : toSafeText(summary.text, '');
       const shortReflection = summary.sourceTier <= 5;
       const labelY = insightsTop;
       const textY = labelY + 34;
@@ -1239,7 +1281,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
       ctx.fillStyle = darkTextColor;
       ctx.font = `500 ${fontSize}px "Space Grotesk", sans-serif`;
-      const endY = wrapText(ctx, summary.text || '', cardCenters[i], textY, sideCardW + 66, lineHeight, 2);
+      const endY = wrapText(ctx, summaryText || '', cardCenters[i], textY, sideCardW + 66, lineHeight, 2);
       insightsBottom = Math.max(insightsBottom, endY);
     }
 
@@ -1339,7 +1381,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     });
     ctx.restore();
 
-    const interpretationY = graphCenterY + graphRadius + 52;
+    const interpretationY = graphCenterY + graphRadius + 92;
     ctx.fillStyle = darkLabelColor;
     ctx.font = '500 24px "Space Grotesk", sans-serif';
     wrapText(ctx, interpretation[0], width / 2, interpretationY, width - 150, 29, 1);

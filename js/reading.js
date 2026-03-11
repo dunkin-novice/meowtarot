@@ -2271,7 +2271,7 @@ async function buildSharePageUrl({ action } = {}) {
   const payloadJson = JSON.stringify(payload);
   sessionStorage.setItem(SHARE_STORAGE_KEY, payloadJson);
   const encoded = base64UrlEncode(payloadJson);
-  const url = new URL('/share/', window.location.origin);
+  const url = new URL('/share/index.html', window.location.origin);
   const oversizedHash = encoded.length > SHARE_HASH_MAX_CHARS;
   if (encoded && !oversizedHash) url.hash = `p=${encoded}`;
   if (action) url.searchParams.set('action', action);
