@@ -4936,3 +4936,143 @@ body[data-page='full'] #overall-card-board .card-back {
   visibility: hidden;
   pointer-events: none;
 }
+
+
+@media (max-width: 640px) {
+  body[data-page='daily'] {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+
+  body[data-page='daily'] #site-footer {
+    display: none;
+  }
+
+  body[data-page='daily'] .page-shell.board-page {
+    height: 100dvh;
+    padding: calc(var(--nav-height) + 8px) 12px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  }
+
+  body[data-page='daily'] .board-page .board-shell {
+    height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 16px);
+    padding: 12px;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  body[data-page='daily'] .board-header {
+    margin-bottom: 0;
+  }
+
+  body[data-page='daily'] .board-topbar {
+    margin-bottom: 0;
+    gap: 8px;
+  }
+
+  body[data-page='daily'] .card-board {
+    margin: 0;
+    min-height: 0;
+    padding: 10px;
+  }
+
+  body[data-page='daily'] .card-board.card-board--daily {
+    height: 60vh;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    align-content: stretch;
+    gap: clamp(8px, 2vh, 14px);
+  }
+
+  body[data-page='daily'] #daily-board .card-slot {
+    width: min(85%, 120px);
+    max-height: 100%;
+    place-self: center;
+  }
+
+  body[data-page='daily'] .board-actions {
+    margin-top: 0;
+  }
+}
+
+
+
+body[data-page='daily'] #daily-board .card-slot {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+body[data-page='daily'] #daily-board .card-slot:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+
+body[data-page='daily'] #daily-board .card-slot {
+  overflow: visible;
+}
+
+body[data-page='daily'] #daily-board .card-slot .selection-badge {
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  z-index: 9;
+  border: 1px solid rgba(236, 225, 255, 0.9);
+  background: rgba(206, 182, 245, 0.96);
+  color: #23163a;
+  box-shadow: 0 4px 10px rgba(31, 19, 49, 0.28);
+}
+
+
+body[data-page='daily'] #daily-board.has-selection .card-slot:not(.is-selected) {
+  opacity: 0.72;
+  filter: saturate(0.74) contrast(0.92);
+}
+
+body[data-page='daily'] #daily-board.has-selection .card-slot:not(.is-selected):hover:not(:disabled) {
+  opacity: 0.85;
+  filter: saturate(0.82) contrast(0.96);
+}
+
+body[data-page='daily'] #daily-board .card-slot .selection-badge {
+  font-size: 0;
+  color: transparent;
+}
+
+body[data-page='daily'] #daily-board .card-slot .selection-badge::before {
+  content: '✓';
+  font-size: 13px;
+  line-height: 1;
+  color: #23163a;
+  font-weight: 800;
+}
+
+body[data-page='daily'] #daily-board .card-slot.is-selected::before {
+  content: none;
+}
+
+body[data-page='daily'] #daily-board .card-slot.is-selected,
+body[data-page='daily'] #daily-board .card-slot.is-selected:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.04);
+  border-color: transparent;
+  box-shadow:
+    0 6px 12px rgba(18, 12, 34, 0.12),
+    0 0 10px rgba(188, 157, 248, 0.4),
+    0 0 14px rgba(198, 172, 255, 0.18);
+}
+
+body[data-page='daily'] #daily-board .card-slot.is-selected::after {
+  inset: -2px;
+  border-radius: 11px;
+  background: radial-gradient(circle at 38% 20%, rgba(220, 202, 255, 0.3), rgba(214, 192, 255, 0.05) 44%, rgba(214, 192, 255, 0) 60%);
+  box-shadow:
+    0 0 9px rgba(188, 157, 248, 0.32),
+    0 0 12px rgba(198, 172, 255, 0.16);
+}
