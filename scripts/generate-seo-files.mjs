@@ -13,7 +13,7 @@ const LOCALES = [
   { code: 'th', prefix: 'th' },
 ];
 
-const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests'];
+const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests', 'node_modules'];
 
 function asPosix(p) {
   return p.split(path.sep).join('/');
@@ -48,8 +48,9 @@ async function walkHtmlFiles(startDir) {
       files.push(...(await walkHtmlFiles(absolutePath)));
     } else if (entry.isFile() && entry.name.endsWith('.html')) {
       if (entry.name === 'meanings.html') continue;
-      if (isDevLike(absolutePath)) continue;
       const relative = asPosix(path.relative(ROOT_DIR, absolutePath));
+      if (relative === 'tarot-card-meanings/card.html' || relative === 'th/tarot-card-meanings/card.html') continue;
+      if (isDevLike(absolutePath)) continue;
       files.push(relative);
     }
   }
