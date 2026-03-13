@@ -18,6 +18,9 @@ const DEAL_STAGGER = 160;
 const STACK_DURATION = 520;
 const CARD_BACK_URL = getCardBackUrl();
 const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
+const FULL_DEAL_ENTRANCE_DURATION = 620;
+const FULL_SHUFFLE_VISUAL_DURATION = 1450;
+const FULL_READY_PULSE_DURATION = 620;
 
 const state = {
   currentLang: 'en',
@@ -357,9 +360,43 @@ function renderOverall() {
   let slots = [];
   let boardCards = [];
   let isFullAnimating = false;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const getSelectedCards = () => selectedSlotIndices.map((idx) => boardCards[idx]).filter(Boolean);
+
+  const ensureDeckStackCards = (deckEl, count = 6) => {
+    if (!deckEl) return;
+    while (deckEl.children.length < count) {
+      const layer = document.createElement('span');
+      layer.className = 'deck-stack-card';
+      deckEl.appendChild(layer);
+    }
+  };
+
+  const triggerDealEntrance = () => {
+    if (prefersReducedMotion) {
+      board.classList.remove('is-deal-entering');
+      return;
+    }
+    board.classList.remove('is-deal-entering');
+    void board.offsetWidth;
+    board.classList.add('is-deal-entering');
+    setTimeout(() => board.classList.remove('is-deal-entering'), FULL_DEAL_ENTRANCE_DURATION + 40);
+  };
+
+  const playCenterShuffleMotion = async () => {
+    centerDeck.classList.remove('is-ready');
+    if (prefersReducedMotion) {
+      return;
+    }
+    centerDeck.classList.add('is-shuffling');
+    await wait(FULL_SHUFFLE_VISUAL_DURATION);
+    centerDeck.classList.remove('is-shuffling');
+    centerDeck.classList.add('is-ready');
+    await wait(FULL_READY_PULSE_DURATION);
+    centerDeck.classList.remove('is-ready');
+  };
 
   const ensureFullBoardSlots = () => {
     if (slots.length === BOARD_CARD_COUNT) return;
@@ -590,8 +627,9 @@ function renderOverall() {
 
     fullPhase = 'dealt';
     restoreStableBoardSurface();
+    renderFullPhase(); // ⚠️ Must run BEFORE triggerDealEntrance — hides center deck first
+    triggerDealEntrance();
     unlockFullInteraction();
-    renderFullPhase();
     renderFullSelection();
   };
 
@@ -606,10 +644,12 @@ function renderOverall() {
     await animateOverlayCollect();
 
     fullPhase = 'shufflingRedeal';
+    renderFullPhase();
+    await playCenterShuffleMotion();
+
     boardCards = getDrawableCards(BOARD_CARD_COUNT);
     hydrateBoardSlots();
     renderFullSelection();
-    renderFullPhase();
     await animateOverlayDeal(centerDeck, {
       duration: FULL_TIMING.dealDuration,
       stagger: FULL_TIMING.dealStagger,
@@ -617,8 +657,9 @@ function renderOverall() {
 
     fullPhase = 'dealt';
     restoreStableBoardSurface();
+    renderFullPhase(); // ⚠️ Must run BEFORE triggerDealEntrance — hides center deck first
+    triggerDealEntrance();
     unlockFullInteraction();
-    renderFullPhase();
     renderFullSelection();
   };
 
@@ -636,28 +677,15 @@ function renderOverall() {
     toolbar.hidden = isPreDeal || isDealing;
     actions.hidden = isPreDeal || isDealing;
 
-    const hideBoard = isPreDeal || isDealing;
-    if (hideBoard) {
-      board.hidden = true;
-      board.classList.add('is-hidden');
-      board.classList.remove('is-phase-placeholder');
-      board.style.visibility = '';
-      board.style.pointerEvents = '';
-    } else if (isShufflePhase) {
-      board.hidden = true;
-      board.classList.add('is-hidden', 'is-phase-placeholder');
-      board.style.visibility = '';
-      board.style.pointerEvents = '';
-    } else {
-      board.hidden = false;
-      board.classList.remove('is-hidden', 'is-phase-placeholder');
-      board.style.visibility = '';
-      board.style.pointerEvents = '';
-    }
+    board.hidden = false;
+    board.classList.toggle('is-hidden', isPreDeal || isDealing);
+    board.classList.toggle('is-phase-placeholder', isShufflePhase);
+    board.style.visibility = '';
+    board.style.pointerEvents = '';
     board.classList.toggle('is-locked', fullPhase !== 'dealt' || isFullAnimating);
 
-    centerDeck.hidden = !isShufflePhase;
-    centerDeck.classList.toggle('is-hidden', centerDeck.hidden);
+    centerDeck.hidden = false;
+    centerDeck.classList.toggle('is-hidden', !isShufflePhase);
 
     if (!MOTION_PHASES.has(fullPhase) && animationLayer.childElementCount) {
       clearOverlayCards();
@@ -681,6 +709,10 @@ function renderOverall() {
     if (fullPhase !== 'dealt' || isFullAnimating || selectedCards.length !== OVERALL_SELECTION_COUNT) return;
     saveSelectionAndGo({ mode: 'full', spread: 'story', topic: 'generic', cards: selectedCards.map((c) => c.id) });
   };
+
+  ensureDeckStackCards(heroDeck);
+  ensureDeckStackCards(centerDeck);
+  flow.querySelectorAll('.deck-stack-card').forEach(applyCardBackBackground);
 
   ensureFullBoardSlots();
   hydrateBoardSlots();
