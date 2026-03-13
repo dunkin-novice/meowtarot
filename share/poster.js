@@ -1245,8 +1245,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const maxCardBottom = Math.max(...cardLayouts.map((layout) => layout.y + layout.h));
     const cardsRowBottom = maxCardBottom + 14 + 32 + 30 * 2;
 
-    const darkLabelColor = '#342b57';
-    const darkTextColor = '#27233f';
+    const darkLabelColor = 'rgba(255, 255, 255, 0.56)';
+    const darkTextColor = '#f8f5ef';
     const presentSummary = summaries[1] || { text: '', sourceTier: 99 };
     const presentSummaryText = toSafeText(presentSummary.text, '');
     const guidanceLabel = lang === 'th' ? 'คำแนะนำของคุณตอนนี้' : 'YOUR GUIDANCE RIGHT NOW';
@@ -1255,9 +1255,23 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const mainQuestionWidth = presentCardW + 300;
     const mainQuestionMaxHeight = 160;
 
-    ctx.fillStyle = '#f0ddab';
-    ctx.font = '700 22px "Space Grotesk", sans-serif';
-    drawTrackingText(ctx, guidanceLabel, cardCenters[1], guidanceLabelY, 0.9);
+    const badgePaddingX = 22;
+    const badgePaddingY = 12;
+    const badgeCorner = 999;
+    const guidanceTracking = 1.9;
+    ctx.save();
+    ctx.font = '700 20px "Space Grotesk", sans-serif';
+    const badgeTextWidth = ctx.measureText(guidanceLabel).width + guidanceTracking * Math.max(0, guidanceLabel.length - 1);
+    const badgeWidth = badgeTextWidth + badgePaddingX * 2;
+    const badgeHeight = 40;
+    const badgeX = cardCenters[1] - badgeWidth / 2;
+    const badgeY = guidanceLabelY - badgeHeight + badgePaddingY;
+    ctx.fillStyle = 'rgba(28, 24, 48, 0.74)';
+    drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, badgeHeight, badgeCorner);
+    ctx.fill();
+    ctx.fillStyle = '#F4C842';
+    drawTrackingText(ctx, guidanceLabel, cardCenters[1], guidanceLabelY, guidanceTracking);
+    ctx.restore();
 
     const fittedMainQuestion = fitMainGuidanceText(ctx, presentSummaryText, {
       maxWidth: mainQuestionWidth,
@@ -1282,11 +1296,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const lineHeight = shortReflection ? 25 : 24;
 
       ctx.fillStyle = darkLabelColor;
-      ctx.font = '620 22px "Space Grotesk", sans-serif';
+      ctx.font = 'italic 500 18px "Space Grotesk", sans-serif';
       wrapText(ctx, labels[i], cardCenters[i], labelY, sideCardW + 86, 26, 2);
 
       ctx.fillStyle = darkTextColor;
-      ctx.font = `500 ${fontSize}px "Space Grotesk", sans-serif`;
+      ctx.font = `620 ${fontSize + 2}px "Space Grotesk", sans-serif`;
       const endY = wrapText(ctx, summaryText || '', cardCenters[i], textY, sideCardW + 66, lineHeight, 2);
       insightsBottom = Math.max(insightsBottom, endY);
     }
