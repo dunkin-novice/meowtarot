@@ -1,7 +1,19 @@
-import { initShell } from './common.js';
+import { initShell, pathHasThaiPrefix } from './common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
-
-const TARGET_CARD_ID = '01-the-fool-upright';
+import {
+  renderCardHero,
+  renderMeaningSnapshot,
+  renderTimeline,
+  renderReadingDigest,
+  renderLove,
+  renderTopicTimeline,
+  renderPracticalGuidance,
+  renderSymbolism,
+  renderRelatedLinks,
+  renderReadingCta,
+  hasContent,
+} from './components/card-meaning-components.js';
+import { getRelatedCards } from './related-cards.js';
 
 const metaFields = {
   title: document.querySelector('[data-card-meta="title"]'),
@@ -18,358 +30,234 @@ const metaFields = {
 };
 
 const dom = {
-  cardTitle: document.getElementById('cardTitle'),
-  cardAlias: document.getElementById('cardAlias'),
-  cardArchetype: document.getElementById('cardArchetype'),
-  cardImage: document.getElementById('cardImage'),
-  orientationBadge: document.getElementById('orientationBadge'),
-  orientationToggle: document.getElementById('orientationToggle'),
-  orientationButtons: Array.from(document.querySelectorAll('[data-orientation]')),
-  keywordChips: document.getElementById('keywordChips'),
-  cardSummary: document.getElementById('cardSummary'),
-  meaningOverview: document.getElementById('meaningOverview'),
-  meaningLove: document.getElementById('meaningLove'),
-  meaningCareer: document.getElementById('meaningCareer'),
-  meaningAdvice: document.getElementById('meaningAdvice'),
-  meaningWarning: document.getElementById('meaningWarning'),
-  spreadSingle: document.getElementById('spreadSingle'),
-  spreadPast: document.getElementById('spreadPast'),
-  spreadPresent: document.getElementById('spreadPresent'),
-  spreadFuture: document.getElementById('spreadFuture'),
-  relatedCards: document.getElementById('relatedCards'),
-  faqList: document.getElementById('faqList'),
+  page: document.getElementById('cardPage'),
+  hero: document.getElementById('cardHero'),
   crumbCard: document.getElementById('crumbCard'),
+  crumbIndex: document.getElementById('crumbIndex'),
+  crumbHome: document.getElementById('crumbHome'),
+  crumbHubItem: document.getElementById('crumbHubItem'),
+  crumbHub: document.getElementById('crumbHub'),
+  meaningSnapshot: document.getElementById('meaningSnapshot'),
+  meaningTimeline: document.getElementById('meaningTimeline'),
+  readingDigest: document.getElementById('readingDigest'),
+  loveSection: document.getElementById('loveSection'),
+  careerSection: document.getElementById('careerSection'),
+  financeSection: document.getElementById('financeSection'),
+  ritualSection: document.getElementById('ritualSection'),
+  symbolismMeta: document.getElementById('symbolismMeta'),
+  relatedLinks: document.getElementById('relatedLinks'),
+  readingCta: document.getElementById('readingCta'),
+  seoNotes: document.getElementById('seoNotes'),
 };
 
-const state = {
-  baseSlug: null,
-  baseCard: null,
-  orientedCards: {
-    upright: null,
-    reversed: null,
-  },
-  orientation: 'upright',
-};
-
-function cleanSlug(slug = '') {
-  return slug.replace(/\/+$/, '').split('/').filter(Boolean).pop() || '';
+function isThaiPath() {
+  return pathHasThaiPrefix(window.location.pathname || '/');
 }
 
-function deriveBaseSlug(rawSlug = '') {
-  const normalized = normalizeId(rawSlug);
-  return normalized.replace(/-reversed(?=-tarot-meaning|$)/, '').replace(/-upright(?=-tarot-meaning|$)/, '');
+function getRequestedMode() {
+  const param = (new URLSearchParams(window.location.search).get('lang') || '').toLowerCase();
+  if (param === 'th' || param === 'en' || param === 'both') return param;
+  return isThaiPath() ? 'th' : 'en';
 }
 
-function deriveOrientationFromId(rawId = '') {
-  return /reversed/i.test(rawId) ? 'reversed' : 'upright';
+function getRequestedOrientation() {
+  const param = (new URLSearchParams(window.location.search).get('orientation') || '').toLowerCase();
+  return param === 'reversed' ? 'reversed' : 'upright';
 }
 
-function resolveRequestedId() {
-  const pathSlug = cleanSlug(window.location.pathname || '');
-  const querySlug = new URLSearchParams(window.location.search || '').get('card');
-  const pathCandidate = pathSlug && pathSlug !== 'tarot-card-meanings' ? pathSlug : '';
-  return pathCandidate || querySlug || TARGET_CARD_ID;
+function cleanSlug(raw = '') {
+  return raw.replace(/\/+$/, '').split('/').filter(Boolean).pop() || '';
 }
 
-function extractSlug() {
-  const requestedId = resolveRequestedId();
-  return deriveBaseSlug(requestedId);
-}
-
-function cardBaseSlug(card) {
-  if (!card) return '';
-  const slug = card.seo_slug_en || card.card_id || card.id || '';
-  return deriveBaseSlug(slug);
-}
-
-function orientationLabel(value) {
-  return value === 'reversed' ? 'Reversed' : 'Upright';
-}
-
-function buildCareerMoneyHtml(card) {
-  const pieces = [];
-  if (card?.career_present_en) pieces.push(`<p><strong>Career:</strong> ${card.career_present_en}</p>`);
-  if (card?.finance_present_en) pieces.push(`<p><strong>Money:</strong> ${card.finance_present_en}</p>`);
-  if (!pieces.length && card?.career_future_en) pieces.push(`<p>${card.career_future_en}</p>`);
-  return pieces.join('');
-}
-
-function splitKeywords(card, orientation) {
-  const source = orientation === 'reversed' ? card?.keywords_shadow : card?.keywords_light;
-  if (!source) return [];
-  return source
-    .split(',')
-    .map((kw) => kw.trim())
+function extractSlugFromPath(pathname = '') {
+  const segments = `${pathname}`
+    .replace(/\/+$/, '')
+    .split('/')
     .filter(Boolean);
+
+  const meaningsIdx = segments.lastIndexOf('tarot-card-meanings');
+  if (meaningsIdx === -1) return '';
+
+  const candidate = segments[meaningsIdx + 1] || '';
+  if (!candidate || candidate === 'card.html' || candidate === 'index.html') return '';
+
+  return normalizeId(candidate);
 }
 
-function findOrientedCards(baseSlug) {
-  const upright = meowTarotCards.find((card) => card.orientation !== 'reversed' && cardBaseSlug(card) === baseSlug);
-  const reversed = meowTarotCards.find((card) => card.orientation === 'reversed' && cardBaseSlug(card) === baseSlug);
-  return { upright: upright || null, reversed: reversed || null };
+function getRequestedSlug() {
+  const pathSlug = extractSlugFromPath(window.location.pathname || '');
+  const querySlug = new URLSearchParams(window.location.search).get('card') || '';
+  if (pathSlug) return pathSlug;
+  return normalizeId(querySlug);
 }
 
-function pickBaseCard(oriented) {
-  return oriented.upright || oriented.reversed || null;
+function cardSlug(card) {
+  return normalizeId(card?.seo_slug_en || card?.card_id || card?.id || '');
 }
 
-function setKeywordChips(card, orientation) {
-  if (!dom.keywordChips) return;
-  dom.keywordChips.innerHTML = '';
-  splitKeywords(card, orientation).forEach((keyword) => {
-    const chip = document.createElement('span');
-    chip.className = 'chip keyword';
-    chip.textContent = keyword;
-    dom.keywordChips.appendChild(chip);
-  });
+function findCardVariant(slug, orientation) {
+  return meowTarotCards.find((card) => cardSlug(card) === slug && (card.orientation || 'upright') === orientation) || null;
 }
 
-function setText(el, value) {
-  if (!el) return;
-  el.textContent = value || '';
+function findBaseCard(slug) {
+  return meowTarotCards.find((card) => cardSlug(card) === slug && (card.orientation || 'upright') !== 'reversed')
+    || meowTarotCards.find((card) => cardSlug(card) === slug)
+    || null;
 }
 
-function chooseOverview(card) {
-  return card?.reading_summary_preview_en || card?.tarot_imply_en || '';
+function buildCardUrl(slug, lang = 'en') {
+  const prefix = lang === 'th' ? '/th' : '';
+  return `https://www.meowtarot.com${prefix}/tarot-card-meanings/${slug}/`;
 }
 
-function chooseLove(card) {
-  return card?.love_present_en || card?.love_future_en || card?.love_reading_single_en || '';
+function orientationLabel(orientation, mode) {
+  if (orientation === 'reversed') return mode === 'th' ? 'กลับหัว' : 'Reversed';
+  return mode === 'th' ? 'ตั้งตรง' : 'Upright';
 }
 
-function chooseAdvice(card) {
-  return card?.standalone_future_en || card?.reading_summary_future_en || '';
+function resolveMetaDescription(card, mode) {
+  if (mode === 'th' && hasContent(card.meta_description_th)) return card.meta_description_th;
+  return card.meta_description_en || card.reading_summary_preview_en || card.tarot_imply_en || '';
 }
 
-function chooseWarning(card) {
-  return card?.standalone_present_en || card?.reading_summary_past_en || '';
-}
-
-function chooseSummary(card) {
-  return card?.reading_summary_preview_en || card?.reading_summary_present_en || card?.tarot_imply_en || '';
-}
-
-function buildCardUrl(baseSlug, langPrefix = '') {
-  const prefix = langPrefix ? `/${langPrefix}` : '';
-  return `https://www.meowtarot.com${prefix}/tarot-card-meanings/${baseSlug}/`;
-}
-
-function updateSeo(baseSlug, baseCard) {
-  if (!baseSlug || !baseCard) return;
-  const name = baseCard.card_name_en || baseCard.name_en || 'Tarot card';
-  const title = `${name} Tarot Meaning | Upright & Reversed | MeowTarot`;
-  const description = baseCard.meta_description_en || chooseOverview(baseCard) || `${name} tarot meaning`;
-  const url = buildCardUrl(baseSlug);
+function updateSeo(card, slug, mode) {
+  const isThai = mode === 'th';
+  const titleEn = `${card.card_name_en || 'Tarot Card'} Tarot Meaning | MeowTarot`;
+  const titleTh = `${card.alias_th || card.card_name_en || 'ไพ่ทาโรต์'} ความหมายไพ่ทาโรต์ | MeowTarot`;
+  const title = isThai ? titleTh : titleEn;
+  const description = resolveMetaDescription(card, mode);
 
   if (metaFields.title) metaFields.title.textContent = title;
   if (metaFields.description) metaFields.description.setAttribute('content', description);
   if (metaFields.ogTitle) metaFields.ogTitle.setAttribute('content', title);
   if (metaFields.ogDescription) metaFields.ogDescription.setAttribute('content', description);
-  if (metaFields.ogUrl) metaFields.ogUrl.setAttribute('content', url);
+  if (metaFields.ogUrl) metaFields.ogUrl.setAttribute('content', buildCardUrl(slug, isThai ? 'th' : 'en'));
   if (metaFields.twitterTitle) metaFields.twitterTitle.setAttribute('content', title);
   if (metaFields.twitterDescription) metaFields.twitterDescription.setAttribute('content', description);
-  if (metaFields.canonical) metaFields.canonical.setAttribute('href', url);
-  if (metaFields.hreflangEn) metaFields.hreflangEn.setAttribute('href', url);
-  if (metaFields.hreflangTh) metaFields.hreflangTh.setAttribute('href', buildCardUrl(baseSlug, 'th'));
-  if (metaFields.hreflangX) metaFields.hreflangX.setAttribute('href', url);
+  if (metaFields.canonical) metaFields.canonical.setAttribute('href', buildCardUrl(slug, isThai ? 'th' : 'en'));
+  if (metaFields.hreflangEn) metaFields.hreflangEn.setAttribute('href', buildCardUrl(slug, 'en'));
+  if (metaFields.hreflangTh) metaFields.hreflangTh.setAttribute('href', buildCardUrl(slug, 'th'));
+  if (metaFields.hreflangX) metaFields.hreflangX.setAttribute('href', buildCardUrl(slug, 'en'));
 }
 
-function updateImage(card, orientation) {
-  if (!dom.cardImage) return;
-  const url = getCardImageUrl(card, { orientation });
-  dom.cardImage.crossOrigin = 'anonymous';
-  dom.cardImage.src = url;
-  const safeName = card?.card_name_en || card?.name_en || 'Tarot card';
-  dom.cardImage.alt = card?.image_alt_en || `${safeName} tarot card illustration (${orientationLabel(orientation)})`;
-  dom.cardImage.onerror = () => {
-    if (orientation === 'reversed' && state.orientedCards.upright) {
-      dom.cardImage.src = getCardImageUrl(state.orientedCards.upright, { orientation: 'upright' });
-    }
-  };
+function setSection(sectionEl, html) {
+  if (!sectionEl) return;
+  const value = (html || '').trim();
+  if (!value) {
+    sectionEl.innerHTML = '';
+    sectionEl.hidden = true;
+    return;
+  }
+  sectionEl.innerHTML = value;
+  sectionEl.hidden = false;
 }
 
-function renderOrientation(card, orientation) {
-  if (!card) return;
-  state.orientation = orientation;
-  dom.orientationButtons.forEach((btn) => {
-    const isActive = btn.dataset.orientation === orientation;
-    btn.classList.toggle('is-active', isActive);
-    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-  });
-
-  if (dom.orientationBadge) setText(dom.orientationBadge, orientationLabel(orientation));
-  setKeywordChips(card, orientation);
-  setText(dom.cardSummary, chooseSummary(card));
-  setText(dom.meaningOverview, chooseOverview(card));
-  setText(dom.meaningLove, chooseLove(card));
-  dom.meaningCareer.innerHTML = buildCareerMoneyHtml(card);
-  setText(dom.meaningAdvice, chooseAdvice(card));
-  setText(dom.meaningWarning, chooseWarning(card));
-  setText(dom.spreadSingle, chooseSummary(card));
-  setText(dom.spreadPast, card?.reading_summary_past_en || '');
-  setText(dom.spreadPresent, card?.reading_summary_present_en || '');
-  setText(dom.spreadFuture, card?.reading_summary_future_en || '');
-  updateImage(card, orientation);
-  buildFaq(card);
+function getGroupMeta(card) {
+  const raw = card.card_id || card.id || '';
+  const match = `${raw}`.match(/^(\d{2})/);
+  const number = match ? parseInt(match[1], 10) : 0;
+  if (!number || number <= 22) return { label: 'Major Arcana', href: '/tarot-card-meanings/major.html' };
+  if (number <= 36) return { label: 'Wands', href: '/tarot-card-meanings/wands.html' };
+  if (number <= 50) return { label: 'Cups', href: '/tarot-card-meanings/cups.html' };
+  if (number <= 64) return { label: 'Swords', href: '/tarot-card-meanings/swords.html' };
+  return { label: 'Pentacles', href: '/tarot-card-meanings/pentacles.html' };
 }
 
-function buildRelatedCards(baseCard) {
-  if (!dom.relatedCards || !baseCard) return;
-  dom.relatedCards.innerHTML = '';
-  const baseSuit = deriveSuit(baseCard.card_id || baseCard.id || '');
-  const baseSlug = cardBaseSlug(baseCard);
-  const candidates = meowTarotCards
-    .filter((card) => card.orientation !== 'reversed')
-    .filter((card) => deriveSuit(card.card_id || card.id || '') === baseSuit)
-    .filter((card) => cardBaseSlug(card) !== baseSlug)
-    .slice(0, 4);
+function localizeLink(path, mode) {
+  if (mode !== 'th') return path;
+  if (path.startsWith('/th/')) return path;
+  if (path === '/') return '/th/';
+  return `/th${path}`;
+}
 
-  candidates.forEach((card) => {
-    const li = document.createElement('li');
-    li.className = 'related-card';
-    const slug = cardBaseSlug(card);
-    li.innerHTML = `
-      <a href="/tarot-card-meanings/${slug}/">
-        <p class="related-title">${card.card_name_en || card.name_en || card.id}</p>
-        <p class="related-meta">${card.archetype_en || card.tarot_imply_en || ''}</p>
-      </a>
+function redirectToMeaningsIndex(mode) {
+  const target = localizeLink('/tarot-card-meanings/', mode);
+  window.location.replace(target);
+}
+
+function renderPage(card, slug, mode, orientation) {
+  const group = getGroupMeta(card);
+  const imageUrl = getCardImageUrl(card, { orientation });
+  const isThai = mode === 'th';
+
+  if (dom.page) dom.page.dataset.renderLang = mode;
+  if (dom.crumbCard) dom.crumbCard.textContent = isThai ? (card.alias_th || card.card_name_en || 'ไพ่') : (card.card_name_en || 'Card');
+  if (dom.crumbHome) dom.crumbHome.setAttribute('href', localizeLink('/', mode));
+  if (dom.crumbIndex) dom.crumbIndex.setAttribute('href', localizeLink('/tarot-card-meanings/', mode));
+  if (dom.crumbHub && dom.crumbHubItem) {
+    dom.crumbHub.textContent = group.label;
+    dom.crumbHub.setAttribute('href', localizeLink(group.href, mode));
+    dom.crumbHubItem.hidden = false;
+  }
+
+  setSection(dom.hero, renderCardHero(card, orientationLabel(orientation, mode), imageUrl, mode));
+  setSection(dom.meaningSnapshot, renderMeaningSnapshot(card, mode));
+  setSection(dom.meaningTimeline, renderTimeline(card, mode));
+  setSection(dom.readingDigest, renderReadingDigest(card, mode));
+  setSection(dom.loveSection, renderLove(card, mode));
+  setSection(dom.careerSection, renderTopicTimeline(isThai ? 'การงาน' : 'Career', {
+    pastEn: card.career_past_en,
+    presentEn: card.career_present_en,
+    futureEn: card.career_future_en,
+    pastTh: card.career_past_th,
+    presentTh: card.career_present_th,
+    futureTh: card.career_future_th,
+  }, mode));
+  setSection(dom.financeSection, renderTopicTimeline(isThai ? 'การเงิน' : 'Finance', {
+    pastEn: card.finance_past_en,
+    presentEn: card.finance_present_en,
+    futureEn: card.finance_future_en,
+    pastTh: card.finance_past_th,
+    presentTh: card.finance_present_th,
+    futureTh: card.finance_future_th,
+  }, mode));
+  setSection(dom.ritualSection, renderPracticalGuidance(card, mode));
+  setSection(dom.symbolismMeta, renderSymbolism(card));
+
+  const relatedCards = getRelatedCards(card, meowTarotCards, { orientation, limit: 6 });
+  setSection(dom.relatedLinks, renderRelatedLinks({
+    indexPath: localizeLink('/tarot-card-meanings/', mode),
+    hubPath: localizeLink(group.href, mode),
+    hubLabel: group.label,
+    relatedCards,
+    mode,
+  }));
+  setSection(dom.readingCta, renderReadingCta(isThai));
+
+  if (dom.seoNotes) {
+    dom.seoNotes.innerHTML = `
+      <p>seo_slug_en: ${card.seo_slug_en || slug}</p>
+      ${hasContent(card.meta_description_en) ? `<p>meta_description_en: ${card.meta_description_en}</p>` : ''}
+      ${hasContent(card.meta_description_th) ? `<p>meta_description_th: ${card.meta_description_th}</p>` : ''}
     `;
-    dom.relatedCards.appendChild(li);
-  });
-}
-
-function deriveSuit(cardId = '') {
-  const match = cardId.match(/^(\d{2})/);
-  if (!match) return 'major';
-  const num = parseInt(match[1], 10);
-  if (num <= 22) return 'major';
-  if (num <= 36) return 'wands';
-  if (num <= 50) return 'cups';
-  if (num <= 64) return 'swords';
-  return 'pentacles';
-}
-
-function buildFaq(card) {
-  if (!dom.faqList || !card) return;
-  dom.faqList.innerHTML = '';
-  const upright = state.orientedCards.upright || card;
-  const reversed = state.orientedCards.reversed;
-
-  const faqs = [
-    {
-      q: `What does ${upright.card_name_en || upright.name_en || 'this card'} mean upright?`,
-      a: chooseOverview(upright),
-    },
-    {
-      q: 'How do I read this card in love?',
-      a: chooseLove(card),
-    },
-  ];
-
-  if (reversed) {
-    faqs.push({
-      q: `What does ${reversed.card_name_en || reversed.name_en || 'this card'} mean reversed?`,
-      a: chooseSummary(reversed),
-    });
   }
 
-  const filteredFaqs = faqs.filter((item) => Boolean(item.a));
-
-  filteredFaqs.forEach((item) => {
-    const detail = document.createElement('details');
-    const summary = document.createElement('summary');
-    summary.textContent = item.q;
-    const body = document.createElement('p');
-    body.textContent = item.a;
-    detail.appendChild(summary);
-    detail.appendChild(body);
-    dom.faqList.appendChild(detail);
-  });
-
-  renderFaqSchema(filteredFaqs, cardBaseSlug(card));
-}
-
-function renderFaqSchema(entries, baseSlug) {
-  const schemaEl = document.getElementById('card-schema');
-  if (!schemaEl || !entries?.length) return;
-  const faq = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    '@id': `${buildCardUrl(baseSlug)}#faq`,
-    mainEntity: entries.map((item) => ({
-      '@type': 'Question',
-      name: item.q,
-      acceptedAnswer: { '@type': 'Answer', text: item.a },
-    })),
-  };
-  schemaEl.textContent = JSON.stringify(faq, null, 2);
-}
-
-function hydrateBaseCard(baseCard) {
-  if (!baseCard) return;
-  setText(dom.cardTitle, `${baseCard.card_name_en || baseCard.name_en || 'Tarot card'} Tarot Meaning`);
-  setText(dom.cardAlias, baseCard.alias_th ? `Thai: ${baseCard.alias_th}` : '');
-  setText(dom.cardArchetype, baseCard.archetype_en || 'Tarot archetype');
-  setText(dom.crumbCard, baseCard.card_name_en || baseCard.name_en || 'Card');
-}
-
-function bindOrientationToggle() {
-  dom.orientationButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const orientation = btn.dataset.orientation;
-      const targetCard = state.orientedCards[orientation] || state.baseCard;
-      renderOrientation(targetCard, orientation);
-    });
-  });
-}
-
-function setOrientationAvailability() {
-  const availableCount = dom.orientationButtons.reduce(
-    (count, btn) => count + (state.orientedCards[btn.dataset.orientation] ? 1 : 0),
-    0,
-  );
-  dom.orientationButtons.forEach((btn) => {
-    const orientation = btn.dataset.orientation;
-    const hasCard = Boolean(state.orientedCards[orientation]);
-    btn.disabled = !hasCard;
-    btn.classList.toggle('is-disabled', !hasCard);
-  });
-
-  const shouldHideToggle = availableCount < 2;
-  if (dom.orientationToggle) {
-    dom.orientationToggle.classList.toggle('is-hidden', shouldHideToggle);
-    dom.orientationToggle.setAttribute('aria-hidden', shouldHideToggle ? 'true' : 'false');
-  }
-}
-
-function hydratePage() {
-  const requestedId = resolveRequestedId();
-  const requestedOrientation = deriveOrientationFromId(requestedId);
-  state.baseSlug = extractSlug();
-  if (!state.baseSlug) return;
-  const oriented = findOrientedCards(state.baseSlug);
-  state.orientedCards = oriented;
-  state.baseCard = pickBaseCard(oriented);
-  if (!state.baseCard) return;
-
-  hydrateBaseCard(state.baseCard);
-  updateSeo(state.baseSlug, state.baseCard);
-  buildRelatedCards(state.baseCard);
-  setOrientationAvailability();
-  const initialOrientation = state.orientedCards[requestedOrientation]
-    ? requestedOrientation
-    : state.orientedCards.upright
-      ? 'upright'
-      : 'reversed';
-  const initialCard = state.orientedCards[initialOrientation] || state.baseCard;
-  renderOrientation(initialCard, initialOrientation);
+  updateSeo(card, slug, mode);
 }
 
 function init() {
   initShell();
   loadTarotData().then(() => {
-    hydratePage();
-    bindOrientationToggle();
+    const slug = getRequestedSlug();
+    const requestedOrientation = getRequestedOrientation();
+    const mode = getRequestedMode();
+
+    if (!slug) {
+      redirectToMeaningsIndex(mode);
+      return;
+    }
+
+    const fallbackCard = findBaseCard(slug);
+    if (!fallbackCard) {
+      redirectToMeaningsIndex(mode);
+      return;
+    }
+
+    const orientedCard = findCardVariant(cardSlug(fallbackCard), requestedOrientation)
+      || findCardVariant(cardSlug(fallbackCard), 'upright')
+      || fallbackCard;
+
+    renderPage(orientedCard, cardSlug(fallbackCard), mode, requestedOrientation);
   });
 }
 
