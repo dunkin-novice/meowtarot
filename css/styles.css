@@ -1473,7 +1473,15 @@ body[data-page='home'] .section-block {
 
 .card-board.card-board--daily {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 360px);
+  min-height: 324px;
+  margin: 16px auto;
+  padding-bottom: 18px;
+  grid-template-columns: repeat(3, 96px);
+  grid-template-rows: repeat(2, 146px);
+  justify-content: center;
+  align-content: center;
+  overflow: visible;
   justify-items: center;
 }
 
@@ -4787,19 +4795,19 @@ body[data-page='daily'] .board-controls {
   gap: 12px;
 }
 
-body[data-page='daily'] .board-controls .ritual-cta,
-body[data-page='daily'] .board-controls .continue-btn {
+body[data-page='daily'] .board-controls .action-btn {
   min-width: 0;
+  min-height: 46px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.94rem;
+  font-weight: 700;
+  flex: 1 1 0;
 }
 
 body[data-page='daily'] .board-controls .ritual-cta {
-  flex: 2.2 1 0;
-}
-
-body[data-page='daily'] .board-controls .continue-btn {
-  flex: 1 1 0;
-  padding-block: 10px;
-  font-size: 0.94rem;
+  line-height: 1;
+  gap: 0;
 }
 
 body[data-page='daily'] #daily-continue {
@@ -4809,12 +4817,21 @@ body[data-page='daily'] #daily-continue {
 }
 
 body[data-page='daily'] #daily-continue:disabled {
-  opacity: 0.46;
+  opacity: 1;
   color: #958aa9;
   background: linear-gradient(135deg, #cbc5d5 0%, #c2bccf 100%);
   border: 1px solid rgba(122, 108, 156, 0.13);
   box-shadow: none;
 }
+
+body[data-page='daily'] #daily-board .card-slot {
+  transition: transform 300ms ease-out, border-color 0.15s ease, box-shadow 0.15s ease, opacity 300ms ease-out;
+}
+
+body[data-page='daily'] #daily-board .card-slot.daily-appearing {
+  opacity: 0;
+}
+
 
 
 body[data-page='full'] #overall-entry[hidden],
@@ -5011,13 +5028,7 @@ body[data-page='full'] #overall-card-board .card-back {
   }
 
   body[data-page='daily'] .board-controls .ritual-cta {
-    flex: 2.2 1 0;
-  }
-
-  body[data-page='daily'] .board-controls .continue-btn {
     flex: 1 1 0;
-    padding-block: 10px;
-    font-size: 0.94rem;
   }
 
   body[data-page='daily'] .selection-counter {
@@ -5031,15 +5042,19 @@ body[data-page='full'] #overall-card-board .card-back {
   }
 
   body[data-page='daily'] .card-board.card-board--daily {
-    height: 60vh;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(3, minmax(0, 1fr));
-    align-content: stretch;
-    gap: clamp(8px, 2vh, 14px);
+    width: min(100%, 274px);
+    min-height: 402px;
+    margin-inline: auto;
+    padding-bottom: 12px;
+    grid-template-columns: repeat(2, 120px);
+    grid-template-rows: repeat(3, auto);
+    justify-content: center;
+    align-content: center;
+    gap: clamp(8px, 1.8vh, 12px);
   }
 
   body[data-page='daily'] #daily-board .card-slot {
-    width: min(85%, 120px);
+    width: 114px;
     max-height: 100%;
     place-self: center;
   }
@@ -5050,6 +5065,96 @@ body[data-page='full'] #overall-card-board .card-back {
 }
 
 
+
+
+@media (max-width: 480px) {
+  body[data-page='daily'] {
+    height: auto;
+    overflow: auto;
+  }
+
+  body[data-page='daily'] .page-shell.board-page {
+    height: auto;
+  }
+
+  body[data-page='daily'] .board-page .board-shell {
+    height: auto;
+    overflow: visible;
+    grid-template-rows: auto auto auto;
+  }
+
+  body[data-page='daily'] .board-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    gap: 16px !important;
+    width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  body[data-page='daily'] .board-controls .action-btn {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 46px;
+    border-radius: 999px;
+    font-size: 0.94rem;
+    font-weight: 700;
+    box-sizing: border-box;
+  }
+
+  body[data-page='daily'] #daily-deal-shuffle,
+  body[data-page='daily'] #daily-continue {
+    width: calc(50% - 8px) !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  body[data-page='daily'] #daily-deal-shuffle {
+    border-color: transparent;
+  }
+
+  body[data-page='daily'] .card-board.card-board--daily {
+    width: fit-content;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, auto);
+    gap: 12px;
+    justify-content: center;
+    justify-items: center;
+    align-content: center;
+    padding-bottom: 28px;
+  }
+
+  body[data-page='daily'] #daily-board .card-slot {
+    position: relative;
+    top: 0;
+    left: 0;
+  }
+
+  body[data-page='daily'] #daily-board .card-slot:not(.is-selected) {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+body[data-page='daily'] #daily-board .card-slot.card-visible {
+  opacity: 1;
+  filter: none;
+}
+
+body[data-page='daily'] #daily-board .card-slot.card-visible .card-back {
+  opacity: 1;
+  filter: none;
+}
 
 body[data-page='daily'] #daily-board .card-slot {
   background: transparent;

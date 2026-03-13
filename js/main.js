@@ -112,10 +112,8 @@ function saveSelectionAndGo({ mode, spread, topic, cards }) {
 function animateBoard(boardEl) {
   const slots = boardEl.querySelectorAll('.card-slot');
   requestAnimationFrame(() => {
-    slots.forEach((slot, idx) => {
-      setTimeout(() => {
-        slot.classList.add('card-visible');
-      }, 60 * idx);
+    slots.forEach((slot) => {
+      slot.classList.add('card-visible');
     });
   });
 }
@@ -171,7 +169,96 @@ function animateDealSlots(boardEl, slots, onDone) {
   });
 }
 
-function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { animated = false } = {}) {
+function animateDailyShuffleSlots(boardEl, slots, onDone) {
+  const SHUFFLE_EASE = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+  const LANDING_EASE = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+  const spreadRange = Math.min(60, Math.max(20, Math.round(boardEl.clientWidth * 0.2)));
+  let finalized = false;
+
+  const resetSlotStyles = () => {
+    slots.forEach((slot) => {
+      slot.style.transform = 'none';
+      slot.style.transition = '';
+      slot.style.willChange = 'auto';
+      slot.style.zIndex = '';
+      slot.style.top = '0';
+      slot.style.left = '0';
+      slot.style.position = '';
+      slot.style.opacity = '1';
+      slot.classList.remove('daily-appearing');
+      const cardBack = slot.querySelector('.card-back');
+      if (cardBack) {
+        cardBack.style.opacity = '1';
+        cardBack.style.filter = '';
+      }
+    });
+  };
+
+  const finalize = () => {
+    if (finalized) return;
+    finalized = true;
+    resetSlotStyles();
+    requestAnimationFrame(() => {
+      resetSlotStyles();
+      onDone?.();
+    });
+  };
+
+  slots.forEach((slot) => {
+    slot.classList.add('card-visible', 'daily-appearing');
+    slot.style.opacity = '';
+    slot.style.willChange = 'transform';
+    slot.style.zIndex = '10';
+    slot.style.transition = 'none';
+    slot.style.transform = 'none';
+  });
+
+  requestAnimationFrame(() => {
+    slots.forEach((slot) => {
+      slot.style.transition = 'opacity 300ms ease-out';
+      slot.classList.remove('daily-appearing');
+    });
+  });
+
+  const phaseOneStart = () => {
+    slots.forEach((slot) => {
+      slot.style.transition = `transform 100ms ${SHUFFLE_EASE}`;
+      slot.style.transform = 'translateY(-8px) scale(1.03)';
+    });
+  };
+
+  const phaseTwoSpread = () => {
+    const spread = [
+      { x: -1, y: 0.35, r: -5 },
+      { x: 0, y: 0.6, r: 3 },
+      { x: 1, y: 0.35, r: 5 },
+      { x: -0.78, y: -0.28, r: -3 },
+      { x: 0, y: -0.5, r: 0 },
+      { x: 0.78, y: -0.28, r: 3 },
+    ];
+    slots.forEach((slot, idx) => {
+      const vector = spread[idx] || { x: 0, y: 0, r: 0 };
+      const x = Math.round(vector.x * spreadRange);
+      const y = Math.round(vector.y * spreadRange);
+      slot.style.transition = `transform 400ms ${SHUFFLE_EASE}`;
+      slot.style.transform = `translate(${x}px, ${y}px) rotate(${vector.r}deg) scale(1.03)`;
+    });
+  };
+
+  const phaseThreeLand = () => {
+    slots.forEach((slot) => {
+      slot.style.transition = `transform 360ms ${LANDING_EASE}`;
+      slot.style.transform = 'translate(0, 0) rotate(0deg) scale(1)';
+    });
+  };
+
+  setTimeout(phaseOneStart, 340);
+  setTimeout(phaseTwoSpread, 460);
+  setTimeout(phaseThreeLand, 880);
+  setTimeout(finalize, 1260);
+}
+
+function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { animated = false, animationProfile = 'default' } = {}) {
   let cards = [];
   let selected = [];
   let slots = [];
@@ -244,7 +331,8 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     if (withAnimation) {
       boardEl.classList.add('is-locked');
       requestAnimationFrame(() => {
-        animateDealSlots(boardEl, slots, () => {
+        const animate = animationProfile === 'daily' ? animateDailyShuffleSlots : animateDealSlots;
+        animate(boardEl, slots, () => {
           boardEl.classList.remove('is-locked');
           refreshBadges();
         });
@@ -298,7 +386,7 @@ function renderDaily() {
     DAILY_BOARD_COUNT,
     DAILY_SELECTION_MAX,
     updateDailySelectionUi,
-    { animated: true }
+    { animated: true, animationProfile: 'daily' }
   );
 
   setRitualCtaLabel(dealShuffleBtn, true);
