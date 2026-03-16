@@ -1674,12 +1674,6 @@ function createDailyBoardPanel(card) {
 
   const archetype = normalizeArchetypeText(getText(card, 'archetype'));
   if (archetype) {
-    const label = document.createElement('p');
-    label.className = 'meta-badge';
-    label.style.margin = '0 auto';
-    label.textContent = state.currentLang === 'th' ? 'ต้นแบบพลังงาน' : 'Archetype';
-    panel.appendChild(label);
-
     const p = document.createElement('p');
     p.className = 'keywords';
     p.style.textAlign = 'center';
