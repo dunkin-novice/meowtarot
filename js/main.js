@@ -439,7 +439,7 @@ function renderOverall() {
   const MOTION_PHASES = new Set(['dealing', 'shufflingCollect', 'shufflingRedeal']);
 
   const isThai = state.currentLang === 'th';
-  dealBtn.textContent = isThai ? 'แจกไพ่' : 'Deal';
+  dealBtn.textContent = isThai ? 'หยิบไพ่ของคุณ' : 'Draw your cards';
   shuffleBtn.textContent = isThai ? 'สับไพ่' : 'Shuffle';
   flow.querySelectorAll('.deck-stack-card').forEach(applyCardBackBackground);
 
