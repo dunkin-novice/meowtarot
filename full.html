@@ -41,13 +41,21 @@
 
       <section id="overall-flow" class="full-flow">
         <div class="overall-entry" id="overall-entry">
-          <div class="deck-stack" id="overall-hero-deck" aria-hidden="true">
-            <span class="deck-stack-card"></span>
-            <span class="deck-stack-card"></span>
-            <span class="deck-stack-card"></span>
-            <span class="deck-stack-card"></span>
+          <div class="deck-stack fan-wrap" id="overall-hero-deck" aria-hidden="true">
+            <span class="deck-stack-card fan-card fan-card-1"></span>
+            <span class="deck-stack-card fan-card fan-card-2"></span>
+            <span class="deck-stack-card fan-card fan-card-3"></span>
+            <span class="deck-stack-card fan-card fan-card-4"></span>
+            <span class="deck-stack-card fan-card fan-card-5"></span>
           </div>
-          <button id="overall-deal" class="primary ritual-cta ritual-cta--deal overall-deal-overlay" type="button">Deal</button>
+          <div class="ritual-nudge">
+            <span class="ritual-nudge__icon" aria-hidden="true">✦</span>
+            <div class="ritual-nudge__text">
+              <p class="ritual-nudge__title" data-i18n="ritualNudgeTitle"></p>
+              <p class="ritual-nudge__body" data-i18n="ritualNudgeBody"></p>
+            </div>
+          </div>
+          <button id="overall-deal" class="primary ritual-cta ritual-cta--deal" type="button">Draw your cards</button>
         </div>
 
         <div class="deck-stack deck-stack--floating" id="overall-center-deck" hidden aria-hidden="true">
