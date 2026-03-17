@@ -262,6 +262,15 @@ function resolveLocalPosterFixtureUrl(kind, orientation = 'upright') {
   return null;
 }
 
+
+function resolveEmergencyPosterFixtureUrl(kind, orientation = 'upright') {
+  if (typeof window === 'undefined') return null;
+  const root = `${window.location.origin}/tests/fixtures`;
+  if (kind === 'card') return `${root}/${orientation === 'reversed' ? '01-the-fool-reversed.png' : '01-the-fool-upright.png'}`;
+  if (kind === 'back') return `${root}/00-back.png`;
+  return null;
+}
+
 function createCanvas(width, height) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -536,6 +545,22 @@ export function resolvePosterCardImageSources(cardEntry, { resolvedPrimary, upri
   return { primary, fallbackChain, cardSlug, orientation };
 }
 
+
+function toSameOriginAssetCandidate(url) {
+  if (!url || typeof window === 'undefined') return null;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return `${window.location.origin}${parsed.pathname}`;
+  } catch (error) {
+    return null;
+  }
+}
+
+function emitFullCardRenderProbe(payload = {}) {
+  if (!isPosterCiDebugEnabled()) return;
+  posterCiLog('full_card_render_probe', payload);
+}
+
 function toSafeText(value, fallback = '') {
   if (value == null) return fallback;
   return String(value);
@@ -747,6 +772,57 @@ function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
     descent,
     occupiedHeight,
   };
+}
+
+
+function normalizeStandaloneAffirmation(text, lang = 'en', fallback = '') {
+  const value = toSafeText(text, '').replace(/\s+/g, ' ').trim();
+  if (!value) return fallback;
+
+  const sentenceParts = lang === 'th'
+    ? value.split(/[.!?！？]+\s*/u)
+    : value.split(/[.!?]+\s*/u);
+  const firstSentence = (sentenceParts.find((part) => part && part.trim()) || value).trim();
+
+  const softBreakMatch = firstSentence.match(/^(.+?)(?:\s*[—–-]\s*|,\s*|;\s*)/u);
+  const conciseSentence = softBreakMatch?.[1]?.trim() || firstSentence;
+
+  const ensureSentenceEnding = (content) => {
+    if (!content) return fallback;
+    if (/[.!?。！？]$/u.test(content)) return content;
+    return lang === 'th' ? content : `${content}.`;
+  };
+
+  const maxChars = lang === 'th' ? 82 : 98;
+  if (firstSentence.length <= maxChars) return ensureSentenceEnding(firstSentence);
+  if (conciseSentence.length >= 16) return ensureSentenceEnding(conciseSentence);
+  return ensureSentenceEnding(firstSentence);
+}
+
+function fitAffirmationText(ctx, text, {
+  maxWidth,
+  maxLines = 3,
+  startFontSize = 22,
+  minFontSize = 14,
+  lineHeightRatio = 1.3,
+} = {}) {
+  const value = toSafeText(text, '').trim();
+  if (!value) {
+    return { fontSize: startFontSize, lineHeight: Math.round(startFontSize * lineHeightRatio), lines: [] };
+  }
+  for (let fontSize = startFontSize; fontSize >= minFontSize; fontSize -= 1) {
+    const lineHeight = Math.round(fontSize * lineHeightRatio);
+    ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+    const lines = wrapTextLines(ctx, value, maxWidth, maxLines);
+    const hasClampEllipsis = lines.some((line) => /…$/.test(line));
+    if (!hasClampEllipsis || fontSize === minFontSize) {
+      return { fontSize, lineHeight, lines };
+    }
+  }
+  const fontSize = minFontSize;
+  const lineHeight = Math.round(fontSize * lineHeightRatio);
+  ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+  return { fontSize, lineHeight, lines: wrapTextLines(ctx, value, maxWidth, maxLines) };
 }
 
 function fitMainGuidanceText(ctx, text, { maxWidth, maxLines = 3, maxHeight, startFontSize = 52, minFontSize = 40 } = {}) {
@@ -1143,9 +1219,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       cardEntriesCount: cardEntries.length,
       cardEntryHits: cardEntries.map((entry) => Boolean(entry?.card)),
     });
-    const labels = lang === 'th'
-      ? ['อะไรที่ยังส่งผลกับคุณ', 'อะไรที่นำทางคุณตอนนี้', 'สิ่งที่เรื่องนี้กำลังพาไป']
-      : ['What still affects you', 'What guides you now', 'Where this is going'];
+    const labels = ['', '', ''];
     const topStripHeight = 170;
     const topGrad = ctx.createLinearGradient(0, 0, 0, topStripHeight);
     topGrad.addColorStop(0, 'rgba(5,10,25,0.85)');
@@ -1172,7 +1246,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const gap = 20;
     const totalW = sideCardW * 2 + presentCardW + gap * 2;
     const startX = (width - totalW) / 2;
-    const cardY = 222;
+    const cardY = 219;
     const centerCardYOffset = -18;
     const sideCardYOffset = 12;
     const cardLayouts = [
@@ -1186,6 +1260,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       canvas: { width, height },
     });
     let cardDrawCalls = 0;
+    const cardMeta = [];
+    const orientationGap = 14;
+    const orientationLineHeight = 24;
+    const orientationToTitleGap = 8;
 
     for (let i = 0; i < 3; i += 1) {
       const entry = cardEntries[i];
@@ -1194,11 +1272,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const cardW = layout.w;
       const cardH = layout.h;
       const cardDrawY = layout.y;
-      ctx.save();
-      ctx.fillStyle = 'rgba(15, 20, 41, 0.9)';
-      ctx.fillRect(x, cardDrawY, cardW, cardH);
-      ctx.restore();
-
       // Defensive: full-story poster rendering must remain resilient when deck lookup
       // misses (ID/path/format mismatches). Resolve card imagery from either the
       // canonical deck hit (entry.card) or the payload slot (payload.cards[i]).
@@ -1211,6 +1284,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
       const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
       const resolvedPrimary = await resolveCardImageUrl(cardIdentity, orientation);
+      const localOrientationFallback = resolveLocalPosterFixtureUrl('card', orientation) || resolveEmergencyPosterFixtureUrl('card', orientation);
+      const localUprightFallback = resolveLocalPosterFixtureUrl('card', 'upright') || resolveEmergencyPosterFixtureUrl('card', 'upright');
+      const localBackFallback = resolveLocalPosterFixtureUrl('back') || resolveEmergencyPosterFixtureUrl('back');
       try {
         const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation, card: sourceCard }, {
           resolvedPrimary,
@@ -1219,41 +1295,127 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
           backUrl,
           lang,
         });
+        const sameOriginCandidate = toSameOriginAssetCandidate(selectedUrl);
+        const sameOriginPrimary = sameOriginCandidate || selectedUrl;
+        const sameOriginFallbackChain = fallbackChain.flatMap((item) => {
+          const sameOrigin = toSameOriginAssetCandidate(item);
+          return sameOrigin ? [sameOrigin, item] : [item];
+        });
+        const prioritizedFallbacks = [
+          ...new Set([
+            ...sameOriginFallbackChain,
+            localOrientationFallback,
+            localUprightFallback,
+            localBackFallback,
+          ].filter(Boolean).filter((item) => item !== sameOriginPrimary)),
+        ];
+        emitFullCardRenderProbe({
+          cardIndex: i,
+          stage: 'resolved',
+          selectedUrl,
+          sameOriginCandidate,
+          sameOriginPrimary,
+          fallbackCount: prioritizedFallbacks.length,
+          localOrientationFallback,
+          localUprightFallback,
+        });
         emitPosterDebug('waiting_for_card', { url: selectedUrl });
-        const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
-        emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardW, h: img?.naturalHeight || cardH });
+        const img = await loadPosterCardImageWithTimeout(sameOriginPrimary, prioritizedFallbacks);
+        const drawnUrl = img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl;
+        emitLegacyCardProbe({ ok: true, url: drawnUrl, w: img?.naturalWidth || cardW, h: img?.naturalHeight || cardH });
+        emitFullCardRenderProbe({
+          cardIndex: i,
+          stage: 'loaded',
+          url: drawnUrl,
+          naturalWidth: img?.naturalWidth || 0,
+          naturalHeight: img?.naturalHeight || 0,
+        });
         ctx.drawImage(img, x, cardDrawY, cardW, cardH);
+        emitFullCardRenderProbe({ cardIndex: i, stage: 'drawn', usedFallback: false });
         cardDrawCalls += 1;
       } catch (error) {
-        emitLegacyCardProbe({ ok: false, url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, error: error?.message || String(error) });
-        console.warn('[Poster] card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
+        const emergencyFallback = localOrientationFallback || localUprightFallback || localBackFallback;
+        if (emergencyFallback) {
+          try {
+            const emergencyImg = await withTimeout(imageManager.loadImage(emergencyFallback, { crossOrigin: 'anonymous' }), 2500, 'full_emergency_fallback_timeout');
+            if (emergencyImg?.naturalWidth) {
+              ctx.drawImage(emergencyImg, x, cardDrawY, cardW, cardH);
+              emitLegacyCardProbe({ ok: true, url: emergencyFallback, w: emergencyImg?.naturalWidth || cardW, h: emergencyImg?.naturalHeight || cardH });
+              emitFullCardRenderProbe({ cardIndex: i, stage: 'drawn', url: emergencyFallback, naturalWidth: emergencyImg?.naturalWidth || 0, naturalHeight: emergencyImg?.naturalHeight || 0, usedFallback: true });
+              cardDrawCalls += 1;
+              continue;
+            }
+          } catch (fallbackError) {
+            emitFullCardRenderProbe({ cardIndex: i, stage: 'emergency_fallback_failed', url: emergencyFallback, error: fallbackError?.message || String(fallbackError), usedFallback: true });
+          }
+        }
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 20, 41, 0.9)';
+        ctx.fillRect(x, cardDrawY, cardW, cardH);
+        ctx.restore();
+        const failUrl = resolvedPrimary || reversedUrl || uprightUrl || backUrl;
+        emitLegacyCardProbe({ ok: false, url: failUrl, error: error?.message || String(error) });
+        emitFullCardRenderProbe({ cardIndex: i, stage: 'fallback', url: failUrl, error: error?.message || String(error), usedFallback: true });
+        console.warn('[Poster] card image failed', { url: failUrl, reason: error?.message || String(error) });
       }
 
-      const orientationText = getOrientationLabel(entry?.orientation || 'upright', lang);
+      const orientationText = getOrientationLabel(orientation, lang);
       const archetypeText = getLocalizedField(entry?.card, 'archetype', lang);
+      const orientationY = cardDrawY + cardH + orientationGap;
+      const titleY = orientationY + orientationLineHeight + orientationToTitleGap;
+      const titleLineHeight = i === 1 ? 30 : 27;
 
-      const textY = cardDrawY + cardH + 14;
-      ctx.fillStyle = 'rgba(226, 230, 242, 0.92)';
       ctx.font = '500 22px "Space Grotesk", sans-serif';
-      wrapText(ctx, orientationText, x + cardW / 2, textY, cardW, 24, 1);
-      ctx.fillStyle = '#fbf8f2';
+      const orientationLines = wrapTextLines(ctx, orientationText, cardW, 1);
       ctx.font = i === 1 ? '650 27px "Space Grotesk", sans-serif' : '650 23px "Space Grotesk", sans-serif';
-      wrapText(ctx, archetypeText, x + cardW / 2, textY + 32, cardW, i === 1 ? 30 : 27, 2);
+      const titleLines = wrapTextLines(ctx, archetypeText, cardW, 2);
+
+      cardMeta.push({
+        i,
+        x,
+        cardW,
+        orientationText,
+        archetypeText,
+        orientationY,
+        titleY,
+        titleLineHeight,
+        titleLineCount: Math.max(1, titleLines.length || 0),
+        blockBottom: titleY + Math.max(1, titleLines.length || 0) * titleLineHeight,
+        orientationLineCount: Math.max(1, orientationLines.length || 0),
+      });
     }
 
-    const cardCenters = cardLayouts.map((layout) => layout.x + layout.w / 2);
-    const maxCardBottom = Math.max(...cardLayouts.map((layout) => layout.y + layout.h));
-    const cardsRowBottom = maxCardBottom + 14 + 32 + 30 * 2;
+    cardMeta.forEach(({ i, x, cardW, orientationText, archetypeText, orientationY, titleY, titleLineHeight }) => {
+      ctx.fillStyle = 'rgba(226, 230, 242, 0.92)';
+      ctx.font = '500 22px "Space Grotesk", sans-serif';
+      wrapText(ctx, orientationText, x + cardW / 2, orientationY, cardW, orientationLineHeight, 1);
+      ctx.fillStyle = '#fbf8f2';
+      ctx.font = i === 1 ? '650 27px "Space Grotesk", sans-serif' : '650 23px "Space Grotesk", sans-serif';
+      wrapText(ctx, archetypeText, x + cardW / 2, titleY, cardW, titleLineHeight, 2);
+    });
 
-    const darkLabelColor = 'rgba(255, 255, 255, 0.56)';
-    const darkTextColor = '#f8f5ef';
-    const presentSummary = summaries[1] || { text: '', sourceTier: 99 };
-    const presentSummaryText = toSafeText(presentSummary.text, '');
+    const cardCenters = cardLayouts.map((layout) => layout.x + layout.w / 2);
+    const cardsRowBottom = Math.max(...cardMeta.map((entry) => entry.blockBottom));
+
+    const headlineColor = '#3A3456';
+    const labelColor = '#7E7896';
+    const answerColor = '#4A445F';
+    const radarLabelColor = '#6C6786';
+    const insightColor = 'rgba(78, 74, 107, 0.85)';
+    const standaloneKeys = ['standalone_past', 'standalone_present', 'standalone_future'];
+    const fallbackAffirmations = lang === 'th'
+      ? ['ฉันก้าวไปอย่างมั่นคงและอ่อนโยน', 'ฉันพร้อมใช้ศักยภาพที่เติบโตอยู่ข้างใน', 'ฉันเปิดรับสิ่งดีที่ค่อย ๆ เติบโตขึ้น']
+      : ['I move forward with steadiness and care.', 'I am ready to use what has been growing inside me.', 'I welcome what is ready to grow, step by step.'];
+    const affirmationColumns = standaloneKeys.map((key, index) => {
+      const card = cardEntries[index]?.card || null;
+      return normalizeStandaloneAffirmation(getLocalizedField(card, key, lang), lang, fallbackAffirmations[index]);
+    });
+    const presentSummaryText = affirmationColumns[1] || fallbackAffirmations[1];
     const guidanceLabel = lang === 'th' ? 'คำแนะนำของคุณตอนนี้' : 'YOUR GUIDANCE RIGHT NOW';
-    const guidanceLabelY = cardsRowBottom + 36;
-    const mainMessageY = guidanceLabelY + 62;
-    const mainQuestionWidth = presentCardW + 300;
-    const mainQuestionMaxHeight = 160;
+    const guidanceLabelY = cardsRowBottom + 42;
+    const mainMessageY = guidanceLabelY + 66;
+    const mainQuestionWidth = presentCardW + 220;
+    const mainQuestionMaxHeight = 154;
 
     const badgePaddingX = 22;
     const badgePaddingY = 12;
@@ -1266,7 +1428,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const badgeHeight = 40;
     const badgeX = cardCenters[1] - badgeWidth / 2;
     const badgeY = guidanceLabelY - badgeHeight + badgePaddingY;
-    ctx.fillStyle = 'rgba(28, 24, 48, 0.74)';
+    ctx.fillStyle = '#3B3655';
     drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, badgeHeight, badgeCorner);
     ctx.fill();
     ctx.fillStyle = '#F4C842';
@@ -1277,31 +1439,31 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       maxWidth: mainQuestionWidth,
       maxLines: 3,
       maxHeight: mainQuestionMaxHeight,
-      startFontSize: 52,
-      minFontSize: 40,
+      startFontSize: 48,
+      minFontSize: 34,
     });
-    ctx.fillStyle = darkTextColor;
-    ctx.font = `620 ${fittedMainQuestion.fontSize}px "Space Grotesk", sans-serif`;
-    const presentEndY = wrapText(ctx, presentSummaryText, cardCenters[1], mainMessageY, mainQuestionWidth, fittedMainQuestion.lineHeight, 3);
+    const presentLineCount = Math.max(1, fittedMainQuestion.lines.length || 0);
+    const presentEndY = mainMessageY + presentLineCount * fittedMainQuestion.lineHeight;
 
-    const insightsTop = presentEndY + 34;
+    const insightsTop = presentEndY + 44;
     let insightsBottom = insightsTop;
+    const summaryLayouts = [];
     for (const i of [0, 1, 2]) {
-      const summary = summaries[i] || { text: '', sourceTier: 99 };
-      const summaryText = i === 1 ? '' : toSafeText(summary.text, '');
-      const shortReflection = summary.sourceTier <= 5;
+      const summaryText = affirmationColumns[i] || fallbackAffirmations[i] || '';
+      const isCenterAffirmation = i === 1;
       const labelY = insightsTop;
-      const textY = labelY + 34;
-      const fontSize = shortReflection ? 20 : 19;
-      const lineHeight = shortReflection ? 25 : 24;
-
-      ctx.fillStyle = darkLabelColor;
-      ctx.font = 'italic 500 18px "Space Grotesk", sans-serif';
-      wrapText(ctx, labels[i], cardCenters[i], labelY, sideCardW + 86, 26, 2);
-
-      ctx.fillStyle = darkTextColor;
-      ctx.font = `620 ${fontSize + 2}px "Space Grotesk", sans-serif`;
-      const endY = wrapText(ctx, summaryText || '', cardCenters[i], textY, sideCardW + 66, lineHeight, 2);
+      const textY = labelY + 18;
+      const maxWidth = isCenterAffirmation ? presentCardW + 124 : sideCardW + 86;
+      const fit = fitAffirmationText(ctx, summaryText || '', {
+        maxWidth,
+        maxLines: isCenterAffirmation ? 3 : 3,
+        startFontSize: isCenterAffirmation ? 24 : 17,
+        minFontSize: isCenterAffirmation ? 20 : 14,
+        lineHeightRatio: isCenterAffirmation ? 1.28 : 1.32,
+      });
+      const answerLineCount = Math.max(1, fit.lines.length || 0);
+      summaryLayouts.push({ i, summaryText, labelY, textY, fontSize: fit.fontSize, lineHeight: fit.lineHeight, maxWidth, maxLines: isCenterAffirmation ? 3 : 3 });
+      const endY = textY + answerLineCount * fit.lineHeight;
       insightsBottom = Math.max(insightsBottom, endY);
     }
 
@@ -1320,7 +1482,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     });
 
     const { scores, interpretation } = resolveEnergyBalance(payload?.energyData);
-    const graphTop = readingBottom + 34;
+    const graphTop = readingBottom + 54;
     const graphCenterX = width / 2;
     const graphCenterY = graphTop + 130;
     const graphRadius = 115;
@@ -1331,6 +1493,60 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       { key: 'thinking', label: 'Thinking', angle: Math.PI / 2 },
       { key: 'stability', label: 'Stability', angle: Math.PI },
     ];
+
+    const interpretationY = graphCenterY + graphRadius + 102;
+    const interpretationLineOneY = interpretationY;
+    const interpretationLineTwoY = interpretationY + 29;
+    const interpretationBottom = interpretationLineTwoY + 27;
+
+    const panelPaddingX = 48;
+    const panelTop = guidanceLabelY - 54;
+    const panelBottom = interpretationBottom + 26;
+    const panelHeight = Math.max(0, panelBottom - panelTop);
+    const panelX = panelPaddingX;
+    const panelWidth = width - panelPaddingX * 2;
+
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.filter = 'blur(18px)';
+    ctx.fillStyle = '#FFFFFF';
+    drawRoundedRect(ctx, panelX + 10, panelTop + 12, panelWidth - 20, panelHeight - 18, 66);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(38, 32, 62, 0.08)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 6;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.075)';
+    drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 66);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.10)';
+    ctx.lineWidth = 1;
+    drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 66);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = headlineColor;
+    ctx.font = `620 ${fittedMainQuestion.fontSize}px "Space Grotesk", sans-serif`;
+    ctx.shadowColor = 'rgba(0,0,0,0.12)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 2;
+    wrapText(ctx, presentSummaryText, cardCenters[1], mainMessageY, mainQuestionWidth, fittedMainQuestion.lineHeight, 3);
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    summaryLayouts.forEach(({ i, summaryText, labelY, textY, fontSize, lineHeight, maxWidth, maxLines }) => {
+      ctx.fillStyle = labelColor;
+      ctx.font = 'italic 500 17px "Space Grotesk", sans-serif';
+      if (labels[i]) wrapText(ctx, labels[i], cardCenters[i], labelY, sideCardW + 86, 24, 2);
+
+      ctx.fillStyle = answerColor;
+      ctx.font = `620 ${fontSize + 2}px "Space Grotesk", sans-serif`;
+      wrapText(ctx, summaryText || '', cardCenters[i], textY, maxWidth, lineHeight, maxLines);
+    });
 
     ctx.save();
     ctx.strokeStyle = 'rgba(100, 100, 150, 0.2)';
@@ -1391,7 +1607,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.stroke();
     });
 
-    ctx.fillStyle = darkLabelColor;
+    ctx.fillStyle = radarLabelColor;
     ctx.font = '500 22px "Space Grotesk", sans-serif';
     axis.forEach((entry) => {
       const labelR = graphRadius + 34;
@@ -1401,12 +1617,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     });
     ctx.restore();
 
-    const interpretationY = graphCenterY + graphRadius + 92;
-    ctx.fillStyle = darkLabelColor;
+    ctx.fillStyle = insightColor;
     ctx.font = '500 24px "Space Grotesk", sans-serif';
-    wrapText(ctx, interpretation[0], width / 2, interpretationY, width - 150, 29, 1);
+    wrapText(ctx, interpretation[0], width / 2, interpretationLineOneY, width - 150, 29, 1);
     ctx.font = '500 22px "Space Grotesk", sans-serif';
-    wrapText(ctx, interpretation[1], width / 2, interpretationY + 29, width - 150, 27, 1);
+    wrapText(ctx, interpretation[1], width / 2, interpretationLineTwoY, width - 150, 27, 1);
 
     const footerOverlayHeight = 120;
     const footerOverlayTop = height - footerOverlayHeight;
