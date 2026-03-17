@@ -106,6 +106,8 @@ export const translations = {
     metaZodiac: 'Zodiac',
     suggestionTitle: 'Suggestion',
     guidanceHeading: 'Guidance',
+    ritualNudgeTitle: 'Take a breath first',
+    ritualNudgeBody: 'Hold your question in mind before drawing',
   },
   th: {
     navHome: 'หน้าหลัก',
@@ -210,6 +212,8 @@ export const translations = {
     metaZodiac: 'ราศี',
     suggestionTitle: 'คำแนะนำ',
     guidanceHeading: 'คำแนะนำ',
+    ritualNudgeTitle: 'หายใจลึกๆ ก่อนนะ',
+    ritualNudgeBody: 'ตั้งใจคิดถึงคำถามก่อนหยิบไพ่',
   },
 };
 

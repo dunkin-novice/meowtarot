@@ -50,6 +50,10 @@ const dom = {
   seoNotes: document.getElementById('seoNotes'),
 };
 
+const state = {
+  currentLang: 'en',
+};
+
 function isThaiPath() {
   return pathHasThaiPrefix(window.location.pathname || '/');
 }
@@ -236,7 +240,7 @@ function renderPage(card, slug, mode, orientation) {
 }
 
 function init() {
-  initShell();
+  initShell(state, null, document.body?.dataset?.page || 'card-meaning');
   loadTarotData().then(() => {
     const slug = getRequestedSlug();
     const requestedOrientation = getRequestedOrientation();

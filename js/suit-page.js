@@ -257,7 +257,7 @@ const state = {
   view: 'grid',
 };
 
-initShell();
+initShell(state, null, document.body?.dataset?.page || 'meanings');
 
 function detectSuit() {
   const bodySuit = document.body?.dataset?.suit;
