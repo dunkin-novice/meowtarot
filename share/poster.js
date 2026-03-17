@@ -774,6 +774,57 @@ function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
   };
 }
 
+
+function normalizeStandaloneAffirmation(text, lang = 'en', fallback = '') {
+  const value = toSafeText(text, '').replace(/\s+/g, ' ').trim();
+  if (!value) return fallback;
+
+  const sentenceParts = lang === 'th'
+    ? value.split(/[.!?！？]+\s*/u)
+    : value.split(/[.!?]+\s*/u);
+  const firstSentence = (sentenceParts.find((part) => part && part.trim()) || value).trim();
+
+  const softBreakMatch = firstSentence.match(/^(.+?)(?:\s*[—–-]\s*|,\s*|;\s*)/u);
+  const conciseSentence = softBreakMatch?.[1]?.trim() || firstSentence;
+
+  const ensureSentenceEnding = (content) => {
+    if (!content) return fallback;
+    if (/[.!?。！？]$/u.test(content)) return content;
+    return lang === 'th' ? content : `${content}.`;
+  };
+
+  const maxChars = lang === 'th' ? 82 : 98;
+  if (firstSentence.length <= maxChars) return ensureSentenceEnding(firstSentence);
+  if (conciseSentence.length >= 16) return ensureSentenceEnding(conciseSentence);
+  return ensureSentenceEnding(firstSentence);
+}
+
+function fitAffirmationText(ctx, text, {
+  maxWidth,
+  maxLines = 3,
+  startFontSize = 22,
+  minFontSize = 14,
+  lineHeightRatio = 1.3,
+} = {}) {
+  const value = toSafeText(text, '').trim();
+  if (!value) {
+    return { fontSize: startFontSize, lineHeight: Math.round(startFontSize * lineHeightRatio), lines: [] };
+  }
+  for (let fontSize = startFontSize; fontSize >= minFontSize; fontSize -= 1) {
+    const lineHeight = Math.round(fontSize * lineHeightRatio);
+    ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+    const lines = wrapTextLines(ctx, value, maxWidth, maxLines);
+    const hasClampEllipsis = lines.some((line) => /…$/.test(line));
+    if (!hasClampEllipsis || fontSize === minFontSize) {
+      return { fontSize, lineHeight, lines };
+    }
+  }
+  const fontSize = minFontSize;
+  const lineHeight = Math.round(fontSize * lineHeightRatio);
+  ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+  return { fontSize, lineHeight, lines: wrapTextLines(ctx, value, maxWidth, maxLines) };
+}
+
 function fitMainGuidanceText(ctx, text, { maxWidth, maxLines = 3, maxHeight, startFontSize = 52, minFontSize = 40 } = {}) {
   const safeWidth = Number.isFinite(maxWidth) && maxWidth > 0 ? maxWidth : 560;
   const safeMaxHeight = Number.isFinite(maxHeight) && maxHeight > 0 ? maxHeight : 160;
@@ -1357,14 +1408,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       : ['I move forward with steadiness and care.', 'I am ready to use what has been growing inside me.', 'I welcome what is ready to grow, step by step.'];
     const affirmationColumns = standaloneKeys.map((key, index) => {
       const card = cardEntries[index]?.card || null;
-      return toSafeText(getLocalizedField(card, key, lang), '').trim() || fallbackAffirmations[index];
+      return normalizeStandaloneAffirmation(getLocalizedField(card, key, lang), lang, fallbackAffirmations[index]);
     });
     const presentSummaryText = affirmationColumns[1] || fallbackAffirmations[1];
     const guidanceLabel = lang === 'th' ? 'คำแนะนำของคุณตอนนี้' : 'YOUR GUIDANCE RIGHT NOW';
     const guidanceLabelY = cardsRowBottom + 42;
     const mainMessageY = guidanceLabelY + 66;
-    const mainQuestionWidth = presentCardW + 300;
-    const mainQuestionMaxHeight = 160;
+    const mainQuestionWidth = presentCardW + 220;
+    const mainQuestionMaxHeight = 154;
 
     const badgePaddingX = 22;
     const badgePaddingY = 12;
@@ -1388,27 +1439,31 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       maxWidth: mainQuestionWidth,
       maxLines: 3,
       maxHeight: mainQuestionMaxHeight,
-      startFontSize: 52,
-      minFontSize: 40,
+      startFontSize: 48,
+      minFontSize: 34,
     });
     const presentLineCount = Math.max(1, fittedMainQuestion.lines.length || 0);
     const presentEndY = mainMessageY + presentLineCount * fittedMainQuestion.lineHeight;
 
-    const insightsTop = presentEndY + 42;
+    const insightsTop = presentEndY + 44;
     let insightsBottom = insightsTop;
     const summaryLayouts = [];
     for (const i of [0, 1, 2]) {
       const summaryText = affirmationColumns[i] || fallbackAffirmations[i] || '';
       const isCenterAffirmation = i === 1;
       const labelY = insightsTop;
-      const textY = labelY + 34;
-      const fontSize = isCenterAffirmation ? 21 : 18;
-      const lineHeight = isCenterAffirmation ? 27 : 24;
-      ctx.font = `620 ${fontSize + 2}px "Space Grotesk", sans-serif`;
-      const answerLines = wrapTextLines(ctx, summaryText || '', sideCardW + 66, 2);
-      const answerLineCount = Math.max(1, answerLines.length || 0);
-      summaryLayouts.push({ i, summaryText, labelY, textY, fontSize, lineHeight });
-      const endY = textY + answerLineCount * lineHeight;
+      const textY = labelY + 18;
+      const maxWidth = isCenterAffirmation ? presentCardW + 124 : sideCardW + 86;
+      const fit = fitAffirmationText(ctx, summaryText || '', {
+        maxWidth,
+        maxLines: isCenterAffirmation ? 3 : 3,
+        startFontSize: isCenterAffirmation ? 24 : 17,
+        minFontSize: isCenterAffirmation ? 20 : 14,
+        lineHeightRatio: isCenterAffirmation ? 1.28 : 1.32,
+      });
+      const answerLineCount = Math.max(1, fit.lines.length || 0);
+      summaryLayouts.push({ i, summaryText, labelY, textY, fontSize: fit.fontSize, lineHeight: fit.lineHeight, maxWidth, maxLines: isCenterAffirmation ? 3 : 3 });
+      const endY = textY + answerLineCount * fit.lineHeight;
       insightsBottom = Math.max(insightsBottom, endY);
     }
 
@@ -1483,14 +1538,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    summaryLayouts.forEach(({ i, summaryText, labelY, textY, fontSize, lineHeight }) => {
+    summaryLayouts.forEach(({ i, summaryText, labelY, textY, fontSize, lineHeight, maxWidth, maxLines }) => {
       ctx.fillStyle = labelColor;
       ctx.font = 'italic 500 17px "Space Grotesk", sans-serif';
       if (labels[i]) wrapText(ctx, labels[i], cardCenters[i], labelY, sideCardW + 86, 24, 2);
 
       ctx.fillStyle = answerColor;
       ctx.font = `620 ${fontSize + 2}px "Space Grotesk", sans-serif`;
-      wrapText(ctx, summaryText || '', cardCenters[i], textY, sideCardW + 66, lineHeight, 2);
+      wrapText(ctx, summaryText || '', cardCenters[i], textY, maxWidth, lineHeight, maxLines);
     });
 
     ctx.save();
