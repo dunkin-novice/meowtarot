@@ -11,6 +11,8 @@ const shareBtn = document.getElementById('shareAction');
 const openLink = document.getElementById('openPosterLink');
 const retryBtn = document.getElementById('retryPoster');
 const backToReading = document.getElementById('backToReading');
+const sharePromptTitleEl = document.getElementById('sharePromptTitle');
+const sharePromptBodyEl = document.getElementById('sharePromptBody');
 
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 const POSTER_DEBUG_STORAGE_KEY = 'POSTER_DEBUG';
@@ -211,6 +213,40 @@ function updateOpenInBrowserBanner(reason = '') {
 
 function getStrings(lang) {
   return STRINGS[lang] || STRINGS.en;
+}
+
+function getTopicLabel(payload = {}) {
+  const lang = payload?.lang || 'en';
+  const topic = String(payload?.topic || '').toLowerCase();
+  const labels = {
+    en: { love: 'Love', career: 'Career', finance: 'Finance', generic: 'Any question' },
+    th: { love: 'ความรัก', career: 'การงาน', finance: 'การเงิน', generic: 'คำถามทั่วไป' },
+  };
+  return labels[lang]?.[topic] || labels[lang]?.generic || labels.en.generic;
+}
+
+function getShareMessage(payload = {}) {
+  const lang = payload?.lang || 'en';
+  const mode = String(payload?.mode || payload?.poster?.mode || '').toLowerCase();
+  const topicLabel = getTopicLabel(payload);
+  if (lang === 'th') {
+    if (mode === 'question') return `คำทำนายถามคำถามของฉันเรื่อง${topicLabel}`;
+    if (mode === 'full') return 'คำทำนาย MeowTarot ของฉัน';
+    return 'คำทำนายรายวันของฉัน';
+  }
+  if (mode === 'question') return `My Ask a Question reading for ${topicLabel.toLowerCase()}`;
+  if (mode === 'full') return 'My MeowTarot reading';
+  return 'My daily reading';
+}
+
+function applySharePrompt(payload = {}) {
+  const lang = payload?.lang || 'en';
+  if (sharePromptTitleEl) sharePromptTitleEl.textContent = lang === 'th' ? 'โปสเตอร์พร้อมแชร์แล้ว' : 'Your shareable poster is ready';
+  if (sharePromptBodyEl) {
+    sharePromptBodyEl.textContent = lang === 'th'
+      ? 'บันทึกเก็บไว้หรือโพสต์ตอนที่ข้อความนี้ยังรู้สึกชัดกับใจคุณอยู่'
+      : 'Save it for yourself or post it while the message still feels fresh.';
+  }
 }
 
 function base64UrlDecode(input = '') {
@@ -586,7 +622,7 @@ async function handleShare() {
 
     if (canNativeShare) {
       showToast(strings.sharing);
-      await navigator.share({ files: [file], title: currentPayload.title || 'MeowTarot', text: 'My daily reading' });
+      await navigator.share({ files: [file], title: currentPayload.title || 'MeowTarot', text: getShareMessage(currentPayload) });
       return { shared: true };
     }
 
@@ -654,6 +690,7 @@ async function init() {
   }
 
   document.title = `${currentPayload.title || 'MeowTarot'} – Share`;
+  applySharePrompt(currentPayload);
   if (backToReading) {
     backToReading.hidden = true;
     backToReading.href = currentPayload.canonicalUrl || '/reading.html';
