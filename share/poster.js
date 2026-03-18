@@ -1646,6 +1646,85 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     return { blob, width, height, perf };
   }
 
+  if (String(payload?.mode || '').toLowerCase() === 'question' && preset === 'story') {
+    const cardEntries = (await buildCardEntries(payload)).slice(0, 3);
+    const slots = ['past', 'present', 'future'];
+    const cardGap = 20;
+    const baseCardW = 290;
+    const cardW = Math.round(baseCardW * 0.95);
+    const cardH = Math.round(cardW * 1.5);
+    const totalW = cardW * 3 + cardGap * 2;
+    const startX = (width - totalW) / 2;
+    const cardY = 290;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f8d77a';
+    ctx.font = '700 62px "Poppins", "Space Grotesk", sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.65)';
+    ctx.shadowBlur = 14;
+    ctx.fillText('MeowTarot', width / 2, 100);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#efe4c2';
+    ctx.font = '500 24px "Space Grotesk", sans-serif';
+    drawTrackingText(ctx, 'Your Tarot Reading', width / 2, 142, 0.8);
+
+    for (let i = 0; i < 3; i += 1) {
+      const entry = cardEntries[i] || null;
+      const payloadCard = payload?.cards?.[i] || {};
+      const fallbackBaseId = baseCardId(payloadCard?.id || payloadCard?.card_id || payloadCard?.image_id || `slot-${i + 1}`);
+      const sourceCard = entry?.card || payloadCard;
+      const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
+      const orientation = toOrientation(entry?.orientation || payloadCard?.orientation || sourceCard?.orientation || 'upright');
+      const orientedId = `${baseId}-${orientation}`;
+      const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, orientation);
+
+      const x = startX + i * (cardW + cardGap);
+      const y = cardY;
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 8;
+      ctx.fillStyle = '#0f1429';
+      ctx.fillRect(x, y, cardW, cardH);
+      ctx.restore();
+
+      try {
+        const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation, card: sourceCard }, {
+          resolvedPrimary,
+          uprightUrl,
+          reversedUrl,
+          backUrl,
+          lang: payload?.lang || 'en',
+        });
+        const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
+        ctx.drawImage(img, x, y, cardW, cardH);
+      } catch (error) {
+        console.warn('[Poster] question card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
+      }
+
+      const positionLabel = slots[i] || 'present';
+      ctx.fillStyle = '#f7f4ee';
+      ctx.font = '600 24px "Space Grotesk", sans-serif';
+      ctx.fillText(positionLabel.charAt(0).toUpperCase() + positionLabel.slice(1), x + cardW / 2, y + cardH + 36);
+    }
+
+    ctx.fillStyle = '#aab0c9';
+    ctx.font = '500 28px "Space Grotesk", sans-serif';
+    const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
+    ctx.fillText(footerText, width / 2, height - 90);
+
+    const exportStart = performance.now();
+    perf.captureCount += 1;
+    const blob = await exportPoster(canvas);
+    perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
+    perf.exportMs = performance.now() - exportStart;
+    if (!blob) throw new Error('Failed to build poster blob');
+    return { blob, width, height, perf };
+  }
+
   if (isDailySingle(payload) && preset === 'story') {
     const safeMargin = 72;
     const lang = payload?.lang || 'en';
