@@ -15,7 +15,7 @@ import {
   getCardBackFallbackUrl,
   applyImgFallback,
 } from './data.js';
-import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
+import { buildQuestionReadingInputPayload, findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
 import { orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-order.js';
 import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
@@ -2475,6 +2475,14 @@ function buildSharePayload() {
     },
     canonicalUrl: window.location.href,
   };
+
+  if (state.mode === 'question') {
+    payload.llmInput = buildQuestionReadingInputPayload({
+      topic: state.topic,
+      selectedIds: state.selectedIds,
+      cards: meowTarotCards,
+    });
+  }
 
   if (state.mode === 'full') {
     payload.energyData = computeFullReadingEnergyData(
