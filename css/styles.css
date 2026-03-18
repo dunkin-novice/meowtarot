@@ -5551,52 +5551,53 @@ body[data-page='reading'][data-reading-mode='full'] .panel--celtic-cross {
 
 body[data-page='reading'][data-reading-mode='full'] .celtic-cross-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
-  gap: 18px;
-  align-items: start;
-}
-
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-areas:
-    ". above ."
-    "past center future"
-    ". below .";
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, auto);
+  gap: 8px;
+  position: relative;
   align-items: center;
   justify-items: center;
 }
 
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-staff {
-  display: grid;
-  gap: 12px;
-  align-content: start;
-}
-
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-slot {
+body[data-page='reading'][data-reading-mode='full'] .celtic-cross-slot,
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot {
   width: 100%;
   max-width: 190px;
 }
 
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--present {
-  grid-area: center;
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--focus { grid-area: 1 / 2; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--past { grid-area: 2 / 1; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center {
+  grid-area: 2 / 2;
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--nearfuture { grid-area: 2 / 3; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--recentpast { grid-area: 3 / 2; }
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--situation {
+  position: relative;
   z-index: 1;
 }
 
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--challenge {
-  grid-area: center;
-  transform: rotate(90deg);
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--challenge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
   z-index: 2;
 }
 
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--past { grid-area: past; }
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--future { grid-area: future; }
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--above { grid-area: above; }
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--below { grid-area: below; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--outcome { grid-area: 1 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--hopes { grid-area: 2 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--environment { grid-area: 3 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--power { grid-area: 4 / 4; }
 
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--present .card-art.is-thumb .card-art-img,
-body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--challenge .card-art.is-thumb .card-art-img {
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center .card-art.is-thumb .card-art-img,
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--challenge .card-art.is-thumb .card-art-img {
   max-width: 170px;
 }
 
@@ -5616,30 +5617,24 @@ body[data-page='reading'][data-reading-mode='full'] .full-interpretation-box > p
   line-height: 1.6;
 }
 
-@media (max-width: 900px) {
-  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-staff {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 640px) {
-  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-layout,
-  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid,
-  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-staff {
+  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-layout {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
-  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-grid .card-slot--challenge {
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center {
+    min-height: 0;
+  }
+
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--challenge {
+    position: static;
     transform: none;
   }
 
-  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-slot {
+  body[data-page='reading'][data-reading-mode='full'] .celtic-cross-slot,
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot {
     max-width: 220px;
   }
 

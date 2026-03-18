@@ -1223,14 +1223,60 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   if (String(payload?.mode || '').toLowerCase() === 'full' && preset === 'story') {
     const lang = payload?.lang || 'en';
     const cardEntries = (await buildCardEntries(payload)).slice(0, 10);
-    const gridColumns = 5;
-    const cardGapX = 18;
-    const cardGapY = 96;
-    const cardW = 172;
+    const cardW = 150;
     const cardH = Math.round(cardW * 1.5);
-    const totalW = cardW * gridColumns + cardGapX * (gridColumns - 1);
-    const startX = Math.round((width - totalW) / 2);
-    const startY = 280;
+    const crossCenterX = 350;
+    const crossCenterY = 760;
+    const crossOffsetX = 190;
+    const crossOffsetY = 290;
+    const staffX = 835;
+    const staffStartY = 360;
+    const staffGapY = 265;
+    const layoutByPosition = {
+      above: { x: crossCenterX, y: crossCenterY - crossOffsetY, labelX: crossCenterX, labelY: crossCenterY - crossOffsetY + cardH + 28 },
+      below: { x: crossCenterX - crossOffsetX, y: crossCenterY, labelX: crossCenterX - crossOffsetX, labelY: crossCenterY + cardH + 28 },
+      present: { x: crossCenterX, y: crossCenterY, labelX: crossCenterX, labelY: crossCenterY + cardH + 28 },
+      challenge: { x: crossCenterX, y: crossCenterY, rotated: true, labelX: crossCenterX + cardH / 2 + 56, labelY: crossCenterY + 8, labelAlign: 'left', orientationX: crossCenterX + cardH / 2 + 56, orientationY: crossCenterY + 34, orientationAlign: 'left' },
+      future: { x: crossCenterX + crossOffsetX, y: crossCenterY, labelX: crossCenterX + crossOffsetX, labelY: crossCenterY + cardH + 28 },
+      past: { x: crossCenterX, y: crossCenterY + crossOffsetY, labelX: crossCenterX, labelY: crossCenterY + crossOffsetY + cardH + 28 },
+      outcome: { x: staffX, y: staffStartY, labelX: staffX, labelY: staffStartY + cardH + 28 },
+      hopes: { x: staffX, y: staffStartY + staffGapY, labelX: staffX, labelY: staffStartY + staffGapY + cardH + 28 },
+      external: { x: staffX, y: staffStartY + staffGapY * 2, labelX: staffX, labelY: staffStartY + staffGapY * 2 + cardH + 28 },
+      advice: { x: staffX, y: staffStartY + staffGapY * 3, labelX: staffX, labelY: staffStartY + staffGapY * 3 + cardH + 28 },
+    };
+
+    const drawCardShadow = (x, y, rotated = false) => {
+      ctx.save();
+      ctx.translate(x, y);
+      if (rotated) ctx.rotate(Math.PI / 2);
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 8;
+      ctx.fillStyle = '#0f1429';
+      ctx.fillRect(-cardW / 2, -cardH / 2, cardW, cardH);
+      ctx.restore();
+    };
+
+    const drawCardImage = (img, x, y, rotated = false) => {
+      ctx.save();
+      ctx.translate(x, y);
+      if (rotated) ctx.rotate(Math.PI / 2);
+      ctx.drawImage(img, -cardW / 2, -cardH / 2, cardW, cardH);
+      ctx.restore();
+    };
+
+    const drawCardLabelBlock = ({ label, orientation, x, y, align = 'center', orientationX = x, orientationY = y + 38, orientationAlign = align }) => {
+      ctx.save();
+      ctx.fillStyle = '#f7f4ee';
+      ctx.font = '600 18px "Space Grotesk", sans-serif';
+      ctx.textAlign = align;
+      wrapText(ctx, label, x, y, align === 'center' ? cardW + 24 : 170, 22, 2);
+      ctx.fillStyle = '#b8bfd6';
+      ctx.font = '500 15px "Space Grotesk", sans-serif';
+      ctx.textAlign = orientationAlign;
+      wrapText(ctx, orientation, orientationX, orientationY, orientationAlign === 'center' ? cardW + 18 : 170, 18, 1);
+      ctx.restore();
+    };
 
     ctx.textAlign = 'center';
     ctx.fillStyle = '#f8d77a';
@@ -1265,40 +1311,34 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         lang,
       });
 
-      const row = Math.floor(i / gridColumns);
-      const col = i % gridColumns;
-      const x = startX + col * (cardW + cardGapX);
-      const y = startY + row * (cardH + cardGapY);
+      const position = payloadCard?.position || ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'][i] || 'present';
+      const layout = layoutByPosition[position] || layoutByPosition.present;
 
-      ctx.save();
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
-      ctx.shadowBlur = 18;
-      ctx.shadowOffsetY = 8;
-      ctx.fillStyle = '#0f1429';
-      ctx.fillRect(x, y, cardW, cardH);
-      ctx.restore();
+      drawCardShadow(layout.x, layout.y, Boolean(layout.rotated));
 
       try {
         const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
-        ctx.drawImage(img, x, y, cardW, cardH);
+        drawCardImage(img, layout.x, layout.y, Boolean(layout.rotated));
       } catch (error) {
         console.warn('[Poster] full card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
       }
 
-      const position = payloadCard?.position || ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'][i] || 'present';
-      const positionLabel = getFullPosterPositionLabel(position, lang);
-      const orientationLabel = getOrientationLabel(orientation, lang);
-      ctx.fillStyle = '#f7f4ee';
-      ctx.font = '600 18px "Space Grotesk", sans-serif';
-      wrapText(ctx, positionLabel, x + cardW / 2, y + cardH + 28, cardW + 24, 22, 2);
-      ctx.fillStyle = '#b8bfd6';
-      ctx.font = '500 15px "Space Grotesk", sans-serif';
-      wrapText(ctx, orientationLabel, x + cardW / 2, y + cardH + 70, cardW + 18, 18, 1);
+      drawCardLabelBlock({
+        label: getFullPosterPositionLabel(position, lang),
+        orientation: getOrientationLabel(orientation, lang),
+        x: layout.labelX,
+        y: layout.labelY,
+        align: layout.labelAlign || 'center',
+        orientationX: layout.orientationX,
+        orientationY: layout.orientationY,
+        orientationAlign: layout.orientationAlign || layout.labelAlign || 'center',
+      });
     }
 
     ctx.fillStyle = '#aab0c9';
     ctx.font = '500 28px "Space Grotesk", sans-serif';
     const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
+    ctx.textAlign = 'center';
     ctx.fillText(footerText, width / 2, height - 90);
 
     const exportStart = performance.now();
