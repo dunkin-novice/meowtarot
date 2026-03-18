@@ -36,6 +36,10 @@ function normalizeOrientation(value) {
   return String(value || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright';
 }
 
+const FULL_POSITIONS = ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'];
+const LEGACY_FULL_POSITIONS = ['past', 'present', 'future'];
+const QUESTION_POSITIONS = ['past', 'present', 'future'];
+
 function normalizeCards(cards = []) {
   return cards
     .filter((item) => item && typeof item === 'object')
@@ -47,6 +51,7 @@ function normalizeCards(cards = []) {
       image_upright: asString(item.image_upright || item.imageUpright),
       image_reversed: asString(item.image_reversed || item.imageReversed),
       resolvedImageUrl: asString(item.resolvedImageUrl || item.imageUrl),
+      position: asString(item.position || item.slot || item.label),
     }))
     .filter((item) => item.id);
 }
@@ -57,9 +62,17 @@ export function normalizePayload(raw) {
   const reading = resolveReading(source);
   const mode = normalizeMode(source.mode || source?.poster?.mode);
   let cards = normalizeCards(resolveCards(source, reading));
-  // legacy single-card question payloads
-  if (mode === 'question' && cards.length === 1) {
-    cards = cards.map((card) => ({ ...card, position: card.position || 'present' }));
+  if (mode === 'question') {
+    cards = cards.map((card, index) => ({
+      ...card,
+      position: card.position || (cards.length === 1 ? 'present' : (QUESTION_POSITIONS[index] || 'present')),
+    }));
+  }
+  if (mode === 'full' && cards.length >= 10) {
+    cards = cards.map((card, index) => ({ ...card, position: card.position || FULL_POSITIONS[index] || FULL_POSITIONS[FULL_POSITIONS.length - 1] }));
+  }
+  if (mode === 'full' && cards.length === 3) {
+    cards = cards.map((card, index) => ({ ...card, position: card.position || LEGACY_FULL_POSITIONS[index] || 'present' }));
   }
   const posterSource = asObject(source.poster);
 

@@ -77,6 +77,8 @@ const dailyUiState = {
 const DAILY_DECK_TO_SPREAD_MS = 300;
 const DAILY_SELECTION_REVEAL_MS = 240;
 const DAILY_READING_RENDER_MS = 240;
+const FULL_CELTIC_POSITION_KEYS = ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'];
+const LEGACY_FULL_POSITION_KEYS = ['past', 'present', 'future'];
 
 function setDailyPhaseAttr(phase = '') {
   if (!document.body) return;
@@ -1717,6 +1719,59 @@ async function runDailyDealAnimation(container) {
   container.classList.add('is-dealt');
 }
 
+
+function getFullPositionKeys(totalCards = 0) {
+  return totalCards === 3 ? LEGACY_FULL_POSITION_KEYS : FULL_CELTIC_POSITION_KEYS;
+}
+
+function getFullPositionTranslationKey(position = '') {
+  const safe = String(position || '').toLowerCase();
+  const map = {
+    present: 'positionPresent',
+    challenge: 'positionChallenge',
+    past: 'positionPast',
+    future: 'positionFuture',
+    above: 'positionAbove',
+    below: 'positionBelow',
+    advice: 'positionAdvice',
+    external: 'positionExternal',
+    hopes: 'positionHopes',
+    outcome: 'positionOutcome',
+  };
+  return map[safe] || 'positionPresent';
+}
+
+function getFullPositionLabel(dict, position = '') {
+  const translationKey = getFullPositionTranslationKey(position);
+  return dict?.[translationKey]
+    || (translations[state.currentLang] || translations.en)?.[translationKey]
+    || position;
+}
+
+function getFullPositionMeta(cards = []) {
+  const keys = getFullPositionKeys(cards.length);
+  return cards.map((card, index) => ({
+    card,
+    index,
+    position: card?.position || keys[index] || FULL_CELTIC_POSITION_KEYS[index] || 'present',
+  }));
+}
+
+function getFullInterpretationText(card, topicConfig = null) {
+  if (!card) return '';
+  if (topicConfig?.singleKey) {
+    return getText(card, topicConfig.singleKey)
+      || getText(card, 'general_meaning')
+      || getText(card, 'tarot_imply')
+      || getText(card, 'card_desc')
+      || '';
+  }
+  return getText(card, 'general_meaning')
+    || getText(card, 'tarot_imply')
+    || getText(card, 'card_desc')
+    || '';
+}
+
 function renderDaily(card, dict) {
   if (!readingContent) return;
 
@@ -1862,84 +1917,77 @@ function renderFull(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
 
-  const positions = ['past', 'present', 'future'];
+  const topic = String(state.topic || 'generic').toLowerCase();
+  const topicConfig = getTopicConfig().find((item) => item.key === topic);
+  const hasTopic = topicConfig && !['generic', 'other'].includes(topic);
+  const positions = getFullPositionMeta(cards);
 
   const spreadPanel = document.createElement('div');
-  spreadPanel.className = 'panel panel--spread';
+  spreadPanel.className = 'panel panel--spread panel--celtic-cross';
 
-  const spreadGrid = document.createElement('div');
-  spreadGrid.className = 'reading-spread-grid';
+  const spreadLayout = document.createElement('div');
+  spreadLayout.className = 'celtic-cross-layout';
 
-  cards.slice(0, 3).forEach((card, idx) => {
-    const cardWrap = document.createElement('button');
-    cardWrap.className = 'reading-spread-card';
-    cardWrap.type = 'button';
-    cardWrap.setAttribute('aria-label', `${dict[positions[idx]] || positions[idx]}`);
+  const crossGrid = document.createElement('div');
+  crossGrid.className = 'celtic-cross-grid';
+  const staffColumn = document.createElement('div');
+  staffColumn.className = 'celtic-cross-staff';
 
-    cardWrap.appendChild(buildCardArt(card, 'thumb'));
+  positions.forEach(({ card, index, position }) => {
+    const slot = document.createElement('button');
+    slot.className = `reading-spread-card celtic-cross-slot card-slot--${position}`;
+    slot.type = 'button';
+    slot.dataset.position = position;
+    slot.setAttribute('aria-label', getFullPositionLabel(dict, position));
+
+    slot.appendChild(buildCardArt(card, 'thumb'));
 
     const caption = document.createElement('div');
     caption.className = 'spread-caption';
+
+    const label = document.createElement('div');
+    label.className = 'spread-label';
+    label.textContent = getFullPositionLabel(dict, position);
+    caption.appendChild(label);
 
     const orientation = document.createElement('div');
     orientation.className = 'spread-orientation';
     orientation.textContent = getOrientationLabel(toOrientation(card), state.currentLang);
     caption.appendChild(orientation);
 
-    cardWrap.appendChild(caption);
-    cardWrap.addEventListener('click', () => openCardSheet(card));
-    spreadGrid.appendChild(cardWrap);
+    slot.appendChild(caption);
+    slot.addEventListener('click', () => openCardSheet(card));
+
+    if (index >= 6) staffColumn.appendChild(slot);
+    else crossGrid.appendChild(slot);
   });
 
-  spreadPanel.appendChild(spreadGrid);
+  spreadLayout.append(crossGrid, staffColumn);
+  spreadPanel.appendChild(spreadLayout);
   readingContent.appendChild(spreadPanel);
 
-  const payloadReading = buildSharePayload()?.reading || {};
+  const interpretationPanel = document.createElement('div');
+  interpretationPanel.className = 'panel full-interpretation-panel';
+  const interpretationGrid = document.createElement('div');
+  interpretationGrid.className = 'full-summary-grid full-interpretation-grid';
 
-  const summaries = [
-    getText(cards[0], 'reading_summary_past') || payloadReading.reading_summary_past || '',
-    getText(cards[1], 'reading_summary_present') || payloadReading.reading_summary_present || '',
-    getText(cards[2], 'reading_summary_future') || payloadReading.reading_summary_future || '',
-  ];
-
-  if (summaries.some((item) => !item)) {
-    console.warn('[Full] missing reading_summary fields');
-  }
-
-  const summaryPanel = document.createElement('div');
-  summaryPanel.className = 'panel full-summary-panel';
-  const summaryGrid = document.createElement('div');
-  summaryGrid.className = 'full-summary-grid';
-
-  summaries.forEach((summary, idx) => {
-    const card = cards[idx];
-    const fallbackName = state.currentLang === 'th'
-      ? (card?.alias_th || card?.name_th || card?.id || '')
-      : (payloadReading[`card_name_${positions[idx]}`] || payloadReading.subHeading || '');
-    const cardName = state.currentLang === 'th'
-      ? (card?.alias_th || card?.name_th || fallbackName || '')
-      : (card?.card_name_en || card?.name_en || card?.name || fallbackName || card?.id || '');
-    const orientationLabel = getOrientationLabel(toOrientation(card), state.currentLang);
-    const fallbackArchetype = payloadReading[`archetype_${positions[idx]}`] || payloadReading.archetype || '';
-    const archetypeText = getText(card, 'archetype') || fallbackArchetype;
-    const fallbackImply = payloadReading[`tarot_imply_${positions[idx]}`] || payloadReading.summary || '';
-    const implyText = getText(card, 'tarot_imply') || fallbackImply;
-
+  positions.forEach(({ card, position }) => {
     const box = document.createElement('article');
-    box.className = 'full-summary-box';
+    box.className = 'full-summary-box full-interpretation-box';
 
-    const h3 = document.createElement('h3');
-    h3.textContent = dict[positions[idx]] || positions[idx];
-    box.appendChild(h3);
+    const heading = document.createElement('h3');
+    heading.textContent = getFullPositionLabel(dict, position);
+    box.appendChild(heading);
 
     const meta = document.createElement('div');
     meta.className = 'full-summary-meta';
 
     const nameLine = document.createElement('p');
     nameLine.className = 'full-summary-meta__name';
-    nameLine.textContent = cardName ? `${cardName} (${orientationLabel})` : orientationLabel;
+    nameLine.textContent = `${getName(card)} (${getOrientationLabel(toOrientation(card), state.currentLang)})`;
     meta.appendChild(nameLine);
 
+    const archetypeText = normalizeArchetypeText(getText(card, 'archetype'));
     if (archetypeText) {
       const archetypeLine = document.createElement('p');
       archetypeLine.className = 'full-summary-meta__archetype';
@@ -1947,57 +1995,17 @@ function renderFull(cards, dict) {
       meta.appendChild(archetypeLine);
     }
 
-    if (implyText) {
-      const implyLine = document.createElement('p');
-      implyLine.className = 'full-summary-meta__imply';
-      implyLine.textContent = implyText;
-      meta.appendChild(implyLine);
-    }
-
     box.appendChild(meta);
 
     const body = document.createElement('p');
-    body.textContent = summary || '';
+    body.textContent = getFullInterpretationText(card, hasTopic ? topicConfig : null);
     box.appendChild(body);
 
-    summaryGrid.appendChild(box);
+    interpretationGrid.appendChild(box);
   });
 
-  summaryPanel.appendChild(summaryGrid);
-  readingContent.appendChild(summaryPanel);
-
-  const deeperPanel = document.createElement('div');
-  deeperPanel.className = 'panel';
-  let deeperHasContent = false;
-
-  getTopicConfig().forEach((topic) => {
-    const texts = cards.slice(0, 3).map((card, idx) => ({
-      label: dict[positions[idx]] || positions[idx],
-      text: getText(card, topic.spreadKeys[idx]),
-    })).filter((item) => item.text);
-
-    if (!texts.length) return;
-
-    const section = document.createElement('div');
-    section.className = 'deeper-section';
-
-    const h3 = document.createElement('h3');
-    h3.textContent = getTopicTitle(dict, topic.titleKey);
-    section.appendChild(h3);
-
-    texts.forEach((item) => {
-      const p = document.createElement('p');
-      p.innerHTML = `<strong>${item.label}:</strong> ${item.text}`;
-      section.appendChild(p);
-    });
-
-    deeperPanel.appendChild(section);
-    deeperHasContent = true;
-  });
-
-  if (deeperHasContent) {
-    readingContent.appendChild(deeperPanel);
-  }
+  interpretationPanel.appendChild(interpretationGrid);
+  readingContent.appendChild(interpretationPanel);
 
   const energyPanel = buildEnergyPanel(cards, dict);
   if (energyPanel) {
@@ -2301,9 +2309,15 @@ function buildSharePayload() {
 
   payload.cards = cards.map((card, index) => {
     const withPosterPayload = { ...buildPosterCardPayload(card), id: card.id, orientation: card.orientation };
-    if (state.mode !== 'question') return withPosterPayload;
-    const position = ['past', 'present', 'future'][index] || 'present';
-    return { ...withPosterPayload, position };
+    if (state.mode === 'question') {
+      const position = ['past', 'present', 'future'][index] || 'present';
+      return { ...withPosterPayload, position };
+    }
+    if (state.mode === 'full') {
+      const position = FULL_CELTIC_POSITION_KEYS[index] || 'present';
+      return { ...withPosterPayload, position };
+    }
+    return withPosterPayload;
   });
 
   shareCiLog('share_payload', {
