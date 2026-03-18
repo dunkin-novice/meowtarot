@@ -105,7 +105,7 @@ const dailyUiState = {
 const DAILY_DECK_TO_SPREAD_MS = 300;
 const DAILY_SELECTION_REVEAL_MS = 240;
 const DAILY_READING_RENDER_MS = 240;
-const FULL_CELTIC_POSITION_KEYS = ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'];
+const FULL_CELTIC_POSITION_KEYS = ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'];
 const LEGACY_FULL_POSITION_KEYS = ['past', 'present', 'future'];
 
 function setDailyPhaseAttr(phase = '') {
@@ -2000,16 +2000,30 @@ function renderFull(cards, dict) {
   const spreadLayout = document.createElement('div');
   spreadLayout.className = 'celtic-cross-layout';
 
-  const crossGrid = document.createElement('div');
-  crossGrid.className = 'celtic-cross-grid';
-  const staffColumn = document.createElement('div');
-  staffColumn.className = 'celtic-cross-staff';
+  const centerSlot = document.createElement('div');
+  centerSlot.className = 'celtic-slot celtic-slot--center';
+  spreadLayout.appendChild(centerSlot);
 
-  positions.forEach(({ card, index, position }) => {
+  const layoutSlotByPosition = {
+    present: 'situation',
+    challenge: 'challenge',
+    above: 'focus',
+    past: 'recentpast',
+    below: 'past',
+    future: 'nearfuture',
+    advice: 'power',
+    external: 'environment',
+    hopes: 'hopes',
+    outcome: 'outcome',
+  };
+
+  positions.forEach(({ card, position }) => {
+    const layoutSlot = layoutSlotByPosition[position] || 'situation';
     const slot = document.createElement('button');
-    slot.className = `reading-spread-card celtic-cross-slot card-slot--${position}`;
+    slot.className = `reading-spread-card celtic-cross-slot celtic-slot celtic-slot--${layoutSlot} card-slot--${position}`;
     slot.type = 'button';
     slot.dataset.position = position;
+    slot.dataset.layoutSlot = layoutSlot;
     slot.setAttribute('aria-label', getFullPositionLabel(dict, position));
 
     slot.appendChild(buildCardArt(card, 'thumb'));
@@ -2030,11 +2044,13 @@ function renderFull(cards, dict) {
     slot.appendChild(caption);
     slot.addEventListener('click', () => openCardSheet(card));
 
-    if (index >= 6) staffColumn.appendChild(slot);
-    else crossGrid.appendChild(slot);
-  });
+    if (position === 'present' || position === 'challenge') {
+      centerSlot.appendChild(slot);
+      return;
+    }
 
-  spreadLayout.append(crossGrid, staffColumn);
+    spreadLayout.appendChild(slot);
+  });
   spreadPanel.appendChild(spreadLayout);
   readingContent.appendChild(spreadPanel);
 
