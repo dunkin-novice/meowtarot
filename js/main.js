@@ -3,13 +3,15 @@ import {
   loadTarotManifest,
   getCardBackUrl,
   getCardBackFallbackUrl,
+  getCardImageUrl,
   applyImageFallback,
   normalizeId,
 } from './data.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
-const OVERALL_SELECTION_COUNT = 10;
+const CELTIC_CROSS_COUNT = 10;
+const OVERALL_SELECTION_COUNT = CELTIC_CROSS_COUNT;
 const QUESTION_SELECTION_COUNT = 3;
 const FULL_POOL_SIZE = 50;
 const ORIENTATION_REVERSED_PROBABILITY = 0.5;
@@ -429,30 +431,32 @@ function renderOverall() {
   const continueBtn = document.getElementById('overall-continue');
   if (!flow || !entry || !heroDeck || !centerDeck || !animationLayer || !dealBtn || !shuffleBtn || !board || !actions || !continueBtn || !toolbar || !counter) return;
 
-  const FULL_TIMING = {
-    dealStagger: 30,
-    dealDuration: 220,
-    collectStagger: 18,
-    collectDuration: 180,
-    badgeClearDuration: 140,
+  const isThai = state.currentLang === 'th';
+  const fullState = {
+    phase: 'preDeal',
+    pool: [],
+    selectedCards: [],
+    activeCard: null,
+    activeCardFlipped: false,
+    isDrawing: false,
   };
 
-  const MOTION_PHASES = new Set(['dealing', 'shufflingCollect', 'shufflingRedeal']);
+  const fullLabels = {
+    previewIdle: isThai ? 'แตะกองไพ่เพื่อเปิดไพ่ 1 ใบ แล้วแตะไพ่เพื่อยืนยัน' : 'Tap the deck to reveal one card, then tap the card to confirm it.',
+    previewReady: isThai ? 'แตะไพ่ที่เปิดอยู่เพื่อยืนยันการเลือกใบนี้' : 'Tap the revealed card to confirm this pick.',
+    previewComplete: isThai ? 'เลือกครบ 10 ใบแล้ว พร้อมไปยังคำทำนาย' : 'All 10 cards selected. Continue to your reading.',
+    selectedHeading: isThai ? 'ไพ่ที่เลือกแล้ว' : 'Selected cards',
+    selectedEmpty: isThai ? 'ไพ่ที่ยืนยันแล้วจะปรากฏที่นี่' : 'Confirmed cards will appear here.',
+    confirmHint: isThai ? 'แตะเพื่อยืนยัน' : 'Tap to confirm',
+    drawAria: isThai ? 'กองไพ่สำหรับสุ่มไพ่ชุดถัดไป' : 'Deck stack for drawing the next card',
+    previewTitle: isThai ? 'ไพ่ที่เปิดอยู่' : 'Revealed card',
+  };
 
-  const isThai = state.currentLang === 'th';
   dealBtn.textContent = isThai ? 'หยิบไพ่ของคุณ' : 'Draw your cards';
-  shuffleBtn.textContent = isThai ? 'สับไพ่' : 'Shuffle';
+  shuffleBtn.textContent = isThai ? 'เริ่มใหม่' : 'Shuffle / Reset';
   flow.querySelectorAll('.deck-stack-card').forEach(applyCardBackBackground);
 
-  let fullPhase = 'preDeal';
-  let selectedSlotIndices = [];
-  let slots = [];
-  let boardCards = [];
-  let isFullAnimating = false;
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const getSelectedCards = () => selectedSlotIndices.map((idx) => boardCards[idx]).filter(Boolean);
 
   const ensureDeckStackCards = (deckEl, count = 6) => {
     if (!deckEl) return;
@@ -463,329 +467,225 @@ function renderOverall() {
     }
   };
 
-  const triggerDealEntrance = () => {
-    if (prefersReducedMotion) {
-      board.classList.remove('is-deal-entering');
-      return;
-    }
-    board.classList.remove('is-deal-entering');
-    void board.offsetWidth;
-    board.classList.add('is-deal-entering');
-    setTimeout(() => board.classList.remove('is-deal-entering'), FULL_DEAL_ENTRANCE_DURATION + 40);
-  };
-
-  const playCenterShuffleMotion = async () => {
-    centerDeck.classList.remove('is-ready');
-    if (prefersReducedMotion) {
-      return;
-    }
-    centerDeck.classList.add('is-shuffling');
-    await wait(FULL_SHUFFLE_VISUAL_DURATION);
-    centerDeck.classList.remove('is-shuffling');
-    centerDeck.classList.add('is-ready');
-    await wait(FULL_READY_PULSE_DURATION);
-    centerDeck.classList.remove('is-ready');
-  };
-
-  const ensureFullBoardSlots = () => {
-    if (slots.length === FULL_POOL_SIZE) return;
-    slots = [];
-    board.textContent = '';
-    for (let i = 0; i < FULL_POOL_SIZE; i += 1) {
-      const slot = document.createElement('button');
-      slot.type = 'button';
-      slot.className = 'card-slot card-visible';
-      slot.dataset.slotIndex = `${i}`;
-      const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
-      applyCardBackBackground(cardBack);
-      slot.appendChild(cardBack);
-      slot.onclick = () => {
-        if (fullPhase !== 'dealt' || isFullAnimating) return;
-        if (selectedSlotIndices.includes(i)) {
-          selectedSlotIndices = selectedSlotIndices.filter((idx) => idx !== i);
-        } else if (selectedSlotIndices.length < OVERALL_SELECTION_COUNT) {
-          selectedSlotIndices.push(i);
-        }
-        renderFullSelection();
-      };
-      slots.push(slot);
-      board.appendChild(slot);
-    }
-  };
-
-  const hydrateBoardSlots = () => {
-    slots.forEach((slot, idx) => {
-      const card = boardCards[idx];
-      slot.dataset.id = card?.id || '';
-      slot.classList.toggle('is-hidden', !card);
-      slot.classList.toggle('card-visible', !!card);
-    });
-  };
-
-  const restoreStableBoardSurface = () => {
-    ensureFullBoardSlots();
-    hydrateBoardSlots();
-    board.hidden = false;
-    board.classList.remove('is-hidden', 'is-phase-placeholder');
-    board.style.visibility = '';
-    board.style.pointerEvents = '';
-  };
-
-  const renderFullSelection = () => {
-    slots.forEach((slot) => {
-      slot.classList.remove('is-selected', 'is-clearing');
-      slot.querySelector('.selection-badge')?.remove();
-      slot.disabled = fullPhase !== 'dealt' || isFullAnimating;
-    });
-
-    selectedSlotIndices.forEach((slotIndex, order) => {
-      const slot = slots[slotIndex];
-      if (!slot) return;
-      slot.classList.add('is-selected');
-      const badge = document.createElement('span');
-      badge.className = 'selection-badge';
-      badge.textContent = `${order + 1}`;
-      slot.appendChild(badge);
-    });
-
-    if (selectedSlotIndices.length >= OVERALL_SELECTION_COUNT) {
-      slots.forEach((slot, idx) => {
-        if (!selectedSlotIndices.includes(idx)) slot.disabled = true;
-      });
-    }
-
-    const selectedCount = getSelectedCards().length;
-    counter.textContent = `${selectedCount}/${OVERALL_SELECTION_COUNT}`;
-    continueBtn.disabled = fullPhase !== 'dealt' || isFullAnimating || selectedCount !== OVERALL_SELECTION_COUNT;
-  };
+  const getRemainingCount = () => fullState.pool.length;
+  const getSelectedIds = () => fullState.selectedCards.map((card) => card?.id).filter(Boolean);
 
   const applyDisabledState = (el, isDisabled) => {
     el.disabled = !!isDisabled;
     el.classList.toggle('is-disabled', !!isDisabled);
   };
 
-  let renderFullPhase = () => {};
-
-  const lockFullInteraction = () => {
-    isFullAnimating = true;
-    flow.classList.add('is-animating');
-    renderFullSelection();
-    renderFullPhase();
+  const buildFullCardImage = (card, className) => {
+    const img = document.createElement('img');
+    img.className = className;
+    img.alt = card?.card_name_en || card?.name_en || card?.name_th || card?.id || '';
+    applyImageFallback(img, getCardImageUrl(card, { orientation: card?.orientation || 'upright' }), [CARD_BACK_URL, CARD_BACK_FALLBACK_URL].filter(Boolean));
+    return img;
   };
 
-  const unlockFullInteraction = () => {
-    isFullAnimating = false;
-    flow.classList.remove('is-animating');
-    renderFullSelection();
-    renderFullPhase();
+  const createThumbnail = (card, order) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'full-picked-thumb';
+    thumb.dataset.cardId = card?.id || '';
+
+    const imageWrap = document.createElement('div');
+    imageWrap.className = 'full-picked-thumb__image';
+    imageWrap.appendChild(buildFullCardImage(card, 'full-picked-thumb__img'));
+
+    const orderBadge = document.createElement('span');
+    orderBadge.className = 'full-picked-thumb__badge';
+    orderBadge.textContent = `${order + 1}`;
+    imageWrap.appendChild(orderBadge);
+
+    thumb.appendChild(imageWrap);
+    return thumb;
   };
 
-  const toLocalRect = (rect) => {
-    const flowRect = flow.getBoundingClientRect();
-    return {
-      left: rect.left - flowRect.left,
-      top: rect.top - flowRect.top,
-      width: rect.width,
-      height: rect.height,
-      centerX: rect.left - flowRect.left + rect.width / 2,
-      centerY: rect.top - flowRect.top + rect.height / 2,
+  const createActiveCard = (card) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'full-draw-card';
+    button.setAttribute('aria-label', fullLabels.confirmHint);
+    button.disabled = fullState.phase !== 'dealt' || fullState.isDrawing || !fullState.activeCardFlipped;
+
+    const inner = document.createElement('span');
+    inner.className = 'full-draw-card__inner';
+
+    const backFace = document.createElement('span');
+    backFace.className = 'full-draw-card__face full-draw-card__face--back';
+    const backImage = Object.assign(document.createElement('img'), { className: 'full-draw-card__back' });
+    applyCardBackBackground(backImage);
+    backFace.appendChild(backImage);
+
+    const frontFace = document.createElement('span');
+    frontFace.className = 'full-draw-card__face full-draw-card__face--front';
+    frontFace.appendChild(buildFullCardImage(card, 'full-draw-card__front'));
+
+    const hint = document.createElement('span');
+    hint.className = 'full-draw-card__hint';
+    hint.textContent = fullLabels.confirmHint;
+    frontFace.appendChild(hint);
+
+    inner.append(backFace, frontFace);
+    button.appendChild(inner);
+    button.classList.toggle('is-flipped', fullState.activeCardFlipped);
+    button.onclick = () => {
+      if (button.disabled || !fullState.activeCard) return;
+      fullState.selectedCards = [...fullState.selectedCards, fullState.activeCard];
+      fullState.activeCard = null;
+      fullState.activeCardFlipped = false;
+      renderFullUi();
     };
+
+    return button;
   };
 
-  const ensureFullAnimationLayer = () => {
-    animationLayer.hidden = false;
-    animationLayer.textContent = '';
-  };
+  const renderSelectedRow = () => {
+    const row = document.createElement('div');
+    row.className = 'full-picked-row';
 
-  const clearOverlayCards = () => {
-    animationLayer.textContent = '';
-    animationLayer.hidden = true;
-  };
+    const heading = document.createElement('div');
+    heading.className = 'full-picked-row__heading';
+    heading.textContent = `${fullLabels.selectedHeading} (${fullState.selectedCards.length}/${CELTIC_CROSS_COUNT})`;
+    row.appendChild(heading);
 
-  const measureSlotRects = () => {
-    const wasHidden = board.hidden;
-    const prevVisibility = board.style.visibility;
-    const prevPointer = board.style.pointerEvents;
-    if (wasHidden) {
-      board.hidden = false;
-      board.style.visibility = 'hidden';
-      board.style.pointerEvents = 'none';
-    }
-    const rects = slots.map((slot) => slot.getBoundingClientRect());
-    if (wasHidden) {
-      board.hidden = true;
-      board.style.visibility = prevVisibility;
-      board.style.pointerEvents = prevPointer;
-    }
-    return rects;
-  };
-
-  const createOverlayCards = (slotRects) => {
-    ensureFullAnimationLayer();
-    return slotRects.map((slotRect) => {
-      const local = toLocalRect(slotRect);
-      const card = document.createElement('div');
-      card.className = 'card-slot card-slot--overlay';
-      card.style.left = `${local.left}px`;
-      card.style.top = `${local.top}px`;
-      card.style.width = `${local.width}px`;
-      card.style.height = `${local.height}px`;
-      const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
-      applyCardBackBackground(cardBack);
-      card.appendChild(cardBack);
-      animationLayer.appendChild(card);
-      return card;
-    });
-  };
-
-  const animateOverlayDeal = async (deckEl, {
-    duration = FULL_TIMING.dealDuration,
-    stagger = FULL_TIMING.dealStagger,
-  } = {}) => {
-    const slotRects = measureSlotRects();
-    const cards = createOverlayCards(slotRects);
-    const origin = toLocalRect(deckEl.getBoundingClientRect());
-
-    cards.forEach((card, idx) => {
-      const target = toLocalRect(slotRects[idx]);
-      const dx = origin.centerX - target.centerX;
-      const dy = origin.centerY - target.centerY;
-      card.style.transition = 'none';
-      card.style.opacity = '0';
-      card.style.transform = `translate(${dx}px, ${dy}px) scale(0.96)`;
-      card.style.zIndex = `${FULL_POOL_SIZE - idx}`;
-    });
-
-    requestAnimationFrame(() => {
-      cards.forEach((card, idx) => {
-        setTimeout(() => {
-          card.style.transition = `transform ${duration}ms cubic-bezier(0.22, 0.65, 0.2, 1), opacity ${duration}ms ease`;
-          card.style.opacity = '1';
-          card.style.transform = 'translate(0, 0) scale(1)';
-          card.style.zIndex = '';
-        }, idx * stagger);
+    const list = document.createElement('div');
+    list.className = 'full-picked-row__list';
+    if (!fullState.selectedCards.length) {
+      const empty = document.createElement('p');
+      empty.className = 'full-picked-row__empty';
+      empty.textContent = fullLabels.selectedEmpty;
+      list.appendChild(empty);
+    } else {
+      fullState.selectedCards.forEach((card, order) => {
+        list.appendChild(createThumbnail(card, order));
       });
-    });
-
-    await wait(duration + cards.length * stagger + 50);
-    clearOverlayCards();
-  };
-
-  const animateOverlayCollect = async () => {
-    const slotRects = measureSlotRects();
-    const cards = createOverlayCards(slotRects);
-    const origin = toLocalRect(centerDeck.getBoundingClientRect());
-
-    cards.forEach((card, idx) => {
-      const target = toLocalRect(slotRects[idx]);
-      const dx = origin.centerX - target.centerX;
-      const dy = origin.centerY - target.centerY;
-      card.classList.add('is-clearing');
-      card.style.transition = `transform ${FULL_TIMING.collectDuration}ms cubic-bezier(0.24, 0.62, 0.28, 1), opacity ${FULL_TIMING.collectDuration}ms ease`;
-      setTimeout(() => {
-        card.style.opacity = '0.88';
-        card.style.transform = `translate(${dx}px, ${dy}px) scale(0.96)`;
-      }, idx * FULL_TIMING.collectStagger);
-    });
-
-    await wait(FULL_TIMING.collectDuration + cards.length * FULL_TIMING.collectStagger + 36);
-    clearOverlayCards();
-  };
-
-  const resetFullSelection = async ({ animateClear = false } = {}) => {
-    selectedSlotIndices = [];
-    renderFullSelection();
-    if (animateClear) {
-      await wait(FULL_TIMING.badgeClearDuration);
-      slots.forEach((slot) => slot.classList.remove('is-clearing'));
     }
+    row.appendChild(list);
+    return row;
+  };
+
+  const renderBoardSurface = () => {
+    board.textContent = '';
+
+    const surface = document.createElement('div');
+    surface.className = 'full-selection-stage';
+
+    const preview = document.createElement('div');
+    preview.className = 'full-selection-preview';
+
+    const previewTitle = document.createElement('div');
+    previewTitle.className = 'full-selection-preview__title';
+    previewTitle.textContent = fullLabels.previewTitle;
+    preview.appendChild(previewTitle);
+
+    const previewBody = document.createElement('div');
+    previewBody.className = 'full-selection-preview__body';
+    if (fullState.activeCard) {
+      previewBody.appendChild(createActiveCard(fullState.activeCard));
+    } else {
+      const idle = document.createElement('p');
+      idle.className = 'full-selection-preview__message';
+      idle.textContent = fullState.selectedCards.length === CELTIC_CROSS_COUNT
+        ? fullLabels.previewComplete
+        : fullLabels.previewIdle;
+      previewBody.appendChild(idle);
+    }
+
+    const previewMeta = document.createElement('p');
+    previewMeta.className = 'full-selection-preview__meta';
+    previewMeta.textContent = fullState.activeCard
+      ? fullLabels.previewReady
+      : (fullState.selectedCards.length === CELTIC_CROSS_COUNT ? fullLabels.previewComplete : `${getRemainingCount()} ${isThai ? 'ใบในกองที่เหลือ' : 'cards remaining in the pool'}`);
+    preview.append(previewBody, previewMeta);
+
+    surface.append(preview, renderSelectedRow());
+    board.appendChild(surface);
+  };
+
+  const renderFullUi = () => {
+    const selectedCount = fullState.selectedCards.length;
+    const isPreDeal = fullState.phase === 'preDeal';
+    const isDealt = fullState.phase === 'dealt';
+    const canDraw = isDealt && !fullState.isDrawing && !fullState.activeCard && selectedCount < CELTIC_CROSS_COUNT && getRemainingCount() > 0;
+    const canContinue = isDealt && !fullState.isDrawing && !fullState.activeCard && selectedCount === CELTIC_CROSS_COUNT;
+
+    flow.dataset.fullPhase = fullState.phase;
+    counter.textContent = `${selectedCount}/${CELTIC_CROSS_COUNT}`;
+
+    entry.hidden = !isPreDeal;
+    heroDeck.hidden = !isPreDeal;
+    toolbar.hidden = isPreDeal;
+    actions.hidden = isPreDeal;
+    board.hidden = isPreDeal;
+
+    centerDeck.hidden = !isDealt;
+    centerDeck.classList.toggle('is-clickable', canDraw);
+    centerDeck.setAttribute('aria-hidden', String(!isDealt));
+    centerDeck.setAttribute('aria-disabled', String(!canDraw));
+    centerDeck.tabIndex = canDraw ? 0 : -1;
+
+    animationLayer.hidden = true;
+    animationLayer.textContent = '';
+
+    applyDisabledState(dealBtn, !isPreDeal || fullState.isDrawing);
+    applyDisabledState(shuffleBtn, !isDealt || fullState.isDrawing);
+    applyDisabledState(continueBtn, !canContinue);
+
+    renderBoardSurface();
+  };
+
+  const resetFullState = async ({ preservePhase = false } = {}) => {
+    fullState.pool = getDrawableCards(FULL_POOL_SIZE);
+    fullState.selectedCards = [];
+    fullState.activeCard = null;
+    fullState.activeCardFlipped = false;
+    fullState.isDrawing = false;
+    if (!preservePhase) fullState.phase = 'dealt';
+    renderFullUi();
+    await wait(0);
+  };
+
+  const drawNextCard = async () => {
+    if (fullState.phase !== 'dealt' || fullState.isDrawing || fullState.activeCard || fullState.selectedCards.length >= CELTIC_CROSS_COUNT || !fullState.pool.length) return;
+    const nextCard = fullState.pool.shift();
+    if (!nextCard) return;
+
+    fullState.activeCard = nextCard;
+    fullState.activeCardFlipped = false;
+    fullState.isDrawing = true;
+    renderFullUi();
+
+    await wait(prefersReducedMotion ? 0 : 40);
+    fullState.activeCardFlipped = true;
+    fullState.isDrawing = false;
+    renderFullUi();
   };
 
   const startFullDeal = async () => {
-    if (fullPhase !== 'preDeal' || !state.cards.length || isFullAnimating) return;
-
-    boardCards = getDrawableCards(FULL_POOL_SIZE);
-    ensureFullBoardSlots();
-    hydrateBoardSlots();
-
-    fullPhase = 'dealing';
-    lockFullInteraction();
-    renderFullPhase();
-
-    await animateOverlayDeal(heroDeck);
-
-    fullPhase = 'dealt';
-    restoreStableBoardSurface();
-    renderFullPhase(); // ⚠️ Must run BEFORE triggerDealEntrance — hides center deck first
-    triggerDealEntrance();
-    unlockFullInteraction();
-    renderFullSelection();
+    if (fullState.phase !== 'preDeal' || fullState.isDrawing || !state.cards.length) return;
+    await resetFullState();
   };
 
   const startFullShuffle = async () => {
-    if (fullPhase !== 'dealt' || isFullAnimating) return;
-
-    fullPhase = 'shufflingCollect';
-    lockFullInteraction();
-    renderFullPhase();
-
-    await resetFullSelection({ animateClear: true });
-    await animateOverlayCollect();
-
-    fullPhase = 'shufflingRedeal';
-    renderFullPhase();
-    await playCenterShuffleMotion();
-
-    boardCards = getDrawableCards(FULL_POOL_SIZE);
-    hydrateBoardSlots();
-    renderFullSelection();
-    await animateOverlayDeal(centerDeck, {
-      duration: FULL_TIMING.dealDuration,
-      stagger: FULL_TIMING.dealStagger,
-    });
-
-    fullPhase = 'dealt';
-    restoreStableBoardSurface();
-    renderFullPhase(); // ⚠️ Must run BEFORE triggerDealEntrance — hides center deck first
-    triggerDealEntrance();
-    unlockFullInteraction();
-    renderFullSelection();
+    if (fullState.phase !== 'dealt' || fullState.isDrawing) return;
+    await resetFullState({ preservePhase: true });
   };
 
-  renderFullPhase = () => {
-    flow.dataset.fullPhase = fullPhase;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const isPreDeal = fullPhase === 'preDeal';
-    const isDealing = fullPhase === 'dealing';
-    const isDealt = fullPhase === 'dealt';
-    const isShufflePhase = fullPhase === 'shufflingCollect' || fullPhase === 'shufflingRedeal';
-
-    entry.hidden = !(isPreDeal || isDealing);
-    heroDeck.hidden = !(isPreDeal || isDealing);
-
-    toolbar.hidden = isPreDeal || isDealing;
-    actions.hidden = isPreDeal || isDealing;
-
-    board.hidden = false;
-    board.classList.toggle('is-hidden', isPreDeal || isDealing);
-    board.classList.toggle('is-phase-placeholder', isShufflePhase);
-    board.style.visibility = '';
-    board.style.pointerEvents = '';
-    board.classList.toggle('is-locked', fullPhase !== 'dealt' || isFullAnimating);
-
-    centerDeck.hidden = false;
-    centerDeck.classList.toggle('is-hidden', !isShufflePhase);
-
-    if (!MOTION_PHASES.has(fullPhase) && animationLayer.childElementCount) {
-      clearOverlayCards();
-    }
-    animationLayer.hidden = !MOTION_PHASES.has(fullPhase) && !animationLayer.childElementCount;
-
-    const toolbarDisabled = !isDealt || isFullAnimating || MOTION_PHASES.has(fullPhase);
-    applyDisabledState(shuffleBtn, toolbarDisabled);
-    applyDisabledState(continueBtn, toolbarDisabled || getSelectedCards().length !== OVERALL_SELECTION_COUNT);
-    applyDisabledState(dealBtn, !isPreDeal || isFullAnimating);
+  const handleDeckActivate = () => {
+    void drawNextCard();
   };
+
+  centerDeck.addEventListener('click', handleDeckActivate);
+  centerDeck.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    handleDeckActivate();
+  });
+  centerDeck.setAttribute('role', 'button');
+  centerDeck.setAttribute('aria-label', fullLabels.drawAria);
 
   dealBtn.onclick = () => {
     void startFullDeal();
@@ -794,22 +694,22 @@ function renderOverall() {
     void startFullShuffle();
   };
   continueBtn.onclick = () => {
-    const selectedCards = getSelectedCards();
-    if (fullPhase !== 'dealt' || isFullAnimating || selectedCards.length !== OVERALL_SELECTION_COUNT) return;
-    saveSelectionAndGo({ mode: 'full', spread: 'story', topic: 'generic', cards: selectedCards.map((c) => c.id) });
+    const selectedIds = getSelectedIds();
+    if (fullState.phase !== 'dealt' || fullState.isDrawing || fullState.activeCard || selectedIds.length !== CELTIC_CROSS_COUNT) return;
+    saveSelectionAndGo({ mode: 'full', spread: 'story', topic: 'generic', cards: selectedIds });
   };
 
   ensureDeckStackCards(heroDeck);
   ensureDeckStackCards(centerDeck);
   flow.querySelectorAll('.deck-stack-card').forEach(applyCardBackBackground);
 
-  ensureFullBoardSlots();
-  hydrateBoardSlots();
-  restoreStableBoardSurface();
-  clearOverlayCards();
-  fullPhase = 'preDeal';
-  resetFullSelection();
-  renderFullPhase();
+  fullState.phase = 'preDeal';
+  fullState.pool = [];
+  fullState.selectedCards = [];
+  fullState.activeCard = null;
+  fullState.activeCardFlipped = false;
+  fullState.isDrawing = false;
+  renderFullUi();
 }
 
 function renderQuestion() {
