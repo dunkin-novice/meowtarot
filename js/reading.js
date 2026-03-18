@@ -17,6 +17,7 @@ import {
 } from './data.js';
 import { findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
+import { orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-order.js';
 import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
@@ -2107,7 +2108,8 @@ function renderQuestion(cards, dict) {
   readingContent.innerHTML = '';
 
   const topic = String(state.topic || 'generic').toLowerCase();
-  const positions = ['past', 'present', 'future'];
+  const positions = QUESTION_CARD_POSITIONS;
+  const orderedCards = orderQuestionCards(cards).slice(0, 3);
 
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
@@ -2127,7 +2129,7 @@ function renderQuestion(cards, dict) {
   const spreadGrid = document.createElement('div');
   spreadGrid.className = 'reading-spread-grid';
 
-  cards.slice(0, 3).forEach((card, idx) => {
+  orderedCards.forEach((card, idx) => {
     const cardWrap = document.createElement('button');
     cardWrap.className = 'reading-spread-card';
     cardWrap.type = 'button';
@@ -2157,7 +2159,7 @@ function renderQuestion(cards, dict) {
   readingContent.appendChild(spreadPanel);
 
   if (topicConfig && !isGeneric) {
-    const texts = cards.slice(0, 3).map((card, idx) => ({
+    const texts = orderedCards.map((card, idx) => ({
       label: dict[positions[idx]] || positions[idx],
       text: getText(card, topicConfig.spreadKeys[idx]),
     })).filter((item) => item.text);
@@ -2341,6 +2343,8 @@ function buildSharePayload() {
     };
   });
 
+  const orderedCards = state.mode === 'question' ? orderQuestionCards(cards) : cards;
+  const orderedReadingCards = orderedCards.map((card) => findCard(`${card.id}-${card.orientation}`) || findCard(card.id) || card);
   const primaryCard = cards[0] || null;
   const reading = buildReadingPayload({
     heading: primaryCard?.summary || '',
@@ -2350,16 +2354,16 @@ function buildSharePayload() {
     summary: primaryCard?.summary || '',
     hook: getText(findCard(state.selectedIds[0]), 'hook'),
     action_prompt: getText(findCard(state.selectedIds[0]), 'action_prompt'),
-    reading_summary_past: getText(findCard(state.selectedIds[0]), 'reading_summary_past'),
-    reading_summary_present: getText(findCard(state.selectedIds[1]), 'reading_summary_present'),
-    reading_summary_future: getText(findCard(state.selectedIds[2]), 'reading_summary_future'),
+    reading_summary_past: getText(orderedReadingCards[0], 'reading_summary_past'),
+    reading_summary_present: getText(orderedReadingCards[1], 'reading_summary_present'),
+    reading_summary_future: getText(orderedReadingCards[2], 'reading_summary_future'),
   });
 
   const poster = buildPosterConfig({
     mode: state.mode,
     orientation: primaryCard?.orientation || 'upright',
     backgroundPath: resolvePosterBackgroundPath({
-      payload: { mode: state.mode, cards: cards.map(({ id, orientation }) => ({ id, orientation })) },
+      payload: { mode: state.mode, cards: orderedCards.map(({ id, orientation, position }) => ({ id, orientation, position })) },
     }),
     assetPack: 'meow-v2',
     backPack: 'meow-v2',
@@ -2374,14 +2378,14 @@ function buildSharePayload() {
     mode: state.mode,
     spread: state.spread,
     topic: state.topic,
-    cards: cards.map((card) => ({ id: card.id, orientation: card.orientation })),
+    cards: orderedCards.map((card) => ({ id: card.id, orientation: card.orientation, position: card.position })),
     title: modeTitle,
     subtitle: modeSubtitle,
     headline: dict.yourReading,
     heading: reading.heading,
     reading,
     poster,
-    keywords: cards.map((card) => card.name).filter(Boolean).slice(0, 3),
+    keywords: orderedCards.map((card) => card.name).filter(Boolean).slice(0, 3),
     lucky: {
       colors: normalizeColorArray(findCard(state.selectedIds[0])?.color_palette).slice(0, 6),
       avoidColors: normalizeColorArray(findCard(state.selectedIds[0])?.avoid_color_palette).slice(0, 6),
@@ -2395,10 +2399,10 @@ function buildSharePayload() {
     );
   }
 
-  payload.cards = cards.map((card, index) => {
+  payload.cards = orderedCards.map((card, index) => {
     const withPosterPayload = { ...buildPosterCardPayload(card), id: card.id, orientation: card.orientation };
     if (state.mode === 'question') {
-      const position = ['past', 'present', 'future'][index] || 'present';
+      const position = card.position || QUESTION_CARD_POSITIONS[index] || 'present';
       return { ...withPosterPayload, position };
     }
     if (state.mode === 'full') {
