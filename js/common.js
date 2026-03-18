@@ -370,10 +370,12 @@ export function initShell(state, afterApply, activePage, options = {}) {
   applyLocaleMeta(state.currentLang);
 }
 
-window.addEventListener('beforeunload', () => {
-  navbarCleanup?.();
-  navbarCleanup = null;
-});
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    navbarCleanup?.();
+    navbarCleanup = null;
+  });
+}
 
 function highlightActiveNav(activePage) {
   if (!activePage) return;
