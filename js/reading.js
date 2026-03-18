@@ -120,6 +120,7 @@ function setDailyPhaseAttr(phase = '') {
 
 const readingContent = document.getElementById('reading-content');
 const contextCopy = document.getElementById('reading-context');
+const readingSubcontext = document.getElementById('reading-subcontext');
 const readingTitle = document.getElementById('readingTitle');
 const newReadingBtn = document.getElementById('newReadingBtn');
 const shareBtn = document.getElementById('shareBtn');
@@ -1111,6 +1112,59 @@ function getTopicTitle(dict, titleKey) {
   return dict?.[titleKey]
     || (translations[state.currentLang] || translations.en)[titleKey]
     || titleKey;
+}
+
+function formatReadingTemplate(template = '', replacements = {}) {
+  return String(template || '').replace(/\{(\w+)\}/g, (_, key) => replacements[key] ?? '');
+}
+
+function getQuestionTopicLabel(dict = activeDict) {
+  const topicConfig = getTopicConfig().find((item) => item.key === String(state.topic || '').toLowerCase());
+  if (!topicConfig) return dict?.topicGeneric || translations[state.currentLang]?.topicGeneric || 'Any question';
+  return getTopicTitle(dict, topicConfig.titleKey);
+}
+
+function getQuestionResultKicker(dict = activeDict) {
+  return formatReadingTemplate(dict?.questionResultKicker || 'Ask a Question · {topic}', {
+    topic: getQuestionTopicLabel(dict),
+  }).trim();
+}
+
+function buildQuestionTakeawayPanel(cards = [], dict = activeDict) {
+  const orderedCards = orderQuestionCards(cards).slice(0, 3);
+  if (!orderedCards.length) return null;
+
+  const panel = document.createElement('section');
+  panel.className = 'panel panel--question-takeaway';
+
+  const title = document.createElement('h3');
+  title.textContent = dict?.questionTakeawayTitle || (state.currentLang === 'th' ? 'ข้อสรุปสำคัญ' : 'Your takeaway');
+  panel.appendChild(title);
+
+  const sentences = [];
+  orderedCards.forEach((card, idx) => {
+    const positionKey = QUESTION_CARD_POSITIONS[idx];
+    const templateKey = idx === 0 ? 'summaryPast' : idx === 1 ? 'summaryPresent' : 'summaryFuture';
+    const summaryLine = formatReadingTemplate(dict?.[templateKey] || '', {
+      card: getName(card),
+      position: dict?.[positionKey] || positionKey,
+    }).trim();
+    if (summaryLine) sentences.push(summaryLine);
+  });
+
+  const lead = document.createElement('p');
+  lead.className = 'question-takeaway__lead';
+  lead.textContent = formatReadingTemplate(dict?.questionTakeawayLead || 'Taken together, your cards suggest {summary}', {
+    summary: sentences.join(' '),
+  }).trim();
+  panel.appendChild(lead);
+
+  const advice = document.createElement('p');
+  advice.className = 'question-takeaway__advice';
+  advice.textContent = dict?.summaryAdvice || '';
+  panel.appendChild(advice);
+
+  return panel;
 }
 
 function isEnergyBalanceDebugEnabled() {
@@ -2116,15 +2170,27 @@ function renderQuestion(cards, dict) {
   const isGeneric = topic === 'generic' || topic === 'other';
 
   if (topicConfig && !isGeneric) {
-    const topicLabelPanel = document.createElement('div');
-    topicLabelPanel.className = 'panel';
+    const topicLabelPanel = document.createElement('section');
+    topicLabelPanel.className = 'panel panel--question-topic';
+
+    const topicMeta = document.createElement('p');
+    topicMeta.className = 'panel-kicker';
+    topicMeta.textContent = dict?.questionTopicLabel || (state.currentLang === 'th' ? 'หัวข้อ' : 'Topic');
+    topicLabelPanel.appendChild(topicMeta);
+
     const topicLabel = document.createElement('h3');
-    topicLabel.textContent = getTopicTitle(dict, topicConfig.titleKey);
+    topicLabel.textContent = getQuestionResultKicker(dict);
     topicLabelPanel.appendChild(topicLabel);
+
+    const topicBody = document.createElement('p');
+    topicBody.className = 'topic-copy';
+    topicBody.textContent = dict?.questionResultContext || '';
+    topicLabelPanel.appendChild(topicBody);
+
     readingContent.appendChild(topicLabelPanel);
   }
 
-  const spreadPanel = document.createElement('div');
+  const spreadPanel = document.createElement('section');
   spreadPanel.className = 'panel panel--spread';
 
   const spreadGrid = document.createElement('div');
@@ -2165,19 +2231,32 @@ function renderQuestion(cards, dict) {
       text: getText(card, topicConfig.spreadKeys[idx]),
     })).filter((item) => item.text);
 
-    const topicPanel = document.createElement('div');
-    topicPanel.className = 'panel';
+    const topicPanel = document.createElement('section');
+    topicPanel.className = 'panel panel--question-story';
     const section = document.createElement('div');
     section.className = 'deeper-section';
 
     const h3 = document.createElement('h3');
-    h3.textContent = getTopicTitle(dict, topicConfig.titleKey);
+    h3.textContent = formatReadingTemplate(dict?.questionTopicPanelTitle || '{topic} perspective', {
+      topic: getTopicTitle(dict, topicConfig.titleKey),
+    });
     section.appendChild(h3);
 
     texts.forEach((item) => {
-      const p = document.createElement('p');
-      p.innerHTML = `<strong>${item.label}:</strong> ${item.text}`;
-      section.appendChild(p);
+      const block = document.createElement('div');
+      block.className = 'question-story-item';
+
+      const label = document.createElement('p');
+      label.className = 'question-story-item__label';
+      label.textContent = item.label;
+      block.appendChild(label);
+
+      const body = document.createElement('p');
+      body.className = 'question-story-item__body';
+      body.textContent = item.text;
+      block.appendChild(body);
+
+      section.appendChild(block);
     });
 
     topicPanel.appendChild(section);
@@ -2190,6 +2269,9 @@ function renderQuestion(cards, dict) {
     const meta = buildMetaPanel(cards[1] || cards[0]);
     if (meta) readingContent.appendChild(meta);
   }
+
+  const takeawayPanel = buildQuestionTakeawayPanel(orderedCards, dict);
+  if (takeawayPanel) readingContent.appendChild(takeawayPanel);
 
   const energyPanel = buildEnergyPanel(cards, dict);
   if (energyPanel) {
@@ -2308,13 +2390,13 @@ function buildSharePayload() {
   const dict = translations[state.currentLang] || translations.en;
   const modeTitle =
     state.mode === 'question'
-      ? dict.questionTitle
+      ? formatReadingTemplate(dict.questionShareTitle || 'Ask a Question · {topic}', { topic: getQuestionTopicLabel(dict) })
       : state.mode === 'full'
         ? dict.overallTitle
         : dict.dailyTitle;
   const modeSubtitle =
     state.mode === 'question'
-      ? dict.questionSpreadNote
+      ? (dict.questionShareSubtitle || dict.questionSpreadNote)
       : state.mode === 'full'
         ? dict.readingSubtitle
         : dict.spreadQuick;
@@ -2532,14 +2614,17 @@ async function openSharePage({ action } = {}) {
 }
 
 function updateContextCopy(dict = translations[state.currentLang]) {
-  if (!contextCopy) return;
-
-  if (isMobile()) {
-    contextCopy.textContent = '';
+  if (state.mode === 'question') {
+    if (contextCopy) contextCopy.textContent = getQuestionResultKicker(dict);
+    if (readingSubcontext) readingSubcontext.textContent = dict?.questionResultContext || '';
     return;
   }
 
-  contextCopy.textContent = state.mode === 'question' ? '' : dict.contextDaily;
+  if (contextCopy) {
+    if (isMobile()) contextCopy.textContent = '';
+    else contextCopy.textContent = dict.contextDaily;
+  }
+  if (readingSubcontext) readingSubcontext.textContent = '';
 }
 
 function downscaleCanvas(canvas, maxWidth = 1080) {
@@ -2695,8 +2780,8 @@ function configureActionButtons(dict = translations[state.currentLang]) {
   if (shareBtn) {
     shareBtn.textContent = mobile
       ? state.currentLang === 'th'
-        ? 'แชร์คำทำนายอย่างละเอียด'
-        : 'Share detailed result'
+        ? 'คัดลอกลิงก์คำทำนาย'
+        : 'Copy reading link'
       : (dict.share || shareBtn.textContent);
     shareBtn.disabled = state.selectedIds.length === 0;
   }

@@ -47,6 +47,26 @@ body {
   gap: 12px;
 }
 
+.share-intro {
+  width: min(100%, 420px);
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.share-intro__eyebrow {
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.share-intro__body {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .poster-loading {
   margin-top: 12px;
   font-size: 0.9rem;
