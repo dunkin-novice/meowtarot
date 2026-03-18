@@ -1,3 +1,5 @@
+import { orderQuestionCards } from '../js/question-card-order.js';
+
 function asObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
@@ -38,8 +40,6 @@ function normalizeOrientation(value) {
 
 const FULL_POSITIONS = ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'];
 const LEGACY_FULL_POSITIONS = ['past', 'present', 'future'];
-const QUESTION_POSITIONS = ['past', 'present', 'future'];
-
 function normalizeCards(cards = []) {
   return cards
     .filter((item) => item && typeof item === 'object')
@@ -63,10 +63,7 @@ export function normalizePayload(raw) {
   const mode = normalizeMode(source.mode || source?.poster?.mode);
   let cards = normalizeCards(resolveCards(source, reading));
   if (mode === 'question') {
-    cards = cards.map((card, index) => ({
-      ...card,
-      position: card.position || (cards.length === 1 ? 'present' : (QUESTION_POSITIONS[index] || 'present')),
-    }));
+    cards = orderQuestionCards(cards);
   }
   if (mode === 'full' && cards.length >= 10) {
     cards = cards.map((card, index) => ({ ...card, position: card.position || FULL_POSITIONS[index] || FULL_POSITIONS[FULL_POSITIONS.length - 1] }));

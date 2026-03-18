@@ -19,6 +19,7 @@ import {
   toAssetUrl,
 } from '../js/asset-resolver.js';
 import { translations } from '../js/common.js';
+import { orderQuestionCards } from '../js/question-card-order.js';
 
 
 const PRESETS = {
@@ -591,9 +592,12 @@ async function buildCardEntries(payload) {
     });
     posterDebugLog('log', '[Poster] buildCardEntries: reloaded tarot data', meowTarotCards.length);
   }
-  const cards = Array.isArray(payload?.cards)
+  const rawCards = Array.isArray(payload?.cards)
     ? payload.cards
     : (payload?.card && typeof payload.card === 'object' ? [payload.card] : []);
+  const cards = String(payload?.mode || '').toLowerCase() === 'question'
+    ? orderQuestionCards(rawCards)
+    : rawCards;
   return cards
     .map((entry) => {
       const orientation = toOrientation(entry?.orientation || entry?.id || 'upright');
@@ -1322,9 +1326,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   }
 
   if (String(payload?.mode || '').toLowerCase() === 'question' && preset === 'story') {
-    const cardEntries = (await buildCardEntries(payload)).slice(0, 3);
-    const questionStrings = getQuestionPosterStrings(payload);
-    const questionCardCount = Array.isArray(payload?.cards) && payload.cards.length === 1 ? 1 : 3;
+    const orderedQuestionCards = orderQuestionCards(Array.isArray(payload?.cards) ? payload.cards : []);
+    const questionPayload = { ...payload, cards: orderedQuestionCards };
+    const cardEntries = (await buildCardEntries(questionPayload)).slice(0, 3);
+    const questionStrings = getQuestionPosterStrings(questionPayload);
+    const questionCardCount = orderedQuestionCards.length === 1 ? 1 : 3;
     const slots = questionCardCount === 1 ? [questionStrings.positions[1]] : questionStrings.positions;
     const cardGap = 20;
     const baseCardW = 290;
@@ -1347,7 +1353,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     for (let i = 0; i < questionCardCount; i += 1) {
       const entry = cardEntries[i] || null;
-      const payloadCard = payload?.cards?.[i] || {};
+      const payloadCard = orderedQuestionCards[i] || {};
       const fallbackBaseId = baseCardId(payloadCard?.id || payloadCard?.card_id || payloadCard?.image_id || `slot-${i + 1}`);
       const sourceCard = entry?.card || payloadCard;
       const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
