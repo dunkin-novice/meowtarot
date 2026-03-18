@@ -2538,7 +2538,7 @@ function updateContextCopy(dict = translations[state.currentLang]) {
     return;
   }
 
-  contextCopy.textContent = state.mode === 'question' ? dict.contextQuestion : dict.contextDaily;
+  contextCopy.textContent = state.mode === 'question' ? '' : dict.contextDaily;
 }
 
 function downscaleCanvas(canvas, maxWidth = 1080) {
