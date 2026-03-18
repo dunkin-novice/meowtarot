@@ -10,6 +10,7 @@ function asString(value, fallback = '') {
 function normalizeMode(rawMode) {
   const value = String(rawMode || '').toLowerCase().trim();
   if (['full', 'overall', 'life'].includes(value)) return 'full';
+  if (['question', 'ask'].includes(value)) return 'question';
   return 'single';
 }
 
@@ -54,7 +55,12 @@ export function normalizePayload(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const source = asObject(raw);
   const reading = resolveReading(source);
-  const cards = normalizeCards(resolveCards(source, reading));
+  const mode = normalizeMode(source.mode || source?.poster?.mode);
+  let cards = normalizeCards(resolveCards(source, reading));
+  // legacy single-card question payloads
+  if (mode === 'question' && cards.length === 1) {
+    cards = cards.map((card) => ({ ...card, position: card.position || 'present' }));
+  }
   const posterSource = asObject(source.poster);
 
   const title = asString(posterSource.title ?? source.title, 'MeowTarot Reading');
@@ -63,7 +69,7 @@ export function normalizePayload(raw) {
 
   return {
     ...source,
-    mode: normalizeMode(source.mode || source?.poster?.mode),
+    mode,
     reading,
     cards,
     title,

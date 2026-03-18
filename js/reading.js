@@ -2011,45 +2011,92 @@ function renderQuestion(cards, dict) {
   readingContent.innerHTML = '';
 
   const topic = String(state.topic || 'generic').toLowerCase();
-  const card = cards[0];
-
-  const panel = document.createElement('div');
-  panel.className = 'panel';
-
-  panel.appendChild(buildCardArt(card, 'hero'));
-
-  const h2 = document.createElement('h2');
-  h2.textContent = `${getName(card)} — ${getOrientationEnglish(card)}`;
-  panel.appendChild(h2);
-
-  const main = getText(card, 'standalone_present');
-  if (main) {
-    const p = document.createElement('p');
-    p.className = 'lede';
-    p.textContent = main;
-    panel.appendChild(p);
-  }
-
-  readingContent.appendChild(panel);
+  const positions = ['past', 'present', 'future'];
 
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
 
   if (topicConfig && !isGeneric) {
-    const topicPanel = buildTopicPanel(
-      getTopicTitle(dict, topicConfig.titleKey),
-      getText(card, topicConfig.singleKey)
-    );
-    if (topicPanel) readingContent.appendChild(topicPanel);
-    return;
+    const topicLabelPanel = document.createElement('div');
+    topicLabelPanel.className = 'panel';
+    const topicLabel = document.createElement('h3');
+    topicLabel.textContent = getTopicTitle(dict, topicConfig.titleKey);
+    topicLabelPanel.appendChild(topicLabel);
+    readingContent.appendChild(topicLabelPanel);
   }
 
-  const heading = state.currentLang === 'th' ? 'คำแนะนำ' : (dict.guidanceHeading || dict.suggestionTitle || 'Guidance');
-  const suggestion = buildSuggestionPanel(card, dict, heading);
-  if (suggestion) readingContent.appendChild(suggestion);
+  const spreadPanel = document.createElement('div');
+  spreadPanel.className = 'panel panel--spread';
 
-  const meta = buildMetaPanel(card);
-  if (meta) readingContent.appendChild(meta);
+  const spreadGrid = document.createElement('div');
+  spreadGrid.className = 'reading-spread-grid';
+
+  cards.slice(0, 3).forEach((card, idx) => {
+    const cardWrap = document.createElement('button');
+    cardWrap.className = 'reading-spread-card';
+    cardWrap.type = 'button';
+    cardWrap.setAttribute('aria-label', `${dict[positions[idx]] || positions[idx]}`);
+
+    cardWrap.appendChild(buildCardArt(card, 'thumb'));
+
+    const caption = document.createElement('div');
+    caption.className = 'spread-caption';
+
+    const label = document.createElement('div');
+    label.className = 'spread-label';
+    label.textContent = dict[positions[idx]] || positions[idx];
+    caption.appendChild(label);
+
+    const orientation = document.createElement('div');
+    orientation.className = 'spread-orientation';
+    orientation.textContent = getOrientationLabel(toOrientation(card), state.currentLang);
+    caption.appendChild(orientation);
+
+    cardWrap.appendChild(caption);
+    cardWrap.addEventListener('click', () => openCardSheet(card));
+    spreadGrid.appendChild(cardWrap);
+  });
+
+  spreadPanel.appendChild(spreadGrid);
+  readingContent.appendChild(spreadPanel);
+
+  if (topicConfig && !isGeneric) {
+    const texts = cards.slice(0, 3).map((card, idx) => ({
+      label: dict[positions[idx]] || positions[idx],
+      text: getText(card, topicConfig.spreadKeys[idx]),
+    })).filter((item) => item.text);
+
+    const topicPanel = document.createElement('div');
+    topicPanel.className = 'panel';
+    const section = document.createElement('div');
+    section.className = 'deeper-section';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = getTopicTitle(dict, topicConfig.titleKey);
+    section.appendChild(h3);
+
+    texts.forEach((item) => {
+      const p = document.createElement('p');
+      p.innerHTML = `<strong>${item.label}:</strong> ${item.text}`;
+      section.appendChild(p);
+    });
+
+    topicPanel.appendChild(section);
+    if (topicPanel) readingContent.appendChild(topicPanel);
+  } else {
+    const heading = state.currentLang === 'th' ? 'คำแนะนำ' : (dict.guidanceHeading || dict.suggestionTitle || 'Guidance');
+    const suggestion = buildSuggestionPanel(cards[1] || cards[0], dict, heading);
+    if (suggestion) readingContent.appendChild(suggestion);
+
+    const meta = buildMetaPanel(cards[1] || cards[0]);
+    if (meta) readingContent.appendChild(meta);
+  }
+
+  const energyPanel = buildEnergyPanel(cards, dict);
+  if (energyPanel) {
+    energyPanel.classList.add('energy-panel--subtle');
+    readingContent.appendChild(energyPanel);
+  }
 }
 
 function renderReading(dict) {
@@ -2252,7 +2299,12 @@ function buildSharePayload() {
     );
   }
 
-  payload.cards = cards.map((card) => ({ ...buildPosterCardPayload(card), id: card.id, orientation: card.orientation }));
+  payload.cards = cards.map((card, index) => {
+    const withPosterPayload = { ...buildPosterCardPayload(card), id: card.id, orientation: card.orientation };
+    if (state.mode !== 'question') return withPosterPayload;
+    const position = ['past', 'present', 'future'][index] || 'present';
+    return { ...withPosterPayload, position };
+  });
 
   shareCiLog('share_payload', {
     mode: payload.mode,
