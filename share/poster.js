@@ -1249,11 +1249,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const staffGapY = 265;
     const layoutByPosition = {
       above: { x: crossCenterX, y: crossCenterY - crossOffsetY, labelX: crossCenterX, labelY: crossCenterY - crossOffsetY + cardH + 28 },
-      below: { x: crossCenterX - crossOffsetX, y: crossCenterY, labelX: crossCenterX - crossOffsetX, labelY: crossCenterY + cardH + 28 },
+      below: { x: crossCenterX, y: crossCenterY + crossOffsetY, labelX: crossCenterX, labelY: crossCenterY + crossOffsetY + cardH + 28 },
       present: { x: crossCenterX, y: crossCenterY, labelX: crossCenterX, labelY: crossCenterY + cardH + 28 },
       challenge: { x: crossCenterX, y: crossCenterY, rotated: true, labelX: crossCenterX + cardH / 2 + 56, labelY: crossCenterY + 8, labelAlign: 'left', orientationX: crossCenterX + cardH / 2 + 56, orientationY: crossCenterY + 34, orientationAlign: 'left' },
       future: { x: crossCenterX + crossOffsetX, y: crossCenterY, labelX: crossCenterX + crossOffsetX, labelY: crossCenterY + cardH + 28 },
-      past: { x: crossCenterX, y: crossCenterY + crossOffsetY, labelX: crossCenterX, labelY: crossCenterY + crossOffsetY + cardH + 28 },
+      past: { x: crossCenterX - crossOffsetX, y: crossCenterY, labelX: crossCenterX - crossOffsetX, labelY: crossCenterY + cardH + 28 },
       outcome: { x: staffX, y: staffStartY, labelX: staffX, labelY: staffStartY + cardH + 28 },
       hopes: { x: staffX, y: staffStartY + staffGapY, labelX: staffX, labelY: staffStartY + staffGapY + cardH + 28 },
       external: { x: staffX, y: staffStartY + staffGapY * 2, labelX: staffX, labelY: staffStartY + staffGapY * 2 + cardH + 28 },

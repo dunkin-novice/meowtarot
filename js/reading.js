@@ -65,7 +65,7 @@ function parseSelectedIds() {
   const single = params.get('card') || params.get('id');
   if (single) return [single.trim()].filter(Boolean);
 
-  const paramCards = params.get('cards');
+  const paramCards = params.get('ids') || params.get('cards');
   const storedCards = storageSelection?.cards;
 
   const combined = paramCards || (Array.isArray(storedCards) ? storedCards.join(',') : storedCards);
@@ -609,6 +609,7 @@ function findCard(id) {
 
 function getExpectedCardCount(mode = 'daily') {
   if (mode === 'daily') return 1;
+  if (mode === 'full') return FULL_CELTIC_POSITION_KEYS.length;
   return 3;
 }
 

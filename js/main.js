@@ -108,6 +108,7 @@ function saveSelectionAndGo({ mode, spread, topic, cards }) {
     mode,
     spread,
     topic,
+    ids: cards.join(','),
     cards: cards.join(','),
     lang: state.currentLang,
   });
