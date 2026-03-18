@@ -215,7 +215,7 @@ Notes:
 ## Active vs legacy paths
 
 - Active poster path: `reading.js` payload build → `/share/index.html` → `share/share.js` → `share/poster.js` canvas renderer.
-- Legacy/secondary path still present: `saveImage()` in `reading.js` (and similarly in `js/app.js`) captures DOM via `html2canvas` for direct save. This is separate from share-poster canvas rendering.
+- Legacy/secondary path still present: `saveImage()` in `reading.js` captures DOM via `html2canvas` for direct save. This is separate from share-poster canvas rendering.
 
 ## Maintenance hotspots
 

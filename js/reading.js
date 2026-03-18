@@ -23,10 +23,23 @@ import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 
 const params = new URLSearchParams(window.location.search);
 const hasUrlSelection = ['cards', 'card', 'id', 'mode', 'topic', 'spread'].some((key) => params.has(key));
-const storageSelection = hasUrlSelection
-  ? null
-  : JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
+
+function readStoredSelection() {
+  if (hasUrlSelection) return null;
+  try {
+    return JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
+  } catch (_) {
+    return null;
+  }
+}
+
+const storageSelection = readStoredSelection();
 const DEBUG_CAPTURE_ERRORS = false;
+
+function isValidMode(raw = '') {
+  const val = String(raw || '').toLowerCase().trim();
+  return ['daily', 'day', 'full', 'overall', 'life', 'question', 'ask'].includes(val);
+}
 
 function normalizeMode(raw = '') {
   const val = String(raw || '').toLowerCase().trim();
@@ -34,6 +47,17 @@ function normalizeMode(raw = '') {
   if (['full', 'overall', 'life'].includes(val)) return 'full';
   if (['question', 'ask'].includes(val)) return 'question';
   return 'daily';
+}
+
+function defaultSpreadForMode(mode = 'daily') {
+  if (mode === 'daily') return 'quick';
+  if (mode === 'question') return 'story';
+  return 'story';
+}
+
+function hydrateSpread(rawSpread, mode) {
+  const spread = String(rawSpread || '').trim();
+  return spread || defaultSpreadForMode(mode);
 }
 
 function parseSelectedIds() {
@@ -53,9 +77,13 @@ function parseSelectedIds() {
     .filter(Boolean);
 }
 
+const rawHydratedMode = params.get('mode') || storageSelection?.mode || 'daily';
+const hydratedMode = normalizeMode(rawHydratedMode);
+
 const state = {
   currentLang: params.get('lang') || (pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en'),
-  mode: normalizeMode(params.get('mode') || storageSelection?.mode || 'daily'),
+  mode: hydratedMode,
+  spread: hydrateSpread(params.get('spread') || storageSelection?.spread, hydratedMode),
   topic: params.get('topic') || storageSelection?.topic || 'generic',
   selectedIds: parseSelectedIds(),
 };
@@ -574,6 +602,50 @@ function findCard(id) {
   }
 
   return null;
+}
+
+function getExpectedCardCount(mode = 'daily') {
+  if (mode === 'daily') return 1;
+  return 3;
+}
+
+function getEntryPathForMode(mode = 'daily') {
+  if (mode === 'question') return '/question.html';
+  if (mode === 'full') return '/full.html';
+  return '/daily.html';
+}
+
+function redirectToSafeEntry(mode = 'daily') {
+  window.location.replace(localizePath(getEntryPathForMode(mode), state.currentLang));
+}
+
+function validateReadingState() {
+  if (!isValidMode(rawHydratedMode)) {
+    redirectToSafeEntry('daily');
+    return false;
+  }
+
+  const expectedCount = getExpectedCardCount(state.mode);
+  const selectedCount = state.selectedIds.length;
+
+  if (state.mode === 'daily') {
+    if (selectedCount > expectedCount) state.selectedIds = [];
+  } else if (selectedCount !== expectedCount) {
+    redirectToSafeEntry(state.mode);
+    return false;
+  }
+
+  const resolvedCount = state.selectedIds.map((id) => findCard(id)).filter(Boolean).length;
+  if (resolvedCount !== selectedCount) {
+    if (state.mode === 'daily') {
+      state.selectedIds = [];
+      return true;
+    }
+    redirectToSafeEntry(state.mode);
+    return false;
+  }
+
+  return true;
 }
 
 function resolveImageIds(card, targetOrientation = toOrientation(card)) {
@@ -2276,7 +2348,7 @@ function buildSharePayload() {
     version: 1,
     lang: state.currentLang,
     mode: state.mode,
-    spread: state.mode === 'daily' ? 'quick' : state.spread,
+    spread: state.spread,
     topic: state.topic,
     cards: cards.map((card) => ({ id: card.id, orientation: card.orientation })),
     title: modeTitle,
@@ -2636,6 +2708,7 @@ function handleTranslations(dict) {
   }
 
   if (dataLoaded) {
+    if (!validateReadingState()) return;
     renderReading(dict);
     hasRendered = true;
   }
@@ -2643,6 +2716,7 @@ function handleTranslations(dict) {
 
 function maybeRenderReading() {
   if (hasRendered || !dataLoaded || !translationsReady) return;
+  if (!validateReadingState()) return;
   renderReading(activeDict);
   hasRendered = true;
 }

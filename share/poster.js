@@ -18,6 +18,7 @@ import {
   resolvePosterBackgroundPath,
   toAssetUrl,
 } from '../js/asset-resolver.js';
+import { translations } from '../js/common.js';
 
 
 const PRESETS = {
@@ -564,6 +565,16 @@ function emitFullCardRenderProbe(payload = {}) {
 function toSafeText(value, fallback = '') {
   if (value == null) return fallback;
   return String(value);
+}
+
+function getQuestionPosterStrings(payload = {}) {
+  const lang = payload?.lang || 'en';
+  const dict = translations[lang] || translations.en;
+  return {
+    title: toSafeText(payload?.poster?.title ?? payload?.title, dict.questionTitle || dict.yourReading || '3-Card Spread'),
+    subtitle: toSafeText(payload?.poster?.subtitle ?? payload?.subtitle, dict.questionSpreadNote || ''),
+    positions: [dict.past || 'Past', dict.present || 'Present', dict.future || 'Future'],
+  };
 }
 
 async function buildCardEntries(payload) {
@@ -1648,12 +1659,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
   if (String(payload?.mode || '').toLowerCase() === 'question' && preset === 'story') {
     const cardEntries = (await buildCardEntries(payload)).slice(0, 3);
-    const slots = ['past', 'present', 'future'];
+    const questionStrings = getQuestionPosterStrings(payload);
+    const questionCardCount = Array.isArray(payload?.cards) && payload.cards.length === 1 ? 1 : 3;
+    const slots = questionCardCount === 1 ? [questionStrings.positions[1]] : questionStrings.positions;
     const cardGap = 20;
     const baseCardW = 290;
     const cardW = Math.round(baseCardW * 0.95);
     const cardH = Math.round(cardW * 1.5);
-    const totalW = cardW * 3 + cardGap * 2;
+    const totalW = cardW * questionCardCount + cardGap * Math.max(0, questionCardCount - 1);
     const startX = (width - totalW) / 2;
     const cardY = 290;
 
@@ -1662,13 +1675,13 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.font = '700 62px "Poppins", "Space Grotesk", sans-serif';
     ctx.shadowColor = 'rgba(0,0,0,0.65)';
     ctx.shadowBlur = 14;
-    ctx.fillText('MeowTarot', width / 2, 100);
+    ctx.fillText(questionStrings.title, width / 2, 100);
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#efe4c2';
     ctx.font = '500 24px "Space Grotesk", sans-serif';
-    drawTrackingText(ctx, 'Your Tarot Reading', width / 2, 142, 0.8);
+    drawTrackingText(ctx, questionStrings.subtitle, width / 2, 142, 0.8);
 
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < questionCardCount; i += 1) {
       const entry = cardEntries[i] || null;
       const payloadCard = payload?.cards?.[i] || {};
       const fallbackBaseId = baseCardId(payloadCard?.id || payloadCard?.card_id || payloadCard?.image_id || `slot-${i + 1}`);
@@ -1705,10 +1718,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         console.warn('[Poster] question card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
       }
 
-      const positionLabel = slots[i] || 'present';
+      const positionLabel = slots[i] || questionStrings.positions[1];
       ctx.fillStyle = '#f7f4ee';
       ctx.font = '600 24px "Space Grotesk", sans-serif';
-      ctx.fillText(positionLabel.charAt(0).toUpperCase() + positionLabel.slice(1), x + cardW / 2, y + cardH + 36);
+      ctx.fillText(positionLabel, x + cardW / 2, y + cardH + 36);
     }
 
     ctx.fillStyle = '#aab0c9';
