@@ -6,7 +6,7 @@ function toText(value) {
 
 export function buildPosterConfig({ mode = 'full', orientation = 'upright', backgroundPath, assetPack = 'meow-v2', backPack = 'meow-v2' } = {}) {
   return {
-    mode: mode === 'daily' ? 'daily' : 'full',
+    mode: mode === 'daily' ? 'daily' : mode === 'question' ? 'question' : 'full',
     orientation: orientation === 'reversed' ? 'reversed' : 'upright',
     backgroundPath: toText(backgroundPath),
     assetPack,
