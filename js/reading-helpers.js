@@ -1,4 +1,5 @@
 import { normalizeId } from './data.js';
+import { normalizeQuestionCardPosition, orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-order.js';
 
 export function getBaseId(id, normalizeFn = normalizeId) {
   const normalized = normalizeFn(String(id ?? ''));
@@ -108,4 +109,62 @@ export function findCardById(cards, id, normalizeFn = normalizeId) {
     || tryFind(orientedCandidates, false)
     || tryFind(fallbackCandidates, false)
   );
+}
+
+function normalizeQuestionTopic(topic = '') {
+  const normalized = String(topic || '').toLowerCase().trim();
+  return ['love', 'career', 'finance'].includes(normalized) ? normalized : 'other';
+}
+
+export function getQuestionMeaningField(topic = 'other', position = 'present') {
+  const normalizedPosition = normalizeQuestionCardPosition(position) || 'present';
+  const normalizedTopic = normalizeQuestionTopic(topic);
+  const fieldPrefix = normalizedTopic === 'other' ? 'standalone' : normalizedTopic;
+  return `${fieldPrefix}_${normalizedPosition}_en`;
+}
+
+export function buildQuestionReadingInputPayload({ topic = 'other', selectedIds = [], cards = [] } = {}) {
+  const orderedSelections = orderQuestionCards(
+    (Array.isArray(selectedIds) ? selectedIds : []).map((entry) => (
+      entry && typeof entry === 'object'
+        ? { ...entry }
+        : { id: entry }
+    )),
+  ).slice(0, QUESTION_CARD_POSITIONS.length);
+
+  const spread = orderedSelections
+    .map((selection, index) => {
+      const position = normalizeQuestionCardPosition(selection?.position) || QUESTION_CARD_POSITIONS[index] || 'present';
+      const selectedId = selection?.id || selection?.card_id || selection?.seo_slug_en || '';
+      const card = findCardById(cards, selectedId, normalizeId);
+      if (!card) return null;
+
+      return {
+        position,
+        card: card.card_name_en || card.name_en || card.name || card.id || selectedId,
+        meaning: card[getQuestionMeaningField(topic, position)] || '',
+        reading_summary_preview_en: card.reading_summary_preview_en || '',
+        _action_prompt_en: card.action_prompt_en || '',
+        _reflection_question_en: card.reflection_question_en || '',
+        _affirmation_en: card.affirmation_en || '',
+      };
+    })
+    .filter(Boolean);
+
+  const presentCard = spread.find((card) => card.position === 'present') || spread[1] || null;
+
+  return {
+    topic: normalizeQuestionTopic(topic),
+    cards: spread.map((card) => ({
+      position: card.position,
+      card: card.card,
+      meaning: card.meaning,
+      reading_summary_preview_en: card.reading_summary_preview_en,
+    })),
+    action: {
+      prompt: presentCard?._action_prompt_en || '',
+      reflection: presentCard?._reflection_question_en || '',
+      affirmation: presentCard?._affirmation_en || '',
+    },
+  };
 }

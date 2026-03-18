@@ -5,9 +5,11 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { normalizeCards, normalizeId } from '../js/data.js';
 import {
+  buildQuestionReadingInputPayload,
   findCardById,
   getBaseCardId,
   getBaseId,
+  getQuestionMeaningField,
   getOrientation,
   matchesCardId,
   toSeoSlugFromId,
@@ -75,4 +77,48 @@ test('each base card appears in both upright and reversed orientations', () => {
   }
 
   assert.strictEqual(deck.length, baseIds.size * 2, 'deck should be doubled by orientation');
+});
+
+test('getQuestionMeaningField switches to standalone for non-specialized topics', () => {
+  assert.strictEqual(getQuestionMeaningField('love', 'past'), 'love_past_en');
+  assert.strictEqual(getQuestionMeaningField('career', 'present'), 'career_present_en');
+  assert.strictEqual(getQuestionMeaningField('finance', 'future'), 'finance_future_en');
+  assert.strictEqual(getQuestionMeaningField('other', 'future'), 'standalone_future_en');
+  assert.strictEqual(getQuestionMeaningField('self', 'past'), 'standalone_past_en');
+});
+
+test('buildQuestionReadingInputPayload derives question input from selected cards and repo data', () => {
+  const payload = buildQuestionReadingInputPayload({
+    topic: 'career',
+    selectedIds: ['01-the-fool-upright', '02-the-magician-reversed', '03-the-high-priestess-upright'],
+    cards: deck,
+  });
+
+  assert.deepStrictEqual(payload.cards.map((card) => [card.position, card.card]), [
+    ['past', 'The Fool'],
+    ['present', 'The Magician'],
+    ['future', 'The High Priestess'],
+  ]);
+
+  assert.strictEqual(
+    payload.cards[0].meaning,
+    deck.find((card) => card.id === '01-the-fool-upright')?.career_past_en,
+  );
+  assert.strictEqual(
+    payload.cards[1].meaning,
+    deck.find((card) => card.id === '02-the-magician-reversed')?.career_present_en,
+  );
+  assert.strictEqual(
+    payload.cards[2].meaning,
+    deck.find((card) => card.id === '03-the-high-priestess-upright')?.career_future_en,
+  );
+  assert.strictEqual(
+    payload.cards[1].reading_summary_preview_en,
+    deck.find((card) => card.id === '02-the-magician-reversed')?.reading_summary_preview_en,
+  );
+  assert.deepStrictEqual(payload.action, {
+    prompt: deck.find((card) => card.id === '02-the-magician-reversed')?.action_prompt_en || '',
+    reflection: deck.find((card) => card.id === '02-the-magician-reversed')?.reflection_question_en || '',
+    affirmation: deck.find((card) => card.id === '02-the-magician-reversed')?.affirmation_en || '',
+  });
 });
