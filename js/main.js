@@ -9,8 +9,9 @@ import {
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
-const OVERALL_SELECTION_COUNT = 3;
+const OVERALL_SELECTION_COUNT = 10;
 const QUESTION_SELECTION_COUNT = 3;
+const FULL_BOARD_COUNT = 10;
 const ORIENTATION_REVERSED_PROBABILITY = 0.5;
 const STORAGE_KEY = 'meowtarot_selection';
 const DAILY_SELECTION_MAX = 1;
@@ -487,10 +488,10 @@ function renderOverall() {
   };
 
   const ensureFullBoardSlots = () => {
-    if (slots.length === BOARD_CARD_COUNT) return;
+    if (slots.length === FULL_BOARD_COUNT) return;
     slots = [];
     board.textContent = '';
-    for (let i = 0; i < BOARD_CARD_COUNT; i += 1) {
+    for (let i = 0; i < FULL_BOARD_COUNT; i += 1) {
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'card-slot card-visible';
@@ -652,7 +653,7 @@ function renderOverall() {
       card.style.transition = 'none';
       card.style.opacity = '0';
       card.style.transform = `translate(${dx}px, ${dy}px) scale(0.96)`;
-      card.style.zIndex = `${BOARD_CARD_COUNT - idx}`;
+      card.style.zIndex = `${FULL_BOARD_COUNT - idx}`;
     });
 
     requestAnimationFrame(() => {
@@ -703,7 +704,7 @@ function renderOverall() {
   const startFullDeal = async () => {
     if (fullPhase !== 'preDeal' || !state.cards.length || isFullAnimating) return;
 
-    boardCards = getDrawableCards(BOARD_CARD_COUNT);
+    boardCards = getDrawableCards(FULL_BOARD_COUNT);
     ensureFullBoardSlots();
     hydrateBoardSlots();
 
@@ -735,7 +736,7 @@ function renderOverall() {
     renderFullPhase();
     await playCenterShuffleMotion();
 
-    boardCards = getDrawableCards(BOARD_CARD_COUNT);
+    boardCards = getDrawableCards(FULL_BOARD_COUNT);
     hydrateBoardSlots();
     renderFullSelection();
     await animateOverlayDeal(centerDeck, {

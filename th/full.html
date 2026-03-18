@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   />
-  <title>MeowTarot | Full Reading</title>
+  <title>MeowTarot | เซลติกครอส</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -35,21 +35,45 @@
   <main class="page-shell board-page">
     <section class="board-shell full-board-shell">
       <div class="board-header">
-        <p class="eyebrow" data-i18n="overallTitle"></p>
-        <h1 data-i18n="overallShortDesc"></h1>
+        <p class="eyebrow" data-i18n="celticCrossEyebrow"></p>
+        <h1 data-i18n="celticCrossTitle"></h1>
       </div>
 
       <section id="overall-flow" class="full-flow">
-        <div class="overall-cta-wrapper">
-          <button id="overall-deal-shuffle" class="primary ritual-cta" type="button">แจกไพ่</button>
+        <div class="overall-entry" id="overall-entry">
+          <div class="deck-stack fan-wrap" id="overall-hero-deck" aria-hidden="true">
+            <span class="deck-stack-card fan-card fan-card-1"></span>
+            <span class="deck-stack-card fan-card fan-card-2"></span>
+            <span class="deck-stack-card fan-card fan-card-3"></span>
+            <span class="deck-stack-card fan-card fan-card-4"></span>
+            <span class="deck-stack-card fan-card fan-card-5"></span>
+          </div>
+          <div class="ritual-nudge">
+            <span class="ritual-nudge__icon" aria-hidden="true">✦</span>
+            <div class="ritual-nudge__text">
+              <p class="ritual-nudge__title" data-i18n="ritualNudgeTitle"></p>
+              <p class="ritual-nudge__body" data-i18n="ritualNudgeBody"></p>
+            </div>
+          </div>
+          <button id="overall-deal" class="primary ritual-cta ritual-cta--deal" type="button">Draw your cards</button>
         </div>
 
-        <div class="board-toolbar" id="overall-toolbar" hidden>
-          <span class="selection-counter" id="overall-counter">0/3</span>
+        <div class="deck-stack deck-stack--floating" id="overall-center-deck" hidden aria-hidden="true">
+          <span class="deck-stack-card"></span>
+          <span class="deck-stack-card"></span>
+          <span class="deck-stack-card"></span>
+          <span class="deck-stack-card"></span>
         </div>
-        <div id="overall-card-board" class="card-board card-board--three" hidden></div>
-        <div class="board-actions board-actions--center" id="overall-actions" hidden>
+
+        <div id="overall-animation-layer" hidden aria-hidden="true"></div>
+
+        <div class="board-toolbar" id="overall-toolbar" hidden>
+          <button id="overall-shuffle" type="button" class="secondary">Shuffle</button>
           <button id="overall-continue" type="button" class="primary" data-i18n="continue" disabled></button>
+        </div>
+        <div id="overall-card-board" class="card-board" hidden></div>
+        <div class="board-actions board-actions--center" id="overall-actions" hidden>
+          <span class="selection-counter" id="overall-counter">0/10</span>
         </div>
       </section>
     </section>
