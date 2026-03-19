@@ -7,6 +7,7 @@ import { normalizeCards, normalizeId } from '../js/data.js';
 import {
   buildQuestionReadingInputPayload,
   findCardById,
+  generateQuestionReading,
   getBaseCardId,
   getBaseId,
   getQuestionMeaningField,
@@ -120,5 +121,40 @@ test('buildQuestionReadingInputPayload derives question input from selected card
     prompt: deck.find((card) => card.id === '02-the-magician-reversed')?.action_prompt_en || '',
     reflection: deck.find((card) => card.id === '02-the-magician-reversed')?.reflection_question_en || '',
     affirmation: deck.find((card) => card.id === '02-the-magician-reversed')?.affirmation_en || '',
+  });
+  assert.strictEqual(
+    payload.reading_summary_preview_en,
+    deck.find((card) => card.id === '02-the-magician-reversed')?.reading_summary_preview_en || '',
+  );
+});
+
+test('generateQuestionReading is a pure transformation of llmInput and uses positions instead of array order', () => {
+  const llmInput = {
+    reading_summary_preview_en: 'Past lessons are clarifying the present and shaping a steadier future.',
+    cards: [
+      { position: 'future', card: 'The High Priestess', meaning: 'Trust what is quietly unfolding.' },
+      { position: 'past', card: 'The Fool', meaning: 'Your earlier leap created this opening.' },
+      { position: 'present', card: 'The Magician', meaning: 'Use what is already in your hands.' },
+    ],
+    action: {
+      prompt: 'Pick one tool and use it today.',
+    },
+  };
+
+  assert.deepStrictEqual(generateQuestionReading(llmInput), {
+    intro: 'Past lessons are clarifying the present and shaping a steadier future.',
+    spread: [
+      { position: 'past', card: 'The Fool', meaning: 'Your earlier leap created this opening.' },
+      { position: 'present', card: 'The Magician', meaning: 'Use what is already in your hands.' },
+      { position: 'future', card: 'The High Priestess', meaning: 'Trust what is quietly unfolding.' },
+    ],
+    synthesis: 'Past lessons are clarifying the present and shaping a steadier future.',
+    takeaway: 'Past lessons are clarifying the present and shaping a steadier future. Trust what is quietly unfolding.',
+    action: {
+      position: 'present',
+      card: 'The Magician',
+      insight: 'Use what is already in your hands.',
+      direction: 'Pick one tool and use it today.',
+    },
   });
 });
