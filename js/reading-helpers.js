@@ -155,6 +155,7 @@ export function buildQuestionReadingInputPayload({ topic = 'other', selectedIds 
 
   return {
     topic: normalizeQuestionTopic(topic),
+    reading_summary_preview_en: presentCard?.reading_summary_preview_en || '',
     cards: spread.map((card) => ({
       position: card.position,
       card: card.card,
@@ -165,6 +166,66 @@ export function buildQuestionReadingInputPayload({ topic = 'other', selectedIds 
       prompt: presentCard?._action_prompt_en || '',
       reflection: presentCard?._reflection_question_en || '',
       affirmation: presentCard?._affirmation_en || '',
+    },
+  };
+}
+
+function asString(value) {
+  return value == null ? '' : String(value).trim();
+}
+
+function toQuestionCardMap(cards = []) {
+  return orderQuestionCards(Array.isArray(cards) ? cards : [])
+    .slice(0, QUESTION_CARD_POSITIONS.length)
+    .reduce((acc, card) => {
+      const position = normalizeQuestionCardPosition(card?.position);
+      if (position && !acc[position]) acc[position] = card;
+      return acc;
+    }, {});
+}
+
+function buildQuestionSpread(cardsByPosition = {}) {
+  return QUESTION_CARD_POSITIONS.map((position) => {
+    const card = cardsByPosition[position] || {};
+    return {
+      position,
+      card: asString(card.card),
+      meaning: asString(card.meaning),
+    };
+  }).filter((entry) => entry.card || entry.meaning);
+}
+
+export function generateQuestionReading(llmInput = {}) {
+  const cardsByPosition = toQuestionCardMap(llmInput?.cards);
+  const spread = buildQuestionSpread(cardsByPosition);
+  const past = cardsByPosition.past || {};
+  const present = cardsByPosition.present || {};
+  const future = cardsByPosition.future || {};
+  const synthesisBase = asString(llmInput?.reading_summary_preview_en);
+  const intro = asString(
+    synthesisBase
+    || present.meaning
+    || past.meaning
+    || future.meaning
+  );
+  const synthesis = asString(
+    synthesisBase
+    || [past.meaning, present.meaning, future.meaning].filter(Boolean).join(' ')
+  );
+  const takeaway = asString(
+    [synthesisBase, future.meaning || present.meaning || past.meaning].filter(Boolean).join(' ').trim()
+  );
+
+  return {
+    intro,
+    spread,
+    synthesis,
+    takeaway,
+    action: {
+      position: 'present',
+      card: asString(present.card),
+      insight: asString(present.meaning),
+      direction: asString(llmInput?.action?.prompt),
     },
   };
 }
