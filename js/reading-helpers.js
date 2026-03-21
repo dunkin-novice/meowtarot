@@ -223,6 +223,22 @@ function buildQuestionSpread(cardsByPosition = {}) {
   }).filter((entry) => entry.card || entry.meaning);
 }
 
+function firstSentence(value) {
+  const text = ensureSentence(value);
+  if (!text) return '';
+  const match = text.match(/^(.+?[.!?])(?:\s|$)/);
+  return match ? match[1].trim() : text;
+}
+
+function compactText(value, maxWords = 18) {
+  const text = asString(value).replace(/\s+/g, ' ');
+  if (!text) return '';
+
+  const words = text.split(' ');
+  if (words.length <= maxWords) return text;
+  return `${words.slice(0, maxWords).join(' ')}…`;
+}
+
 export function generateQuestionReading(llmInput = {}) {
   const cardsByPosition = toQuestionCardMap(llmInput?.cards);
   const spread = buildQuestionSpread(cardsByPosition);
@@ -270,5 +286,37 @@ export function generateQuestionReading(llmInput = {}) {
       insight: asString(present.meaning),
       direction: asString(llmInput?.action?.prompt),
     },
+  };
+}
+
+
+export function generateQuestionShareSummary(reading = {}) {
+  const cardsByPosition = toQuestionCardMap(reading?.spread);
+  const past = cardsByPosition.past || {};
+  const present = cardsByPosition.present || {};
+  const future = cardsByPosition.future || {};
+  const actionCard = asString(reading?.action?.card || present.card);
+  const actionInsight = firstSentence(reading?.action?.insight || present.meaning || reading?.takeaway || reading?.synthesis || reading?.intro);
+  const headline = compactText(
+    actionCard && actionInsight
+      ? `${actionCard}: ${stripTrailingPunctuation(actionInsight)}`
+      : actionInsight || firstSentence(reading?.intro),
+    12,
+  );
+  const summary = compactText([
+    firstSentence(past.meaning),
+    firstSentence(actionInsight && actionInsight !== firstSentence(past.meaning)
+      ? `Now, ${lowerFirst(actionInsight)}`
+      : present.meaning),
+    firstSentence(future.meaning ? `Next, ${lowerFirst(future.meaning)}` : ''),
+  ].filter(Boolean).join(' '), 28);
+  const ctaSource = firstSentence(reading?.action?.direction)
+    || firstSentence(actionInsight ? `Start here: ${lowerFirst(actionInsight)}` : future.meaning)
+    || 'Take the next clear step.';
+
+  return {
+    headline,
+    summary,
+    cta: compactText(ctaSource, 14),
   };
 }
