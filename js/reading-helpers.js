@@ -174,6 +174,34 @@ function asString(value) {
   return value == null ? '' : String(value).trim();
 }
 
+function ensureSentence(value) {
+  const text = asString(value).replace(/\s+/g, ' ');
+  if (!text) return '';
+  return /[.!?]$/.test(text) ? text : `${text}.`;
+}
+
+function stripTrailingPunctuation(value) {
+  return asString(value).replace(/[.!?]+$/, '');
+}
+
+function lowerFirst(value) {
+  const text = asString(value);
+  if (!text) return '';
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+function buildTopicLabel(topic = '') {
+  const normalized = asString(topic).toLowerCase();
+  if (normalized === 'love') return 'your love life';
+  if (normalized === 'career') return 'your career path';
+  if (normalized === 'finance') return 'your financial situation';
+  return 'this question';
+}
+
+function pickQuestionThread(...values) {
+  return values.map(ensureSentence).find(Boolean) || '';
+}
+
 function toQuestionCardMap(cards = []) {
   return orderQuestionCards(Array.isArray(cards) ? cards : [])
     .slice(0, QUESTION_CARD_POSITIONS.length)
@@ -201,20 +229,35 @@ export function generateQuestionReading(llmInput = {}) {
   const past = cardsByPosition.past || {};
   const present = cardsByPosition.present || {};
   const future = cardsByPosition.future || {};
-  const synthesisBase = asString(llmInput?.reading_summary_preview_en);
+  const synthesisBase = ensureSentence(llmInput?.reading_summary_preview_en);
+  const pastThread = pickQuestionThread(past.reading_summary_preview_en, past.meaning);
+  const presentThread = pickQuestionThread(present.reading_summary_preview_en, present.meaning);
+  const futureThread = pickQuestionThread(future.reading_summary_preview_en, future.meaning);
+  const topicLabel = buildTopicLabel(llmInput?.topic);
+  const introLead = stripTrailingPunctuation(synthesisBase || presentThread || present.meaning || pastThread || futureThread);
   const intro = asString(
-    synthesisBase
-    || present.meaning
-    || past.meaning
-    || future.meaning
+    introLead
+      ? `Right now, ${topicLabel} centers on ${asString(present.card) || 'the present moment'}: ${lowerFirst(introLead)}.`
+      : ''
   );
-  const synthesis = asString(
-    synthesisBase
-    || [past.meaning, present.meaning, future.meaning].filter(Boolean).join(' ')
-  );
-  const takeaway = asString(
-    [synthesisBase, future.meaning || present.meaning || past.meaning].filter(Boolean).join(' ').trim()
-  );
+  const synthesis = asString([
+    pastThread,
+    presentThread && pastThread
+      ? `Now, ${asString(present.card) || 'the present card'} asks for this response: ${lowerFirst(presentThread)}`
+      : presentThread,
+    synthesisBase && synthesisBase !== presentThread
+      ? `Taken together, it shows that ${lowerFirst(synthesisBase)}`
+      : '',
+    futureThread && (pastThread || presentThread || synthesisBase)
+      ? `That opens into ${lowerFirst(futureThread)}`
+      : futureThread,
+  ].filter(Boolean).join(' '));
+  const beneathSurface = stripTrailingPunctuation(synthesisBase || presentThread || pastThread || present.meaning || past.meaning || future.meaning);
+  const nextFocus = ensureSentence(present.meaning || future.meaning || presentThread || futureThread);
+  const takeaway = asString([
+    beneathSurface ? `Beneath the surface, ${lowerFirst(beneathSurface)}.` : '',
+    nextFocus ? `Next, focus on this: ${nextFocus}` : '',
+  ].filter(Boolean).join(' '));
 
   return {
     intro,

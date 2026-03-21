@@ -142,14 +142,14 @@ test('generateQuestionReading is a pure transformation of llmInput and uses posi
   };
 
   assert.deepStrictEqual(generateQuestionReading(llmInput), {
-    intro: 'Past lessons are clarifying the present and shaping a steadier future.',
+    intro: 'Right now, this question centers on The Magician: past lessons are clarifying the present and shaping a steadier future.',
     spread: [
       { position: 'past', card: 'The Fool', meaning: 'Your earlier leap created this opening.' },
       { position: 'present', card: 'The Magician', meaning: 'Use what is already in your hands.' },
       { position: 'future', card: 'The High Priestess', meaning: 'Trust what is quietly unfolding.' },
     ],
-    synthesis: 'Past lessons are clarifying the present and shaping a steadier future.',
-    takeaway: 'Past lessons are clarifying the present and shaping a steadier future. Trust what is quietly unfolding.',
+    synthesis: 'Your earlier leap created this opening. Now, The Magician asks for this response: use what is already in your hands. Taken together, it shows that past lessons are clarifying the present and shaping a steadier future. That opens into trust what is quietly unfolding.',
+    takeaway: 'Beneath the surface, past lessons are clarifying the present and shaping a steadier future. Next, focus on this: Use what is already in your hands.',
     action: {
       position: 'present',
       card: 'The Magician',
