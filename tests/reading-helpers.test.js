@@ -8,6 +8,7 @@ import {
   buildQuestionReadingInputPayload,
   findCardById,
   generateQuestionReading,
+  generateQuestionShareSummary,
   getBaseCardId,
   getBaseId,
   getQuestionMeaningField,
@@ -156,5 +157,50 @@ test('generateQuestionReading is a pure transformation of llmInput and uses posi
       insight: 'Use what is already in your hands.',
       direction: 'Pick one tool and use it today.',
     },
+  });
+});
+
+
+test('generateQuestionShareSummary builds compact share copy from question reading output', () => {
+  const reading = generateQuestionReading({
+    reading_summary_preview_en: 'Past lessons are clarifying the present and shaping a steadier future.',
+    cards: [
+      { position: 'future', card: 'The High Priestess', meaning: 'Trust what is quietly unfolding.' },
+      { position: 'past', card: 'The Fool', meaning: 'Your earlier leap created this opening.' },
+      { position: 'present', card: 'The Magician', meaning: 'Use what is already in your hands.' },
+    ],
+    action: {
+      prompt: 'Pick one tool and use it today.',
+    },
+  });
+
+  assert.deepStrictEqual(generateQuestionShareSummary(reading), {
+    headline: 'The Magician: Use what is already in your hands',
+    summary: 'Your earlier leap created this opening. Now, use what is already in your hands. Next, trust what is quietly unfolding.',
+    cta: 'Pick one tool and use it today.',
+  });
+});
+
+test('generateQuestionShareSummary falls back to existing reading output when action details are missing', () => {
+  const reading = {
+    intro: 'Right now, this question centers on the present moment: make the practical choice in front of you.',
+    spread: [
+      { position: 'present', card: 'Two of Pentacles', meaning: 'Make the practical choice in front of you.' },
+      { position: 'future', card: 'Six of Swords', meaning: 'A calmer stretch is coming once you commit.' },
+    ],
+    synthesis: 'Make the practical choice in front of you. That opens into a calmer stretch is coming once you commit.',
+    takeaway: 'Beneath the surface, make the practical choice in front of you. Next, focus on this: A calmer stretch is coming once you commit.',
+    action: {
+      position: 'present',
+      card: '',
+      insight: '',
+      direction: '',
+    },
+  };
+
+  assert.deepStrictEqual(generateQuestionShareSummary(reading), {
+    headline: 'Two of Pentacles: Make the practical choice in front of you',
+    summary: 'Now, make the practical choice in front of you. Next, a calmer stretch is coming once you commit.',
+    cta: 'Start here: make the practical choice in front of you.',
   });
 });
