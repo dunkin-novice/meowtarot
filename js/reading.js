@@ -105,14 +105,28 @@ const imagePreloadCache = new Map();
 const imageLoadedCache = new Set();
 const resolvedResultCardSrcByKey = new Map();
 const dailyUiState = {
-  phase: 'predeal',
+  phase: 'idle',
   isAnimating: false,
   spreadCards: [],
+  renderCards: [],
   selectedCardId: '',
+  lastSignature: '',
+  animationRunId: 0,
 };
-const DAILY_DECK_TO_SPREAD_MS = 300;
-const DAILY_SELECTION_REVEAL_MS = 240;
-const DAILY_READING_RENDER_MS = 240;
+const DAILY_VISUAL_STATES = Object.freeze({
+  IDLE: 'idle',
+  GATHERING: 'gathering',
+  STACKED: 'stacked',
+  DEALING: 'dealing',
+  REVEALED: 'revealed',
+});
+const DAILY_TIMINGS = Object.freeze({
+  gatherMs: 260,
+  shuffleMs: 200,
+  dealMs: 210,
+  staggerMs: 95,
+  revealMs: 180,
+});
 const FULL_CELTIC_POSITION_KEYS = ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'];
 const LEGACY_FULL_POSITION_KEYS = ['past', 'present', 'future'];
 
@@ -616,7 +630,7 @@ function findCard(id) {
 }
 
 function getExpectedCardCount(mode = 'daily') {
-  if (mode === 'daily') return 1;
+  if (mode === 'daily') return state.spread === 'story' ? 3 : 1;
   if (mode === 'full') return FULL_CELTIC_POSITION_KEYS.length;
   return 3;
 }
@@ -641,7 +655,7 @@ function validateReadingState() {
   const selectedCount = state.selectedIds.length;
 
   if (state.mode === 'daily') {
-    if (selectedCount > expectedCount) state.selectedIds = [];
+    if (selectedCount && selectedCount !== expectedCount) state.selectedIds = [];
   } else if (selectedCount !== expectedCount) {
     redirectToSafeEntry(state.mode);
     return false;
@@ -1691,11 +1705,14 @@ function buildDailyAdvicePanel(card) {
 }
 
 function resetDailyUiState() {
-  dailyUiState.phase = 'predeal';
+  dailyUiState.phase = DAILY_VISUAL_STATES.IDLE;
   dailyUiState.isAnimating = false;
   dailyUiState.spreadCards = [];
+  dailyUiState.renderCards = [];
   dailyUiState.selectedCardId = '';
-  setDailyPhaseAttr('predeal');
+  dailyUiState.lastSignature = '';
+  dailyUiState.animationRunId += 1;
+  setDailyPhaseAttr(DAILY_VISUAL_STATES.IDLE);
 }
 
 function stripOrientationSuffix(value = '') {
@@ -1744,30 +1761,20 @@ function getDailyEntryStrings(dict = activeDict) {
   if (state.currentLang === 'th') {
     return {
       deal: 'เปิดไพ่',
+      card: 'ไพ่ใบที่',
     };
   }
 
   return {
     deal: 'Deal',
+    card: 'Card',
   };
 }
 
-function createDailyDealView(strings, onDeal) {
-  const shell = document.createElement('section');
-  shell.className = 'daily-entry-shell';
-
-  const deckWrap = document.createElement('button');
-  deckWrap.type = 'button';
-  deckWrap.className = 'daily-deck-stack daily-deck-trigger';
-  deckWrap.setAttribute('aria-label', strings.deal);
-  deckWrap.addEventListener('click', onDeal);
-  const setPressed = (pressed) => {
-    deckWrap.classList.toggle('is-pressed', pressed);
-  };
-  deckWrap.addEventListener('pointerdown', () => setPressed(true));
-  deckWrap.addEventListener('pointerup', () => setPressed(false));
-  deckWrap.addEventListener('pointercancel', () => setPressed(false));
-  deckWrap.addEventListener('pointerleave', () => setPressed(false));
+function createDailyDeckElement(label = '') {
+  const deckWrap = document.createElement('div');
+  deckWrap.className = 'daily-deck-stack daily-deck-stack--center';
+  if (label) deckWrap.setAttribute('aria-label', label);
 
   const deckBackUrl = getCardBackUrl() || getCardBackFallbackUrl();
   if (deckBackUrl) {
@@ -1778,34 +1785,59 @@ function createDailyDealView(strings, onDeal) {
     const layer = document.createElement('span');
     layer.className = 'daily-deck-layer';
     const offset = Math.max(0, i - 2);
-    layer.style.setProperty('--dx', `${(i % 2 === 0 ? -1 : 1) * offset * 1.6}px`);
-    layer.style.setProperty('--dy', `${-offset * 2}px`);
-    layer.style.setProperty('--dr', `${(i - 3) * 0.6}deg`);
+    layer.style.setProperty('--dx', `${(i % 2 === 0 ? -1 : 1) * offset * 1.4}px`);
+    layer.style.setProperty('--dy', `${-offset * 1.8}px`);
+    layer.style.setProperty('--dr', `${(i - 3) * 0.45}deg`);
     layer.style.setProperty('--z', String(i + 1));
     deckWrap.appendChild(layer);
   }
 
-  const cta = document.createElement('button');
-  cta.type = 'button';
-  cta.className = 'primary ritual-cta ritual-cta--deal daily-entry-deal-btn';
-  cta.textContent = strings.deal;
-  cta.addEventListener('click', onDeal);
-
-  shell.appendChild(deckWrap);
-  shell.appendChild(cta);
-  return shell;
+  return deckWrap;
 }
 
-function createDailyBoardPanel(card) {
+function getDailyReadingCardCount(cards = []) {
+  if (Array.isArray(cards) && cards.length === 3) return 3;
+  return state.spread === 'story' ? 3 : 1;
+}
+
+function getDailyReadingCards(cards = []) {
+  const count = getDailyReadingCardCount(cards);
+  const resolved = Array.isArray(cards) ? cards.filter(Boolean).slice(0, count) : [];
+  if (resolved.length === count) return resolved;
+  return getDailySpreadCandidates(count);
+}
+
+function getDailyCardLabel(dict, index) {
+  const base = dict?.card || getDailyEntryStrings(dict).card;
+  return `${base} ${index + 1}`;
+}
+
+function getDailyCardRotation(index, count) {
+  if (count === 1) return 0;
+  return [-2.4, 0, 2.4][index] || 0;
+}
+
+function waitForDailyMotion(duration) {
+  return new Promise((resolve) => window.setTimeout(resolve, duration));
+}
+
+function waitForDailyFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function setDailyVisualState(phase) {
+  dailyUiState.phase = phase;
+  setDailyPhaseAttr(phase);
+}
+
+function createDailyCardSummaryPanel(card, heading = '') {
   const panel = document.createElement('div');
   panel.className = 'panel daily-board-panel';
 
-  const art = buildCardArt(card, 'hero');
-  art.classList.add('daily-result-art');
-  panel.appendChild(art);
-
   const h2 = document.createElement('h2');
-  h2.textContent = `${getName(card)} — ${getOrientationEnglish(card)}`;
+  h2.textContent = heading
+    ? `${heading} · ${getName(card)} — ${getOrientationEnglish(card)}`
+    : `${getName(card)} — ${getOrientationEnglish(card)}`;
   h2.style.textAlign = 'center';
   panel.appendChild(h2);
 
@@ -1841,17 +1873,293 @@ function createDailyDetails(card) {
   return frag;
 }
 
-async function runDailyDealAnimation(container) {
-  if (!container) return;
+function createDailyMotionStage(cards, dict) {
+  const count = Math.max(1, cards.length || 1);
+  const strings = getDailyEntryStrings(dict);
+
+  const stage = document.createElement('section');
+  stage.className = 'daily-reading-stage daily-reading-stage--motion';
+
+  const board = document.createElement('div');
+  board.className = `daily-motion-board daily-motion-board--${count === 1 ? 'single' : 'triple'}`;
+
+  const layout = document.createElement('div');
+  layout.className = `daily-motion-layout daily-motion-layout--${count === 1 ? 'single' : 'triple'}`;
+  board.appendChild(layout);
+
+  const slots = cards.map((card, index) => {
+    const slot = document.createElement('div');
+    slot.className = 'daily-motion-slot';
+    slot.setAttribute('aria-hidden', 'true');
+
+    const label = document.createElement('span');
+    label.className = 'daily-motion-slot-label';
+    label.textContent = count === 1 ? '' : getDailyCardLabel(strings, index);
+    slot.appendChild(label);
+    layout.appendChild(slot);
+    return slot;
+  });
+
+  const deck = createDailyDeckElement(strings.deal);
+  board.appendChild(deck);
+
+  const cardBackUrl = getCardBackUrl() || getCardBackFallbackUrl();
+  const cardsEls = cards.map((card, index) => {
+    const cardEl = document.createElement('div');
+    cardEl.className = `daily-motion-card daily-motion-card--${count === 1 ? 'single' : 'triple'}`;
+    cardEl.dataset.cardId = getCardSelectionId(card);
+    cardEl.style.setProperty('--deal-rotation', `${getDailyCardRotation(index, count)}deg`);
+    cardEl.style.setProperty('--stack-offset-x', `${(index - Math.floor(count / 2)) * 1.6}px`);
+    cardEl.style.setProperty('--stack-offset-y', `${-Math.min(index, 2) * 2}px`);
+
+    const backFace = document.createElement('span');
+    backFace.className = 'daily-motion-face daily-motion-face--back';
+    const back = Object.assign(document.createElement('img'), {
+      className: 'card-back',
+      alt: '',
+    });
+    applyImgFallback(back, cardBackUrl, [getCardBackFallbackUrl()].filter(Boolean));
+    backFace.appendChild(back);
+
+    const frontFace = document.createElement('span');
+    frontFace.className = 'daily-motion-face daily-motion-face--front';
+    const art = buildCardArt(card, count === 1 ? 'hero' : 'thumb');
+    art.classList.add('daily-motion-art');
+    frontFace.appendChild(art);
+
+    cardEl.appendChild(backFace);
+    cardEl.appendChild(frontFace);
+    board.appendChild(cardEl);
+    return cardEl;
+  });
+
+  stage.appendChild(board);
+  return { stage, board, layout, slots, deck, cards: cardsEls };
+}
+
+function syncDailyStageCards(stageRefs, cards) {
+  stageRefs.cards.forEach((cardEl, index) => {
+    const nextCard = cards[index];
+    if (!nextCard) return;
+    cardEl.dataset.cardId = getCardSelectionId(nextCard);
+    const frontFace = cardEl.querySelector('.daily-motion-face--front');
+    if (!frontFace) return;
+    frontFace.textContent = '';
+    const art = buildCardArt(nextCard, cards.length === 1 ? 'hero' : 'thumb');
+    art.classList.add('daily-motion-art');
+    frontFace.appendChild(art);
+  });
+}
+
+function measureDailyMotionStage(stageRefs) {
+  const boardRect = stageRefs.board.getBoundingClientRect();
+  const deckRect = stageRefs.deck.getBoundingClientRect();
+  const deckCenterX = deckRect.left - boardRect.left + (deckRect.width / 2);
+  const deckCenterY = deckRect.top - boardRect.top + (deckRect.height / 2);
+
+  const targets = stageRefs.slots.map((slot) => {
+    const slotRect = slot.getBoundingClientRect();
+    const width = slotRect.width;
+    const height = slotRect.height;
+    return {
+      width,
+      height,
+      x: slotRect.left - boardRect.left + (width / 2) - deckCenterX,
+      y: slotRect.top - boardRect.top + (height / 2) - deckCenterY,
+    };
+  });
+
+  stageRefs.cards.forEach((cardEl, index) => {
+    const target = targets[index];
+    if (!target) return;
+    cardEl.style.width = `${target.width}px`;
+    cardEl.style.height = `${target.height}px`;
+    cardEl.style.left = `${deckCenterX}px`;
+    cardEl.style.top = `${deckCenterY}px`;
+  });
+
+  return targets;
+}
+
+function setDailyCardsToDeck(stageRefs) {
+  stageRefs.cards.forEach((cardEl) => {
+    cardEl.classList.remove('is-revealed');
+    cardEl.classList.remove('is-dealt');
+    cardEl.style.setProperty('--deal-x', '0px');
+    cardEl.style.setProperty('--deal-y', '0px');
+    cardEl.style.setProperty('--deal-scale', '1');
+    cardEl.style.setProperty('--deal-rotation-current', '0deg');
+  });
+}
+
+async function animateDailyGather(stageRefs, targets) {
   if (prefersReducedMotion()) {
-    container.classList.add('is-dealt');
+    setDailyCardsToDeck(stageRefs);
     return;
   }
 
-  container.classList.add('is-dealing');
-  await new Promise((resolve) => window.setTimeout(resolve, DAILY_DECK_TO_SPREAD_MS));
-  container.classList.remove('is-dealing');
-  container.classList.add('is-dealt');
+  stageRefs.cards.forEach((cardEl, index) => {
+    const target = targets[index];
+    if (!target) return;
+    cardEl.classList.add('is-dealt');
+    cardEl.classList.add('is-revealed');
+    cardEl.style.transitionDuration = `${DAILY_TIMINGS.gatherMs}ms`;
+    cardEl.style.transitionTimingFunction = 'cubic-bezier(0.2, 0.7, 0.22, 1)';
+    cardEl.style.setProperty('--deal-x', `${target.x}px`);
+    cardEl.style.setProperty('--deal-y', `${target.y}px`);
+    cardEl.style.setProperty('--deal-scale', '1');
+    cardEl.style.setProperty('--deal-rotation-current', cardEl.style.getPropertyValue('--deal-rotation') || '0deg');
+  });
+
+  await waitForDailyFrame();
+
+  stageRefs.cards.forEach((cardEl, index) => {
+    cardEl.style.transitionDelay = `${index * 20}ms`;
+    cardEl.style.setProperty('--deal-x', '0px');
+    cardEl.style.setProperty('--deal-y', '0px');
+    cardEl.style.setProperty('--deal-scale', '0.992');
+    cardEl.style.setProperty('--deal-rotation-current', '0deg');
+  });
+
+  await waitForDailyMotion(DAILY_TIMINGS.gatherMs + Math.max(0, (stageRefs.cards.length - 1) * 20));
+  stageRefs.cards.forEach((cardEl) => {
+    cardEl.style.transitionDelay = '0ms';
+    cardEl.style.transitionTimingFunction = '';
+  });
+}
+
+async function animateDailyShuffle(stageRefs) {
+  if (prefersReducedMotion()) return;
+  stageRefs.deck.classList.add('is-shuffling');
+  await waitForDailyMotion(DAILY_TIMINGS.shuffleMs);
+  stageRefs.deck.classList.remove('is-shuffling');
+}
+
+async function animateDailyDeal(stageRefs, targets) {
+  setDailyCardsToDeck(stageRefs);
+  if (prefersReducedMotion()) {
+    stageRefs.cards.forEach((cardEl, index) => {
+      const target = targets[index];
+      if (!target) return;
+      cardEl.classList.add('is-dealt');
+      cardEl.style.setProperty('--deal-x', `${target.x}px`);
+      cardEl.style.setProperty('--deal-y', `${target.y}px`);
+      cardEl.style.setProperty('--deal-scale', '1');
+      cardEl.style.setProperty('--deal-rotation-current', cardEl.style.getPropertyValue('--deal-rotation') || '0deg');
+    });
+    return;
+  }
+
+  await waitForDailyFrame();
+
+  stageRefs.cards.forEach((cardEl, index) => {
+    const target = targets[index];
+    if (!target) return;
+    cardEl.classList.add('is-dealt');
+    cardEl.style.transitionDelay = `${index * DAILY_TIMINGS.staggerMs}ms`;
+    cardEl.style.transitionDuration = `${DAILY_TIMINGS.dealMs}ms`;
+    cardEl.style.transitionTimingFunction = 'cubic-bezier(0.22, 0.68, 0.2, 1)';
+    cardEl.style.setProperty('--deal-x', `${target.x}px`);
+    cardEl.style.setProperty('--deal-y', `${target.y}px`);
+    cardEl.style.setProperty('--deal-scale', '1');
+    cardEl.style.setProperty('--deal-rotation-current', cardEl.style.getPropertyValue('--deal-rotation') || '0deg');
+  });
+
+  await waitForDailyMotion(DAILY_TIMINGS.dealMs + ((stageRefs.cards.length - 1) * DAILY_TIMINGS.staggerMs));
+  stageRefs.cards.forEach((cardEl) => {
+    cardEl.style.transitionDelay = '0ms';
+    cardEl.style.transitionTimingFunction = '';
+  });
+}
+
+async function animateDailyReveal(stageRefs) {
+  if (prefersReducedMotion()) {
+    stageRefs.cards.forEach((cardEl) => cardEl.classList.add('is-revealed'));
+    return;
+  }
+
+  await waitForDailyFrame();
+  stageRefs.cards.forEach((cardEl, index) => {
+    cardEl.style.transitionDelay = `${index * 30}ms`;
+    cardEl.classList.add('is-revealed');
+  });
+  await waitForDailyMotion(DAILY_TIMINGS.revealMs + ((stageRefs.cards.length - 1) * 30));
+  stageRefs.cards.forEach((cardEl) => {
+    cardEl.style.transitionDelay = '0ms';
+  });
+}
+
+function createDailyMultiCardDetails(cards, dict) {
+  const wrap = document.createElement('section');
+  wrap.className = 'daily-reading-details daily-reading-details--multi';
+  cards.forEach((entryCard, index) => {
+    wrap.appendChild(createDailyCardSummaryPanel(entryCard, getDailyCardLabel(dict, index)));
+  });
+  return wrap;
+}
+
+function renderDailyDetails(cards, dict, stage) {
+  const count = cards.length;
+  if (count === 1) {
+    stage.appendChild(createDailyCardSummaryPanel(cards[0]));
+    const detailsWrap = document.createElement('section');
+    detailsWrap.className = 'daily-reading-details';
+    detailsWrap.appendChild(createDailyDetails(cards[0]));
+    stage.appendChild(detailsWrap);
+    return;
+  }
+
+  stage.appendChild(createDailyMultiCardDetails(cards, dict));
+}
+
+async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}) {
+  if (!readingContent) return;
+
+  const runId = dailyUiState.animationRunId + 1;
+  dailyUiState.animationRunId = runId;
+  dailyUiState.isAnimating = true;
+  const currentCards = gatherCurrent && dailyUiState.renderCards.length === cards.length
+    ? dailyUiState.renderCards.slice()
+    : cards;
+  dailyUiState.selectedCardId = getCardSelectionId(cards[0]) || '';
+  dailyUiState.lastSignature = cards.map((card) => getCardSelectionId(card)).filter(Boolean).join(',');
+
+  readingContent.innerHTML = '';
+  const stageRefs = createDailyMotionStage(currentCards, dict);
+  readingContent.appendChild(stageRefs.stage);
+  await waitForDailyFrame();
+
+  const targets = measureDailyMotionStage(stageRefs);
+  setDailyCardsToDeck(stageRefs);
+
+  if (gatherCurrent) {
+    setDailyVisualState(DAILY_VISUAL_STATES.GATHERING);
+    await animateDailyGather(stageRefs, targets);
+    if (dailyUiState.animationRunId !== runId) return;
+    syncDailyStageCards(stageRefs, cards);
+    setDailyCardsToDeck(stageRefs);
+    await waitForDailyFrame();
+  }
+
+  setDailyVisualState(DAILY_VISUAL_STATES.STACKED);
+  await animateDailyShuffle(stageRefs);
+  if (dailyUiState.animationRunId !== runId) return;
+
+  setDailyVisualState(DAILY_VISUAL_STATES.DEALING);
+  await animateDailyDeal(stageRefs, targets);
+  if (dailyUiState.animationRunId !== runId) return;
+
+  setDailyVisualState(DAILY_VISUAL_STATES.REVEALED);
+  await animateDailyReveal(stageRefs);
+  if (dailyUiState.animationRunId !== runId) return;
+
+  state.selectedIds = cards.map((entryCard) => getCardSelectionId(entryCard)).filter(Boolean);
+  dailyUiState.selectedCardId = state.selectedIds[0] || '';
+  dailyUiState.spreadCards = cards.slice();
+  dailyUiState.renderCards = cards.slice();
+  renderDailyDetails(cards, dict, stageRefs.stage);
+  dailyUiState.isAnimating = false;
+  configureActionButtons(activeDict);
 }
 
 
@@ -1931,145 +2239,16 @@ function getFullIntegrationEntries(dict, positions = []) {
   return entries.filter((entry) => entry.text);
 }
 
-function renderDaily(card, dict) {
+function renderDaily(cards, dict) {
   if (!readingContent) return;
+  const resolvedCards = getDailyReadingCards(cards);
+  if (!resolvedCards.length) return;
 
-  if (card && !dailyUiState.selectedCardId) {
-    dailyUiState.selectedCardId = getCardSelectionId(card);
-    dailyUiState.phase = 'dealt';
-    setDailyPhaseAttr('dealt');
-  }
+  const signature = resolvedCards.map((entryCard) => getCardSelectionId(entryCard)).filter(Boolean).join(',');
+  if (dailyUiState.isAnimating && dailyUiState.lastSignature === signature) return;
+  if (dailyUiState.phase === DAILY_VISUAL_STATES.REVEALED && dailyUiState.lastSignature === signature) return;
 
-  const strings = getDailyEntryStrings(dict);
-  const renderPreDeal = () => {
-    setDailyPhaseAttr('predeal');
-    readingContent.innerHTML = '';
-    const dealView = createDailyDealView(strings, async () => {
-      if (dailyUiState.isAnimating) return;
-      dailyUiState.isAnimating = true;
-      dailyUiState.phase = 'dealing';
-      setDailyPhaseAttr('dealing');
-      await runDailyDealAnimation(dealView);
-      dailyUiState.spreadCards = getDailySpreadCandidates(6);
-      dailyUiState.phase = 'spread';
-      dailyUiState.isAnimating = false;
-      setDailyPhaseAttr('spread');
-      renderSpread();
-    });
-    readingContent.appendChild(dealView);
-  };
-
-  const renderSpread = () => {
-    setDailyPhaseAttr('spread');
-    readingContent.innerHTML = '';
-
-    const spreadStage = document.createElement('section');
-    spreadStage.className = 'daily-reading-stage';
-
-    const spreadBoard = document.createElement('div');
-    spreadBoard.className = 'card-board card-board--daily';
-
-    const cardBackUrl = getCardBackUrl() || getCardBackFallbackUrl();
-
-    dailyUiState.spreadCards.forEach((entryCard) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'card-slot card-slot--dealable card-visible';
-      btn.dataset.id = entryCard?.id || '';
-
-      const back = Object.assign(document.createElement('img'), {
-        className: 'card-back',
-        alt: '',
-      });
-      applyImgFallback(back, cardBackUrl, [getCardBackFallbackUrl()].filter(Boolean));
-      btn.appendChild(back);
-
-      btn.addEventListener('click', () => {
-        if (dailyUiState.isAnimating || !entryCard) return;
-        dailyUiState.phase = 'selected';
-        dailyUiState.isAnimating = true;
-        dailyUiState.selectedCardId = getCardSelectionId(entryCard);
-        setDailyPhaseAttr('selected');
-
-        const selectedId = getCardSelectionId(entryCard);
-
-        spreadBoard.querySelectorAll('.card-slot').forEach((slot) => {
-          if (slot.dataset.id === selectedId) {
-            slot.classList.add('is-selected');
-            return;
-          }
-          slot.classList.add('is-dimmed');
-          slot.disabled = true;
-        });
-
-        window.setTimeout(() => {
-          dailyUiState.phase = 'revealed';
-          setDailyPhaseAttr('revealed');
-          renderRevealed(entryCard);
-        }, DAILY_SELECTION_REVEAL_MS);
-      });
-
-      spreadBoard.appendChild(btn);
-    });
-
-    spreadStage.appendChild(spreadBoard);
-    readingContent.appendChild(spreadStage);
-  };
-
-  const renderRevealed = (resolvedCard) => {
-    setDailyPhaseAttr('revealed');
-    readingContent.innerHTML = '';
-
-    const boardWrap = document.createElement('section');
-    boardWrap.className = 'daily-reading-stage';
-    boardWrap.appendChild(createDailyBoardPanel(resolvedCard));
-    readingContent.appendChild(boardWrap);
-
-    window.setTimeout(() => {
-      dailyUiState.phase = 'dealt';
-      dailyUiState.isAnimating = false;
-      setDailyPhaseAttr('dealt');
-      const committedId = getCardSelectionId(resolvedCard);
-      if (committedId) state.selectedIds = [committedId];
-      configureActionButtons(activeDict);
-      renderDealt();
-    }, DAILY_READING_RENDER_MS);
-  };
-
-  const renderDealt = () => {
-    const resolvedSelectedCard = findCard(dailyUiState.selectedCardId) || findCard(getCardSelectionId(card)) || card;
-    if (!resolvedSelectedCard) {
-      renderPreDeal();
-      return;
-    }
-
-    setDailyPhaseAttr('dealt');
-    readingContent.innerHTML = '';
-    const boardWrap = document.createElement('section');
-    boardWrap.className = 'daily-reading-stage';
-
-    const boardPanel = createDailyBoardPanel(resolvedSelectedCard);
-    boardWrap.appendChild(boardPanel);
-
-    const detailsWrap = document.createElement('section');
-    detailsWrap.className = 'daily-reading-details';
-    detailsWrap.appendChild(createDailyDetails(resolvedSelectedCard));
-
-    readingContent.appendChild(boardWrap);
-    readingContent.appendChild(detailsWrap);
-  };
-
-  if (dailyUiState.phase === 'dealt') {
-    renderDealt();
-    return;
-  }
-
-  if (dailyUiState.phase === 'spread' && dailyUiState.spreadCards.length) {
-    renderSpread();
-    return;
-  }
-
-  renderPreDeal();
+  startDailyReadingFlow(resolvedCards, dict, { gatherCurrent: false });
 }
 
 function renderFull(cards, dict) {
@@ -2372,7 +2551,7 @@ function renderReading(dict) {
   }
 
   if (state.mode === 'daily') {
-    renderDaily(cards[0], dict);
+    renderDaily(cards, dict);
     return;
   }
 
@@ -2473,7 +2652,7 @@ function buildSharePayload() {
       ? (dict.questionShareSubtitle || dict.questionSpreadNote)
       : state.mode === 'full'
         ? dict.readingSubtitle
-        : dict.spreadQuick;
+        : (state.spread === 'story' ? dict.spreadStory : dict.spreadQuick);
 
   const cards = state.selectedIds.map((id) => {
     const card = findCard(id);
@@ -2884,6 +3063,12 @@ function configureActionButtons(dict = translations[state.currentLang]) {
   shareBtn?.addEventListener('click', shareButtonHandler);
 
   newReadingButtonHandler = () => {
+    if (state.mode === 'daily') {
+      const nextCards = getDailyReadingCards([]);
+      startDailyReadingFlow(nextCards, activeDict, { gatherCurrent: true });
+      return;
+    }
+
     const target =
       state.mode === 'question'
         ? '/question.html'
