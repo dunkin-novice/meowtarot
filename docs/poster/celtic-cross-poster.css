@@ -1,0 +1,317 @@
+/* Canvas export remains the production path; this scoped stylesheet documents the intended
+   poster--celtic-cross class structure so future DOM-based poster work can match the export. */
+
+.poster--celtic-cross {
+  --cc-card-w: 118px;
+  --cc-card-h: 188px;
+  --cc-gap: 14px;
+  --cc-radius: 22px;
+  --cc-panel-radius: 24px;
+  --cc-border: rgba(255, 255, 255, 0.14);
+  --cc-border-strong: rgba(255, 255, 255, 0.22);
+  --cc-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  --cc-text: rgba(255, 255, 255, 0.96);
+  --cc-text-soft: rgba(255, 255, 255, 0.76);
+  --cc-text-faint: rgba(255, 255, 255, 0.58);
+  --cc-gold: rgba(236, 205, 132, 0.95);
+  --cc-blur: blur(16px);
+  position: relative;
+}
+
+.poster--celtic-cross .poster__content {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 20px;
+  min-height: 100%;
+}
+
+.poster--celtic-cross .poster__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
+.poster--celtic-cross .poster__eyebrow {
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cc-gold);
+}
+
+.poster--celtic-cross .poster__title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.05;
+  font-weight: 700;
+  color: var(--cc-text);
+  text-wrap: balance;
+}
+
+.poster--celtic-cross .poster__subtitle {
+  margin: 0;
+  max-width: 760px;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--cc-text-soft);
+  text-wrap: balance;
+}
+
+.poster--celtic-cross .poster__spreadShell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--cc-border);
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  backdrop-filter: var(--cc-blur);
+  box-shadow: var(--cc-shadow);
+}
+
+.poster--celtic-cross .poster__spread--celtic {
+  display: grid;
+  grid-template-columns: repeat(5, var(--cc-card-w));
+  grid-template-rows: repeat(4, var(--cc-card-h));
+  column-gap: var(--cc-gap);
+  row-gap: var(--cc-gap);
+  align-items: center;
+  justify-items: center;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.poster--celtic-cross .poster__cardSlot {
+  position: relative;
+  width: var(--cc-card-w);
+  height: var(--cc-card-h);
+}
+
+.poster--celtic-cross .poster__cardSlotInner,
+.poster--celtic-cross .poster__cardFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.poster--celtic-cross .poster__cardFrame {
+  border-radius: var(--cc-radius);
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.poster--celtic-cross .poster__cardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--cc-radius);
+}
+
+.poster--celtic-cross .poster__cardSlot.is-reversed .poster__cardImg {
+  transform: rotate(180deg);
+}
+
+.poster--celtic-cross .poster__cardMeta {
+  position: absolute;
+  left: 50%;
+  bottom: -26px;
+  transform: translateX(-50%);
+  width: calc(100% + 8px);
+  text-align: center;
+}
+
+.poster--celtic-cross .poster__positionLabel {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--cc-border);
+  background: rgba(17, 18, 26, 0.78);
+  backdrop-filter: blur(12px);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-text-soft);
+  white-space: nowrap;
+}
+
+.poster--celtic-cross .poster__cardName {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--cc-text);
+  text-wrap: balance;
+}
+
+.poster--celtic-cross .poster__orientation {
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-text-faint);
+}
+
+.poster--celtic-cross .poster__cardSlot.is-present .poster__cardFrame,
+.poster--celtic-cross .poster__cardSlot.is-advice .poster__cardFrame,
+.poster--celtic-cross .poster__cardSlot.is-outcome .poster__cardFrame {
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(236, 205, 132, 0.18);
+}
+
+.poster--celtic-cross .poster__cardSlot.is-outcome .poster__cardFrame {
+  box-shadow: 0 20px 38px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(236, 205, 132, 0.28), 0 0 24px rgba(236, 205, 132, 0.1);
+}
+
+.poster--celtic-cross .is-present { grid-column: 2; grid-row: 2; z-index: 3; }
+.poster--celtic-cross .is-challenge { grid-column: 2; grid-row: 2; z-index: 4; }
+.poster--celtic-cross .is-challenge .poster__cardSlotInner { transform: rotate(90deg) scale(0.98); }
+.poster--celtic-cross .is-past { grid-column: 1; grid-row: 2; }
+.poster--celtic-cross .is-future { grid-column: 3; grid-row: 2; }
+.poster--celtic-cross .is-above { grid-column: 2; grid-row: 1; }
+.poster--celtic-cross .is-below { grid-column: 2; grid-row: 3; }
+.poster--celtic-cross .is-advice { grid-column: 5; grid-row: 4; }
+.poster--celtic-cross .is-external { grid-column: 5; grid-row: 3; }
+.poster--celtic-cross .is-hopes { grid-column: 5; grid-row: 2; }
+.poster--celtic-cross .is-outcome { grid-column: 5; grid-row: 1; }
+
+.poster--celtic-cross .poster__insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.poster--celtic-cross .poster__insight {
+  position: relative;
+  padding: 18px 18px 16px;
+  border-radius: var(--cc-panel-radius);
+  border: 1px solid var(--cc-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: var(--cc-blur);
+  box-shadow: var(--cc-shadow);
+  overflow: hidden;
+}
+
+.poster--celtic-cross .poster__insight::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.poster--celtic-cross .poster__insight--present::before,
+.poster--celtic-cross .poster__insight--advice::before { background: rgba(236, 205, 132, 0.35); }
+
+.poster--celtic-cross .poster__insight--outcome {
+  border-color: var(--cc-border-strong);
+  background: linear-gradient(180deg, rgba(236, 205, 132, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+.poster--celtic-cross .poster__insight--outcome::before { background: rgba(236, 205, 132, 0.85); }
+
+.poster--celtic-cross .poster__insightLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-gold);
+}
+
+.poster--celtic-cross .poster__insightTitle {
+  margin: 0 0 8px;
+  font-size: 19px;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--cc-text);
+  text-wrap: balance;
+}
+
+.poster--celtic-cross .poster__insight--outcome .poster__insightTitle { font-size: 24px; }
+
+.poster--celtic-cross .poster__insightBody {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.48;
+  color: var(--cc-text-soft);
+}
+
+.poster--celtic-cross .poster__insight--outcome .poster__insightBody {
+  font-size: 15px;
+  line-height: 1.52;
+  color: var(--cc-text);
+}
+
+.poster--celtic-cross .poster__footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  color: var(--cc-text-faint);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.poster--story.poster--celtic-cross {
+  --cc-card-w: 108px;
+  --cc-card-h: 172px;
+  --cc-gap: 12px;
+}
+
+.poster--story.poster--celtic-cross .poster__content {
+  grid-template-rows: auto auto auto 1fr;
+  gap: 18px;
+}
+
+.poster--story.poster--celtic-cross .poster__spreadShell { padding: 18px 14px 34px; }
+.poster--story.poster--celtic-cross .poster__insights { grid-template-columns: 1fr; gap: 12px; }
+.poster--story.poster--celtic-cross .poster__insight--outcome { order: -1; }
+.poster--story.poster--celtic-cross .poster__title { font-size: 38px; }
+.poster--story.poster--celtic-cross .poster__subtitle { font-size: 15px; }
+
+.poster--portrait.poster--celtic-cross {
+  --cc-card-w: 102px;
+  --cc-card-h: 164px;
+  --cc-gap: 12px;
+}
+
+.poster--portrait.poster--celtic-cross .poster__spreadShell { padding: 18px 16px 34px; }
+.poster--portrait.poster--celtic-cross .poster__insights { grid-template-columns: 1fr 1fr; }
+.poster--portrait.poster--celtic-cross .poster__insight--outcome { grid-column: 1 / -1; }
+
+.poster--square.poster--celtic-cross {
+  --cc-card-w: 88px;
+  --cc-card-h: 140px;
+  --cc-gap: 10px;
+}
+
+.poster--square.poster--celtic-cross .poster__content { gap: 14px; }
+.poster--square.poster--celtic-cross .poster__spreadShell {
+  padding: 14px 12px 30px;
+  border-radius: 24px;
+}
+
+.poster--square.poster--celtic-cross .poster__title { font-size: 28px; }
+.poster--square.poster--celtic-cross .poster__subtitle { font-size: 14px; max-width: 620px; }
+.poster--square.poster--celtic-cross .poster__insights {
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 10px;
+}
+
+.poster--square.poster--celtic-cross .poster__insight {
+  padding: 14px 14px 13px;
+  border-radius: 18px;
+}
+
+.poster--square.poster--celtic-cross .poster__insightTitle { font-size: 16px; }
+.poster--square.poster--celtic-cross .poster__insight--outcome .poster__insightTitle { font-size: 20px; }
+.poster--square.poster--celtic-cross .poster__insightBody { font-size: 12.5px; line-height: 1.42; }
+.poster--square.poster--celtic-cross .poster__insight--outcome .poster__insightBody { font-size: 13px; }
+.poster--square.poster--celtic-cross .poster__positionLabel { font-size: 10px; }
+.poster--square.poster--celtic-cross .poster__cardName { font-size: 11px; }

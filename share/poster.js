@@ -8,7 +8,7 @@ import {
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { normalizePayload } from './normalize-payload.js';
-import { findCardById, toOrientation } from '../js/reading-helpers.js';
+import { findCardById, getCelticCrossInterpretation, toOrientation } from '../js/reading-helpers.js';
 import { getLuckyColorVisibilityStyle } from '../js/lucky-color-visibility.js';
 import { getLocalizedField, getOrientationLabel } from '../js/tarot-format.js';
 import {
@@ -31,6 +31,30 @@ const PRESETS = {
 const FULL_POSITION_LABELS = {
   en: { present: 'The Present', challenge: 'The Challenge', past: 'The Past', future: 'The Future', above: 'Above', below: 'Below', advice: 'Advice', external: 'External Influences', hopes: 'Hopes & Fears', outcome: 'Outcome' },
   th: { present: 'สถานการณ์ปัจจุบัน', challenge: 'ความท้าทาย', past: 'อดีต', future: 'อนาคต', above: 'เป้าหมาย', below: 'รากฐาน', advice: 'คำแนะนำ', external: 'อิทธิพลภายนอก', hopes: 'ความหวังและความกลัว', outcome: 'ผลลัพธ์' },
+};
+
+const CELTIC_CROSS_POSITIONS = ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'];
+const CELTIC_CROSS_POSTER_STRINGS = {
+  en: {
+    eyebrow: 'Celtic Cross Reading',
+    subtitle: 'A 10-card spread showing the energies around your situation.',
+    heroFallback: 'Your path is becoming clearer.',
+    insightTitles: {
+      present: 'What this is about',
+      advice: 'Your next step',
+      outcome: 'Where this may lead',
+    },
+  },
+  th: {
+    eyebrow: 'เซลติกครอส',
+    subtitle: 'การเปิดไพ่ 10 ใบเพื่อมองพลังงานรอบสถานการณ์ของคุณ',
+    heroFallback: 'เส้นทางของคุณกำลังชัดเจนขึ้น',
+    insightTitles: {
+      present: 'เรื่องนี้กำลังพาไปทางไหน',
+      advice: 'ก้าวต่อไปของคุณ',
+      outcome: 'ผลลัพธ์ที่อาจเกิดขึ้น',
+    },
+  },
 };
 
 function isPosterCiDebugEnabled() {
@@ -573,6 +597,75 @@ function toSafeText(value, fallback = '') {
   return String(value);
 }
 
+function normalizePosterLanguage(lang = 'en') {
+  return String(lang || '').toLowerCase().startsWith('th') ? 'th' : 'en';
+}
+
+function isCelticCrossPosterPayload(payload) {
+  return String(payload?.mode || '').toLowerCase() === 'full'
+    && Array.isArray(payload?.cards)
+    && payload.cards.length >= CELTIC_CROSS_POSITIONS.length;
+}
+
+function resolveLocalizedCardName(card = {}, fallback = '', lang = 'en') {
+  const locale = normalizePosterLanguage(lang);
+  const name = locale === 'th'
+    ? (card?.card_name_th || card?.name_th || card?.card_name_en || card?.name_en || card?.name)
+    : (card?.card_name_en || card?.name_en || card?.card_name_th || card?.name_th || card?.name);
+  return toSafeText(name || fallback, fallback);
+}
+
+function mergeCelticCrossCardEntries(payload = {}, cardEntries = []) {
+  return CELTIC_CROSS_POSITIONS.map((position, index) => {
+    const payloadCard = payload?.cards?.[index] || {};
+    const entry = cardEntries[index] || null;
+    return {
+      position,
+      payloadCard,
+      entry,
+      card: entry?.card || payloadCard || null,
+      orientation: toOrientation(entry?.orientation || payloadCard?.orientation || 'upright'),
+    };
+  });
+}
+
+export function resolveCelticCrossPosterContent(payload = {}, cardEntries = []) {
+  const lang = normalizePosterLanguage(payload?.lang || 'en');
+  const strings = CELTIC_CROSS_POSTER_STRINGS[lang] || CELTIC_CROSS_POSTER_STRINGS.en;
+  const positionedCards = mergeCelticCrossCardEntries(payload, cardEntries);
+  const byPosition = new Map(positionedCards.map((item) => [item.position, item]));
+
+  const buildInsight = (position) => {
+    const item = byPosition.get(position) || { position, payloadCard: {}, entry: null, card: null, orientation: 'upright' };
+    const card = item.card || {};
+    const body = getCelticCrossInterpretation(card, position, lang);
+    const fallbackTitle = strings.insightTitles[position] || getFullPosterPositionLabel(position, lang);
+    return {
+      ...item,
+      label: getFullPosterPositionLabel(position, lang),
+      title: resolveLocalizedCardName(card, fallbackTitle, lang) || fallbackTitle,
+      body: toSafeText(body, '').trim(),
+      orientationLabel: getOrientationLabel(item.orientation, lang),
+    };
+  };
+
+  const present = buildInsight('present');
+  const advice = buildInsight('advice');
+  const outcome = buildInsight('outcome');
+  const heroTitle = normalizeStandaloneAffirmation(outcome.body, lang, strings.heroFallback);
+
+  return {
+    lang,
+    strings,
+    heroTitle,
+    subtitle: strings.subtitle,
+    present,
+    advice,
+    outcome,
+    positionedCards,
+  };
+}
+
 function getQuestionPosterStrings(payload = {}) {
   const lang = payload?.lang || 'en';
   const dict = translations[lang] || translations.en;
@@ -908,6 +1001,330 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
+function fillRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
+  ctx.save();
+  drawRoundedRect(ctx, x, y, width, height, radius);
+  ctx.fillStyle = fillStyle;
+  ctx.fill();
+  ctx.restore();
+}
+
+function strokeRoundedRect(ctx, x, y, width, height, radius, strokeStyle, lineWidth = 1) {
+  ctx.save();
+  drawRoundedRect(ctx, x, y, width, height, radius);
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function resolveCelticCrossPresetLayout(preset = 'story', width = 1080, height = 1920) {
+  const layouts = {
+    story: {
+      header: { top: 110, brandSize: 72, eyebrowSize: 20, heroSize: 44, subtitleSize: 22 },
+      spreadShell: { x: 56, y: 286, w: width - 112, h: 930, radius: 32 },
+      spread: { cardW: 132, cardH: 210, gapX: 14, gapY: 20, labelGap: 10, nameGap: 7 },
+      insights: { x: 56, y: 1272, w: width - 112, gap: 14, rowH: 150, direction: 'column', heroFirst: true },
+      footerY: height - 92,
+    },
+    portrait: {
+      header: { top: 92, brandSize: 66, eyebrowSize: 18, heroSize: 38, subtitleSize: 20 },
+      spreadShell: { x: 72, y: 238, w: width - 144, h: 630, radius: 30 },
+      spread: { cardW: 110, cardH: 176, gapX: 12, gapY: 16, labelGap: 8, nameGap: 6 },
+      insights: { x: 72, y: 920, w: width - 144, gap: 14, rowH: 148, direction: 'portrait-grid', heroFirst: false },
+      footerY: height - 86,
+    },
+    square: {
+      header: { top: 86, brandSize: 56, eyebrowSize: 16, heroSize: 32, subtitleSize: 18 },
+      spreadShell: { x: 56, y: 204, w: width - 112, h: 458, radius: 28 },
+      spread: { cardW: 84, cardH: 134, gapX: 10, gapY: 14, labelGap: 7, nameGap: 5 },
+      insights: { x: 56, y: 722, w: width - 112, gap: 10, rowH: 176, direction: 'row', heroFirst: false },
+      footerY: height - 64,
+    },
+  };
+  return layouts[preset] || layouts.story;
+}
+
+async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
+  const lang = normalizePosterLanguage(payload?.lang || 'en');
+  const layout = resolveCelticCrossPresetLayout(preset, width, height);
+  const cardEntries = (await buildCardEntries(payload)).slice(0, CELTIC_CROSS_POSITIONS.length);
+  const content = resolveCelticCrossPosterContent(payload, cardEntries);
+  const {
+    header,
+    spreadShell,
+    spread,
+    insights,
+    footerY,
+  } = layout;
+
+  const drawHeader = () => {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.42)';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#f8d77a';
+    ctx.font = `700 ${header.brandSize}px "Poppins", "Space Grotesk", sans-serif`;
+    ctx.fillText('MeowTarot', width / 2, header.top);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(236, 205, 132, 0.95)';
+    ctx.font = `600 ${header.eyebrowSize}px "Space Grotesk", sans-serif`;
+    drawTrackingText(ctx, content.strings.eyebrow, width / 2, header.top + 44, 1.2);
+
+    const heroWidth = Math.min(width - 180, preset === 'square' ? 820 : 860);
+    const heroFit = fitMainGuidanceText(ctx, content.heroTitle, {
+      maxWidth: heroWidth,
+      maxLines: preset === 'square' ? 2 : 3,
+      maxHeight: preset === 'square' ? 82 : 128,
+      startFontSize: header.heroSize,
+      minFontSize: preset === 'square' ? 24 : 28,
+    });
+    ctx.fillStyle = '#f7f4ee';
+    ctx.font = `700 ${heroFit.fontSize}px "Space Grotesk", sans-serif`;
+    heroFit.lines.forEach((line, index) => {
+      ctx.fillText(line, width / 2, header.top + 94 + index * heroFit.lineHeight);
+    });
+
+    const subtitleY = header.top + 94 + heroFit.lines.length * heroFit.lineHeight + 10;
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.font = `500 ${header.subtitleSize}px "Space Grotesk", sans-serif`;
+    wrapText(ctx, content.subtitle, width / 2, subtitleY, width - 220, Math.round(header.subtitleSize * 1.45), 2);
+    ctx.restore();
+  };
+
+  const drawSpreadShell = () => {
+    const shellGradient = ctx.createLinearGradient(spreadShell.x, spreadShell.y, spreadShell.x, spreadShell.y + spreadShell.h);
+    shellGradient.addColorStop(0, 'rgba(255,255,255,0.08)');
+    shellGradient.addColorStop(1, 'rgba(255,255,255,0.035)');
+    fillRoundedRect(ctx, spreadShell.x, spreadShell.y, spreadShell.w, spreadShell.h, spreadShell.radius, shellGradient);
+    strokeRoundedRect(ctx, spreadShell.x, spreadShell.y, spreadShell.w, spreadShell.h, spreadShell.radius, 'rgba(255,255,255,0.14)', 1.5);
+  };
+
+  const spreadGridWidth = spread.cardW * 5 + spread.gapX * 4;
+  const spreadGridHeight = spread.cardH * 4 + spread.gapY * 3;
+  const spreadOriginX = spreadShell.x + (spreadShell.w - spreadGridWidth) / 2;
+  const spreadOriginY = spreadShell.y + Math.max(26, (spreadShell.h - spreadGridHeight - 84) / 2);
+  const spreadCenterX = spreadOriginX + spread.cardW + spread.gapX + spread.cardW / 2;
+  const spreadCenterY = spreadOriginY + spread.cardH + spread.gapY + spread.cardH / 2;
+  const staffX = spreadOriginX + (spread.cardW + spread.gapX) * 4 + spread.cardW / 2;
+  const cardLayouts = {
+    present: { x: spreadCenterX, y: spreadCenterY },
+    challenge: { x: spreadCenterX, y: spreadCenterY, rotated: true },
+    past: { x: spreadOriginX + spread.cardW / 2, y: spreadCenterY },
+    future: { x: spreadOriginX + (spread.cardW + spread.gapX) * 2 + spread.cardW / 2, y: spreadCenterY },
+    above: { x: spreadCenterX, y: spreadOriginY + spread.cardH / 2 },
+    below: { x: spreadCenterX, y: spreadOriginY + (spread.cardH + spread.gapY) * 2 + spread.cardH / 2 },
+    outcome: { x: staffX, y: spreadOriginY + spread.cardH / 2 },
+    hopes: { x: staffX, y: spreadOriginY + (spread.cardH + spread.gapY) + spread.cardH / 2 },
+    external: { x: staffX, y: spreadOriginY + (spread.cardH + spread.gapY) * 2 + spread.cardH / 2 },
+    advice: { x: staffX, y: spreadOriginY + (spread.cardH + spread.gapY) * 3 + spread.cardH / 2 },
+  };
+
+  const drawCardMeta = ({ item, layoutBox, isHeroPosition = false }) => {
+    const label = getFullPosterPositionLabel(item.position, lang);
+    const cardName = resolveLocalizedCardName(item.card, item.entry?.name || item.payloadCard?.name || '', lang);
+    const orientationLabel = getOrientationLabel(item.orientation, lang);
+    const pillPaddingX = preset === 'square' ? 13 : 16;
+    const pillHeight = preset === 'square' ? 22 : 24;
+    const pillFontSize = preset === 'square' ? 11 : 12;
+    const labelY = layoutBox.y + spread.cardH / 2 + spread.labelGap;
+    ctx.save();
+    ctx.font = `600 ${pillFontSize}px "Space Grotesk", sans-serif`;
+    const pillWidth = Math.min(spread.cardW + 18, Math.max(70, ctx.measureText(label).width + pillPaddingX * 2));
+    ctx.restore();
+    const pillX = layoutBox.x - pillWidth / 2;
+
+    fillRoundedRect(ctx, pillX, labelY, pillWidth, pillHeight, pillHeight / 2, 'rgba(17,18,26,0.78)');
+    strokeRoundedRect(ctx, pillX, labelY, pillWidth, pillHeight, pillHeight / 2, 'rgba(255,255,255,0.14)', 1);
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.font = `600 ${pillFontSize}px "Space Grotesk", sans-serif`;
+    ctx.fillText(label, layoutBox.x, labelY + pillHeight - 8);
+
+    ctx.fillStyle = '#f7f4ee';
+    ctx.font = `${isHeroPosition ? 600 : 500} ${preset === 'square' ? 11 : 12}px "Space Grotesk", sans-serif`;
+    wrapText(ctx, cardName, layoutBox.x, labelY + pillHeight + spread.nameGap + 10, spread.cardW + 24, 15, 2);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.56)';
+    ctx.font = `500 ${preset === 'square' ? 9 : 10}px "Space Grotesk", sans-serif`;
+    wrapText(ctx, orientationLabel, layoutBox.x, labelY + pillHeight + spread.nameGap + 41, spread.cardW + 24, 13, 1);
+    ctx.restore();
+  };
+
+  const drawCardArt = async (item) => {
+    const sourceCard = item.entry?.card || item.payloadCard || {};
+    const fallbackBaseId = baseCardId(item.payloadCard?.id || item.payloadCard?.card_id || item.payloadCard?.image_id || item.position);
+    const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
+    const orientation = item.orientation;
+    const orientedId = `${baseId}-${orientation}`;
+    const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
+    const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
+    const resolvedPrimary = await resolveCardImageUrl(cardIdentity, orientation);
+    const { primary, fallbackChain } = resolvePosterCardImageSources({ ...item.entry, ...item.payloadCard, orientation, card: sourceCard }, {
+      resolvedPrimary,
+      uprightUrl,
+      reversedUrl,
+      backUrl,
+      lang,
+    });
+    try {
+      return await loadPosterCardImageWithTimeout(primary, fallbackChain);
+    } catch (error) {
+      console.warn('[Poster] celtic cross card image failed', { position: item.position, url: primary || backUrl, reason: error?.message || String(error) });
+      return null;
+    }
+  };
+
+  const drawSingleCard = async (item) => {
+    const layoutBox = cardLayouts[item.position] || cardLayouts.present;
+    const image = await drawCardArt(item);
+    const cardX = layoutBox.x - spread.cardW / 2;
+    const cardY = layoutBox.y - spread.cardH / 2;
+    const frameRadius = Math.max(16, Math.round(spread.cardW * 0.18));
+    const isHeroPosition = ['present', 'advice', 'outcome'].includes(item.position);
+    const shadowBlur = item.position === 'outcome' ? 32 : (isHeroPosition ? 24 : 18);
+
+    ctx.save();
+    ctx.shadowColor = item.position === 'outcome' ? 'rgba(236,205,132,0.18)' : 'rgba(0,0,0,0.32)';
+    ctx.shadowBlur = shadowBlur;
+    ctx.shadowOffsetY = 10;
+    fillRoundedRect(ctx, cardX, cardY, spread.cardW, spread.cardH, frameRadius, 'rgba(15,20,41,0.92)');
+    ctx.restore();
+
+    if (isHeroPosition) {
+      strokeRoundedRect(ctx, cardX - 1, cardY - 1, spread.cardW + 2, spread.cardH + 2, frameRadius + 1, 'rgba(236,205,132,0.22)', 1.5);
+    }
+
+    ctx.save();
+    ctx.translate(layoutBox.x, layoutBox.y);
+    if (layoutBox.rotated) ctx.rotate(Math.PI / 2);
+    drawRoundedRect(ctx, -spread.cardW / 2, -spread.cardH / 2, spread.cardW, spread.cardH, frameRadius);
+    ctx.clip();
+    if (image) {
+      if (item.orientation === 'reversed') {
+        ctx.translate(0, 0);
+        ctx.rotate(Math.PI);
+      }
+      ctx.drawImage(image, -spread.cardW / 2, -spread.cardH / 2, spread.cardW, spread.cardH);
+    } else {
+      const fallbackFill = ctx.createLinearGradient(-spread.cardW / 2, -spread.cardH / 2, spread.cardW / 2, spread.cardH / 2);
+      fallbackFill.addColorStop(0, 'rgba(255,255,255,0.12)');
+      fallbackFill.addColorStop(1, 'rgba(236,205,132,0.08)');
+      ctx.fillStyle = fallbackFill;
+      ctx.fillRect(-spread.cardW / 2, -spread.cardH / 2, spread.cardW, spread.cardH);
+    }
+    ctx.restore();
+
+    drawCardMeta({ item, layoutBox, isHeroPosition });
+    emitFullCardRenderProbe({ position: item.position, ok: Boolean(image), preset });
+  };
+
+  const drawInsightPanel = ({ x, y, w, h, insight, variant }) => {
+    const gradient = ctx.createLinearGradient(x, y, x, y + h);
+    if (variant === 'outcome') {
+      gradient.addColorStop(0, 'rgba(236,205,132,0.16)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0.08)');
+    } else {
+      gradient.addColorStop(0, 'rgba(255,255,255,0.10)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0.05)');
+    }
+    fillRoundedRect(ctx, x, y, w, h, variant === 'outcome' ? 26 : 22, gradient);
+    strokeRoundedRect(ctx, x, y, w, h, variant === 'outcome' ? 26 : 22, variant === 'outcome' ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.14)', 1.25);
+    fillRoundedRect(ctx, x, y, 4, h, 3, variant === 'outcome' ? 'rgba(236,205,132,0.9)' : 'rgba(236,205,132,0.34)');
+
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(236,205,132,0.98)';
+    ctx.font = `600 ${preset === 'square' ? 11 : 12}px "Space Grotesk", sans-serif`;
+    ctx.fillText(insight.label, x + 20, y + 28);
+
+    ctx.fillStyle = '#f7f4ee';
+    const titleFont = variant === 'outcome'
+      ? (preset === 'square' ? 22 : 26)
+      : (preset === 'square' ? 16 : 19);
+    ctx.font = `700 ${titleFont}px "Space Grotesk", sans-serif`;
+    const titleWidth = w - 40;
+    const titleY = y + 58;
+    const titleLines = wrapTextLines(ctx, insight.title, titleWidth, variant === 'outcome' ? 2 : 2);
+    titleLines.forEach((line, index) => {
+      ctx.fillText(line, x + 20, titleY + index * Math.round(titleFont * 1.18));
+    });
+
+    const bodyFont = variant === 'outcome'
+      ? (preset === 'square' ? 13 : 15)
+      : (preset === 'square' ? 12 : 14);
+    const bodyLineHeight = Math.round(bodyFont * (variant === 'outcome' ? 1.48 : 1.42));
+    const bodyStartY = titleY + titleLines.length * Math.round(titleFont * 1.18) + 18;
+    const maxBodyLines = Math.max(2, Math.floor((h - (bodyStartY - y) - 22) / bodyLineHeight));
+    ctx.fillStyle = variant === 'outcome' ? '#f7f4ee' : 'rgba(255,255,255,0.78)';
+    ctx.font = `500 ${bodyFont}px "Space Grotesk", sans-serif`;
+    wrapText(ctx, insight.body, x + 20, bodyStartY, titleWidth, bodyLineHeight, maxBodyLines);
+    ctx.restore();
+  };
+
+  const drawInsights = () => {
+    const order = insights.heroFirst
+      ? [
+        { insight: content.outcome, variant: 'outcome' },
+        { insight: content.present, variant: 'present' },
+        { insight: content.advice, variant: 'advice' },
+      ]
+      : [
+        { insight: content.present, variant: 'present' },
+        { insight: content.advice, variant: 'advice' },
+        { insight: content.outcome, variant: 'outcome' },
+      ];
+
+    if (insights.direction === 'column') {
+      order.forEach((item, index) => {
+        drawInsightPanel({
+          x: insights.x,
+          y: insights.y + index * (insights.rowH + insights.gap),
+          w: insights.w,
+          h: item.variant === 'outcome' ? insights.rowH + 8 : insights.rowH,
+          ...item,
+        });
+      });
+      return;
+    }
+
+    if (insights.direction === 'portrait-grid') {
+      const halfW = (insights.w - insights.gap) / 2;
+      drawInsightPanel({ x: insights.x, y: insights.y, w: halfW, h: insights.rowH, ...order[0] });
+      drawInsightPanel({ x: insights.x + halfW + insights.gap, y: insights.y, w: halfW, h: insights.rowH, ...order[1] });
+      drawInsightPanel({ x: insights.x, y: insights.y + insights.rowH + insights.gap, w: insights.w, h: insights.rowH + 8, ...order[2] });
+      return;
+    }
+
+    const sideW = Math.max(180, Math.round((insights.w - insights.gap * 2) * 0.3));
+    const outcomeW = insights.w - sideW * 2 - insights.gap * 2;
+    drawInsightPanel({ x: insights.x, y: insights.y, w: sideW, h: insights.rowH, ...order[0] });
+    drawInsightPanel({ x: insights.x + sideW + insights.gap, y: insights.y, w: sideW, h: insights.rowH, ...order[1] });
+    drawInsightPanel({ x: insights.x + sideW * 2 + insights.gap * 2, y: insights.y, w: outcomeW, h: insights.rowH, ...order[2] });
+  };
+
+  drawHeader();
+  drawSpreadShell();
+  for (const item of content.positionedCards) {
+    // Keep the implementation canvas-based while mirroring the product's poster--celtic-cross layout structure.
+    await drawSingleCard(item);
+  }
+  drawInsights();
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.58)';
+  ctx.font = `500 ${preset === 'square' ? 24 : 28}px "Space Grotesk", sans-serif`;
+  ctx.fillText(toSafeText(payload?.poster?.footer, 'meowtarot.com'), width / 2, footerY);
+  ctx.restore();
+
+  return {
+    cardEntries,
+    content,
+  };
+}
+
 
 function getFullPosterPositionLabel(position = '', lang = 'en') {
   const labels = FULL_POSITION_LABELS[lang] || FULL_POSITION_LABELS.en;
@@ -1234,6 +1651,18 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
   const backgroundUrl = await drawPosterBackground(ctx, width, height, payload);
   posterDebugLog('log', '[Poster] Background resolved', backgroundUrl || 'fallback-gradient');
+
+  if (isCelticCrossPosterPayload(payload)) {
+    await renderCelticCrossPoster(ctx, payload, preset, width, height);
+
+    const exportStart = performance.now();
+    perf.captureCount += 1;
+    const blob = await exportPoster(canvas);
+    perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
+    perf.exportMs = performance.now() - exportStart;
+    if (!blob) throw new Error('Failed to build poster blob');
+    return { blob, width, height, perf };
+  }
 
   if (String(payload?.mode || '').toLowerCase() === 'full' && preset === 'story') {
     const lang = payload?.lang || 'en';
