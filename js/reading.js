@@ -15,7 +15,14 @@ import {
   getCardBackFallbackUrl,
   applyImgFallback,
 } from './data.js';
-import { buildQuestionReadingInputPayload, findCardById, getBaseCardId, toOrientation } from './reading-helpers.js';
+import {
+  buildQuestionReadingInputPayload,
+  findCardById,
+  getBaseCardId,
+  getCelticCrossIntegration,
+  getCelticCrossInterpretation,
+  toOrientation,
+} from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
 import { orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-order.js';
 import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
@@ -1900,6 +1907,30 @@ function getFullInterpretationText(card, topicConfig = null) {
     || '';
 }
 
+function getFullIntegrationEntries(dict, positions = []) {
+  const cards = positions.map(({ card, position }) => ({ ...card, position }));
+  const integration = getCelticCrossIntegration(cards, state.currentLang);
+  const entries = [
+    {
+      key: 'action',
+      title: dict?.celticCrossNextStep || (state.currentLang === 'th' ? 'ก้าวต่อไปของคุณ' : 'Your next step'),
+      ...integration.action,
+    },
+    {
+      key: 'affirmation',
+      title: dict?.celticCrossHoldEnergy || (state.currentLang === 'th' ? 'โอบพลังนี้ไว้' : 'Hold this energy'),
+      ...integration.affirmation,
+    },
+    {
+      key: 'reflection',
+      title: dict?.celticCrossAskYourself || (state.currentLang === 'th' ? 'ลองถามตัวเอง' : 'Ask yourself'),
+      ...integration.reflection,
+    },
+  ];
+
+  return entries.filter((entry) => entry.text);
+}
+
 function renderDaily(card, dict) {
   if (!readingContent) return;
 
@@ -2049,6 +2080,7 @@ function renderFull(cards, dict) {
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const hasTopic = topicConfig && !['generic', 'other'].includes(topic);
   const positions = getFullPositionMeta(cards);
+  const isCelticCross = cards.length >= 10;
 
   const spreadPanel = document.createElement('div');
   spreadPanel.className = 'panel panel--spread panel--celtic-cross';
@@ -2142,7 +2174,9 @@ function renderFull(cards, dict) {
     box.appendChild(meta);
 
     const body = document.createElement('p');
-    body.textContent = getFullInterpretationText(card, hasTopic ? topicConfig : null);
+    body.textContent = isCelticCross
+      ? getCelticCrossInterpretation(card, position, state.currentLang)
+      : getFullInterpretationText(card, hasTopic ? topicConfig : null);
     box.appendChild(body);
 
     interpretationGrid.appendChild(box);
@@ -2150,6 +2184,46 @@ function renderFull(cards, dict) {
 
   interpretationPanel.appendChild(interpretationGrid);
   readingContent.appendChild(interpretationPanel);
+
+  if (isCelticCross) {
+    const integrationEntries = getFullIntegrationEntries(dict, positions);
+    if (integrationEntries.length) {
+      const integrationPanel = document.createElement('section');
+      integrationPanel.className = 'panel full-integration-panel';
+
+      const heading = document.createElement('h3');
+      heading.textContent = dict?.guidanceHeading || (state.currentLang === 'th' ? 'คำแนะนำ' : 'Guidance');
+      integrationPanel.appendChild(heading);
+
+      const grid = document.createElement('div');
+      grid.className = 'full-integration-grid';
+
+      integrationEntries.forEach((entry) => {
+        const item = document.createElement('article');
+        item.className = 'full-summary-box full-integration-box';
+
+        const title = document.createElement('h4');
+        title.textContent = entry.title;
+        item.appendChild(title);
+
+        if (entry.source) {
+          const source = document.createElement('p');
+          source.className = 'full-integration-box__source';
+          source.textContent = getName(entry.source);
+          item.appendChild(source);
+        }
+
+        const copy = document.createElement('p');
+        copy.textContent = entry.text;
+        item.appendChild(copy);
+
+        grid.appendChild(item);
+      });
+
+      integrationPanel.appendChild(grid);
+      readingContent.appendChild(integrationPanel);
+    }
+  }
 
   const energyPanel = buildEnergyPanel(cards, dict);
   if (energyPanel) {

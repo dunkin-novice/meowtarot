@@ -1,6 +1,29 @@
 import { normalizeId } from './data.js';
 import { normalizeQuestionCardPosition, orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-order.js';
 
+const CELTIC_CROSS_STANDALONE_FIELD_BY_POSITION = {
+  present: 'standalone_present',
+  challenge: 'standalone_present',
+  past: 'standalone_past',
+  future: 'standalone_future',
+  above: 'standalone_future',
+  below: 'standalone_past',
+  advice: 'standalone_present',
+  external: 'standalone_present',
+  hopes: 'standalone_future',
+  outcome: 'standalone_future',
+};
+
+function normalizeLanguage(lang = 'en') {
+  return String(lang || '').toLowerCase().startsWith('th') ? 'th' : 'en';
+}
+
+function getLocalizedCardField(card, fieldBase, lang = 'en') {
+  if (!card || !fieldBase) return '';
+  const locale = normalizeLanguage(lang);
+  return card[`${fieldBase}_${locale}`] || '';
+}
+
 export function getBaseId(id, normalizeFn = normalizeId) {
   const normalized = normalizeFn(String(id ?? ''));
   return normalized.replace(/-(upright|reversed|u|r)$/i, '');
@@ -121,6 +144,53 @@ export function getQuestionMeaningField(topic = 'other', position = 'present') {
   const normalizedTopic = normalizeQuestionTopic(topic);
   const fieldPrefix = normalizedTopic === 'other' ? 'standalone' : normalizedTopic;
   return `${fieldPrefix}_${normalizedPosition}_en`;
+}
+
+export function getCelticCrossStandaloneField(position = '') {
+  return CELTIC_CROSS_STANDALONE_FIELD_BY_POSITION[String(position || '').toLowerCase()] || 'standalone_present';
+}
+
+export function getCelticCrossInterpretation(card, position = '', lang = 'en') {
+  if (!card) return '';
+
+  return getLocalizedCardField(card, getCelticCrossStandaloneField(position), lang)
+    || getLocalizedCardField(card, 'general_meaning', lang)
+    || getLocalizedCardField(card, 'tarot_imply', lang)
+    || getLocalizedCardField(card, 'card_desc', lang)
+    || '';
+}
+
+export function getCelticCrossIntegration(cards = [], lang = 'en') {
+  const byPosition = new Map(
+    (Array.isArray(cards) ? cards : [])
+      .filter((card) => card && typeof card === 'object')
+      .map((card) => [String(card.position || '').toLowerCase(), card]),
+  );
+
+  const adviceCard = byPosition.get('advice') || null;
+  const presentCard = byPosition.get('present') || null;
+  const outcomeCard = byPosition.get('outcome') || null;
+  const belowCard = byPosition.get('below') || null;
+  const hopesCard = byPosition.get('hopes') || null;
+  const presentAffirmation = getLocalizedCardField(presentCard, 'affirmation', lang);
+  const outcomeAffirmation = getLocalizedCardField(outcomeCard, 'affirmation', lang);
+  const belowReflection = getLocalizedCardField(belowCard, 'reflection_question', lang);
+  const hopesReflection = getLocalizedCardField(hopesCard, 'reflection_question', lang);
+
+  return {
+    action: {
+      source: adviceCard,
+      text: getLocalizedCardField(adviceCard, 'action_prompt', lang),
+    },
+    affirmation: {
+      source: presentAffirmation ? presentCard : (outcomeAffirmation ? outcomeCard : null),
+      text: presentAffirmation || outcomeAffirmation,
+    },
+    reflection: {
+      source: belowReflection ? belowCard : (hopesReflection ? hopesCard : null),
+      text: belowReflection || hopesReflection,
+    },
+  };
 }
 
 export function buildQuestionReadingInputPayload({ topic = 'other', selectedIds = [], cards = [] } = {}) {

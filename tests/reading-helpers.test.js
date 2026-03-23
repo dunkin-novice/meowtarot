@@ -11,6 +11,9 @@ import {
   generateQuestionShareSummary,
   getBaseCardId,
   getBaseId,
+  getCelticCrossIntegration,
+  getCelticCrossInterpretation,
+  getCelticCrossStandaloneField,
   getQuestionMeaningField,
   getOrientation,
   matchesCardId,
@@ -87,6 +90,52 @@ test('getQuestionMeaningField switches to standalone for non-specialized topics'
   assert.strictEqual(getQuestionMeaningField('finance', 'future'), 'finance_future_en');
   assert.strictEqual(getQuestionMeaningField('other', 'future'), 'standalone_future_en');
   assert.strictEqual(getQuestionMeaningField('self', 'past'), 'standalone_past_en');
+});
+
+test('getCelticCrossStandaloneField maps each Celtic Cross position to the correct standalone bucket', () => {
+  assert.strictEqual(getCelticCrossStandaloneField('present'), 'standalone_present');
+  assert.strictEqual(getCelticCrossStandaloneField('challenge'), 'standalone_present');
+  assert.strictEqual(getCelticCrossStandaloneField('past'), 'standalone_past');
+  assert.strictEqual(getCelticCrossStandaloneField('future'), 'standalone_future');
+  assert.strictEqual(getCelticCrossStandaloneField('above'), 'standalone_future');
+  assert.strictEqual(getCelticCrossStandaloneField('below'), 'standalone_past');
+  assert.strictEqual(getCelticCrossStandaloneField('advice'), 'standalone_present');
+  assert.strictEqual(getCelticCrossStandaloneField('external'), 'standalone_present');
+  assert.strictEqual(getCelticCrossStandaloneField('hopes'), 'standalone_future');
+  assert.strictEqual(getCelticCrossStandaloneField('outcome'), 'standalone_future');
+});
+
+test('getCelticCrossInterpretation uses localized standalone buckets before generic fallbacks', () => {
+  const card = {
+    standalone_past_en: 'Past bucket EN.',
+    standalone_past_th: 'อดีตภาษาไทย',
+    standalone_present_en: 'Present bucket EN.',
+    standalone_future_en: 'Future bucket EN.',
+    general_meaning_en: 'Generic EN.',
+  };
+
+  assert.strictEqual(getCelticCrossInterpretation(card, 'below', 'en'), 'Past bucket EN.');
+  assert.strictEqual(getCelticCrossInterpretation(card, 'challenge', 'en'), 'Present bucket EN.');
+  assert.strictEqual(getCelticCrossInterpretation(card, 'hopes', 'en'), 'Future bucket EN.');
+  assert.strictEqual(getCelticCrossInterpretation(card, 'past', 'th'), 'อดีตภาษาไทย');
+  assert.strictEqual(getCelticCrossInterpretation({ general_meaning_en: 'Generic EN.' }, 'present', 'en'), 'Generic EN.');
+});
+
+test('getCelticCrossIntegration returns single-source integration content with required fallbacks', () => {
+  const entries = getCelticCrossIntegration([
+    { position: 'advice', action_prompt_en: 'Take the practical next step.' },
+    { position: 'present', affirmation_en: '' },
+    { position: 'outcome', affirmation_en: 'I let the path reveal itself.' },
+    { position: 'below', reflection_question_en: '' },
+    { position: 'hopes', reflection_question_en: 'What truth am I ready to admit?' },
+  ], 'en');
+
+  assert.strictEqual(entries.action.text, 'Take the practical next step.');
+  assert.strictEqual(entries.affirmation.text, 'I let the path reveal itself.');
+  assert.strictEqual(entries.reflection.text, 'What truth am I ready to admit?');
+  assert.strictEqual(entries.action.source?.position, 'advice');
+  assert.strictEqual(entries.affirmation.source?.position, 'outcome');
+  assert.strictEqual(entries.reflection.source?.position, 'hopes');
 });
 
 test('buildQuestionReadingInputPayload derives question input from selected cards and repo data', () => {
