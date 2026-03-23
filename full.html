@@ -45,7 +45,33 @@
           <span class="selection-counter" id="overall-counter">0/10</span>
         </div>
 
-        <div id="overall-card-board" class="card-board card-board--full" hidden></div>
+        <div class="full-stage-copy" id="overall-stage-copy">
+          <p class="eyebrow" id="overall-stage-eyebrow" data-i18n="fullReadingStageDealEyebrow"></p>
+          <h2 id="overall-stage-title" data-i18n="fullReadingStageDealTitle"></h2>
+          <p id="overall-stage-description" data-i18n="fullReadingStageDealBody"></p>
+        </div>
+
+        <section id="overall-selection-shell" class="full-selection-shell" aria-live="polite">
+          <div id="overall-deal-stage" class="full-stage-panel full-stage-panel--deal">
+            <div class="full-deal-orbit" id="overall-deal-orbit" aria-hidden="true"></div>
+            <div class="full-deck-area">
+              <button id="overall-draw-deck" type="button" class="full-draw-deck" aria-describedby="overall-stage-description">
+                <span class="full-draw-deck__stack" aria-hidden="true"></span>
+                <span class="full-draw-deck__label" data-i18n="fullReadingDeckReady"></span>
+              </button>
+              <p class="full-deck-area__hint" data-i18n="fullReadingDeckHint"></p>
+            </div>
+          </div>
+
+          <div id="overall-draw-summary" class="full-draw-summary" hidden></div>
+
+          <section id="overall-arrange-stage" class="full-stage-panel full-stage-panel--arrange" hidden>
+            <div class="full-arrange-copy">
+              <p class="full-arrange-note" data-i18n="fullReadingArrangeHint"></p>
+            </div>
+            <div id="overall-arrange-list" class="full-arrange-list" role="list"></div>
+          </section>
+        </section>
 
         <div class="board-actions board-actions--center" id="overall-actions" hidden>
           <button id="overall-continue" type="button" class="primary" data-i18n="continue" disabled></button>
