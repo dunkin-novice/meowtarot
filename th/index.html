@@ -107,45 +107,54 @@
 <body data-page="home">
   <header id="site-header"></header>
 
-  <main class="page-shell">
-    <div class="home-grid">
-      <section class="hero hero--compact">
-      <div class="hero-copy">
-        <p class="eyebrow">ดูดวงไพ่ยิปซีแบบแมว</p>
-        <h1 class="brand-title">ดูดวงไพ่ทาโรต์แบบแมว ๆ &amp; ความหมายไพ่ครบชุด – MeowTarot</h1>
-        <p class="tagline">
-          ดูดวงไพ่ทาโรต์รายวัน สเปรดถามคำถาม 3 ใบ และความหมายไพ่ทาโรต์แบบสองภาษา พร้อมเซลติกครอสแบบเต็มที่กำลังจะมา
-        </p>
-        <p class="intro">
-          ตั้งคำถาม ขอดูดวง แล้วรับคำแนะนำปลอดภัยทางใจในโทนแมวน่ารัก ไม่มีการขู่หรือทำนายลบ เน้นมุมมองที่ใช้ได้จริง
-        </p>
-        <div class="cta-group">
-          <a href="daily.html" class="btn btn-primary">ดูดวงรายวัน</a>
-          <a href="full.html" class="btn btn-secondary" aria-label="เปิดดูดวงเซลติกครอสแบบเต็ม">เซลติกครอส</a>
+  <main class="page-shell home-page">
+    <section class="home-hero-card" aria-labelledby="home-hero-title">
+      <div class="home-hero-copy">
+        <p class="eyebrow">MeowTarot</p>
+        <p class="hero-brand">MeowTarot</p>
+        <h1 class="home-hero-title" id="home-hero-title">อ่านดวงของคุณด้วยคำแนะนำจากไพ่ทาโรต์</h1>
+        <p class="home-hero-body">คำทำนายไพ่ทาโรต์ที่น่ารักและใช้สัญชาตญาณสำหรับวันนี้ สำหรับคำถามของคุณ หรือสำหรับเส้นทางชีวิตที่ใหญ่กว่าเดิม</p>
+        <div class="home-hero-actions">
+          <a href="question.html" class="btn btn-primary home-primary-cta" aria-label="เริ่มเส้นทางถามคำถาม">เริ่มดูดวง</a>
         </div>
+        <p class="home-hero-note">เริ่มจากถามคำถามเพื่อเข้าสู่การอ่านไพ่ที่ชัดเจนและโฟกัสที่สุด</p>
       </div>
+
+      <aside class="home-hero-aside" aria-label="สรุปเส้นทางหลักของการดูดวง">
+        <div class="hero-spotlight-card">
+          <p class="eyebrow">เส้นทางหลัก</p>
+          <h2>ถามคำถาม</h2>
+          <p>เลือกหัวข้อก่อน แล้วเปิดไพ่ 3 ใบเพื่อรับคำแนะนำที่โฟกัสกับสถานการณ์ที่สำคัญที่สุดของคุณตอนนี้</p>
+          <ul class="hero-spotlight-list">
+            <li>เลือกหัวข้อ</li>
+            <li>หยิบไพ่ 3 ใบ</li>
+            <li>อ่านคำแนะนำของคุณ</li>
+          </ul>
+        </div>
+      </aside>
     </section>
 
-    <section class="section-block section-meanings" id="home-meanings">
-      <div class="section-heading">
-        <p class="eyebrow">ความหมายไพ่</p>
-        <h2>ความหมายไพ่ทาโรต์ครบ 78 ใบ</h2>
-        <p>สำรวจความหมายไพ่ทาโรต์ทั้งแบบตั้งตรงและกลับหัว พร้อมคำอธิบายด้านความรัก การงาน และการเงินทุกใบ</p>
+    <section class="secondary-reading-section" aria-labelledby="secondary-reading-title">
+      <div class="section-heading section-heading--tight">
+        <p class="eyebrow">เส้นทางรอง</p>
+        <h2 id="secondary-reading-title">อีกสองวิธีในการรับคำแนะนำ</h2>
+        <p>เลือกการดูดวงสั้นสำหรับวันนี้ หรืออ่านลึกขึ้นสำหรับภาพรวมชีวิต</p>
       </div>
 
-      <div class="meanings-actions">
-        <a href="tarot-card-meanings/" class="btn btn-primary meanings-btn">อ่านความหมายไพ่</a>
-        <div class="meanings-categories" aria-label="เลือกหมวดไพ่">
-          <a class="chip" href="tarot-card-meanings/?category=major">Major Arcana</a>
-          <a class="chip" href="tarot-card-meanings/?category=wands">Wands</a>
-          <a class="chip" href="tarot-card-meanings/?category=cups">Cups</a>
-          <a class="chip" href="tarot-card-meanings/?category=swords">Swords</a>
-          <a class="chip" href="tarot-card-meanings/?category=pentacles">Pentacles</a>
-        </div>
+      <div class="secondary-reading-grid">
+        <a class="reading-path-card reading-path-card--secondary" href="daily.html" aria-label="เปิดการดูดวงรายวัน">
+          <p class="reading-path-card__eyebrow">รวดเร็วและอ่อนโยน</p>
+          <h3>Daily Reading</h3>
+          <p>การดูดวงแบบเร็วสำหรับพลังงานและบรรยากาศของวันปัจจุบัน</p>
+        </a>
+
+        <a class="reading-path-card reading-path-card--secondary" href="full.html" aria-label="เปิดการดูดวงชีวิต">
+          <p class="reading-path-card__eyebrow">ลึกและครบกว่า</p>
+          <h3>Life Reading</h3>
+          <p>การอ่านแบบ Celtic Cross สำหรับเส้นทางชีวิต แพตเทิร์นสำคัญ และก้าวถัดไปของคุณ</p>
+        </a>
       </div>
     </section>
-
-    </div>
   </main>
 
   <footer id="site-footer"></footer>
