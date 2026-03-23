@@ -299,19 +299,19 @@ export function generateQuestionShareSummary(reading = {}) {
   const actionInsight = firstSentence(reading?.action?.insight || present.meaning || reading?.takeaway || reading?.synthesis || reading?.intro);
   const headline = compactText(
     actionCard && actionInsight
-      ? `${actionCard}: ${stripTrailingPunctuation(actionInsight)}`
+      ? `${actionCard}: it's time to ${lowerFirst(stripTrailingPunctuation(actionInsight))}`
       : actionInsight || firstSentence(reading?.intro),
-    12,
+    14,
   );
   const summary = compactText([
     firstSentence(past.meaning),
     firstSentence(actionInsight && actionInsight !== firstSentence(past.meaning)
-      ? `Now, ${lowerFirst(actionInsight)}`
+      ? `Right now, ${lowerFirst(actionInsight)}`
       : present.meaning),
     firstSentence(future.meaning ? `Next, ${lowerFirst(future.meaning)}` : ''),
   ].filter(Boolean).join(' '), 28);
   const ctaSource = firstSentence(reading?.action?.direction)
-    || firstSentence(actionInsight ? `Start here: ${lowerFirst(actionInsight)}` : future.meaning)
+    || firstSentence(actionInsight ? `Let this guide your next move: ${lowerFirst(actionInsight)}` : `Move toward this: ${lowerFirst(future.meaning)}`)
     || 'Take the next clear step.';
 
   return {

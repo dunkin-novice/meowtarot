@@ -175,8 +175,8 @@ test('generateQuestionShareSummary builds compact share copy from question readi
   });
 
   assert.deepStrictEqual(generateQuestionShareSummary(reading), {
-    headline: 'The Magician: Use what is already in your hands',
-    summary: 'Your earlier leap created this opening. Now, use what is already in your hands. Next, trust what is quietly unfolding.',
+    headline: "The Magician: it's time to use what is already in your hands",
+    summary: 'Your earlier leap created this opening. Right now, use what is already in your hands. Next, trust what is quietly unfolding.',
     cta: 'Pick one tool and use it today.',
   });
 });
@@ -199,8 +199,8 @@ test('generateQuestionShareSummary falls back to existing reading output when ac
   };
 
   assert.deepStrictEqual(generateQuestionShareSummary(reading), {
-    headline: 'Two of Pentacles: Make the practical choice in front of you',
-    summary: 'Now, make the practical choice in front of you. Next, a calmer stretch is coming once you commit.',
-    cta: 'Start here: make the practical choice in front of you.',
+    headline: "Two of Pentacles: it's time to make the practical choice in front of you",
+    summary: 'Right now, make the practical choice in front of you. Next, a calmer stretch is coming once you commit.',
+    cta: 'Let this guide your next move: make the practical choice in front of you.',
   });
 });
