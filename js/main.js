@@ -3,6 +3,7 @@ import {
   loadTarotManifest,
   getCardBackUrl,
   getCardBackFallbackUrl,
+  getCardImageUrl,
   applyImageFallback,
   normalizeId,
 } from './data.js';
@@ -17,14 +18,28 @@ const STORAGE_KEY = 'meowtarot_selection';
 const DAILY_SELECTION_MAX = 1;
 const DEAL_STAGGER = 160;
 const STACK_DURATION = 520;
+const FULL_DEAL_ANIMATION_DURATION = 960;
 const CARD_BACK_URL = getCardBackUrl();
 const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
+const CELTIC_CROSS_POSITIONS = [
+  { key: 'present', labelKey: 'positionPresent' },
+  { key: 'challenge', labelKey: 'positionChallenge' },
+  { key: 'past', labelKey: 'positionPast' },
+  { key: 'future', labelKey: 'positionFuture' },
+  { key: 'above', labelKey: 'positionAbove' },
+  { key: 'below', labelKey: 'positionBelow' },
+  { key: 'advice', labelKey: 'positionAdvice' },
+  { key: 'external', labelKey: 'positionExternal' },
+  { key: 'hopes', labelKey: 'positionHopes' },
+  { key: 'outcome', labelKey: 'positionOutcome' },
+];
 
 const state = {
   currentLang: 'en',
   cards: [],
   questionTopic: 'love',
 };
+let overallFlowCleanup = null;
 
 const staticCardBacks = document.querySelectorAll('.card-back');
 
@@ -109,6 +124,51 @@ function saveSelectionAndGo({ mode, spread, topic, cards }) {
   });
   const destination = localizePath('/reading.html', state.currentLang);
   window.location.href = `${destination}?${params.toString()}`;
+}
+
+function formatCopy(template, values = {}) {
+  return String(template || '').replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ''));
+}
+
+function getCardName(card) {
+  if (!card) return '';
+  return state.currentLang === 'th'
+    ? (card.alias_th || card.name_th || card.card_name_en || card.name_en || card.name || card.id || '')
+    : (card.card_name_en || card.name_en || card.name || card.name_th || card.id || '');
+}
+
+function getOrientationLabel(card) {
+  const orientation = card?.orientation || (String(card?.id || '').endsWith('-reversed') ? 'reversed' : 'upright');
+  if (state.currentLang === 'th') return orientation === 'reversed' ? 'กลับหัว' : 'ตั้งตรง';
+  return orientation === 'reversed' ? 'Reversed' : 'Upright';
+}
+
+function createCardArt(card, className = '', { useBack = false, alt = '' } = {}) {
+  const img = document.createElement('img');
+  img.className = className;
+  img.alt = alt;
+  if (useBack) {
+    applyCardBackBackground(img);
+    return img;
+  }
+  applyImageFallback(img, getCardImageUrl(card), [CARD_BACK_URL, CARD_BACK_FALLBACK_URL]);
+  return img;
+}
+
+function moveItem(list, fromIndex, toIndex) {
+  const copy = Array.from(list);
+  if (
+    fromIndex < 0
+    || fromIndex >= copy.length
+    || toIndex < 0
+    || toIndex >= copy.length
+    || fromIndex === toIndex
+  ) {
+    return copy;
+  }
+  const [item] = copy.splice(fromIndex, 1);
+  copy.splice(toIndex, 0, item);
+  return copy;
 }
 
 function animateBoard(boardEl) {
@@ -413,78 +473,390 @@ function renderDaily() {
 }
 
 function renderOverall() {
-  const board = document.getElementById('overall-card-board');
   const toolbar = document.getElementById('overall-toolbar');
   const shuffleBtn = document.getElementById('overall-shuffle');
   const counter = document.getElementById('overall-counter');
   const continueBtn = document.getElementById('overall-continue');
   const actions = document.getElementById('overall-actions');
-  if (!board || !toolbar || !shuffleBtn || !counter || !continueBtn || !actions) return;
+  const stageEyebrow = document.getElementById('overall-stage-eyebrow');
+  const stageTitle = document.getElementById('overall-stage-title');
+  const stageDescription = document.getElementById('overall-stage-description');
+  const dealOrbit = document.getElementById('overall-deal-orbit');
+  const drawDeck = document.getElementById('overall-draw-deck');
+  const drawSummary = document.getElementById('overall-draw-summary');
+  const dealStage = document.getElementById('overall-deal-stage');
+  const arrangeStage = document.getElementById('overall-arrange-stage');
+  const arrangeList = document.getElementById('overall-arrange-list');
+  if (
+    !toolbar
+    || !shuffleBtn
+    || !counter
+    || !continueBtn
+    || !actions
+    || !stageEyebrow
+    || !stageTitle
+    || !stageDescription
+    || !dealOrbit
+    || !drawDeck
+    || !drawSummary
+    || !dealStage
+    || !arrangeStage
+    || !arrangeList
+  ) return;
 
+  const dict = translations[state.currentLang] || translations.en;
+  const sortingState = {
+    pointerId: null,
+    activeIndex: -1,
+    activeHandle: null,
+  };
+  const dealPositions = [
+    { x: '-33%', y: '34%', r: '-18deg' },
+    { x: '-25%', y: '18%', r: '-14deg' },
+    { x: '-16%', y: '8%', r: '-10deg' },
+    { x: '-8%', y: '0%', r: '-6deg' },
+    { x: '0%', y: '-3%', r: '-2deg' },
+    { x: '8%', y: '0%', r: '2deg' },
+    { x: '16%', y: '8%', r: '6deg' },
+    { x: '25%', y: '18%', r: '10deg' },
+    { x: '33%', y: '34%', r: '14deg' },
+    { x: '0%', y: '20%', r: '0deg' },
+  ];
+  let stage = 'deal';
+  let pool = [];
   let selectedCards = [];
+  let dealTimer = null;
+  let isDisposed = false;
 
-  board.parentElement?.querySelector('.full-picked-row')?.remove();
+  const clearDealTimer = () => {
+    if (!dealTimer) return;
+    window.clearTimeout(dealTimer);
+    dealTimer = null;
+  };
 
-  const pickedRow = document.createElement('div');
-  pickedRow.className = 'full-picked-row';
+  const isPoolReady = () => pool.length >= CELTIC_CROSS_COUNT;
 
-  const updatePickedRow = () => {
-    pickedRow.innerHTML = '';
-    selectedCards.forEach((card, idx) => {
-      const thumb = document.createElement('div');
-      thumb.className = 'full-picked-thumb';
+  const teardownSortCapture = () => {
+    if (sortingState.pointerId == null) return;
+    if (!sortingState.activeHandle?.hasPointerCapture?.(sortingState.pointerId)) return;
+    sortingState.activeHandle.releasePointerCapture(sortingState.pointerId);
+  };
 
-      const img = document.createElement('img');
-      img.className = 'full-picked-thumb__img';
-      img.alt = card?.id || '';
-      applyCardBackBackground(img);
-      thumb.appendChild(img);
+  const stopSorting = () => {
+    teardownSortCapture();
+    sortingState.pointerId = null;
+    sortingState.activeIndex = -1;
+    sortingState.activeHandle = null;
+    arrangeList.classList.remove('is-sorting');
+    rerenderArrangeList();
+  };
 
-      const badge = document.createElement('span');
-      badge.className = 'full-picked-thumb__badge';
-      badge.textContent = `${idx + 1}`;
-      thumb.appendChild(badge);
+  const handleSortMove = (event) => {
+    if (sortingState.pointerId !== event.pointerId || sortingState.activeIndex < 0) return;
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.full-arrange-item');
+    const targetIndex = Number(target?.dataset.index ?? sortingState.activeIndex);
+    if (!Number.isInteger(targetIndex) || targetIndex === sortingState.activeIndex) return;
+    selectedCards = moveItem(selectedCards, sortingState.activeIndex, targetIndex);
+    sortingState.activeIndex = targetIndex;
+    rerenderArrangeList(targetIndex);
+  };
 
-      pickedRow.appendChild(thumb);
+  const handleSortEnd = (event) => {
+    if (sortingState.pointerId !== event.pointerId) return;
+    stopSorting();
+  };
+
+  const setStageCopy = (mode) => {
+    if (mode === 'arrange') {
+      const firstPosition = dict[CELTIC_CROSS_POSITIONS[0].labelKey] || CELTIC_CROSS_POSITIONS[0].key;
+      const lastPosition = dict[CELTIC_CROSS_POSITIONS[CELTIC_CROSS_COUNT - 1].labelKey]
+        || CELTIC_CROSS_POSITIONS[CELTIC_CROSS_COUNT - 1].key;
+      stageEyebrow.textContent = dict.fullReadingStageArrangeEyebrow;
+      stageTitle.textContent = dict.fullReadingStageArrangeTitle;
+      stageDescription.textContent = formatCopy(dict.fullReadingStageArrangeBody, {
+        firstPosition,
+        lastPosition,
+      });
+      return;
+    }
+
+    if (mode === 'draw') {
+      const current = Math.min(selectedCards.length + 1, CELTIC_CROSS_COUNT);
+      const nextLabelKey = CELTIC_CROSS_POSITIONS[Math.min(selectedCards.length, CELTIC_CROSS_COUNT - 1)]?.labelKey;
+      stageEyebrow.textContent = dict.fullReadingStageDrawEyebrow;
+      stageTitle.textContent = formatCopy(dict.fullReadingStageDrawTitle, { current, total: CELTIC_CROSS_COUNT });
+      stageDescription.textContent = formatCopy(dict.fullReadingStageDrawBody, {
+        position: dict[nextLabelKey] || '',
+      });
+      return;
+    }
+
+    stageEyebrow.textContent = dict.fullReadingStageDealEyebrow;
+    stageTitle.textContent = dict.fullReadingStageDealTitle;
+    stageDescription.textContent = dict.fullReadingStageDealBody;
+  };
+
+  const updateCounter = () => {
+    counter.textContent = `${selectedCards.length}/${CELTIC_CROSS_COUNT}`;
+  };
+
+  const updateContinue = () => {
+    continueBtn.disabled = stage !== 'arrange' || selectedCards.length !== CELTIC_CROSS_COUNT;
+  };
+
+  const renderDealOrbit = () => {
+    dealOrbit.innerHTML = '';
+    dealPositions.forEach((position, idx) => {
+      const ghost = document.createElement('div');
+      ghost.className = 'full-deal-card';
+      ghost.style.setProperty('--deal-x', position.x);
+      ghost.style.setProperty('--deal-y', position.y);
+      ghost.style.setProperty('--deal-rotate', position.r);
+      ghost.style.transitionDelay = `${idx * 42}ms`;
+      ghost.appendChild(createCardArt(null, 'full-deal-card__img', { useBack: true }));
+      dealOrbit.appendChild(ghost);
+    });
+    dealOrbit.classList.remove('is-dealt');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        dealOrbit.classList.add('is-dealt');
+      });
     });
   };
 
-  const updateContinue = (cards) => {
-    selectedCards = cards;
-    counter.textContent = `${cards.length}/${CELTIC_CROSS_COUNT}`;
-    continueBtn.disabled = cards.length !== CELTIC_CROSS_COUNT;
-    updatePickedRow();
+  const renderDrawSummary = () => {
+    if (!selectedCards.length) {
+      drawSummary.hidden = true;
+      drawSummary.innerHTML = '';
+      return;
+    }
+
+    drawSummary.hidden = false;
+    drawSummary.innerHTML = '';
+
+    const latestCard = selectedCards[selectedCards.length - 1];
+    const latestWrap = document.createElement('article');
+    latestWrap.className = 'full-latest-card';
+    latestWrap.appendChild(createCardArt(latestCard, 'full-latest-card__img', {
+      alt: `${getCardName(latestCard)} — ${getOrientationLabel(latestCard)}`,
+    }));
+
+    const latestMeta = document.createElement('div');
+    latestMeta.className = 'full-latest-card__meta';
+
+    const latestEyebrow = document.createElement('p');
+    latestEyebrow.className = 'full-latest-card__eyebrow';
+    latestEyebrow.textContent = dict.fullReadingLatestCard;
+    latestMeta.appendChild(latestEyebrow);
+
+    const latestPosition = document.createElement('h3');
+    latestPosition.textContent = dict[CELTIC_CROSS_POSITIONS[selectedCards.length - 1]?.labelKey] || '';
+    latestMeta.appendChild(latestPosition);
+
+    const latestName = document.createElement('p');
+    latestName.className = 'full-latest-card__name';
+    latestName.textContent = `${getCardName(latestCard)} · ${getOrientationLabel(latestCard)}`;
+    latestMeta.appendChild(latestName);
+    latestWrap.appendChild(latestMeta);
+    drawSummary.appendChild(latestWrap);
+
+    const rail = document.createElement('section');
+    rail.className = 'full-picked-rail';
+
+    const railLabel = document.createElement('p');
+    railLabel.className = 'full-picked-rail__label';
+    railLabel.textContent = dict.fullReadingDrawnLabel;
+    rail.appendChild(railLabel);
+
+    const railGrid = document.createElement('div');
+    railGrid.className = 'full-picked-rail__grid';
+    selectedCards.forEach((card, idx) => {
+      const item = document.createElement('article');
+      item.className = 'full-picked-rail__item';
+
+      const badge = document.createElement('span');
+      badge.className = 'full-picked-rail__badge';
+      badge.textContent = `${idx + 1}`;
+      item.appendChild(badge);
+      item.appendChild(createCardArt(card, 'full-picked-rail__img', { alt: getCardName(card) }));
+
+      const label = document.createElement('p');
+      label.className = 'full-picked-rail__position';
+      label.textContent = dict[CELTIC_CROSS_POSITIONS[idx]?.labelKey] || '';
+      item.appendChild(label);
+      railGrid.appendChild(item);
+    });
+    rail.appendChild(railGrid);
+    drawSummary.appendChild(rail);
   };
 
-  board.insertAdjacentElement('afterend', pickedRow);
+  const rerenderArrangeList = (activeIndex = -1) => {
+    arrangeList.innerHTML = '';
 
-  const fullBoard = setupBoard(
-    board,
-    FULL_POOL_SIZE,
-    CELTIC_CROSS_COUNT,
-    updateContinue,
-    { animated: true, animationProfile: 'default' }
-  );
+    selectedCards.forEach((card, idx) => {
+      const item = document.createElement('article');
+      item.className = 'full-arrange-item';
+      item.dataset.index = String(idx);
+      item.setAttribute('role', 'listitem');
+      if (idx === activeIndex) item.classList.add('is-dragging');
 
-  board.hidden = false;
+      const order = document.createElement('div');
+      order.className = 'full-arrange-item__order';
+      order.innerHTML = `
+        <span class="full-arrange-item__order-index">${idx + 1}</span>
+        <span class="full-arrange-item__order-label">${formatCopy(dict.fullReadingPositionPrefix, { index: idx + 1 })}</span>
+      `;
+      item.appendChild(order);
+
+      item.appendChild(createCardArt(card, 'full-arrange-item__img', { alt: getCardName(card) }));
+
+      const meta = document.createElement('div');
+      meta.className = 'full-arrange-item__meta';
+
+      const position = document.createElement('p');
+      position.className = 'full-arrange-item__position';
+      position.textContent = dict[CELTIC_CROSS_POSITIONS[idx]?.labelKey] || '';
+      meta.appendChild(position);
+
+      const name = document.createElement('h3');
+      name.className = 'full-arrange-item__name';
+      name.textContent = getCardName(card);
+      meta.appendChild(name);
+
+      const orientation = document.createElement('p');
+      orientation.className = 'full-arrange-item__orientation';
+      orientation.textContent = getOrientationLabel(card);
+      meta.appendChild(orientation);
+      item.appendChild(meta);
+
+      const controls = document.createElement('div');
+      controls.className = 'full-arrange-item__controls';
+
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = 'full-arrange-item__handle';
+      handle.setAttribute('aria-label', dict.fullReadingDragHandle);
+      handle.innerHTML = '<span aria-hidden="true">⋮⋮</span>';
+      handle.onpointerdown = (event) => {
+        sortingState.pointerId = event.pointerId;
+        sortingState.activeIndex = idx;
+        sortingState.activeHandle = handle;
+        handle.setPointerCapture?.(event.pointerId);
+        arrangeList.classList.add('is-sorting');
+        rerenderArrangeList(idx);
+      };
+      controls.appendChild(handle);
+
+      const moveUp = document.createElement('button');
+      moveUp.type = 'button';
+      moveUp.className = 'full-arrange-item__move';
+      moveUp.textContent = '↑';
+      moveUp.setAttribute('aria-label', dict.fullReadingMoveUp);
+      moveUp.disabled = idx === 0;
+      moveUp.onclick = () => {
+        selectedCards = moveItem(selectedCards, idx, idx - 1);
+        rerenderArrangeList();
+      };
+      controls.appendChild(moveUp);
+
+      const moveDown = document.createElement('button');
+      moveDown.type = 'button';
+      moveDown.className = 'full-arrange-item__move';
+      moveDown.textContent = '↓';
+      moveDown.setAttribute('aria-label', dict.fullReadingMoveDown);
+      moveDown.disabled = idx === selectedCards.length - 1;
+      moveDown.onclick = () => {
+        selectedCards = moveItem(selectedCards, idx, idx + 1);
+        rerenderArrangeList();
+      };
+      controls.appendChild(moveDown);
+
+      item.appendChild(controls);
+      arrangeList.appendChild(item);
+    });
+
+    updateContinue();
+  };
+
+  const syncUi = () => {
+    setStageCopy(stage);
+    updateCounter();
+    updateContinue();
+    drawDeck.disabled = stage !== 'draw' || !isPoolReady() || selectedCards.length >= CELTIC_CROSS_COUNT;
+    drawDeck.classList.toggle('is-complete', selectedCards.length >= CELTIC_CROSS_COUNT);
+    dealStage.hidden = stage === 'arrange';
+    dealOrbit.hidden = stage === 'arrange';
+    arrangeStage.hidden = stage !== 'arrange';
+    renderDrawSummary();
+    if (stage === 'arrange') rerenderArrangeList(sortingState.activeIndex);
+  };
+
+  const goToArrangeStage = () => {
+    stage = 'arrange';
+    syncUi();
+  };
+
+  const drawNextCard = () => {
+    if (stage !== 'draw') return;
+    const nextCard = pool[selectedCards.length];
+    if (!nextCard) return;
+    selectedCards = [...selectedCards, nextCard];
+    if (selectedCards.length >= CELTIC_CROSS_COUNT) {
+      goToArrangeStage();
+      return;
+    }
+    syncUi();
+  };
+
+  const resetFullFlow = () => {
+    clearDealTimer();
+    stage = 'deal';
+    pool = getDrawableCards(FULL_POOL_SIZE);
+    selectedCards = [];
+    stopSorting();
+    renderDealOrbit();
+    syncUi();
+    if (!isPoolReady()) return;
+    dealTimer = window.setTimeout(() => {
+      if (isDisposed) return;
+      stage = 'draw';
+      syncUi();
+    }, FULL_DEAL_ANIMATION_DURATION);
+  };
+
   toolbar.hidden = false;
   actions.hidden = false;
-  counter.textContent = `0/${CELTIC_CROSS_COUNT}`;
   continueBtn.disabled = true;
+  document.addEventListener('pointermove', handleSortMove);
+  document.addEventListener('pointerup', handleSortEnd);
+  document.addEventListener('pointercancel', handleSortEnd);
 
-  shuffleBtn.onclick = () => {
-    fullBoard.render();
-    updateContinue([]);
-  };
-
+  shuffleBtn.onclick = () => resetFullFlow();
+  drawDeck.onclick = () => drawNextCard();
   continueBtn.onclick = () => {
     if (selectedCards.length !== CELTIC_CROSS_COUNT) return;
     saveSelectionAndGo({
       mode: 'full',
       spread: 'story',
       topic: 'generic',
-      cards: selectedCards.map((c) => c.id),
+      cards: selectedCards.map((card) => card.id),
     });
+  };
+
+  resetFullFlow();
+
+  return () => {
+    if (isDisposed) return;
+    isDisposed = true;
+    clearDealTimer();
+    teardownSortCapture();
+    arrangeList.classList.remove('is-sorting');
+    document.removeEventListener('pointermove', handleSortMove);
+    document.removeEventListener('pointerup', handleSortEnd);
+    document.removeEventListener('pointercancel', handleSortEnd);
+    shuffleBtn.onclick = null;
+    drawDeck.onclick = null;
+    continueBtn.onclick = null;
   };
 }
 
@@ -541,8 +913,10 @@ function renderQuestion() {
 
 function renderPage(dict) {
   const page = document.body.dataset.page;
+  overallFlowCleanup?.();
+  overallFlowCleanup = null;
   if (page === 'daily') renderDaily(dict);
-  if (page === 'overall' || page === 'full') renderOverall(dict);
+  if (page === 'overall' || page === 'full') overallFlowCleanup = renderOverall(dict) || null;
   if (page === 'question') renderQuestion(dict);
 }
 
