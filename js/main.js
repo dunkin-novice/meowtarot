@@ -1,4 +1,5 @@
 import { initShell, localizePath, translations } from './common.js';
+import { getAskQuestionTopics } from './question-topics.js';
 import {
   loadTarotManifest,
   getCardBackUrl,
@@ -860,22 +861,21 @@ function renderOverall() {
   };
 }
 
-function renderQuestion() {
+function renderQuestion(dict = translations[state.currentLang] || translations.en) {
   const board = document.getElementById('question-card-board');
-  const topicToggle = document.getElementById('topic-toggle');
+  const topicGrid = document.getElementById('question-topic-grid');
   const shuffleBtn = document.getElementById('question-reset');
   const continueBtn = document.getElementById('question-continue');
   const counter = document.getElementById('question-counter');
   const toolbar = document.getElementById('question-toolbar');
-  if (!board || !topicToggle || !shuffleBtn || !continueBtn || !counter || !toolbar) return;
+  const drawPanel = document.getElementById('question-draw-panel');
+  const actions = document.getElementById('question-actions');
+  const selectedTopicTitle = document.getElementById('question-selected-topic-title');
+  if (!board || !topicGrid || !shuffleBtn || !continueBtn || !counter || !toolbar || !drawPanel || !actions || !selectedTopicTitle) return;
 
   let boardApi = null;
   let latestSelection = [];
-
-  const setActive = (container, btn) => {
-    container.querySelectorAll('.chip').forEach((chip) => chip.classList.remove('active', 'chip-active'));
-    btn.classList.add('active', 'chip-active');
-  };
+  const topics = getAskQuestionTopics();
 
   const updateContinue = (cards) => {
     latestSelection = cards;
@@ -883,19 +883,56 @@ function renderQuestion() {
     counter.textContent = `${cards.length}/${QUESTION_SELECTION_COUNT}`;
   };
 
-  const renderBoard = () => {
-    board.hidden = false;
-    toolbar.hidden = false;
-    boardApi = setupBoard(board, BOARD_CARD_COUNT, QUESTION_SELECTION_COUNT, updateContinue);
-    updateContinue([]);
+  const getTopicLabel = (topicKey) => {
+    const topic = topics.find((item) => item.key === topicKey);
+    if (!topic) return dict.topicGeneric || translations[state.currentLang]?.topicGeneric || 'Any question';
+    return dict[topic.titleKey] || translations[state.currentLang]?.[topic.titleKey] || topic.key;
   };
 
-  topicToggle.querySelectorAll('[data-topic]').forEach((btn) => {
-    btn.onclick = () => {
-      setActive(topicToggle, btn);
-      state.questionTopic = btn.dataset.topic;
-    };
-  });
+  const buildTopicCard = (topic) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'topic-card';
+    button.dataset.topic = topic.key;
+
+    const icon = document.createElement('span');
+    icon.className = 'topic-card__icon';
+    icon.textContent = topic.icon;
+    button.appendChild(icon);
+
+    const title = document.createElement('span');
+    title.className = 'topic-card__title';
+    title.textContent = dict[topic.titleKey] || topic.key;
+    button.appendChild(title);
+
+    const description = document.createElement('span');
+    description.className = 'topic-card__body';
+    description.textContent = dict[topic.descriptionKey] || '';
+    button.appendChild(description);
+
+    button.addEventListener('click', () => {
+      state.questionTopic = topic.key;
+      topicGrid.querySelectorAll('.topic-card').forEach((card) => card.classList.remove('is-active'));
+      button.classList.add('is-active');
+      selectedTopicTitle.textContent = getTopicLabel(topic.key);
+      drawPanel.hidden = false;
+      board.hidden = false;
+      toolbar.hidden = false;
+      actions.hidden = false;
+      if (!boardApi) {
+        boardApi = setupBoard(board, BOARD_CARD_COUNT, QUESTION_SELECTION_COUNT, updateContinue);
+      } else {
+        boardApi.render();
+        updateContinue([]);
+      }
+      drawPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    return button;
+  };
+
+  topicGrid.innerHTML = '';
+  topics.forEach((topic) => topicGrid.appendChild(buildTopicCard(topic)));
 
   shuffleBtn.onclick = () => boardApi?.render();
   continueBtn.onclick = () => {
@@ -908,7 +945,11 @@ function renderQuestion() {
     });
   };
 
-  renderBoard();
+  drawPanel.hidden = true;
+  board.hidden = true;
+  toolbar.hidden = true;
+  actions.hidden = true;
+  updateContinue([]);
 }
 
 function renderPage(dict) {

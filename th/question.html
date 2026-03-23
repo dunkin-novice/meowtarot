@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   />
-  <title>MeowTarot | ไพ่ 3 ใบ</title>
+  <title>MeowTarot | ถามคำถาม</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -32,28 +32,55 @@
 <body data-page="question">
   <header id="site-header"></header>
 
-  <main class="page-shell">
-    <section class="section-block">
-      <p class="eyebrow" data-i18n="questionDesc"></p>
-      <h1 data-i18n="questionTitle"></h1>
-      <p class="lede" data-i18n="questionLead"></p>
-
-      <p class="chip chip-active" data-i18n="questionSpreadNote"></p>
-
-      <div class="topic-chips" id="topic-toggle">
-        <button type="button" data-topic="love" class="chip chip-active" data-i18n="topicLove"></button>
-        <button type="button" data-topic="career" class="chip" data-i18n="topicCareer"></button>
-        <button type="button" data-topic="finance" class="chip" data-i18n="topicFinance"></button>
+  <main class="page-shell question-page-shell">
+    <section class="section-block question-flow-card">
+      <div class="question-flow-intro">
+        <p class="eyebrow">MeowTarot</p>
+        <h1 data-i18n="questionTitle"></h1>
+        <p class="lede" data-i18n="questionLead"></p>
       </div>
 
-      <div class="board-toolbar" id="question-toolbar" hidden>
-        <button id="question-reset" type="button" class="ghost" data-i18n="shuffleCards"></button>
-        <span class="selection-counter" id="question-counter">0/3</span>
+      <div class="question-flow-layout">
+        <section class="topic-selection-panel" aria-labelledby="topic-selection-title">
+          <div class="section-heading section-heading--tight">
+            <p class="eyebrow" data-i18n="questionDesc"></p>
+            <h2 id="topic-selection-title" data-i18n="questionTopicSelectionTitle"></h2>
+            <p data-i18n="questionTopicSelectionBody"></p>
+          </div>
+          <div class="topic-card-grid" id="question-topic-grid"></div>
+        </section>
+
+        <aside class="question-intention" aria-label="คู่มือการดูดวงแบบถามคำถาม">
+          <div class="question-intention__intro">
+            <h2 data-i18n="questionPromptTitle"></h2>
+            <p data-i18n="questionPromptBody"></p>
+          </div>
+          <div class="question-intention__steps">
+            <p class="question-step" data-i18n="questionStepTopic"></p>
+            <p class="question-step" data-i18n="questionStepDraw"></p>
+            <p class="question-step" data-i18n="questionStepRead"></p>
+          </div>
+        </aside>
       </div>
-      <div id="question-card-board" class="card-board card-board--three" hidden></div>
-      <div class="board-actions">
-        <button id="question-continue" type="button" class="primary" data-i18n="continue" disabled></button>
-      </div>
+
+      <section class="question-draw-panel" id="question-draw-panel" hidden aria-labelledby="question-selected-topic-title">
+        <div class="question-draw-header">
+          <div>
+            <p class="question-selected-label" data-i18n="questionSelectedTopicLabel"></p>
+            <h2 id="question-selected-topic-title"></h2>
+          </div>
+          <p class="chip chip-active question-spread-chip" data-i18n="questionSpreadNote"></p>
+        </div>
+
+        <div class="board-toolbar" id="question-toolbar" hidden>
+          <button id="question-reset" type="button" class="ghost" data-i18n="shuffleCards"></button>
+          <span class="selection-counter" id="question-counter">0/3</span>
+        </div>
+        <div id="question-card-board" class="card-board card-board--three" hidden></div>
+        <div class="board-actions" id="question-actions" hidden>
+          <button id="question-continue" type="button" class="primary" data-i18n="continue" disabled></button>
+        </div>
+      </section>
     </section>
   </main>
 
