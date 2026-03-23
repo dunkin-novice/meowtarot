@@ -1536,72 +1536,6 @@ body[data-page='home'] .section-block {
 
 .card-board { overflow: visible; }
 
-
-
-
-
-body[data-page='full'] {
-  --full-deal-grad-start: #7C98F7;
-  --full-deal-grad-end: #D98FC8;
-  --full-deal-text: #FFFFFF;
-  --full-deal-shadow: 0 14px 30px rgba(94, 82, 140, 0.22);
-  --full-deal-border: rgba(255, 255, 255, 0.42);
-  --full-continue-disabled-bg: #E7E3EE;
-  --full-continue-disabled-text: #A79DB8;
-  --full-continue-disabled-border: rgba(122, 108, 156, 0.10);
-  --full-continue-active-start: #AFC2F7;
-  --full-continue-active-end: #E1B8D7;
-  --full-continue-active-text: #FFFFFF;
-}
-
-.overall-entry {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin: 4px auto 14px;
-  width: min(100%, 320px);
-  padding: 8px 0;
-}
-
-.overall-deal-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  min-width: 180px;
-  color: var(--full-deal-text);
-  background: linear-gradient(135deg, var(--full-deal-grad-start) 0%, var(--full-deal-grad-end) 100%);
-  border: 1px solid var(--full-deal-border);
-  box-shadow: var(--full-deal-shadow);
-  opacity: 1;
-  transition: opacity 120ms ease;
-}
-
-.overall-deal-overlay:disabled {
-  opacity: 1;
-  filter: saturate(0.8);
-}
-
-
-body[data-page='full'] #overall-flow[data-full-phase='preDeal'] .deck-stack#overall-hero-deck,
-body[data-page='full'] #overall-flow[data-full-phase='dealing'] .deck-stack#overall-hero-deck {
-  transform: scale(clamp(1.15, 1.12 + 0.14vw, 1.22));
-  transform-origin: center;
-}
-
-body[data-page='full'] #overall-flow[data-full-phase='dealing'] .overall-deal-overlay {
-  opacity: 0;
-  pointer-events: none;
-}
-
-body[data-page='full'] .overall-deal-overlay:hover:not(:disabled),
-body[data-page='full'] .overall-deal-overlay:active:not(:disabled) {
-  transform: translate(-50%, -50%);
-}
-
 .deck-stack {
   position: relative;
   width: clamp(112px, 15vw, 156px);
@@ -1609,13 +1543,76 @@ body[data-page='full'] .overall-deal-overlay:active:not(:disabled) {
   isolation: isolate;
 }
 
-.deck-stack--floating {
+body[data-page='full'] #overall-toolbar[hidden],
+body[data-page='full'] #overall-card-board[hidden],
+body[data-page='full'] #overall-actions[hidden] {
+  display: none !important;
+}
+
+body[data-page='full'] #overall-card-board {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(8, 13, 38, 0.32);
+  min-height: auto;
+}
+
+/* Full mode — 50-card dense grid */
+.card-board--full {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+
+body[data-page='full'] .card-board--full .selection-badge {
+  display: none;
+}
+
+/* Picked cards row */
+.full-picked-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding: 8px 0;
+  min-height: 48px;
+}
+
+.full-picked-thumb {
+  position: relative;
+  width: 40px;
+  height: 60px;
+}
+
+.full-picked-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.full-picked-thumb__badge {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 4;
-  pointer-events: none;
+  top: -6px;
+  right: -6px;
+  background: #f8d77a;
+  color: #1a1230;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .card-board--full {
+    grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+    gap: 4px;
+  }
 }
 
 .deck-stack-card:nth-child(1) { transform: translate(-10px, 8px) rotate(-9deg); opacity: 0.78; }
@@ -4946,32 +4943,6 @@ body[data-page='daily'] #daily-board .card-slot.daily-appearing {
   opacity: 0;
 }
 
-
-
-body[data-page='full'] #overall-entry[hidden],
-body[data-page='full'] #overall-toolbar[hidden],
-body[data-page='full'] #overall-card-board[hidden],
-body[data-page='full'] #overall-actions[hidden],
-body[data-page='full'] #overall-center-deck[hidden],
-body[data-page='full'] #overall-animation-layer[hidden] {
-  display: none !important;
-}
-
-
-
-body[data-page='full'] #overall-animation-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  overflow: visible;
-}
-
-body[data-page='full'] .card-slot--overlay {
-  position: absolute;
-  margin: 0;
-  opacity: 0;
-}
 body[data-page='full'] .full-board-shell {
   max-width: 980px;
   margin: 0 auto;
@@ -5012,15 +4983,15 @@ body[data-page='full'] #overall-toolbar button {
 }
 
 body[data-page='full'] #overall-continue {
-  color: var(--full-continue-active-text);
-  background: linear-gradient(135deg, var(--full-continue-active-start) 0%, var(--full-continue-active-end) 100%);
+  color: #ffffff;
+  background: linear-gradient(135deg, #afc2f7 0%, #e1b8d7 100%);
   border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 body[data-page='full'] #overall-continue:disabled {
-  background: var(--full-continue-disabled-bg);
-  color: var(--full-continue-disabled-text);
-  border: 1px solid var(--full-continue-disabled-border);
+  background: #e7e3ee;
+  color: #a79db8;
+  border: 1px solid rgba(122, 108, 156, 0.10);
   box-shadow: none;
 }
 body[data-page='full'] #overall-card-board {
@@ -5045,32 +5016,6 @@ body[data-page='full'] #overall-card-board {
 body[data-page='full'] #overall-card-board.is-hidden {
   opacity: 0;
   transform: scale(0.97);
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/*
- * ⚠️  FRAGILE — DO NOT simplify these into the shared #overall-card-board rules.
- *
- * #overall-center-deck is position:absolute and centered via translate(-50%,-50%).
- * The translate() MUST be included in BOTH the visible and .is-hidden states,
- * otherwise the CSS transition will interpolate from translate(0,0) and the
- * deck will fly off-center when fading in/out.
- *
- * If you add a new absolutely-positioned element with its own transform offset,
- * give it its own rule set using the same pattern — never merge into a shared rule.
- */
-body[data-page='full'] #overall-center-deck {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-  visibility: visible;
-  pointer-events: auto;
-  transition: opacity 200ms ease, transform 200ms ease;
-}
-
-body[data-page='full'] #overall-center-deck.is-hidden {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.97);
   visibility: hidden;
   pointer-events: none;
 }
@@ -5140,89 +5085,6 @@ body[data-page='full'] #overall-card-board .card-back {
   visibility: hidden;
   pointer-events: none;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes fullDealCardEntrance {
-    from {
-      opacity: 0;
-      transform: translateY(24px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fullShuffleRiffle {
-    0%,
-    100% {
-      transform: translate(0, 0) rotate(var(--deck-base-rot, 0deg)) scale(1);
-    }
-    24% {
-      transform: translate(-10px, 1px) rotate(calc(var(--deck-base-rot, 0deg) - 8deg)) scale(1.01);
-    }
-    50% {
-      transform: translate(10px, -1px) rotate(calc(var(--deck-base-rot, 0deg) + 8deg)) scale(1.01);
-    }
-    74% {
-      transform: translate(-6px, 0) rotate(calc(var(--deck-base-rot, 0deg) - 4deg)) scale(1.005);
-    }
-  }
-
-  @keyframes fullDeckReadyPulse {
-    0% {
-      transform: translate(-50%, -50%) scale(1);
-      filter: drop-shadow(0 0 0 rgba(198, 183, 255, 0));
-    }
-    40% {
-      transform: translate(-50%, -50%) scale(1.03);
-      filter: drop-shadow(0 0 14px rgba(198, 183, 255, 0.58));
-    }
-    100% {
-      transform: translate(-50%, -50%) scale(1);
-      filter: drop-shadow(0 0 0 rgba(198, 183, 255, 0));
-    }
-  }
-
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot {
-    opacity: 0;
-    animation: fullDealCardEntrance 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  }
-
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(1) { animation-delay: 0ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(2) { animation-delay: 40ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(3) { animation-delay: 80ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(4) { animation-delay: 120ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(5) { animation-delay: 160ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(6) { animation-delay: 200ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(7) { animation-delay: 240ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(8) { animation-delay: 280ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(9) { animation-delay: 320ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(10) { animation-delay: 360ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(11) { animation-delay: 400ms; }
-  body[data-page='full'] #overall-card-board.is-deal-entering .card-slot:nth-child(12) { animation-delay: 440ms; }
-
-  body[data-page='full'] #overall-center-deck.is-shuffling .deck-stack-card {
-    animation: fullShuffleRiffle 620ms cubic-bezier(0.45, 0, 0.55, 1) 2;
-    animation-fill-mode: both;
-  }
-
-  body[data-page='full'] #overall-center-deck.is-shuffling .deck-stack-card:nth-child(odd) {
-    animation-direction: alternate;
-  }
-
-  body[data-page='full'] #overall-center-deck .deck-stack-card:nth-child(1) { --deck-base-rot: -9deg; animation-delay: 0ms; }
-  body[data-page='full'] #overall-center-deck .deck-stack-card:nth-child(2) { --deck-base-rot: -6deg; animation-delay: 60ms; }
-  body[data-page='full'] #overall-center-deck .deck-stack-card:nth-child(3) { --deck-base-rot: -3deg; animation-delay: 120ms; }
-  body[data-page='full'] #overall-center-deck .deck-stack-card:nth-child(4) { --deck-base-rot: 2deg; animation-delay: 180ms; }
-  body[data-page='full'] #overall-center-deck .deck-stack-card:nth-child(5) { --deck-base-rot: 4deg; animation-delay: 240ms; }
-  body[data-page='full'] #overall-center-deck .deck-stack-card:nth-child(6) { --deck-base-rot: 0deg; animation-delay: 300ms; }
-
-  body[data-page='full'] #overall-center-deck.is-ready {
-    animation: fullDeckReadyPulse 600ms ease-in-out 1;
-  }
-}
-
 
 @media (max-width: 640px) {
   body[data-page='daily'] {
@@ -5483,140 +5345,6 @@ body[data-page='daily'] #daily-board .card-slot.is-selected::after {
     0 0 12px rgba(198, 172, 255, 0.16);
 }
 
-/* ── Fan spread (pre-deal, full reading) ──────────────────────────── */
-.fan-wrap {
-  position: relative;
-  width: 260px;
-  height: 200px;
-  margin: 0 auto 16px;
-  overflow: visible;
-}
-
-.fan-wrap .fan-card {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  margin-left: -38px;
-  transform-origin: center 160px;
-  will-change: transform;
-}
-
-@keyframes fanIn {
-  from {
-    opacity: 0;
-    transform: rotate(0deg);
-  }
-}
-
-.fan-card-1 { transform: rotate(-24deg); animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.00s both; }
-.fan-card-2 { transform: rotate(-12deg); animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.04s both; }
-.fan-card-3 { transform: rotate(  0deg); animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both; }
-.fan-card-4 { transform: rotate( 12deg); animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both; }
-.fan-card-5 { transform: rotate( 24deg); animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both; }
-
-/* Override deck-stack stacking offsets inside the fan */
-.fan-wrap .deck-stack-card {
-  top: 0 !important;
-  left: 50% !important;
-  right: auto !important;
-  margin: 0 0 0 -38px !important;
-  transform-origin: 50% 140% !important;
-}
-
-.fan-wrap .fan-card-1 {
-  transform: rotate(-24deg) !important;
-  animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.00s both !important;
-}
-.fan-wrap .fan-card-2 {
-  transform: rotate(-12deg) !important;
-  animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.04s both !important;
-}
-.fan-wrap .fan-card-3 {
-  transform: rotate(0deg) !important;
-  animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both !important;
-}
-.fan-wrap .fan-card-4 {
-  transform: rotate(12deg) !important;
-  animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both !important;
-}
-.fan-wrap .fan-card-5 {
-  transform: rotate(24deg) !important;
-  animation: fanIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fan-card { animation: none !important; }
-}
-
-/* ── Ritual nudge block ───────────────────────────────────────────── */
-.ritual-nudge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(138, 80, 220, 0.07);
-  border: 0.5px solid rgba(138, 80, 220, 0.18);
-  margin: 0 16px 16px;
-  text-align: left;
-}
-
-.ritual-nudge__icon {
-  font-size: 18px;
-  color: #8a50dc;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.ritual-nudge__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.ritual-nudge__title {
-  font-size: 12px;
-  font-weight: 500;
-  color: #3d1f7a;
-  margin: 0;
-  line-height: 1.3;
-}
-
-.ritual-nudge__body {
-  font-size: 11px;
-  font-weight: 300;
-  color: #9b8dc0;
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* Ensure overall-entry is a flex column wide enough for nudge + button */
-.overall-entry {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 360px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 20px;
-  box-sizing: border-box;
-}
-
-/* Make ritual nudge fill the entry container */
-.overall-entry .ritual-nudge {
-  width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-  box-sizing: border-box;
-}
-
-/* Make button fill the entry container */
-.overall-entry #overall-deal {
-  width: 100%;
-  box-sizing: border-box;
-}
-
 #overall-flow {
   min-height: unset;
 }
@@ -5759,219 +5487,15 @@ body[data-page='reading'][data-reading-mode='full'] .full-interpretation-box > p
   }
 }
 
-/* Full-mode stacked deck draw flow */
-body[data-page='full'] #overall-flow {
-  gap: 18px;
-}
-
-body[data-page='full'] #overall-center-deck {
-  position: relative;
-  top: auto;
-  left: auto;
-  transform: none;
-  margin: 0 auto;
-  z-index: 1;
-  pointer-events: auto;
-  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
-}
-
-body[data-page='full'] #overall-center-deck.is-hidden {
-  transform: none;
-}
-
-body[data-page='full'] #overall-center-deck.is-clickable {
-  cursor: pointer;
-}
-
-body[data-page='full'] #overall-center-deck.is-clickable:hover,
-body[data-page='full'] #overall-center-deck.is-clickable:focus-visible {
-  transform: translateY(-4px);
-  filter: drop-shadow(0 14px 24px rgba(105, 98, 160, 0.3));
-}
-
-body[data-page='full'] #overall-center-deck[aria-disabled='true'] {
-  cursor: default;
-  filter: saturate(0.88);
-}
-
 body[data-page='full'] #overall-card-board {
   border-style: solid;
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(8, 13, 38, 0.32);
   min-height: auto;
-  padding: 18px;
-}
-
-body[data-page='full'] .full-selection-stage {
-  width: min(100%, 720px);
-  display: grid;
-  gap: 18px;
-}
-
-body[data-page='full'] .full-selection-preview {
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-}
-
-body[data-page='full'] .full-selection-preview__title {
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-body[data-page='full'] .full-selection-preview__body {
-  min-height: clamp(220px, 42vw, 340px);
-  width: 100%;
-  display: grid;
-  place-items: center;
-}
-
-body[data-page='full'] .full-selection-preview__message,
-body[data-page='full'] .full-selection-preview__meta,
-body[data-page='full'] .full-picked-row__empty {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.76);
-  text-align: center;
-  line-height: 1.5;
-}
-
-body[data-page='full'] .full-draw-card {
-  appearance: none;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  width: min(52vw, 188px);
-  min-width: 122px;
-  aspect-ratio: 1568 / 2720;
-  cursor: pointer;
-  perspective: 1200px;
-}
-
-body[data-page='full'] .full-draw-card:disabled {
-  cursor: default;
-}
-
-body[data-page='full'] .full-draw-card__inner {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-body[data-page='full'] .full-draw-card.is-flipped .full-draw-card__inner {
-  transform: rotateY(180deg) translateY(-8px);
-}
-
-body[data-page='full'] .full-draw-card__face {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  overflow: hidden;
-  backface-visibility: hidden;
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.34);
-}
-
-body[data-page='full'] .full-draw-card__face--back {
-  background: rgba(12, 18, 48, 0.9);
-}
-
-body[data-page='full'] .full-draw-card__face--front {
-  transform: rotateY(180deg);
-  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(235,231,250,0.96));
-}
-
-body[data-page='full'] .full-draw-card__back,
-body[data-page='full'] .full-draw-card__front,
-body[data-page='full'] .full-picked-thumb__img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-body[data-page='full'] .full-draw-card__hint {
-  position: absolute;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(13, 19, 51, 0.82);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-body[data-page='full'] .full-picked-row {
-  display: grid;
-  gap: 10px;
-}
-
-body[data-page='full'] .full-picked-row__heading {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.82);
-  text-align: center;
-}
-
-body[data-page='full'] .full-picked-row__list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-}
-
-body[data-page='full'] .full-picked-thumb {
-  width: clamp(52px, 13vw, 72px);
-}
-
-body[data-page='full'] .full-picked-thumb__image {
-  position: relative;
-  aspect-ratio: 1568 / 2720;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
-}
-
-body[data-page='full'] .full-picked-thumb__badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.92);
-  color: #141b46;
-  font-size: 0.78rem;
-  font-weight: 800;
 }
 
 @media (max-width: 640px) {
   body[data-page='full'] #overall-card-board {
     width: 100%;
-    padding: 14px;
-  }
-
-  body[data-page='full'] .full-selection-stage {
-    gap: 14px;
-  }
-
-  body[data-page='full'] .full-selection-preview__body {
-    min-height: 206px;
-  }
-
-  body[data-page='full'] .full-picked-row__list {
-    gap: 8px;
   }
 }
