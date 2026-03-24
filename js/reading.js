@@ -24,6 +24,11 @@ import {
   toOrientation,
 } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
+import {
+  FULL_READING_POSITION_KEYS,
+  getFullReadingPositionAt,
+  getFullReadingPositionMeta,
+} from './full-reading-position-order.js';
 import { orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-order.js';
 import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
@@ -127,7 +132,7 @@ const DAILY_TIMINGS = Object.freeze({
   staggerMs: 95,
   revealMs: 180,
 });
-const FULL_CELTIC_POSITION_KEYS = ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'];
+const FULL_CELTIC_POSITION_KEYS = FULL_READING_POSITION_KEYS;
 const LEGACY_FULL_POSITION_KEYS = ['past', 'present', 'future'];
 
 function setDailyPhaseAttr(phase = '') {
@@ -2162,11 +2167,6 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   configureActionButtons(activeDict);
 }
 
-
-function getFullPositionKeys(totalCards = 0) {
-  return totalCards === 3 ? LEGACY_FULL_POSITION_KEYS : FULL_CELTIC_POSITION_KEYS;
-}
-
 function getFullPositionTranslationKey(position = '') {
   const safe = String(position || '').toLowerCase();
   const map = {
@@ -2192,12 +2192,7 @@ function getFullPositionLabel(dict, position = '') {
 }
 
 function getFullPositionMeta(cards = []) {
-  const keys = getFullPositionKeys(cards.length);
-  return cards.map((card, index) => ({
-    card,
-    index,
-    position: card?.position || keys[index] || FULL_CELTIC_POSITION_KEYS[index] || 'present',
-  }));
+  return getFullReadingPositionMeta(cards, { legacyKeys: LEGACY_FULL_POSITION_KEYS });
 }
 
 function getFullInterpretationText(card, topicConfig = null) {
@@ -2750,7 +2745,7 @@ function buildSharePayload() {
       return { ...withPosterPayload, position };
     }
     if (state.mode === 'full') {
-      const position = FULL_CELTIC_POSITION_KEYS[index] || 'present';
+      const position = getFullReadingPositionAt(index, orderedCards.length, { legacyKeys: LEGACY_FULL_POSITION_KEYS });
       return { ...withPosterPayload, position };
     }
     return withPosterPayload;
