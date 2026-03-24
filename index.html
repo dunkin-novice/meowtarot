@@ -111,51 +111,34 @@
   <header id="site-header"></header>
 
   <main class="page-shell home-page">
-    <section class="home-hero-card" aria-labelledby="home-hero-title">
-      <div class="home-hero-copy">
+    <section class="home-hero-card home-hero-card--chooser" aria-labelledby="home-hero-title">
+      <div class="home-hero-copy home-hero-copy--centered">
         <p class="eyebrow">MeowTarot</p>
-        <p class="hero-brand">MeowTarot</p>
-        <h1 class="home-hero-title" id="home-hero-title">Read your fortune with tarot guidance</h1>
-        <p class="home-hero-body">Cute, intuitive tarot readings for your day, your question, or your bigger life path.</p>
-        <div class="home-hero-actions">
-          <a href="question.html" class="btn btn-primary home-primary-cta" aria-label="Start the Ask a Question reading flow">Start a Reading</a>
-        </div>
-        <p class="home-hero-note">Start with Ask a Question for the clearest path into a focused tarot reading.</p>
+        <h1 class="home-hero-title" id="home-hero-title">Choose your reading</h1>
       </div>
 
-      <aside class="home-hero-aside" aria-label="Primary reading flow summary">
-        <div class="hero-spotlight-card">
-          <p class="eyebrow">Primary path</p>
-          <h2>Ask a Question</h2>
-          <p>Choose a topic first, then draw a guided 3-card spread for the situation that matters most right now.</p>
-          <ul class="hero-spotlight-list">
-            <li>Choose your topic</li>
-            <li>Draw 3 cards</li>
-            <li>Read your guidance</li>
-          </ul>
-        </div>
-      </aside>
-    </section>
+      <div class="home-path-grid" role="list" aria-label="Reading paths">
+        <a class="reading-path-card reading-path-card--chooser" href="daily.html" role="listitem" aria-label="Choose Today reading">
+          <span class="reading-path-card__placeholder" aria-hidden="true"></span>
+          <h2 class="reading-path-card__label">How’s today looking?</h2>
+          <p class="reading-path-card__meta">Daily Reading</p>
+        </a>
 
-    <section class="secondary-reading-section" aria-labelledby="secondary-reading-title">
-      <div class="section-heading section-heading--tight">
-        <p class="eyebrow">Other ways to read</p>
-        <h2 id="secondary-reading-title">More ways to receive guidance</h2>
-        <p>Quick support for today, or a deeper look at your bigger path.</p>
+        <a class="reading-path-card reading-path-card--chooser" href="full.html" role="listitem" aria-label="Choose Recent Path reading">
+          <span class="reading-path-card__placeholder" aria-hidden="true"></span>
+          <h2 class="reading-path-card__label">How’s my life lately?</h2>
+          <p class="reading-path-card__meta">Reading for the next 6–12 months</p>
+        </a>
+
+        <a class="reading-path-card reading-path-card--chooser" href="question.html" role="listitem" aria-label="Choose Ask reading">
+          <span class="reading-path-card__placeholder" aria-hidden="true"></span>
+          <h2 class="reading-path-card__label">Ask a Question</h2>
+          <p class="reading-path-card__meta">Best for exploring one topic at a time over the next 3–6 months.</p>
+        </a>
       </div>
 
-      <div class="secondary-reading-grid">
-        <a class="reading-path-card reading-path-card--secondary" href="daily.html" aria-label="Open the Daily Reading flow">
-          <p class="reading-path-card__eyebrow">Quick guidance</p>
-          <h3>Daily Reading</h3>
-          <p>A fast, gentle reading for your current day and energy.</p>
-        </a>
-
-        <a class="reading-path-card reading-path-card--secondary" href="full.html" aria-label="Open the Life Reading flow">
-          <p class="reading-path-card__eyebrow">Deeper spread</p>
-          <h3>Life Reading</h3>
-          <p>A fuller Celtic Cross reading for your life path, patterns, and next chapter.</p>
-        </a>
+      <div class="home-hero-actions home-hero-actions--subtle">
+        <a href="question.html" class="btn btn-secondary home-secondary-cta" aria-label="Choose your path with Ask reading">Choose your path</a>
       </div>
     </section>
   </main>
