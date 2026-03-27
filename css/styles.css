@@ -6416,4 +6416,35 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
   .topic-card-grid {
     grid-template-columns: 1fr;
   }
+
+  body[data-page='home'] .home-hero-card--chooser {
+    gap: 16px;
+    padding: 22px 16px;
+  }
+
+  body[data-page='home'] .home-path-grid {
+    gap: 10px;
+  }
+
+  body[data-page='home'] .reading-path-card--chooser {
+    gap: 10px;
+    padding: 12px 10px;
+  }
+
+  body[data-page='home'] .reading-path-card__placeholder {
+    width: min(100%, 132px);
+    aspect-ratio: 4 / 5;
+  }
+
+  body[data-page='home'] .reading-path-card__label {
+    font-size: clamp(1rem, 3.6vw, 1.16rem);
+    line-height: 1.14;
+    max-width: 12ch;
+  }
+
+  body[data-page='home'] .reading-path-card__meta {
+    margin-top: 0;
+    font-size: clamp(0.74rem, 2.35vw, 0.82rem);
+    line-height: 1.4;
+  }
 }
