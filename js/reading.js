@@ -2417,27 +2417,6 @@ function renderQuestion(cards, dict) {
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
 
-  if (topicConfig && !isGeneric) {
-    const topicLabelPanel = document.createElement('section');
-    topicLabelPanel.className = 'panel panel--question-topic';
-
-    const topicMeta = document.createElement('p');
-    topicMeta.className = 'panel-kicker';
-    topicMeta.textContent = dict?.questionTopicLabel || (state.currentLang === 'th' ? 'หัวข้อ' : 'Topic');
-    topicLabelPanel.appendChild(topicMeta);
-
-    const topicLabel = document.createElement('h3');
-    topicLabel.textContent = getQuestionResultKicker(dict);
-    topicLabelPanel.appendChild(topicLabel);
-
-    const topicBody = document.createElement('p');
-    topicBody.className = 'topic-copy';
-    topicBody.textContent = dict?.questionResultContext || '';
-    topicLabelPanel.appendChild(topicBody);
-
-    readingContent.appendChild(topicLabelPanel);
-  }
-
   const spreadPanel = document.createElement('section');
   spreadPanel.className = 'panel panel--spread';
 

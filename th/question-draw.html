@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>MeowTarot | จั่วไพ่ของคุณ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap"
+    />
+  </noscript>
+  <link rel="preload" href="../css/styles.css" as="style" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body data-page="question-draw">
+  <header id="site-header"></header>
+
+  <main class="page-shell question-draw-shell">
+    <section class="section-block question-draw-panel" aria-labelledby="question-selected-topic-title">
+      <div class="question-draw-header">
+        <div>
+          <p class="question-selected-label" data-i18n="questionSelectedTopicLabel"></p>
+          <h2 id="question-selected-topic-title"></h2>
+        </div>
+        <p class="chip chip-active question-spread-chip" data-i18n="questionSpreadNote"></p>
+      </div>
+
+      <div class="board-toolbar" id="question-toolbar">
+        <button id="question-reset" type="button" class="ghost" data-i18n="shuffleCards"></button>
+        <span class="selection-counter" id="question-counter">0/3</span>
+      </div>
+      <div id="question-card-board" class="card-board card-board--three"></div>
+      <div class="board-actions" id="question-actions">
+        <button id="question-continue" type="button" class="primary" data-i18n="continue" disabled></button>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script type="module" src="../js/main.js"></script>
+</body>
+</html>

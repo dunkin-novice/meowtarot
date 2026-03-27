@@ -676,6 +676,30 @@ function getQuestionPosterStrings(payload = {}) {
   };
 }
 
+function resolveQuestionPosterSummaries(payload = {}, cardEntries = []) {
+  const reading = payload?.reading || {};
+  const slots = ['past', 'present', 'future'];
+  const pickFirst = (candidates = []) => {
+    for (const item of candidates) {
+      const text = toSafeText(item, '').trim();
+      if (text) return text;
+    }
+    return '';
+  };
+
+  return slots.map((slot, idx) => {
+    const card = cardEntries[idx]?.card || {};
+    return pickFirst([
+      reading[`reading_summary_${slot}`],
+      reading[`reading_summary_${slot}_en`],
+      card[`reflection_question_${slot}`],
+      card.reflection_question_en,
+      card[`reading_summary_${slot}_en`],
+      card.general_meaning_en,
+    ]);
+  });
+}
+
 async function buildCardEntries(payload) {
   posterDebugLog('log', '[Poster] buildCardEntries: meowTarotCards length', meowTarotCards.length);
   if (meowTarotCards.length < 150) {
@@ -1799,8 +1823,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const questionPayload = { ...payload, cards: orderedQuestionCards };
     const cardEntries = (await buildCardEntries(questionPayload)).slice(0, 3);
     const questionStrings = getQuestionPosterStrings(questionPayload);
+    const questionSummaries = resolveQuestionPosterSummaries(questionPayload, cardEntries);
     const questionCardCount = orderedQuestionCards.length === 1 ? 1 : 3;
     const slots = questionCardCount === 1 ? [questionStrings.positions[1]] : questionStrings.positions;
+    const summaries = questionCardCount === 1 ? [questionSummaries[1] || questionSummaries[0] || ''] : questionSummaries;
     const cardGap = 20;
     const baseCardW = 290;
     const cardW = Math.round(baseCardW * 0.95);
@@ -1861,6 +1887,13 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.fillStyle = '#f7f4ee';
       ctx.font = '600 24px "Space Grotesk", sans-serif';
       ctx.fillText(positionLabel, x + cardW / 2, y + cardH + 36);
+
+      const summaryText = toSafeText(summaries[i], '').trim();
+      if (summaryText) {
+        ctx.fillStyle = 'rgba(239, 228, 194, 0.94)';
+        ctx.font = '500 17px "Space Grotesk", sans-serif';
+        wrapText(ctx, summaryText, x + cardW / 2, y + cardH + 66, cardW + 18, 22, 4);
+      }
     }
 
     ctx.fillStyle = '#aab0c9';
