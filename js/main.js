@@ -690,32 +690,9 @@ function renderOverall() {
 }
 
 function renderQuestion(dict = translations[state.currentLang] || translations.en) {
-  const board = document.getElementById('question-card-board');
   const topicGrid = document.getElementById('question-topic-grid');
-  const shuffleBtn = document.getElementById('question-reset');
-  const continueBtn = document.getElementById('question-continue');
-  const counter = document.getElementById('question-counter');
-  const toolbar = document.getElementById('question-toolbar');
-  const drawPanel = document.getElementById('question-draw-panel');
-  const actions = document.getElementById('question-actions');
-  const selectedTopicTitle = document.getElementById('question-selected-topic-title');
-  if (!board || !topicGrid || !shuffleBtn || !continueBtn || !counter || !toolbar || !drawPanel || !actions || !selectedTopicTitle) return;
-
-  let boardApi = null;
-  let latestSelection = [];
+  if (!topicGrid) return;
   const topics = getAskQuestionTopics();
-
-  const updateContinue = (cards) => {
-    latestSelection = cards;
-    continueBtn.disabled = cards.length !== QUESTION_SELECTION_COUNT;
-    counter.textContent = `${cards.length}/${QUESTION_SELECTION_COUNT}`;
-  };
-
-  const getTopicLabel = (topicKey) => {
-    const topic = topics.find((item) => item.key === topicKey);
-    if (!topic) return dict.topicGeneric || translations[state.currentLang]?.topicGeneric || 'Any question';
-    return dict[topic.titleKey] || translations[state.currentLang]?.[topic.titleKey] || topic.key;
-  };
 
   const buildTopicCard = (topic) => {
     const button = document.createElement('button');
@@ -740,20 +717,9 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
 
     button.addEventListener('click', () => {
       state.questionTopic = topic.key;
-      topicGrid.querySelectorAll('.topic-card').forEach((card) => card.classList.remove('is-active'));
-      button.classList.add('is-active');
-      selectedTopicTitle.textContent = getTopicLabel(topic.key);
-      drawPanel.hidden = false;
-      board.hidden = false;
-      toolbar.hidden = false;
-      actions.hidden = false;
-      if (!boardApi) {
-        boardApi = setupBoard(board, BOARD_CARD_COUNT, QUESTION_SELECTION_COUNT, updateContinue);
-      } else {
-        boardApi.render();
-        updateContinue([]);
-      }
-      drawPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const destination = localizePath('/question-draw.html', state.currentLang);
+      const params = new URLSearchParams({ topic: topic.key });
+      window.location.href = `${destination}?${params.toString()}`;
     });
 
     return button;
@@ -761,8 +727,35 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
 
   topicGrid.innerHTML = '';
   topics.forEach((topic) => topicGrid.appendChild(buildTopicCard(topic)));
+}
 
-  shuffleBtn.onclick = () => boardApi?.render();
+function renderQuestionDraw(dict = translations[state.currentLang] || translations.en) {
+  const board = document.getElementById('question-card-board');
+  const shuffleBtn = document.getElementById('question-reset');
+  const continueBtn = document.getElementById('question-continue');
+  const counter = document.getElementById('question-counter');
+  const selectedTopicTitle = document.getElementById('question-selected-topic-title');
+  if (!board || !shuffleBtn || !continueBtn || !counter || !selectedTopicTitle) return;
+
+  let latestSelection = [];
+  const topics = getAskQuestionTopics();
+  const queryTopic = new URLSearchParams(window.location.search).get('topic') || '';
+  const isKnownTopic = topics.some((item) => item.key === queryTopic);
+  state.questionTopic = isKnownTopic ? queryTopic : state.questionTopic;
+
+  const selectedTopic = topics.find((item) => item.key === state.questionTopic);
+  selectedTopicTitle.textContent = selectedTopic
+    ? (dict[selectedTopic.titleKey] || selectedTopic.key)
+    : (dict.topicGeneric || translations[state.currentLang]?.topicGeneric || 'Any question');
+
+  const updateContinue = (cards) => {
+    latestSelection = cards;
+    continueBtn.disabled = cards.length !== QUESTION_SELECTION_COUNT;
+    counter.textContent = `${cards.length}/${QUESTION_SELECTION_COUNT}`;
+  };
+
+  const boardApi = setupBoard(board, BOARD_CARD_COUNT, QUESTION_SELECTION_COUNT, updateContinue);
+  shuffleBtn.onclick = () => boardApi.render();
   continueBtn.onclick = () => {
     if (latestSelection.length !== QUESTION_SELECTION_COUNT) return;
     saveSelectionAndGo({
@@ -772,12 +765,6 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
       cards: latestSelection.map((c) => c.id),
     });
   };
-
-  drawPanel.hidden = true;
-  board.hidden = true;
-  toolbar.hidden = true;
-  actions.hidden = true;
-  updateContinue([]);
 }
 
 function renderPage(dict) {
@@ -787,11 +774,13 @@ function renderPage(dict) {
   if (page === 'daily') renderDaily(dict);
   if (page === 'overall' || page === 'full') overallFlowCleanup = renderOverall(dict) || null;
   if (page === 'question') renderQuestion(dict);
+  if (page === 'question-draw') renderQuestionDraw(dict);
 }
 
 function init() {
   const page = document.body.dataset.page;
-  initShell(state, (dict) => renderPage(dict), page);
+  const navPage = page === 'question-draw' ? 'question' : page;
+  initShell(state, (dict) => renderPage(dict), navPage);
 
   if (page === 'home') {
     renderPage(translations[state.currentLang] || translations.en);
