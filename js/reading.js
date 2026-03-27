@@ -2158,6 +2158,8 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   await animateDailyReveal(stageRefs);
   if (dailyUiState.animationRunId !== runId) return;
 
+  stageRefs.deck.remove();
+
   state.selectedIds = cards.map((entryCard) => getCardSelectionId(entryCard)).filter(Boolean);
   dailyUiState.selectedCardId = state.selectedIds[0] || '';
   dailyUiState.spreadCards = cards.slice();
