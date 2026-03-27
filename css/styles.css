@@ -6347,12 +6347,15 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
   }
 
   .home-path-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .reading-path-card--chooser {
-    width: min(100%, 380px);
-    margin: 0 auto;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 14px;
   }
 
   .question-draw-header {
