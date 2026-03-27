@@ -8,6 +8,7 @@ import {
   applyImageFallback,
   normalizeId,
 } from './data.js';
+import { applyTapSwap, buildNextDrawBoard } from './full-reading-flow.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -25,10 +26,10 @@ const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
 const CELTIC_CROSS_POSITIONS = [
   { key: 'present', labelKey: 'positionPresent' },
   { key: 'challenge', labelKey: 'positionChallenge' },
-  { key: 'past', labelKey: 'positionPast' },
-  { key: 'future', labelKey: 'positionFuture' },
   { key: 'above', labelKey: 'positionAbove' },
+  { key: 'past', labelKey: 'positionPast' },
   { key: 'below', labelKey: 'positionBelow' },
+  { key: 'future', labelKey: 'positionFuture' },
   { key: 'advice', labelKey: 'positionAdvice' },
   { key: 'external', labelKey: 'positionExternal' },
   { key: 'hopes', labelKey: 'positionHopes' },
@@ -131,19 +132,6 @@ function formatCopy(template, values = {}) {
   return String(template || '').replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ''));
 }
 
-function getCardName(card) {
-  if (!card) return '';
-  return state.currentLang === 'th'
-    ? (card.alias_th || card.name_th || card.card_name_en || card.name_en || card.name || card.id || '')
-    : (card.card_name_en || card.name_en || card.name || card.name_th || card.id || '');
-}
-
-function getOrientationLabel(card) {
-  const orientation = card?.orientation || (String(card?.id || '').endsWith('-reversed') ? 'reversed' : 'upright');
-  if (state.currentLang === 'th') return orientation === 'reversed' ? 'กลับหัว' : 'ตั้งตรง';
-  return orientation === 'reversed' ? 'Reversed' : 'Upright';
-}
-
 function createCardArt(card, className = '', { useBack = false, alt = '' } = {}) {
   const img = document.createElement('img');
   img.className = className;
@@ -154,22 +142,6 @@ function createCardArt(card, className = '', { useBack = false, alt = '' } = {})
   }
   applyImageFallback(img, getCardImageUrl(card), [CARD_BACK_URL, CARD_BACK_FALLBACK_URL]);
   return img;
-}
-
-function moveItem(list, fromIndex, toIndex) {
-  const copy = Array.from(list);
-  if (
-    fromIndex < 0
-    || fromIndex >= copy.length
-    || toIndex < 0
-    || toIndex >= copy.length
-    || fromIndex === toIndex
-  ) {
-    return copy;
-  }
-  const [item] = copy.splice(fromIndex, 1);
-  copy.splice(toIndex, 0, item);
-  return copy;
 }
 
 function animateBoard(boardEl) {
@@ -506,26 +478,12 @@ function renderOverall() {
   ) return;
 
   const dict = translations[state.currentLang] || translations.en;
-  const sortingState = {
-    pointerId: null,
-    activeIndex: -1,
-    activeHandle: null,
-  };
-  const dealPositions = [
-    { x: '-33%', y: '34%', r: '-18deg' },
-    { x: '-25%', y: '18%', r: '-14deg' },
-    { x: '-16%', y: '8%', r: '-10deg' },
-    { x: '-8%', y: '0%', r: '-6deg' },
-    { x: '0%', y: '-3%', r: '-2deg' },
-    { x: '8%', y: '0%', r: '2deg' },
-    { x: '16%', y: '8%', r: '6deg' },
-    { x: '25%', y: '18%', r: '10deg' },
-    { x: '33%', y: '34%', r: '14deg' },
-    { x: '0%', y: '20%', r: '0deg' },
-  ];
+  const DRAW_BOARD_SIZE = 10;
   let stage = 'deal';
   let pool = [];
+  let drawBoardCards = [];
   let selectedCards = [];
+  let selectedSwapIndex = -1;
   let dealTimer = null;
   let isDisposed = false;
 
@@ -537,35 +495,7 @@ function renderOverall() {
 
   const isPoolReady = () => pool.length >= CELTIC_CROSS_COUNT;
 
-  const teardownSortCapture = () => {
-    if (sortingState.pointerId == null) return;
-    if (!sortingState.activeHandle?.hasPointerCapture?.(sortingState.pointerId)) return;
-    sortingState.activeHandle.releasePointerCapture(sortingState.pointerId);
-  };
-
-  const stopSorting = () => {
-    teardownSortCapture();
-    sortingState.pointerId = null;
-    sortingState.activeIndex = -1;
-    sortingState.activeHandle = null;
-    arrangeList.classList.remove('is-sorting');
-    rerenderArrangeList();
-  };
-
-  const handleSortMove = (event) => {
-    if (sortingState.pointerId !== event.pointerId || sortingState.activeIndex < 0) return;
-    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.full-arrange-item');
-    const targetIndex = Number(target?.dataset.index ?? sortingState.activeIndex);
-    if (!Number.isInteger(targetIndex) || targetIndex === sortingState.activeIndex) return;
-    selectedCards = moveItem(selectedCards, sortingState.activeIndex, targetIndex);
-    sortingState.activeIndex = targetIndex;
-    rerenderArrangeList(targetIndex);
-  };
-
-  const handleSortEnd = (event) => {
-    if (sortingState.pointerId !== event.pointerId) return;
-    stopSorting();
-  };
+  const buildDrawBoardCards = () => buildNextDrawBoard(pool, selectedCards, DRAW_BOARD_SIZE);
 
   const setStageCopy = (mode) => {
     if (mode === 'arrange') {
@@ -607,88 +537,41 @@ function renderOverall() {
 
   const renderDealOrbit = () => {
     dealOrbit.innerHTML = '';
-    dealPositions.forEach((position, idx) => {
-      const ghost = document.createElement('div');
-      ghost.className = 'full-deal-card';
-      ghost.style.setProperty('--deal-x', position.x);
-      ghost.style.setProperty('--deal-y', position.y);
-      ghost.style.setProperty('--deal-rotate', position.r);
-      ghost.style.transitionDelay = `${idx * 42}ms`;
-      ghost.appendChild(createCardArt(null, 'full-deal-card__img', { useBack: true }));
-      dealOrbit.appendChild(ghost);
+    if (stage !== 'draw') return;
+    const board = document.createElement('div');
+    board.className = 'full-draw-board';
+    drawBoardCards.forEach((_, idx) => {
+      const slot = document.createElement('button');
+      slot.type = 'button';
+      slot.className = 'full-draw-board__slot';
+      slot.setAttribute('aria-label', formatCopy(dict.fullReadingDrawCardLabel, { index: idx + 1 }));
+      slot.appendChild(createCardArt(null, 'full-draw-board__img', { useBack: true }));
+      slot.onclick = () => {
+        const picked = drawBoardCards[idx];
+        if (!picked || stage !== 'draw') return;
+        selectedCards = [...selectedCards, picked];
+        drawBoardCards = buildDrawBoardCards();
+        if (selectedCards.length >= CELTIC_CROSS_COUNT) {
+          goToArrangeStage();
+          return;
+        }
+        syncUi();
+      };
+      board.appendChild(slot);
     });
-    dealOrbit.classList.remove('is-dealt');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        dealOrbit.classList.add('is-dealt');
-      });
-    });
+    dealOrbit.appendChild(board);
   };
 
   const renderDrawSummary = () => {
-    if (!selectedCards.length) {
-      drawSummary.hidden = true;
-      drawSummary.innerHTML = '';
-      return;
-    }
-
     drawSummary.hidden = false;
     drawSummary.innerHTML = '';
-
-    const latestCard = selectedCards[selectedCards.length - 1];
-    const latestWrap = document.createElement('article');
-    latestWrap.className = 'full-latest-card';
-    latestWrap.appendChild(createCardArt(latestCard, 'full-latest-card__img', {
-      alt: `${getCardName(latestCard)} — ${getOrientationLabel(latestCard)}`,
-    }));
-
-    const latestMeta = document.createElement('div');
-    latestMeta.className = 'full-latest-card__meta';
-
-    const latestEyebrow = document.createElement('p');
-    latestEyebrow.className = 'full-latest-card__eyebrow';
-    latestEyebrow.textContent = dict.fullReadingLatestCard;
-    latestMeta.appendChild(latestEyebrow);
-
-    const latestPosition = document.createElement('h3');
-    latestPosition.textContent = dict[CELTIC_CROSS_POSITIONS[selectedCards.length - 1]?.labelKey] || '';
-    latestMeta.appendChild(latestPosition);
-
-    const latestName = document.createElement('p');
-    latestName.className = 'full-latest-card__name';
-    latestName.textContent = `${getCardName(latestCard)} · ${getOrientationLabel(latestCard)}`;
-    latestMeta.appendChild(latestName);
-    latestWrap.appendChild(latestMeta);
-    drawSummary.appendChild(latestWrap);
-
-    const rail = document.createElement('section');
-    rail.className = 'full-picked-rail';
-
-    const railLabel = document.createElement('p');
-    railLabel.className = 'full-picked-rail__label';
-    railLabel.textContent = dict.fullReadingDrawnLabel;
-    rail.appendChild(railLabel);
-
-    const railGrid = document.createElement('div');
-    railGrid.className = 'full-picked-rail__grid';
-    selectedCards.forEach((card, idx) => {
-      const item = document.createElement('article');
-      item.className = 'full-picked-rail__item';
-
-      const badge = document.createElement('span');
-      badge.className = 'full-picked-rail__badge';
-      badge.textContent = `${idx + 1}`;
-      item.appendChild(badge);
-      item.appendChild(createCardArt(card, 'full-picked-rail__img', { alt: getCardName(card) }));
-
-      const label = document.createElement('p');
-      label.className = 'full-picked-rail__position';
-      label.textContent = dict[CELTIC_CROSS_POSITIONS[idx]?.labelKey] || '';
-      item.appendChild(label);
-      railGrid.appendChild(item);
+    const note = document.createElement('p');
+    note.className = 'full-draw-summary__note';
+    note.textContent = formatCopy(dict.fullReadingDrawnCount, {
+      current: selectedCards.length,
+      total: CELTIC_CROSS_COUNT,
     });
-    rail.appendChild(railGrid);
-    drawSummary.appendChild(rail);
+    drawSummary.appendChild(note);
   };
 
   const rerenderArrangeList = (activeIndex = -1) => {
@@ -709,7 +592,7 @@ function renderOverall() {
       `;
       item.appendChild(order);
 
-      item.appendChild(createCardArt(card, 'full-arrange-item__img', { alt: getCardName(card) }));
+      item.appendChild(createCardArt(null, 'full-arrange-item__img', { useBack: true }));
 
       const meta = document.createElement('div');
       meta.className = 'full-arrange-item__meta';
@@ -721,58 +604,23 @@ function renderOverall() {
 
       const name = document.createElement('h3');
       name.className = 'full-arrange-item__name';
-      name.textContent = getCardName(card);
+      name.textContent = dict.fullReadingFaceDownCard;
       meta.appendChild(name);
-
-      const orientation = document.createElement('p');
-      orientation.className = 'full-arrange-item__orientation';
-      orientation.textContent = getOrientationLabel(card);
-      meta.appendChild(orientation);
       item.appendChild(meta);
-
-      const controls = document.createElement('div');
-      controls.className = 'full-arrange-item__controls';
-
-      const handle = document.createElement('button');
-      handle.type = 'button';
-      handle.className = 'full-arrange-item__handle';
-      handle.setAttribute('aria-label', dict.fullReadingDragHandle);
-      handle.innerHTML = '<span aria-hidden="true">⋮⋮</span>';
-      handle.onpointerdown = (event) => {
-        sortingState.pointerId = event.pointerId;
-        sortingState.activeIndex = idx;
-        sortingState.activeHandle = handle;
-        handle.setPointerCapture?.(event.pointerId);
-        arrangeList.classList.add('is-sorting');
-        rerenderArrangeList(idx);
-      };
-      controls.appendChild(handle);
-
-      const moveUp = document.createElement('button');
-      moveUp.type = 'button';
-      moveUp.className = 'full-arrange-item__move';
-      moveUp.textContent = '↑';
-      moveUp.setAttribute('aria-label', dict.fullReadingMoveUp);
-      moveUp.disabled = idx === 0;
-      moveUp.onclick = () => {
-        selectedCards = moveItem(selectedCards, idx, idx - 1);
+      item.tabIndex = 0;
+      item.setAttribute('aria-label', formatCopy(dict.fullReadingSwapCardLabel, { index: idx + 1 }));
+      item.onclick = () => {
+        const next = applyTapSwap(selectedCards, selectedSwapIndex, idx);
+        selectedCards = next.cards;
+        selectedSwapIndex = next.selectedIndex;
         rerenderArrangeList();
       };
-      controls.appendChild(moveUp);
-
-      const moveDown = document.createElement('button');
-      moveDown.type = 'button';
-      moveDown.className = 'full-arrange-item__move';
-      moveDown.textContent = '↓';
-      moveDown.setAttribute('aria-label', dict.fullReadingMoveDown);
-      moveDown.disabled = idx === selectedCards.length - 1;
-      moveDown.onclick = () => {
-        selectedCards = moveItem(selectedCards, idx, idx + 1);
-        rerenderArrangeList();
+      item.onkeydown = (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          item.click();
+        }
       };
-      controls.appendChild(moveDown);
-
-      item.appendChild(controls);
       arrangeList.appendChild(item);
     });
 
@@ -783,13 +631,13 @@ function renderOverall() {
     setStageCopy(stage);
     updateCounter();
     updateContinue();
-    drawDeck.disabled = stage !== 'draw' || !isPoolReady() || selectedCards.length >= CELTIC_CROSS_COUNT;
-    drawDeck.classList.toggle('is-complete', selectedCards.length >= CELTIC_CROSS_COUNT);
+    drawDeck.disabled = true;
     dealStage.hidden = stage === 'arrange';
-    dealOrbit.hidden = stage === 'arrange';
+    dealOrbit.hidden = stage !== 'draw';
     arrangeStage.hidden = stage !== 'arrange';
+    renderDealOrbit();
     renderDrawSummary();
-    if (stage === 'arrange') rerenderArrangeList(sortingState.activeIndex);
+    if (stage === 'arrange') rerenderArrangeList(selectedSwapIndex);
   };
 
   const goToArrangeStage = () => {
@@ -797,30 +645,19 @@ function renderOverall() {
     syncUi();
   };
 
-  const drawNextCard = () => {
-    if (stage !== 'draw') return;
-    const nextCard = pool[selectedCards.length];
-    if (!nextCard) return;
-    selectedCards = [...selectedCards, nextCard];
-    if (selectedCards.length >= CELTIC_CROSS_COUNT) {
-      goToArrangeStage();
-      return;
-    }
-    syncUi();
-  };
-
   const resetFullFlow = () => {
     clearDealTimer();
     stage = 'deal';
     pool = getDrawableCards(FULL_POOL_SIZE);
+    drawBoardCards = [];
     selectedCards = [];
-    stopSorting();
-    renderDealOrbit();
+    selectedSwapIndex = -1;
     syncUi();
     if (!isPoolReady()) return;
     dealTimer = window.setTimeout(() => {
       if (isDisposed) return;
       stage = 'draw';
+      drawBoardCards = buildDrawBoardCards();
       syncUi();
     }, FULL_DEAL_ANIMATION_DURATION);
   };
@@ -828,12 +665,8 @@ function renderOverall() {
   toolbar.hidden = false;
   actions.hidden = false;
   continueBtn.disabled = true;
-  document.addEventListener('pointermove', handleSortMove);
-  document.addEventListener('pointerup', handleSortEnd);
-  document.addEventListener('pointercancel', handleSortEnd);
-
   shuffleBtn.onclick = () => resetFullFlow();
-  drawDeck.onclick = () => drawNextCard();
+  drawDeck.onclick = null;
   continueBtn.onclick = () => {
     if (selectedCards.length !== CELTIC_CROSS_COUNT) return;
     saveSelectionAndGo({
@@ -850,11 +683,6 @@ function renderOverall() {
     if (isDisposed) return;
     isDisposed = true;
     clearDealTimer();
-    teardownSortCapture();
-    arrangeList.classList.remove('is-sorting');
-    document.removeEventListener('pointermove', handleSortMove);
-    document.removeEventListener('pointerup', handleSortEnd);
-    document.removeEventListener('pointercancel', handleSortEnd);
     shuffleBtn.onclick = null;
     drawDeck.onclick = null;
     continueBtn.onclick = null;

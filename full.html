@@ -53,12 +53,9 @@
 
         <section id="overall-selection-shell" class="full-selection-shell" aria-live="polite">
           <div id="overall-deal-stage" class="full-stage-panel full-stage-panel--deal">
-            <div class="full-deal-orbit" id="overall-deal-orbit" aria-hidden="true"></div>
+            <div class="full-deal-orbit" id="overall-deal-orbit"></div>
             <div class="full-deck-area">
-              <button id="overall-draw-deck" type="button" class="full-draw-deck" aria-describedby="overall-stage-description">
-                <span class="full-draw-deck__stack" aria-hidden="true"></span>
-                <span class="full-draw-deck__label" data-i18n="fullReadingDeckReady"></span>
-              </button>
+              <button id="overall-draw-deck" type="button" class="full-draw-deck" hidden tabindex="-1" aria-hidden="true"></button>
               <p class="full-deck-area__hint" data-i18n="fullReadingDeckHint"></p>
             </div>
           </div>

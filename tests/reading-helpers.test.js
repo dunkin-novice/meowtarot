@@ -99,9 +99,9 @@ test('getCelticCrossStandaloneField maps each Celtic Cross position to the corre
   assert.strictEqual(getCelticCrossStandaloneField('future'), 'standalone_future');
   assert.strictEqual(getCelticCrossStandaloneField('above'), 'standalone_future');
   assert.strictEqual(getCelticCrossStandaloneField('below'), 'standalone_past');
-  assert.strictEqual(getCelticCrossStandaloneField('advice'), 'standalone_present');
+  assert.strictEqual(getCelticCrossStandaloneField('advice'), 'action_prompt');
   assert.strictEqual(getCelticCrossStandaloneField('external'), 'standalone_present');
-  assert.strictEqual(getCelticCrossStandaloneField('hopes'), 'standalone_future');
+  assert.strictEqual(getCelticCrossStandaloneField('hopes'), 'reflection_question');
   assert.strictEqual(getCelticCrossStandaloneField('outcome'), 'standalone_future');
 });
 
@@ -111,12 +111,15 @@ test('getCelticCrossInterpretation uses localized standalone buckets before gene
     standalone_past_th: 'อดีตภาษาไทย',
     standalone_present_en: 'Present bucket EN.',
     standalone_future_en: 'Future bucket EN.',
+    action_prompt_en: 'Take one concrete step.',
+    reflection_question_en: 'What are you afraid to hope for?',
     general_meaning_en: 'Generic EN.',
   };
 
   assert.strictEqual(getCelticCrossInterpretation(card, 'below', 'en'), 'Past bucket EN.');
   assert.strictEqual(getCelticCrossInterpretation(card, 'challenge', 'en'), 'Present bucket EN.');
-  assert.strictEqual(getCelticCrossInterpretation(card, 'hopes', 'en'), 'Future bucket EN.');
+  assert.strictEqual(getCelticCrossInterpretation(card, 'hopes', 'en'), 'What are you afraid to hope for?');
+  assert.strictEqual(getCelticCrossInterpretation(card, 'advice', 'en'), 'Take one concrete step.');
   assert.strictEqual(getCelticCrossInterpretation(card, 'past', 'th'), 'อดีตภาษาไทย');
   assert.strictEqual(getCelticCrossInterpretation({ general_meaning_en: 'Generic EN.' }, 'present', 'en'), 'Generic EN.');
 });

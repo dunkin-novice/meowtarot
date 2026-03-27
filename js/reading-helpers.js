@@ -8,9 +8,9 @@ const CELTIC_CROSS_STANDALONE_FIELD_BY_POSITION = {
   future: 'standalone_future',
   above: 'standalone_future',
   below: 'standalone_past',
-  advice: 'standalone_present',
+  advice: 'action_prompt',
   external: 'standalone_present',
-  hopes: 'standalone_future',
+  hopes: 'reflection_question',
   outcome: 'standalone_future',
 };
 

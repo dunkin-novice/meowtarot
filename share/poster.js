@@ -33,7 +33,7 @@ const FULL_POSITION_LABELS = {
   th: { present: 'สถานการณ์ปัจจุบัน', challenge: 'ความท้าทาย', past: 'อดีต', future: 'อนาคต', above: 'เป้าหมาย', below: 'รากฐาน', advice: 'คำแนะนำ', external: 'อิทธิพลภายนอก', hopes: 'ความหวังและความกลัว', outcome: 'ผลลัพธ์' },
 };
 
-const CELTIC_CROSS_POSITIONS = ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'];
+const CELTIC_CROSS_POSITIONS = ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'];
 const CELTIC_CROSS_POSTER_STRINGS = {
   en: {
     eyebrow: 'Celtic Cross Reading',
