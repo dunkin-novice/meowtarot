@@ -5985,6 +5985,7 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
 .reading-path-card--chooser {
   display: grid;
   gap: 14px;
+  align-content: center;
   justify-items: center;
   text-align: center;
   padding: 18px;
