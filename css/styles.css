@@ -5098,6 +5098,8 @@ body[data-page='full'] .full-draw-board {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
+  align-items: start;
 }
 
 body[data-page='full'] .full-draw-board__slot {
@@ -5105,6 +5107,10 @@ body[data-page='full'] .full-draw-board__slot {
   border-radius: 12px;
   padding: 4px;
   background: rgba(15, 22, 52, 0.68);
+  width: 100%;
+  aspect-ratio: 1568 / 2720;
+  min-height: 0;
+  display: block;
 }
 
 body[data-page='full'] .full-draw-board__slot:focus-visible,
@@ -5115,7 +5121,8 @@ body[data-page='full'] .full-draw-board__slot:hover {
 body[data-page='full'] .full-draw-board__img,
 body[data-page='full'] .full-arrange-item__img {
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 1568 / 2720;
   object-fit: contain;
   display: block;
 }
@@ -5726,18 +5733,24 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
 
 @media (max-width: 640px) {
   body[data-page='full'] {
-    height: 100dvh;
+    --full-mobile-vh: 100dvh;
+    height: var(--full-mobile-vh);
     overflow: hidden;
+  }
+  @supports (height: 100svh) {
+    body[data-page='full'] {
+      --full-mobile-vh: 100svh;
+    }
   }
   body[data-page='full'] #site-footer {
     display: none;
   }
   body[data-page='full'] .page-shell.board-page {
-    height: 100dvh;
+    height: var(--full-mobile-vh);
     padding: calc(var(--nav-height) + 6px) 10px calc(env(safe-area-inset-bottom, 0px) + 8px);
   }
   body[data-page='full'] .board-shell {
-    height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 14px);
+    height: calc(var(--full-mobile-vh) - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 14px);
     padding: 10px;
     overflow: hidden;
   }
@@ -5769,7 +5782,16 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
     height: 30px;
   }
   body[data-page='full'] .full-draw-board {
-    gap: 6px;
+    width: min(100%, 360px);
+    margin-inline: auto;
+    gap: clamp(4px, 1.5vw, 6px);
+  }
+  body[data-page='full'] .full-draw-board__slot {
+    padding: clamp(2px, 0.8vw, 3px);
+    border-radius: 10px;
+  }
+  body[data-page='full'] .full-draw-board__img {
+    height: 100%;
   }
   body[data-page='full'] .full-stage-panel--deal {
     padding: 10px;
