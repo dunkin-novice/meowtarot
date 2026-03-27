@@ -48,7 +48,7 @@ test('resolveCelticCrossPosterContent supports Thai copy and titles', () => {
   const payload = {
     mode: 'full',
     lang: 'th',
-    cards: Array.from({ length: 10 }, (_, index) => ({ position: ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'][index] })),
+    cards: Array.from({ length: 10 }, (_, index) => ({ position: ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'][index] })),
   };
 
   const cardEntries = [
@@ -58,7 +58,7 @@ test('resolveCelticCrossPosterContent supports Thai copy and titles', () => {
     {},
     {},
     {},
-    { card: { card_name_th: 'ไพ่พละกำลัง', standalone_present_th: 'ค่อย ๆ เดินและวางใจในจังหวะของตัวเอง' }, orientation: 'upright' },
+    { card: { card_name_th: 'ไพ่พละกำลัง', action_prompt_th: 'ค่อย ๆ เดินและวางใจในจังหวะของตัวเอง' }, orientation: 'upright' },
     {},
     {},
     { card: { card_name_th: 'ไพ่โลก', standalone_future_th: 'ปลายทางนี้กำลังปิดวงอย่างสวยงาม' }, orientation: 'upright' },

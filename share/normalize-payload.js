@@ -38,7 +38,7 @@ function normalizeOrientation(value) {
   return String(value || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright';
 }
 
-const FULL_POSITIONS = ['present', 'challenge', 'past', 'future', 'above', 'below', 'advice', 'external', 'hopes', 'outcome'];
+const FULL_POSITIONS = ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'];
 const LEGACY_FULL_POSITIONS = ['past', 'present', 'future'];
 function normalizeCards(cards = []) {
   return cards

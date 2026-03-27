@@ -1,10 +1,10 @@
 export const FULL_READING_POSITION_KEYS = [
   'present',
   'challenge',
-  'past',
-  'future',
   'above',
+  'past',
   'below',
+  'future',
   'advice',
   'external',
   'hopes',
