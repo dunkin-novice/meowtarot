@@ -108,51 +108,34 @@
   <header id="site-header"></header>
 
   <main class="page-shell home-page">
-    <section class="home-hero-card" aria-labelledby="home-hero-title">
-      <div class="home-hero-copy">
+    <section class="home-hero-card home-hero-card--chooser" aria-labelledby="home-hero-title">
+      <div class="home-hero-copy home-hero-copy--centered">
         <p class="eyebrow">MeowTarot</p>
-        <p class="hero-brand">MeowTarot</p>
-        <h1 class="home-hero-title" id="home-hero-title">อ่านดวงของคุณด้วยคำแนะนำจากไพ่ทาโรต์</h1>
-        <p class="home-hero-body">คำทำนายไพ่ทาโรต์ที่น่ารักและใช้สัญชาตญาณสำหรับวันนี้ สำหรับคำถามของคุณ หรือสำหรับเส้นทางชีวิตที่ใหญ่กว่าเดิม</p>
-        <div class="home-hero-actions">
-          <a href="question.html" class="btn btn-primary home-primary-cta" aria-label="เริ่มเส้นทางถามคำถาม">เริ่มดูดวง</a>
-        </div>
-        <p class="home-hero-note">เริ่มจากถามคำถามเพื่อเข้าสู่การอ่านไพ่ที่ชัดเจนและโฟกัสที่สุด</p>
+        <h1 class="home-hero-title" id="home-hero-title">เลือกแบบการอ่านของคุณ</h1>
       </div>
 
-      <aside class="home-hero-aside" aria-label="สรุปเส้นทางหลักของการดูดวง">
-        <div class="hero-spotlight-card">
-          <p class="eyebrow">เส้นทางหลัก</p>
-          <h2>ถามคำถาม</h2>
-          <p>เลือกหัวข้อก่อน แล้วเปิดไพ่ 3 ใบเพื่อรับคำแนะนำที่โฟกัสกับสถานการณ์ที่สำคัญที่สุดของคุณตอนนี้</p>
-          <ul class="hero-spotlight-list">
-            <li>เลือกหัวข้อ</li>
-            <li>หยิบไพ่ 3 ใบ</li>
-            <li>อ่านคำแนะนำของคุณ</li>
-          </ul>
-        </div>
-      </aside>
-    </section>
+      <div class="home-path-grid" role="list" aria-label="เส้นทางการอ่านไพ่">
+        <a class="reading-path-card reading-path-card--chooser" href="daily.html" role="listitem" aria-label="เลือกการอ่านรายวัน">
+          <span class="reading-path-card__placeholder" aria-hidden="true"></span>
+          <h2 class="reading-path-card__label">วันนี้ดวงเป็นอย่างไร?</h2>
+          <p class="reading-path-card__meta">ดูดวงรายวัน</p>
+        </a>
 
-    <section class="secondary-reading-section" aria-labelledby="secondary-reading-title">
-      <div class="section-heading section-heading--tight">
-        <p class="eyebrow">เส้นทางรอง</p>
-        <h2 id="secondary-reading-title">อีกสองวิธีในการรับคำแนะนำ</h2>
-        <p>เลือกการดูดวงสั้นสำหรับวันนี้ หรืออ่านลึกขึ้นสำหรับภาพรวมชีวิต</p>
+        <a class="reading-path-card reading-path-card--chooser" href="full.html" role="listitem" aria-label="เลือกการอ่านภาพรวมชีวิตช่วงนี้">
+          <span class="reading-path-card__placeholder" aria-hidden="true"></span>
+          <h2 class="reading-path-card__label">ช่วงนี้ชีวิตเป็นอย่างไร?</h2>
+          <p class="reading-path-card__meta">อ่านภาพรวมชีวิตในช่วง 6–12 เดือนข้างหน้า</p>
+        </a>
+
+        <a class="reading-path-card reading-path-card--chooser" href="question.html" role="listitem" aria-label="เลือกการอ่านแบบถามคำถาม">
+          <span class="reading-path-card__placeholder" aria-hidden="true"></span>
+          <h2 class="reading-path-card__label">ถามคำถาม</h2>
+          <p class="reading-path-card__meta">เหมาะกับการสำรวจทีละเรื่องแบบโฟกัสในช่วง 3–6 เดือนข้างหน้า</p>
+        </a>
       </div>
 
-      <div class="secondary-reading-grid">
-        <a class="reading-path-card reading-path-card--secondary" href="daily.html" aria-label="เปิดการดูดวงรายวัน">
-          <p class="reading-path-card__eyebrow">รวดเร็วและอ่อนโยน</p>
-          <h3>Daily Reading</h3>
-          <p>การดูดวงแบบเร็วสำหรับพลังงานและบรรยากาศของวันปัจจุบัน</p>
-        </a>
-
-        <a class="reading-path-card reading-path-card--secondary" href="full.html" aria-label="เปิดการดูดวงชีวิต">
-          <p class="reading-path-card__eyebrow">ลึกและครบกว่า</p>
-          <h3>Life Reading</h3>
-          <p>การอ่านแบบ Celtic Cross สำหรับเส้นทางชีวิต แพตเทิร์นสำคัญ และก้าวถัดไปของคุณ</p>
-        </a>
+      <div class="home-hero-actions home-hero-actions--subtle">
+        <a href="question.html?topic=other" class="btn btn-secondary home-secondary-cta" aria-label="จั่วไพ่ด่วนด้วยการอ่านแบบถามคำถาม">จั่วไพ่ด่วน</a>
       </div>
     </section>
   </main>
