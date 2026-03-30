@@ -574,13 +574,62 @@ function renderOverall() {
     drawSummary.appendChild(note);
   };
 
-  const rerenderArrangeList = (activeIndex = -1) => {
+  const captureArrangeRects = () => {
+    const rects = new Map();
+    arrangeList.querySelectorAll('.full-arrange-item').forEach((item) => {
+      const cardId = item.dataset.cardId;
+      if (!cardId) return;
+      rects.set(cardId, item.getBoundingClientRect());
+    });
+    return rects;
+  };
+
+  const animateArrangeListSwap = (previousRects) => {
+    const items = arrangeList.querySelectorAll('.full-arrange-item');
+    items.forEach((item) => {
+      const cardId = item.dataset.cardId;
+      if (!cardId) return;
+      const previousRect = previousRects.get(cardId);
+      if (!previousRect) return;
+      const nextRect = item.getBoundingClientRect();
+      const deltaX = previousRect.left - nextRect.left;
+      const deltaY = previousRect.top - nextRect.top;
+      if (!deltaX && !deltaY) return;
+
+      if (typeof item.animate === 'function') {
+        item.animate(
+          [
+            { transform: `translate(${deltaX}px, ${deltaY}px)` },
+            { transform: 'translate(0, 0)' },
+          ],
+          {
+            duration: 320,
+            easing: 'cubic-bezier(0.22, 0.68, 0.2, 1)',
+          },
+        );
+        return;
+      }
+
+      item.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+      window.requestAnimationFrame(() => {
+        item.style.transition = 'transform 320ms cubic-bezier(0.22, 0.68, 0.2, 1)';
+        item.style.transform = 'translate(0, 0)';
+        window.setTimeout(() => {
+          item.style.transition = '';
+          item.style.transform = '';
+        }, 320);
+      });
+    });
+  };
+
+  const rerenderArrangeList = (activeIndex = -1, { previousRects = null, animateSwap = false } = {}) => {
     arrangeList.innerHTML = '';
 
     selectedCards.forEach((card, idx) => {
       const item = document.createElement('article');
       item.className = 'full-arrange-item';
       item.dataset.index = String(idx);
+      item.dataset.cardId = String(card?.id || card?.card_id || '');
       item.setAttribute('role', 'listitem');
       if (idx === activeIndex) item.classList.add('is-dragging');
 
@@ -610,10 +659,11 @@ function renderOverall() {
       item.tabIndex = 0;
       item.setAttribute('aria-label', formatCopy(dict.fullReadingSwapCardLabel, { index: idx + 1 }));
       item.onclick = () => {
+        const previousRects = captureArrangeRects();
         const next = applyTapSwap(selectedCards, selectedSwapIndex, idx);
         selectedCards = next.cards;
         selectedSwapIndex = next.selectedIndex;
-        rerenderArrangeList();
+        rerenderArrangeList(selectedSwapIndex, { previousRects, animateSwap: next.swapped });
       };
       item.onkeydown = (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -625,6 +675,9 @@ function renderOverall() {
     });
 
     updateContinue();
+    if (animateSwap && previousRects?.size) {
+      window.requestAnimationFrame(() => animateArrangeListSwap(previousRects));
+    }
   };
 
   const syncUi = () => {
