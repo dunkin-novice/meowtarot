@@ -667,11 +667,23 @@ export function resolveCelticCrossPosterContent(payload = {}, cardEntries = []) 
 }
 
 function getQuestionPosterStrings(payload = {}) {
-  const lang = payload?.lang || 'en';
+  const lang = normalizePosterLanguage(payload?.lang || 'en');
   const dict = translations[lang] || translations.en;
+  const topicKeyBySlug = {
+    love: 'topicLove',
+    career: 'topicCareer',
+    finance: 'topicFinance',
+    generic: 'topicGeneric',
+  };
+  const topicKey = topicKeyBySlug[String(payload?.topic || '').toLowerCase()] || 'topicGeneric';
+  const topicTitle = toSafeText(dict?.[topicKey], '').trim();
+  const heroTitle = topicTitle || toSafeText(payload?.poster?.title ?? payload?.title, dict.questionTitle || dict.yourReading || '3-Card Spread');
+  const isThai = lang === 'th';
   return {
-    title: toSafeText(payload?.poster?.title ?? payload?.title, dict.questionTitle || dict.yourReading || '3-Card Spread'),
-    subtitle: toSafeText(payload?.poster?.subtitle ?? payload?.subtitle, dict.questionSpreadNote || ''),
+    title: heroTitle,
+    eyebrow: isThai ? 'Ask a Question' : 'Ask a Question',
+    subtitle: isThai ? 'ภาพรวมจังหวะการเงินที่ควรรู้ตอนนี้' : 'Your money timeline at a glance',
+    tertiary: toSafeText(payload?.poster?.subtitle ?? payload?.subtitle, dict.questionSpreadNote || (isThai ? 'อดีต · ปัจจุบัน · อนาคต' : 'Past · Present · Future')),
     positions: [dict.past || 'Past', dict.present || 'Present', dict.future || 'Future'],
   };
 }
@@ -1607,6 +1619,29 @@ function resolveEnergyBalance(energyData = {}) {
   return { scores, interpretation };
 }
 
+function computeQuestionEnergyData(cardEntries = []) {
+  const totals = { action: 0, emotion: 0, thinking: 0, stability: 0 };
+  let withScores = 0;
+
+  cardEntries.forEach((entry) => {
+    const scores = entry?.card?.energy_scores;
+    if (!scores || typeof scores !== 'object') return;
+    withScores += 1;
+    totals.action += Number(scores.fire) || 0;
+    totals.emotion += Number(scores.water) || 0;
+    totals.thinking += Number(scores.air) || 0;
+    totals.stability += Number(scores.earth) || 0;
+  });
+
+  if (!withScores) return null;
+  return {
+    action: totals.action / withScores,
+    emotion: totals.emotion / withScores,
+    thinking: totals.thinking / withScores,
+    stability: totals.stability / withScores,
+  };
+}
+
 function resolveLuckyInfo(payload, cardEntry) {
   const lucky = payload?.lucky || {};
   const colors = Array.isArray(lucky.colors) && lucky.colors.length
@@ -1824,27 +1859,47 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const cardEntries = (await buildCardEntries(questionPayload)).slice(0, 3);
     const questionStrings = getQuestionPosterStrings(questionPayload);
     const questionSummaries = resolveQuestionPosterSummaries(questionPayload, cardEntries);
+    const energySource = payload?.energyData || computeQuestionEnergyData(cardEntries) || {};
+    const energyBalance = resolveEnergyBalance(energySource);
     const questionCardCount = orderedQuestionCards.length === 1 ? 1 : 3;
     const slots = questionCardCount === 1 ? [questionStrings.positions[1]] : questionStrings.positions;
     const summaries = questionCardCount === 1 ? [questionSummaries[1] || questionSummaries[0] || ''] : questionSummaries;
     const cardGap = 20;
-    const baseCardW = 290;
-    const cardW = Math.round(baseCardW * 0.95);
+    const cardW = 260;
     const cardH = Math.round(cardW * 1.5);
     const totalW = cardW * questionCardCount + cardGap * Math.max(0, questionCardCount - 1);
     const startX = (width - totalW) / 2;
-    const cardY = 290;
+    const cardY = 365;
+    const textPanelX = 74;
+    const textPanelY = 48;
+    const textPanelW = width - textPanelX * 2;
+    const textPanelH = 220;
 
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#f8d77a';
-    ctx.font = '700 62px "Poppins", "Space Grotesk", sans-serif';
-    ctx.shadowColor = 'rgba(0,0,0,0.65)';
-    ctx.shadowBlur = 14;
-    ctx.fillText(questionStrings.title, width / 2, 100);
+    ctx.save();
+    ctx.fillStyle = 'rgba(19, 22, 44, 0.42)';
+    drawRoundedRect(ctx, textPanelX, textPanelY, textPanelW, textPanelH, 44);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(245, 238, 222, 0.88)';
+    ctx.font = '600 24px "Space Grotesk", sans-serif';
+    drawTrackingText(ctx, questionStrings.eyebrow, width / 2, 96, 1.5);
+
+    ctx.fillStyle = '#fff7de';
+    ctx.font = '700 76px "Poppins", "Space Grotesk", sans-serif';
+    ctx.shadowColor = 'rgba(11, 13, 26, 0.55)';
+    ctx.shadowBlur = 20;
+    ctx.fillText(questionStrings.title, width / 2, 158);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#efe4c2';
-    ctx.font = '500 24px "Space Grotesk", sans-serif';
-    drawTrackingText(ctx, questionStrings.subtitle, width / 2, 142, 0.8);
+
+    ctx.fillStyle = 'rgba(252, 245, 231, 0.95)';
+    ctx.font = '600 31px "Space Grotesk", sans-serif';
+    drawTrackingText(ctx, questionStrings.subtitle, width / 2, 198, 0.2);
+
+    ctx.fillStyle = 'rgba(235, 228, 214, 0.9)';
+    ctx.font = '500 22px "Space Grotesk", sans-serif';
+    drawTrackingText(ctx, questionStrings.tertiary, width / 2, 232, 0.8);
 
     for (let i = 0; i < questionCardCount; i += 1) {
       const entry = cardEntries[i] || null;
@@ -1883,23 +1938,132 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         console.warn('[Poster] question card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
       }
 
+      const labelPillW = Math.min(228, cardW - 24);
+      const labelPillH = 42;
+      const labelPillX = x + (cardW - labelPillW) / 2;
+      const labelPillY = y + cardH + 14;
+      ctx.save();
+      ctx.fillStyle = 'rgba(20, 23, 44, 0.62)';
+      drawRoundedRect(ctx, labelPillX, labelPillY, labelPillW, labelPillH, 22);
+      ctx.fill();
+      ctx.restore();
+
       const positionLabel = slots[i] || questionStrings.positions[1];
-      ctx.fillStyle = '#f7f4ee';
-      ctx.font = '600 24px "Space Grotesk", sans-serif';
-      ctx.fillText(positionLabel, x + cardW / 2, y + cardH + 36);
+      ctx.fillStyle = '#fff9eb';
+      ctx.font = '700 22px "Space Grotesk", sans-serif';
+      ctx.fillText(positionLabel, x + cardW / 2, labelPillY + 29);
 
       const summaryText = toSafeText(summaries[i], '').trim();
       if (summaryText) {
-        ctx.fillStyle = 'rgba(239, 228, 194, 0.94)';
-        ctx.font = '500 17px "Space Grotesk", sans-serif';
-        wrapText(ctx, summaryText, x + cardW / 2, y + cardH + 66, cardW + 18, 22, 4);
+        const summaryY = labelPillY + labelPillH + 16;
+        const summaryH = 148;
+        ctx.save();
+        ctx.fillStyle = 'rgba(22, 24, 48, 0.52)';
+        drawRoundedRect(ctx, x + 4, summaryY, cardW - 8, summaryH, 24);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255, 248, 235, 0.96)';
+        ctx.font = '500 18px "Space Grotesk", sans-serif';
+        wrapText(ctx, summaryText, x + cardW / 2, summaryY + 34, cardW - 34, 24, 5);
       }
     }
 
-    ctx.fillStyle = '#aab0c9';
+    const graphPanelX = 96;
+    const graphPanelY = 1138;
+    const graphPanelW = width - graphPanelX * 2;
+    const graphPanelH = 500;
+    const graphCenterX = width / 2;
+    const graphCenterY = graphPanelY + 228;
+    const graphRadius = 132;
+    const axisOrder = [
+      { key: 'action', label: 'Action', angle: -Math.PI / 2 },
+      { key: 'emotion', label: 'Emotion', angle: 0 },
+      { key: 'thinking', label: 'Thinking', angle: Math.PI / 2 },
+      { key: 'stability', label: 'Stability', angle: Math.PI },
+    ];
+    const toPoint = (angle, radius) => ({
+      x: graphCenterX + Math.cos(angle) * radius,
+      y: graphCenterY + Math.sin(angle) * radius,
+    });
+    const dataPoints = axisOrder.map(({ key, angle }) => {
+      const ratio = Math.max(0, Math.min(1, (Number(energyBalance?.scores?.[key]) || 0) / 100));
+      return toPoint(angle, graphRadius * ratio);
+    });
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 18, 38, 0.62)';
+    drawRoundedRect(ctx, graphPanelX, graphPanelY, graphPanelW, graphPanelH, 40);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(250, 243, 229, 0.94)';
+    ctx.font = '600 30px "Space Grotesk", sans-serif';
+    ctx.fillText('Energy Balance', graphCenterX, graphPanelY + 56);
+
+    for (let ring = 1; ring <= 4; ring += 1) {
+      const ringRadius = (graphRadius / 4) * ring;
+      ctx.beginPath();
+      axisOrder.forEach(({ angle }, idx) => {
+        const point = toPoint(angle, ringRadius);
+        if (idx === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(255, 247, 229, 0.14)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+
+    axisOrder.forEach(({ label, angle }) => {
+      const edge = toPoint(angle, graphRadius);
+      ctx.beginPath();
+      ctx.moveTo(graphCenterX, graphCenterY);
+      ctx.lineTo(edge.x, edge.y);
+      ctx.strokeStyle = 'rgba(255, 247, 229, 0.2)';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+
+      const labelPoint = toPoint(angle, graphRadius + 34);
+      ctx.fillStyle = 'rgba(252, 246, 236, 0.92)';
+      ctx.font = '500 22px "Space Grotesk", sans-serif';
+      ctx.fillText(label, labelPoint.x, labelPoint.y + 8);
+    });
+
+    ctx.beginPath();
+    dataPoints.forEach((point, idx) => {
+      if (idx === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(235, 192, 255, 0.42)';
+    ctx.strokeStyle = 'rgba(255, 228, 165, 0.82)';
+    ctx.lineWidth = 3;
+    ctx.fill();
+    ctx.stroke();
+
+    dataPoints.forEach((point) => {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffefc7';
+      ctx.fill();
+    });
+
+    ctx.fillStyle = 'rgba(252, 246, 236, 0.94)';
+    ctx.font = '500 24px "Space Grotesk", sans-serif';
+    wrapText(
+      ctx,
+      energyBalance.interpretation.join(' '),
+      graphCenterX,
+      graphPanelY + 370,
+      graphPanelW - 120,
+      32,
+      3,
+    );
+
+    ctx.fillStyle = 'rgba(228, 230, 245, 0.96)';
     ctx.font = '500 28px "Space Grotesk", sans-serif';
     const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
-    ctx.fillText(footerText, width / 2, height - 90);
+    ctx.fillText(footerText, width / 2, height - 62);
 
     const exportStart = performance.now();
     perf.captureCount += 1;
