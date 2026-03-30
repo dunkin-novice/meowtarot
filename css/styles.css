@@ -6103,10 +6103,19 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
   max-width: 70ch;
 }
 
+.question-flow-intro .eyebrow {
+  margin-bottom: 6px;
+}
+
 .question-flow-intro h1 {
   margin: 0;
   font-family: 'Playfair Display', serif;
   font-size: clamp(2rem, 5vw, 3.4rem);
+}
+
+.question-flow-intro .lede {
+  margin: 12px 0 0;
+  max-width: 58ch;
 }
 
 .question-flow-layout {
@@ -6251,23 +6260,46 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
     min-width: 0;
   }
 
-  .question-page-shell .topic-card-grid {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(160px, 44%);
-    gap: 12px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 4px;
-    scroll-snap-type: x mandatory;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
+  .question-page-shell .question-flow-card {
+    gap: 20px;
+    padding: 20px 18px;
   }
 
-  .question-page-shell .topic-card-grid > .topic-card {
-    width: auto;
-    min-width: 0;
-    scroll-snap-align: start;
+  .question-page-shell .question-flow-intro {
+    max-width: 62ch;
+  }
+
+  .question-page-shell .question-flow-intro h1 {
+    font-size: clamp(1.82rem, 6.2vw, 2.4rem);
+  }
+
+  .question-page-shell .topic-selection-panel {
+    padding: 18px;
+  }
+
+  .question-page-shell .topic-selection-panel .section-heading--tight p:last-child {
+    margin-top: 6px;
+  }
+
+  .question-page-shell .topic-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .question-page-shell .topic-card {
+    min-height: 104px;
+    padding: 12px;
+  }
+
+  .question-page-shell .topic-card__title {
+    margin-top: 10px;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .question-page-shell .topic-card__body {
+    display: none;
   }
 
   .home-hero-title {
@@ -6335,8 +6367,8 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
 @media (max-width: 640px) {
   .home-page,
   .question-page-shell {
-    padding-top: clamp(98px, 22vw, 126px);
-    padding-bottom: 48px;
+    padding-top: clamp(86px, 18vw, 108px);
+    padding-bottom: 40px;
   }
 
   body[data-page='home'] .home-page {
@@ -6354,6 +6386,19 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
     text-align: center;
   }
 
+  .question-page-shell .question-flow-intro .eyebrow {
+    margin-bottom: 4px;
+  }
+
+  .question-page-shell .question-flow-intro h1 {
+    font-size: clamp(1.62rem, 7.2vw, 2rem);
+    line-height: 1.1;
+  }
+
+  .question-page-shell .question-flow-intro .lede {
+    display: none;
+  }
+
   .topic-selection-panel .section-heading {
     text-align: center;
   }
@@ -6364,48 +6409,39 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
   }
 
   .question-page-shell .question-flow-card {
-    gap: 16px;
-    padding: 16px 14px;
+    gap: 12px;
+    padding: 14px 12px;
   }
 
   .question-page-shell .topic-selection-panel {
-    padding: 14px;
+    padding: 12px;
   }
 
   .question-page-shell .topic-card-grid {
     display: grid;
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(132px, 44%);
-    gap: 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 2px 2px 4px;
-    scroll-snap-type: x mandatory;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+    padding: 0;
   }
 
   .question-page-shell .topic-card {
-    width: auto;
-    min-width: 0;
-    min-height: 96px;
-    padding: 12px 10px;
+    min-height: 90px;
+    padding: 10px 8px;
     gap: 2px;
-    scroll-snap-align: start;
   }
 
   .question-page-shell .topic-card__icon {
-    min-width: 34px;
-    min-height: 34px;
-    padding: 6px 10px;
-    font-size: 0.92rem;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 0.86rem;
   }
 
   .question-page-shell .topic-card__title {
-    margin-top: 10px;
-    font-size: 1rem;
-    line-height: 1.25;
+    margin-top: 8px;
+    font-size: 0.95rem;
+    line-height: 1.2;
   }
 
   .home-hero-card,
