@@ -763,11 +763,6 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
     title.textContent = dict[topic.titleKey] || topic.key;
     button.appendChild(title);
 
-    const description = document.createElement('span');
-    description.className = 'topic-card__body';
-    description.textContent = dict[topic.descriptionKey] || '';
-    button.appendChild(description);
-
     button.addEventListener('click', () => {
       state.questionTopic = topic.key;
       const destination = localizePath('/question-draw.html', state.currentLang);
