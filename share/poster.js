@@ -669,21 +669,44 @@ export function resolveCelticCrossPosterContent(payload = {}, cardEntries = []) 
 function getQuestionPosterStrings(payload = {}) {
   const lang = normalizePosterLanguage(payload?.lang || 'en');
   const dict = translations[lang] || translations.en;
-  const topicKeyBySlug = {
-    love: 'topicLove',
-    career: 'topicCareer',
-    finance: 'topicFinance',
-    generic: 'topicGeneric',
+  const topicConfigBySlug = {
+    love: {
+      titleKey: 'topicLove',
+      supportKey: 'topicLoveDesc',
+      subtitle: lang === 'th' ? 'ภาพรวมจังหวะความรักที่ควรรู้ตอนนี้' : 'Your love timeline at a glance',
+    },
+    career: {
+      titleKey: 'topicCareer',
+      supportKey: 'topicCareerDesc',
+      subtitle: lang === 'th' ? 'ภาพรวมจังหวะการงานที่ควรรู้ตอนนี้' : 'Your career timeline at a glance',
+    },
+    finance: {
+      titleKey: 'topicFinance',
+      supportKey: 'topicFinanceDesc',
+      subtitle: lang === 'th' ? 'ภาพรวมจังหวะการเงินที่ควรรู้ตอนนี้' : 'Your money timeline at a glance',
+    },
+    other: {
+      titleKey: 'topicOther',
+      supportKey: 'topicOtherDesc',
+      subtitle: lang === 'th' ? 'ภาพรวมคำถามนี้ในสามช่วงเวลา' : 'Your question timeline at a glance',
+    },
+    generic: {
+      titleKey: 'topicGeneric',
+      supportKey: 'topicOtherDesc',
+      subtitle: lang === 'th' ? 'ภาพรวมคำถามนี้ในสามช่วงเวลา' : 'Your question timeline at a glance',
+    },
   };
-  const topicKey = topicKeyBySlug[String(payload?.topic || '').toLowerCase()] || 'topicGeneric';
-  const topicTitle = toSafeText(dict?.[topicKey], '').trim();
+  const topicSlug = String(payload?.topic || '').toLowerCase();
+  const topicConfig = topicConfigBySlug[topicSlug] || topicConfigBySlug.generic;
+  const topicTitle = toSafeText(dict?.[topicConfig.titleKey], '').trim();
   const heroTitle = topicTitle || toSafeText(payload?.poster?.title ?? payload?.title, dict.questionTitle || dict.yourReading || '3-Card Spread');
-  const isThai = lang === 'th';
+  const spreadFallback = dict.questionSpreadNote || (lang === 'th' ? 'อดีต · ปัจจุบัน · อนาคต' : 'Past · Present · Future');
+  const supportLine = toSafeText(dict?.[topicConfig.supportKey], '').trim() || spreadFallback;
   return {
     title: heroTitle,
-    eyebrow: isThai ? 'Ask a Question' : 'Ask a Question',
-    subtitle: isThai ? 'ภาพรวมจังหวะการเงินที่ควรรู้ตอนนี้' : 'Your money timeline at a glance',
-    tertiary: toSafeText(payload?.poster?.subtitle ?? payload?.subtitle, dict.questionSpreadNote || (isThai ? 'อดีต · ปัจจุบัน · อนาคต' : 'Past · Present · Future')),
+    eyebrow: 'Ask a Question',
+    subtitle: topicConfig.subtitle,
+    tertiary: supportLine,
     positions: [dict.past || 'Past', dict.present || 'Present', dict.future || 'Future'],
   };
 }
@@ -1869,11 +1892,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const cardH = Math.round(cardW * 1.5);
     const totalW = cardW * questionCardCount + cardGap * Math.max(0, questionCardCount - 1);
     const startX = (width - totalW) / 2;
-    const cardY = 365;
+    const cardY = 378;
     const textPanelX = 74;
     const textPanelY = 48;
     const textPanelW = width - textPanelX * 2;
-    const textPanelH = 220;
+    const textPanelH = 236;
 
     ctx.textAlign = 'center';
     ctx.save();
@@ -1884,22 +1907,22 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     ctx.fillStyle = 'rgba(245, 238, 222, 0.88)';
     ctx.font = '600 24px "Space Grotesk", sans-serif';
-    drawTrackingText(ctx, questionStrings.eyebrow, width / 2, 96, 1.5);
+    drawTrackingText(ctx, questionStrings.eyebrow, width / 2, 100, 1.5);
 
     ctx.fillStyle = '#fff7de';
     ctx.font = '700 76px "Poppins", "Space Grotesk", sans-serif';
     ctx.shadowColor = 'rgba(11, 13, 26, 0.55)';
     ctx.shadowBlur = 20;
-    ctx.fillText(questionStrings.title, width / 2, 158);
+    ctx.fillText(questionStrings.title, width / 2, 166);
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = 'rgba(252, 245, 231, 0.95)';
     ctx.font = '600 31px "Space Grotesk", sans-serif';
-    drawTrackingText(ctx, questionStrings.subtitle, width / 2, 198, 0.2);
+    drawTrackingText(ctx, questionStrings.subtitle, width / 2, 212, 0.2);
 
     ctx.fillStyle = 'rgba(235, 228, 214, 0.9)';
     ctx.font = '500 22px "Space Grotesk", sans-serif';
-    drawTrackingText(ctx, questionStrings.tertiary, width / 2, 232, 0.8);
+    drawTrackingText(ctx, questionStrings.tertiary, width / 2, 248, 0.8);
 
     for (let i = 0; i < questionCardCount; i += 1) {
       const entry = cardEntries[i] || null;
@@ -1956,7 +1979,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const summaryText = toSafeText(summaries[i], '').trim();
       if (summaryText) {
         const summaryY = labelPillY + labelPillH + 16;
-        const summaryH = 148;
+        const summaryH = 160;
         ctx.save();
         ctx.fillStyle = 'rgba(22, 24, 48, 0.52)';
         drawRoundedRect(ctx, x + 4, summaryY, cardW - 8, summaryH, 24);
@@ -1964,17 +1987,17 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.restore();
         ctx.fillStyle = 'rgba(255, 248, 235, 0.96)';
         ctx.font = '500 18px "Space Grotesk", sans-serif';
-        wrapText(ctx, summaryText, x + cardW / 2, summaryY + 34, cardW - 34, 24, 5);
+        wrapText(ctx, summaryText, x + cardW / 2, summaryY + 36, cardW - 40, 24, 5);
       }
     }
 
     const graphPanelX = 96;
-    const graphPanelY = 1138;
+    const graphPanelY = 1154;
     const graphPanelW = width - graphPanelX * 2;
-    const graphPanelH = 500;
+    const graphPanelH = 520;
     const graphCenterX = width / 2;
-    const graphCenterY = graphPanelY + 228;
-    const graphRadius = 132;
+    const graphCenterY = graphPanelY + 214;
+    const graphRadius = 124;
     const axisOrder = [
       { key: 'action', label: 'Action', angle: -Math.PI / 2 },
       { key: 'emotion', label: 'Emotion', angle: 0 },
@@ -1998,7 +2021,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     ctx.fillStyle = 'rgba(250, 243, 229, 0.94)';
     ctx.font = '600 30px "Space Grotesk", sans-serif';
-    ctx.fillText('Energy Balance', graphCenterX, graphPanelY + 56);
+    ctx.fillText('Energy Balance', graphCenterX, graphPanelY + 58);
 
     for (let ring = 1; ring <= 4; ring += 1) {
       const ringRadius = (graphRadius / 4) * ring;
@@ -2023,10 +2046,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.lineWidth = 1.1;
       ctx.stroke();
 
-      const labelPoint = toPoint(angle, graphRadius + 34);
+      const labelPoint = toPoint(angle, graphRadius + 44);
       ctx.fillStyle = 'rgba(252, 246, 236, 0.92)';
       ctx.font = '500 22px "Space Grotesk", sans-serif';
-      ctx.fillText(label, labelPoint.x, labelPoint.y + 8);
+      if (Math.cos(angle) > 0.4) ctx.textAlign = 'left';
+      else if (Math.cos(angle) < -0.4) ctx.textAlign = 'right';
+      else ctx.textAlign = 'center';
+      const axisLabelOffsetX = ctx.textAlign === 'left' ? 10 : ctx.textAlign === 'right' ? -10 : 0;
+      const axisLabelOffsetY = Math.sin(angle) > 0.4 ? 12 : Math.sin(angle) < -0.4 ? -8 : 8;
+      ctx.fillText(label, labelPoint.x + axisLabelOffsetX, labelPoint.y + axisLabelOffsetY);
+      ctx.textAlign = 'center';
     });
 
     ctx.beginPath();
@@ -2054,9 +2083,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx,
       energyBalance.interpretation.join(' '),
       graphCenterX,
-      graphPanelY + 370,
-      graphPanelW - 120,
-      32,
+      graphPanelY + 396,
+      graphPanelW - 132,
+      30,
       3,
     );
 
