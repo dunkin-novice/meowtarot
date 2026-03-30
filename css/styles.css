@@ -6241,9 +6241,30 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
     grid-template-columns: 1fr;
   }
 
+  .question-page-shell .question-flow-card,
+  .question-page-shell .question-flow-layout,
+  .question-page-shell .topic-selection-panel,
+  .question-page-shell .topic-card-grid {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .question-page-shell .topic-selection-panel {
+    overflow-x: hidden;
+  }
+
   .question-page-shell .topic-card-grid {
     grid-template-columns: minmax(0, 1fr);
-    overflow-x: clip;
+    grid-auto-flow: row;
+    grid-auto-columns: minmax(0, 1fr);
+    overflow-x: hidden;
+  }
+
+  .question-page-shell .topic-card-grid > .topic-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .home-hero-title {
