@@ -21,8 +21,13 @@ const DAILY_SELECTION_MAX = 1;
 const DEAL_STAGGER = 160;
 const STACK_DURATION = 520;
 const FULL_DEAL_ANIMATION_DURATION = 960;
-const FULL_PICK_ANIMATION_DURATION = 1000;
-const FULL_PICK_REDUCED_MOTION_DURATION = 240;
+const FULL_PICK_CLEAR_DURATION = 120;
+const FULL_PICK_REDEAL_DURATION = 1000;
+const FULL_PICK_CONFIRM_DURATION = 200;
+const FULL_PICK_REDEAL_ONLY_DURATION = FULL_PICK_REDEAL_DURATION - FULL_PICK_CLEAR_DURATION;
+const FULL_PICK_REDUCED_CLEAR_DURATION = 50;
+const FULL_PICK_REDUCED_REDEAL_DURATION = 100;
+const FULL_PICK_REDUCED_CONFIRM_DURATION = 70;
 const CARD_BACK_URL = getCardBackUrl();
 const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
 const CELTIC_CROSS_POSITIONS = [
@@ -496,10 +501,6 @@ function renderOverall() {
   let isPickAnimating = false;
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  const getPickAnimationDuration = () => (
-    reducedMotionQuery.matches ? FULL_PICK_REDUCED_MOTION_DURATION : FULL_PICK_ANIMATION_DURATION
-  );
-
   const clearDealTimer = () => {
     if (!dealTimer) return;
     window.clearTimeout(dealTimer);
@@ -570,6 +571,7 @@ function renderOverall() {
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'full-draw-board__slot';
+      slot.dataset.drawBoardIndex = String(idx);
       slot.setAttribute('aria-label', formatCopy(dict.fullReadingDrawCardLabel, { index: idx + 1 }));
       slot.appendChild(createCardArt(null, 'full-draw-board__img', { useBack: true }));
       slot.onclick = () => {
@@ -578,7 +580,6 @@ function renderOverall() {
 
         isPickAnimating = true;
         board.classList.add('is-picking');
-        slot.classList.add('is-selected-feedback');
 
         const commitPick = () => {
           if (isDisposed || stage !== 'draw') {
@@ -597,14 +598,16 @@ function renderOverall() {
         };
 
         const targetIndex = selectedCards.length;
-        runPickAnimation(slot, targetIndex, commitPick);
+        runPickAnimation({ board, slot, slotIndex: idx, targetIndex, onDone: commitPick });
       };
       board.appendChild(slot);
     });
     dealOrbit.appendChild(board);
   };
 
-  const runPickAnimation = (slot, targetIndex, onDone) => {
+  const runPickAnimation = ({
+    board, slot, slotIndex, targetIndex, onDone,
+  }) => {
     clearPickAnimation({ unlock: false });
     const runId = pickAnimationRunId;
     const targetSlot = drawSummary.querySelector(`[data-draw-target-index="${targetIndex}"]`);
@@ -612,59 +615,85 @@ function renderOverall() {
       if (runId !== pickAnimationRunId) return;
       pickAnimationTimer = null;
       activePickAnimationCleanup = null;
-      slot.classList.remove('is-selected-feedback');
+      board.classList.remove('is-picking');
+      board.classList.remove('is-clearing-spread');
+      board.classList.remove('is-redealing-spread');
+      slot.classList.remove('is-picked-confirm');
       if (isDisposed || stage !== 'draw') {
         isPickAnimating = false;
         return;
       }
       onDone?.();
     };
-    const duration = getPickAnimationDuration();
 
-    if (reducedMotionQuery.matches || !targetSlot || !slot.isConnected) {
-      slot.classList.add('is-selected-feedback-static');
-      if (targetSlot) targetSlot.classList.add('is-awaiting-card');
-      pickAnimationTimer = window.setTimeout(() => {
-        slot.classList.remove('is-selected-feedback-static');
-        if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
-        finalize();
-      }, duration);
+    if (!board?.isConnected || !slot?.isConnected) {
+      pickAnimationTimer = window.setTimeout(finalize, 0);
       return;
     }
+    const slots = Array.from(board.querySelectorAll('.full-draw-board__slot'));
 
-    const sourceRect = slot.getBoundingClientRect();
-    const targetRect = targetSlot.getBoundingClientRect();
-    const selectionRect = selectionShell.getBoundingClientRect();
-    const ghost = document.createElement('div');
-    ghost.className = 'full-draw-flight-card';
-    ghost.style.setProperty('--flight-duration', `${duration}ms`);
-    ghost.style.left = `${sourceRect.left - selectionRect.left}px`;
-    ghost.style.top = `${sourceRect.top - selectionRect.top}px`;
-    ghost.style.width = `${sourceRect.width}px`;
-    ghost.style.height = `${sourceRect.height}px`;
-    ghost.style.setProperty('--flight-x', `${(targetRect.left + (targetRect.width / 2)) - (sourceRect.left + (sourceRect.width / 2))}px`);
-    ghost.style.setProperty('--flight-y', `${(targetRect.top + (targetRect.height / 2)) - (sourceRect.top + (sourceRect.height / 2))}px`);
-    ghost.style.setProperty('--flight-scale', String(Math.min(1.05, Math.max(0.72, targetRect.width / sourceRect.width))));
-    ghost.appendChild(createCardArt(null, 'full-draw-flight-card__img', { useBack: true }));
-    selectionShell.appendChild(ghost);
-    targetSlot.classList.add('is-awaiting-card');
+    const reducedMotion = reducedMotionQuery.matches;
+    const clearDuration = reducedMotion ? FULL_PICK_REDUCED_CLEAR_DURATION : FULL_PICK_CLEAR_DURATION;
+    const redealDuration = reducedMotion ? FULL_PICK_REDUCED_REDEAL_DURATION : FULL_PICK_REDEAL_ONLY_DURATION;
+    const confirmDuration = reducedMotion ? FULL_PICK_REDUCED_CONFIRM_DURATION : FULL_PICK_CONFIRM_DURATION;
+
+    const slotCount = Math.max(slots.length, 1);
+    const perSlotDelay = slotCount > 1 ? redealDuration / (slotCount - 1) : 0;
+    const columns = 5;
+    const selectedCol = slotIndex % columns;
+    const selectedRow = Math.floor(slotIndex / columns);
+
+    slots.forEach((candidate, index) => {
+      const clearDelay = Math.abs(slotIndex - index) * (reducedMotion ? 6 : 10);
+      const col = index % columns;
+      const row = Math.floor(index / columns);
+      const driftX = (col - selectedCol) * (reducedMotion ? 4 : 10);
+      const driftY = (row - selectedRow) * (reducedMotion ? 2 : 8) + (reducedMotion ? 8 : 18);
+      candidate.style.setProperty('--clear-delay', `${Math.round(clearDelay)}ms`);
+      candidate.style.setProperty('--clear-shift-x', `${Math.round(driftX)}px`);
+      candidate.style.setProperty('--clear-shift-y', `${Math.round(driftY)}px`);
+      candidate.style.setProperty('--redeal-delay', `${Math.round(index * perSlotDelay)}ms`);
+      candidate.style.setProperty('--redeal-duration', `${Math.round(Math.max(130, redealDuration * 0.34))}ms`);
+      candidate.style.setProperty('--redeal-lift', `${Math.round(reducedMotion ? 6 : 16 + ((row % 2) * 3))}px`);
+    });
+
     activePickAnimationCleanup = () => {
-      ghost.remove();
-      targetSlot.classList.remove('is-awaiting-card');
-      slot.classList.remove('is-selected-feedback');
-      slot.classList.remove('is-selected-feedback-static');
+      board.classList.remove('is-clearing-spread');
+      board.classList.remove('is-redealing-spread');
+      board.classList.remove('is-picking');
+      slot.classList.remove('is-picked-confirm');
+      if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
+      slots.forEach((candidate) => {
+        candidate.style.removeProperty('--clear-delay');
+        candidate.style.removeProperty('--clear-shift-x');
+        candidate.style.removeProperty('--clear-shift-y');
+        candidate.style.removeProperty('--redeal-delay');
+        candidate.style.removeProperty('--redeal-duration');
+        candidate.style.removeProperty('--redeal-lift');
+      });
     };
 
-    window.requestAnimationFrame(() => {
-      ghost.classList.add('is-active');
-    });
+    board.classList.add('is-clearing-spread');
+    if (targetSlot) targetSlot.classList.add('is-awaiting-card');
 
     pickAnimationTimer = window.setTimeout(() => {
       if (runId !== pickAnimationRunId) return;
-      ghost.remove();
-      targetSlot.classList.remove('is-awaiting-card');
-      finalize();
-    }, duration);
+      board.classList.remove('is-clearing-spread');
+      board.classList.add('is-redealing-spread');
+
+      pickAnimationTimer = window.setTimeout(() => {
+        if (runId !== pickAnimationRunId) return;
+        board.classList.remove('is-redealing-spread');
+        slot.classList.add('is-picked-confirm');
+
+        pickAnimationTimer = window.setTimeout(() => {
+          if (runId !== pickAnimationRunId) return;
+          slot.classList.remove('is-picked-confirm');
+          if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
+          finalize();
+        }, confirmDuration);
+      }, redealDuration);
+    }, clearDuration);
   };
 
   const renderDrawSummary = () => {
