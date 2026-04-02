@@ -673,27 +673,27 @@ function renderOverall() {
       });
     };
 
-    board.classList.add('is-clearing-spread');
-    if (targetSlot) targetSlot.classList.add('is-awaiting-card');
+    slot.classList.add('is-picked-confirm');
 
     pickAnimationTimer = window.setTimeout(() => {
       if (runId !== pickAnimationRunId) return;
-      board.classList.remove('is-clearing-spread');
-      board.classList.add('is-redealing-spread');
+      slot.classList.remove('is-picked-confirm');
+      board.classList.add('is-clearing-spread');
+      if (targetSlot) targetSlot.classList.add('is-awaiting-card');
 
       pickAnimationTimer = window.setTimeout(() => {
         if (runId !== pickAnimationRunId) return;
-        board.classList.remove('is-redealing-spread');
-        slot.classList.add('is-picked-confirm');
+        board.classList.remove('is-clearing-spread');
+        board.classList.add('is-redealing-spread');
 
         pickAnimationTimer = window.setTimeout(() => {
           if (runId !== pickAnimationRunId) return;
-          slot.classList.remove('is-picked-confirm');
+          board.classList.remove('is-redealing-spread');
           if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
           finalize();
-        }, confirmDuration);
-      }, redealDuration);
-    }, clearDuration);
+        }, redealDuration);
+      }, clearDuration);
+    }, confirmDuration);
   };
 
   const renderDrawSummary = () => {
