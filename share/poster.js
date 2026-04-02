@@ -1248,7 +1248,9 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.shadowColor = item.position === 'outcome' ? 'rgba(236,205,132,0.18)' : 'rgba(0,0,0,0.32)';
     ctx.shadowBlur = shadowBlur;
     ctx.shadowOffsetY = 10;
-    fillRoundedRect(ctx, cardX, cardY, spread.cardW, spread.cardH, frameRadius, 'rgba(15,20,41,0.92)');
+    drawRoundedRect(ctx, cardX, cardY, spread.cardW, spread.cardH, frameRadius);
+    ctx.fillStyle = 'rgba(255,255,255,0.01)';
+    ctx.fill();
     ctx.restore();
 
     if (isHeroPosition) {
