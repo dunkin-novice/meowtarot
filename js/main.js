@@ -21,6 +21,8 @@ const DAILY_SELECTION_MAX = 1;
 const DEAL_STAGGER = 160;
 const STACK_DURATION = 520;
 const FULL_DEAL_ANIMATION_DURATION = 960;
+const FULL_PICK_ANIMATION_DURATION = 1000;
+const FULL_PICK_REDUCED_MOTION_DURATION = 240;
 const CARD_BACK_URL = getCardBackUrl();
 const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
 const CELTIC_CROSS_POSITIONS = [
@@ -457,6 +459,7 @@ function renderOverall() {
   const dealOrbit = document.getElementById('overall-deal-orbit');
   const drawDeck = document.getElementById('overall-draw-deck');
   const drawSummary = document.getElementById('overall-draw-summary');
+  const selectionShell = document.getElementById('overall-selection-shell');
   const dealStage = document.getElementById('overall-deal-stage');
   const arrangeStage = document.getElementById('overall-arrange-stage');
   const arrangeList = document.getElementById('overall-arrange-list');
@@ -472,6 +475,7 @@ function renderOverall() {
     || !dealOrbit
     || !drawDeck
     || !drawSummary
+    || !selectionShell
     || !dealStage
     || !arrangeStage
     || !arrangeList
@@ -485,16 +489,34 @@ function renderOverall() {
   let selectedCards = [];
   let selectedSwapIndex = -1;
   let dealTimer = null;
+  let pickAnimationTimer = null;
+  let activePickAnimationCleanup = null;
+  let pickAnimationRunId = 0;
   let isDisposed = false;
   let isPickAnimating = false;
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  const getPickFeedbackDelay = () => (reducedMotionQuery.matches ? 0 : 140);
+  const getPickAnimationDuration = () => (
+    reducedMotionQuery.matches ? FULL_PICK_REDUCED_MOTION_DURATION : FULL_PICK_ANIMATION_DURATION
+  );
 
   const clearDealTimer = () => {
     if (!dealTimer) return;
     window.clearTimeout(dealTimer);
     dealTimer = null;
+  };
+
+  const clearPickAnimation = ({ unlock = true } = {}) => {
+    if (pickAnimationTimer) {
+      window.clearTimeout(pickAnimationTimer);
+      pickAnimationTimer = null;
+    }
+    if (typeof activePickAnimationCleanup === 'function') {
+      activePickAnimationCleanup();
+      activePickAnimationCleanup = null;
+    }
+    pickAnimationRunId += 1;
+    if (unlock) isPickAnimating = false;
   };
 
   const isPoolReady = () => pool.length >= CELTIC_CROSS_COUNT;
@@ -574,11 +596,75 @@ function renderOverall() {
           syncUi();
         };
 
-        window.setTimeout(commitPick, getPickFeedbackDelay());
+        const targetIndex = selectedCards.length;
+        runPickAnimation(slot, targetIndex, commitPick);
       };
       board.appendChild(slot);
     });
     dealOrbit.appendChild(board);
+  };
+
+  const runPickAnimation = (slot, targetIndex, onDone) => {
+    clearPickAnimation({ unlock: false });
+    const runId = pickAnimationRunId;
+    const targetSlot = drawSummary.querySelector(`[data-draw-target-index="${targetIndex}"]`);
+    const finalize = () => {
+      if (runId !== pickAnimationRunId) return;
+      pickAnimationTimer = null;
+      activePickAnimationCleanup = null;
+      slot.classList.remove('is-selected-feedback');
+      if (isDisposed || stage !== 'draw') {
+        isPickAnimating = false;
+        return;
+      }
+      onDone?.();
+    };
+    const duration = getPickAnimationDuration();
+
+    if (reducedMotionQuery.matches || !targetSlot || !slot.isConnected) {
+      slot.classList.add('is-selected-feedback-static');
+      if (targetSlot) targetSlot.classList.add('is-awaiting-card');
+      pickAnimationTimer = window.setTimeout(() => {
+        slot.classList.remove('is-selected-feedback-static');
+        if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
+        finalize();
+      }, duration);
+      return;
+    }
+
+    const sourceRect = slot.getBoundingClientRect();
+    const targetRect = targetSlot.getBoundingClientRect();
+    const selectionRect = selectionShell.getBoundingClientRect();
+    const ghost = document.createElement('div');
+    ghost.className = 'full-draw-flight-card';
+    ghost.style.setProperty('--flight-duration', `${duration}ms`);
+    ghost.style.left = `${sourceRect.left - selectionRect.left}px`;
+    ghost.style.top = `${sourceRect.top - selectionRect.top}px`;
+    ghost.style.width = `${sourceRect.width}px`;
+    ghost.style.height = `${sourceRect.height}px`;
+    ghost.style.setProperty('--flight-x', `${(targetRect.left + (targetRect.width / 2)) - (sourceRect.left + (sourceRect.width / 2))}px`);
+    ghost.style.setProperty('--flight-y', `${(targetRect.top + (targetRect.height / 2)) - (sourceRect.top + (sourceRect.height / 2))}px`);
+    ghost.style.setProperty('--flight-scale', String(Math.min(1.05, Math.max(0.72, targetRect.width / sourceRect.width))));
+    ghost.appendChild(createCardArt(null, 'full-draw-flight-card__img', { useBack: true }));
+    selectionShell.appendChild(ghost);
+    targetSlot.classList.add('is-awaiting-card');
+    activePickAnimationCleanup = () => {
+      ghost.remove();
+      targetSlot.classList.remove('is-awaiting-card');
+      slot.classList.remove('is-selected-feedback');
+      slot.classList.remove('is-selected-feedback-static');
+    };
+
+    window.requestAnimationFrame(() => {
+      ghost.classList.add('is-active');
+    });
+
+    pickAnimationTimer = window.setTimeout(() => {
+      if (runId !== pickAnimationRunId) return;
+      ghost.remove();
+      targetSlot.classList.remove('is-awaiting-card');
+      finalize();
+    }, duration);
   };
 
   const renderDrawSummary = () => {
@@ -591,6 +677,23 @@ function renderOverall() {
       total: CELTIC_CROSS_COUNT,
     });
     drawSummary.appendChild(note);
+
+    const preview = document.createElement('div');
+    preview.className = 'full-celtic-preview';
+    preview.setAttribute('aria-hidden', 'true');
+    CELTIC_CROSS_POSITIONS.forEach((position, idx) => {
+      const slot = document.createElement('div');
+      slot.className = `full-celtic-preview__slot full-celtic-preview__slot--${position.key}`;
+      slot.dataset.drawTargetIndex = String(idx);
+      if (idx < selectedCards.length) slot.classList.add('is-filled');
+      if (idx === selectedCards.length && selectedCards.length < CELTIC_CROSS_COUNT) slot.classList.add('is-next');
+      const order = document.createElement('span');
+      order.className = 'full-celtic-preview__order';
+      order.textContent = String(idx + 1);
+      slot.appendChild(order);
+      preview.appendChild(slot);
+    });
+    drawSummary.appendChild(preview);
   };
 
   const captureArrangeRects = () => {
@@ -713,12 +816,14 @@ function renderOverall() {
   };
 
   const goToArrangeStage = () => {
+    clearPickAnimation();
     stage = 'arrange';
     syncUi();
   };
 
   const resetFullFlow = () => {
     clearDealTimer();
+    clearPickAnimation();
     isPickAnimating = false;
     stage = 'deal';
     pool = getDrawableCards(FULL_POOL_SIZE);
@@ -756,6 +861,7 @@ function renderOverall() {
     if (isDisposed) return;
     isDisposed = true;
     clearDealTimer();
+    clearPickAnimation();
     shuffleBtn.onclick = null;
     drawDeck.onclick = null;
     continueBtn.onclick = null;
