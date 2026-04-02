@@ -486,6 +486,10 @@ function renderOverall() {
   let selectedSwapIndex = -1;
   let dealTimer = null;
   let isDisposed = false;
+  let isPickAnimating = false;
+  const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  const getPickFeedbackDelay = () => (reducedMotionQuery.matches ? 0 : 140);
 
   const clearDealTimer = () => {
     if (!dealTimer) return;
@@ -548,14 +552,29 @@ function renderOverall() {
       slot.appendChild(createCardArt(null, 'full-draw-board__img', { useBack: true }));
       slot.onclick = () => {
         const picked = drawBoardCards[idx];
-        if (!picked || stage !== 'draw') return;
-        selectedCards = [...selectedCards, picked];
-        drawBoardCards = buildDrawBoardCards();
-        if (selectedCards.length >= CELTIC_CROSS_COUNT) {
-          goToArrangeStage();
-          return;
-        }
-        syncUi();
+        if (!picked || stage !== 'draw' || isPickAnimating) return;
+
+        isPickAnimating = true;
+        board.classList.add('is-picking');
+        slot.classList.add('is-selected-feedback');
+
+        const commitPick = () => {
+          if (isDisposed || stage !== 'draw') {
+            isPickAnimating = false;
+            return;
+          }
+          selectedCards = [...selectedCards, picked];
+          drawBoardCards = buildDrawBoardCards();
+          isPickAnimating = false;
+
+          if (selectedCards.length >= CELTIC_CROSS_COUNT) {
+            goToArrangeStage();
+            return;
+          }
+          syncUi();
+        };
+
+        window.setTimeout(commitPick, getPickFeedbackDelay());
       };
       board.appendChild(slot);
     });
@@ -700,6 +719,7 @@ function renderOverall() {
 
   const resetFullFlow = () => {
     clearDealTimer();
+    isPickAnimating = false;
     stage = 'deal';
     pool = getDrawableCards(FULL_POOL_SIZE);
     drawBoardCards = [];
