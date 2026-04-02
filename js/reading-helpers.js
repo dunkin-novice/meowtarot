@@ -136,14 +136,15 @@ export function findCardById(cards, id, normalizeFn = normalizeId) {
 
 function normalizeQuestionTopic(topic = '') {
   const normalized = String(topic || '').toLowerCase().trim();
-  return ['love', 'career', 'finance'].includes(normalized) ? normalized : 'other';
+  return ['love', 'career', 'finance', 'health', 'family', 'travel', 'self'].includes(normalized) ? normalized : 'other';
 }
 
-export function getQuestionMeaningField(topic = 'other', position = 'present') {
+export function getQuestionMeaningField(topic = 'other', position = 'present', lang = 'en') {
   const normalizedPosition = normalizeQuestionCardPosition(position) || 'present';
   const normalizedTopic = normalizeQuestionTopic(topic);
+  const normalizedLang = String(lang || 'en').toLowerCase() === 'th' ? 'th' : 'en';
   const fieldPrefix = normalizedTopic === 'other' ? 'standalone' : normalizedTopic;
-  return `${fieldPrefix}_${normalizedPosition}_en`;
+  return `${fieldPrefix}_${normalizedPosition}_${normalizedLang}`;
 }
 
 export function getCelticCrossStandaloneField(position = '') {

@@ -1130,8 +1130,7 @@ const ALL_TOPICS = [
 ];
 
 function getTopicConfig() {
-  if (!isMobile()) return ALL_TOPICS;
-  return ALL_TOPICS.filter((topic) => !['family', 'travel', 'self'].includes(topic.key));
+  return ALL_TOPICS;
 }
 
 function getTopicTitle(dict, titleKey) {

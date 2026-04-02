@@ -84,12 +84,19 @@ test('each base card appears in both upright and reversed orientations', () => {
   assert.strictEqual(deck.length, baseIds.size * 2, 'deck should be doubled by orientation');
 });
 
-test('getQuestionMeaningField switches to standalone for non-specialized topics', () => {
+test('getQuestionMeaningField maps supported topics to topic fields with language suffixes', () => {
   assert.strictEqual(getQuestionMeaningField('love', 'past'), 'love_past_en');
   assert.strictEqual(getQuestionMeaningField('career', 'present'), 'career_present_en');
   assert.strictEqual(getQuestionMeaningField('finance', 'future'), 'finance_future_en');
+  assert.strictEqual(getQuestionMeaningField('health', 'present'), 'health_present_en');
+  assert.strictEqual(getQuestionMeaningField('family', 'past'), 'family_past_en');
+  assert.strictEqual(getQuestionMeaningField('travel', 'future'), 'travel_future_en');
+  assert.strictEqual(getQuestionMeaningField('self', 'past'), 'self_past_en');
+  assert.strictEqual(getQuestionMeaningField('family', 'past', 'th'), 'family_past_th');
+  assert.strictEqual(getQuestionMeaningField('self', 'future', 'th'), 'self_future_th');
+  assert.strictEqual(getQuestionMeaningField('health', 'present', 'th'), 'health_present_th');
   assert.strictEqual(getQuestionMeaningField('other', 'future'), 'standalone_future_en');
-  assert.strictEqual(getQuestionMeaningField('self', 'past'), 'standalone_past_en');
+  assert.strictEqual(getQuestionMeaningField('other', 'future', 'th'), 'standalone_future_th');
 });
 
 test('getCelticCrossStandaloneField maps each Celtic Cross position to the correct standalone bucket', () => {
