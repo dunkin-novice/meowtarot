@@ -2324,10 +2324,17 @@ function renderFull(cards, dict) {
 
   positions.forEach(({ card, position }) => {
     const box = document.createElement('article');
-    box.className = 'full-summary-box full-interpretation-box';
+    box.className = `full-summary-box full-interpretation-box full-interpretation-box--${position}`;
+    box.dataset.position = position;
+
+    const tag = document.createElement('p');
+    tag.className = 'full-interpretation-tag';
+    tag.textContent = getFullPositionLabel(dict, position);
+    box.appendChild(tag);
 
     const heading = document.createElement('h3');
-    heading.textContent = getFullPositionLabel(dict, position);
+    heading.className = 'full-interpretation-title';
+    heading.textContent = getName(card);
     box.appendChild(heading);
 
     const meta = document.createElement('div');
@@ -2335,7 +2342,7 @@ function renderFull(cards, dict) {
 
     const nameLine = document.createElement('p');
     nameLine.className = 'full-summary-meta__name';
-    nameLine.textContent = `${getName(card)} (${getOrientationLabel(toOrientation(card), state.currentLang)})`;
+    nameLine.textContent = getOrientationLabel(toOrientation(card), state.currentLang);
     meta.appendChild(nameLine);
 
     const archetypeText = normalizeArchetypeText(getText(card, 'archetype'));
@@ -2349,6 +2356,7 @@ function renderFull(cards, dict) {
     box.appendChild(meta);
 
     const body = document.createElement('p');
+    body.className = 'full-interpretation-body';
     body.textContent = isCelticCross
       ? getCelticCrossInterpretation(card, position, state.currentLang)
       : getFullInterpretationText(card, hasTopic ? topicConfig : null);
