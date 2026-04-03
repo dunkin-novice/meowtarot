@@ -542,8 +542,10 @@ function renderOverall() {
       const current = Math.min(selectedCards.length + 1, CELTIC_CROSS_COUNT);
       const nextLabelKey = CELTIC_CROSS_POSITIONS[Math.min(selectedCards.length, CELTIC_CROSS_COUNT - 1)]?.labelKey;
       stageEyebrow.textContent = dict.fullReadingStageDrawEyebrow;
-      stageTitle.textContent = formatCopy(dict.fullReadingStageDrawTitle, { current, total: CELTIC_CROSS_COUNT });
+      stageTitle.textContent = dict.fullReadingStageDrawTitle;
       stageDescription.textContent = formatCopy(dict.fullReadingStageDrawBody, {
+        current,
+        total: CELTIC_CROSS_COUNT,
         position: dict[nextLabelKey] || '',
       });
       return;
@@ -555,7 +557,10 @@ function renderOverall() {
   };
 
   const updateCounter = () => {
-    counter.textContent = `${selectedCards.length}/${CELTIC_CROSS_COUNT}`;
+    counter.textContent = formatCopy(dict.fullReadingDrawnCount, {
+      current: selectedCards.length,
+      total: CELTIC_CROSS_COUNT,
+    });
   };
 
   const updateContinue = () => {
@@ -699,13 +704,6 @@ function renderOverall() {
   const renderDrawSummary = () => {
     drawSummary.hidden = false;
     drawSummary.innerHTML = '';
-    const note = document.createElement('p');
-    note.className = 'full-draw-summary__note';
-    note.textContent = formatCopy(dict.fullReadingDrawnCount, {
-      current: selectedCards.length,
-      total: CELTIC_CROSS_COUNT,
-    });
-    drawSummary.appendChild(note);
 
     const preview = document.createElement('div');
     preview.className = 'full-celtic-preview';
@@ -715,6 +713,7 @@ function renderOverall() {
       slot.className = `full-celtic-preview__slot full-celtic-preview__slot--${position.key}`;
       slot.dataset.drawTargetIndex = String(idx);
       if (idx < selectedCards.length) slot.classList.add('is-filled');
+      if (idx === selectedCards.length - 1) slot.classList.add('is-latest');
       if (idx === selectedCards.length && selectedCards.length < CELTIC_CROSS_COUNT) slot.classList.add('is-next');
       const order = document.createElement('span');
       order.className = 'full-celtic-preview__order';
