@@ -21,6 +21,7 @@ import {
   getBaseCardId,
   getCelticCrossIntegration,
   getCelticCrossInterpretation,
+  getCelticCrossSlotText,
   toOrientation,
 } from './reading-helpers.js';
 import { buildPosterConfig, buildPosterCardPayload, buildReadingPayload } from './share-payload.js';
@@ -2361,6 +2362,28 @@ function renderFull(cards, dict) {
       ? getCelticCrossInterpretation(card, position, state.currentLang)
       : getFullInterpretationText(card, hasTopic ? topicConfig : null);
     box.appendChild(body);
+
+    if (isCelticCross && position === 'challenge') {
+      const adviceText = getCelticCrossSlotText(
+        card,
+        'challenge_advice',
+        state.currentLang,
+        getCelticCrossInterpretation(card, 'advice', state.currentLang),
+      );
+      if (adviceText) {
+        const adviceLabel = document.createElement('p');
+        adviceLabel.className = 'full-interpretation-tag full-interpretation-tag--advice';
+        adviceLabel.textContent = dict?.positionAdvice
+          || (translations[state.currentLang] || translations.en)?.positionAdvice
+          || (state.currentLang === 'th' ? 'คำแนะนำ' : 'Advice');
+        box.appendChild(adviceLabel);
+
+        const adviceBody = document.createElement('p');
+        adviceBody.className = 'full-interpretation-body full-interpretation-body--advice';
+        adviceBody.textContent = adviceText;
+        box.appendChild(adviceBody);
+      }
+    }
 
     interpretationGrid.appendChild(box);
   });
