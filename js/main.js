@@ -497,6 +497,10 @@ function renderOverall() {
   let pickAnimationTimer = null;
   let activePickAnimationCleanup = null;
   let pickAnimationRunId = 0;
+  let boardShuffleTimer = null;
+  let activeBoardShuffleCleanup = null;
+  let boardShuffleRunId = 0;
+  let isBoardShuffleAnimating = false;
   let isDisposed = false;
   let isPickAnimating = false;
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -518,6 +522,19 @@ function renderOverall() {
     }
     pickAnimationRunId += 1;
     if (unlock) isPickAnimating = false;
+  };
+
+  const clearBoardShuffleAnimation = ({ unlock = true } = {}) => {
+    if (boardShuffleTimer) {
+      window.clearTimeout(boardShuffleTimer);
+      boardShuffleTimer = null;
+    }
+    if (typeof activeBoardShuffleCleanup === 'function') {
+      activeBoardShuffleCleanup();
+      activeBoardShuffleCleanup = null;
+    }
+    boardShuffleRunId += 1;
+    if (unlock) isBoardShuffleAnimating = false;
   };
 
   const isPoolReady = () => pool.length >= CELTIC_CROSS_COUNT;
@@ -557,10 +574,7 @@ function renderOverall() {
   };
 
   const updateCounter = () => {
-    counter.textContent = formatCopy(dict.fullReadingDrawnCount, {
-      current: selectedCards.length,
-      total: CELTIC_CROSS_COUNT,
-    });
+    counter.textContent = `${selectedCards.length} / ${CELTIC_CROSS_COUNT}`;
   };
 
   const updateContinue = () => {
@@ -581,7 +595,7 @@ function renderOverall() {
       slot.appendChild(createCardArt(null, 'full-draw-board__img', { useBack: true }));
       slot.onclick = () => {
         const picked = drawBoardCards[idx];
-        if (!picked || stage !== 'draw' || isPickAnimating) return;
+        if (!picked || stage !== 'draw' || isPickAnimating || isBoardShuffleAnimating) return;
 
         isPickAnimating = true;
         board.classList.add('is-picking');
@@ -699,6 +713,85 @@ function renderOverall() {
         }, redealDuration);
       }, clearDuration);
     }, confirmDuration);
+  };
+
+  const runBoardShuffleAnimation = ({ board, onDone }) => {
+    clearBoardShuffleAnimation({ unlock: false });
+    const runId = boardShuffleRunId;
+    const slots = Array.from(board.querySelectorAll('.full-draw-board__slot'));
+    const reducedMotion = reducedMotionQuery.matches;
+    const clearDuration = reducedMotion ? FULL_PICK_REDUCED_CLEAR_DURATION : FULL_PICK_CLEAR_DURATION;
+    const redealDuration = reducedMotion ? FULL_PICK_REDUCED_REDEAL_DURATION : FULL_PICK_REDEAL_ONLY_DURATION;
+    const slotCount = Math.max(slots.length, 1);
+    const perSlotDelay = slotCount > 1 ? redealDuration / (slotCount - 1) : 0;
+    const columns = 5;
+    const centerIndex = Math.floor(slots.length / 2);
+    const centerCol = centerIndex % columns;
+    const centerRow = Math.floor(centerIndex / columns);
+
+    if (!slots.length) {
+      boardShuffleTimer = window.setTimeout(() => {
+        if (runId !== boardShuffleRunId) return;
+        boardShuffleTimer = null;
+        activeBoardShuffleCleanup = null;
+        onDone?.();
+      }, 0);
+      return;
+    }
+
+    slots.forEach((candidate, index) => {
+      const clearDelay = Math.abs(centerIndex - index) * (reducedMotion ? 5 : 9);
+      const col = index % columns;
+      const row = Math.floor(index / columns);
+      const driftX = (col - centerCol) * (reducedMotion ? 4 : 10);
+      const driftY = (row - centerRow) * (reducedMotion ? 2 : 7) + (reducedMotion ? 7 : 16);
+      candidate.style.setProperty('--clear-delay', `${Math.round(clearDelay)}ms`);
+      candidate.style.setProperty('--clear-shift-x', `${Math.round(driftX)}px`);
+      candidate.style.setProperty('--clear-shift-y', `${Math.round(driftY)}px`);
+      candidate.style.setProperty('--redeal-delay', `${Math.round(index * perSlotDelay)}ms`);
+      candidate.style.setProperty('--redeal-duration', `${Math.round(Math.max(120, redealDuration * 0.34))}ms`);
+      candidate.style.setProperty('--redeal-lift', `${Math.round(reducedMotion ? 6 : 16 + ((row % 2) * 3))}px`);
+    });
+
+    activeBoardShuffleCleanup = () => {
+      board.classList.remove('is-shuffling');
+      board.classList.remove('is-clearing-spread');
+      board.classList.remove('is-redealing-spread');
+      slots.forEach((candidate) => {
+        candidate.style.removeProperty('--clear-delay');
+        candidate.style.removeProperty('--clear-shift-x');
+        candidate.style.removeProperty('--clear-shift-y');
+        candidate.style.removeProperty('--redeal-delay');
+        candidate.style.removeProperty('--redeal-duration');
+        candidate.style.removeProperty('--redeal-lift');
+      });
+    };
+
+    board.classList.add('is-shuffling');
+    board.classList.add('is-clearing-spread');
+
+    boardShuffleTimer = window.setTimeout(() => {
+      if (runId !== boardShuffleRunId) return;
+      board.classList.remove('is-clearing-spread');
+      board.classList.add('is-redealing-spread');
+
+      boardShuffleTimer = window.setTimeout(() => {
+        if (runId !== boardShuffleRunId) return;
+        boardShuffleTimer = null;
+        activeBoardShuffleCleanup = null;
+        board.classList.remove('is-redealing-spread');
+        board.classList.remove('is-shuffling');
+        slots.forEach((candidate) => {
+          candidate.style.removeProperty('--clear-delay');
+          candidate.style.removeProperty('--clear-shift-x');
+          candidate.style.removeProperty('--clear-shift-y');
+          candidate.style.removeProperty('--redeal-delay');
+          candidate.style.removeProperty('--redeal-duration');
+          candidate.style.removeProperty('--redeal-lift');
+        });
+        onDone?.();
+      }, redealDuration);
+    }, clearDuration);
   };
 
   const renderDrawSummary = () => {
@@ -852,7 +945,9 @@ function renderOverall() {
   const resetFullFlow = () => {
     clearDealTimer();
     clearPickAnimation();
+    clearBoardShuffleAnimation();
     isPickAnimating = false;
+    isBoardShuffleAnimating = false;
     stage = 'deal';
     pool = getDrawableCards(FULL_POOL_SIZE);
     drawBoardCards = [];
@@ -870,10 +965,28 @@ function renderOverall() {
 
   const handleShuffle = () => {
     if (stage === 'draw') {
+      if (isBoardShuffleAnimating) return;
       clearPickAnimation();
       isPickAnimating = false;
-      drawBoardCards = buildDrawBoardCards();
-      syncUi();
+      const activeBoard = dealOrbit.querySelector('.full-draw-board');
+      if (!activeBoard) {
+        drawBoardCards = buildDrawBoardCards();
+        syncUi();
+        return;
+      }
+      isBoardShuffleAnimating = true;
+      runBoardShuffleAnimation({
+        board: activeBoard,
+        onDone: () => {
+          if (isDisposed || stage !== 'draw') {
+            isBoardShuffleAnimating = false;
+            return;
+          }
+          drawBoardCards = buildDrawBoardCards();
+          isBoardShuffleAnimating = false;
+          syncUi();
+        },
+      });
       return;
     }
 
@@ -904,6 +1017,7 @@ function renderOverall() {
     isDisposed = true;
     clearDealTimer();
     clearPickAnimation();
+    clearBoardShuffleAnimation();
     shuffleBtn.onclick = null;
     drawDeck.onclick = null;
     continueBtn.onclick = null;
