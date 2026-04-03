@@ -5068,7 +5068,8 @@ body[data-page='full'] .full-stage-copy h2 {
 
 body[data-page='full'] .full-stage-copy p:last-child {
   margin: 0;
-  color: rgba(236, 230, 248, 0.86);
+  color: rgba(243, 236, 255, 0.94);
+  font-weight: 500;
 }
 
 body[data-page='full'] .full-selection-shell {
@@ -5190,22 +5191,36 @@ body[data-page='full'] .full-celtic-preview {
 
 body[data-page='full'] .full-celtic-preview__slot {
   border-radius: 10px;
-  border: 1px solid rgba(212, 193, 244, 0.28);
-  background: rgba(13, 19, 44, 0.42);
+  border: 1px solid rgba(208, 197, 238, 0.34);
+  background: linear-gradient(165deg, rgba(34, 33, 58, 0.72), rgba(23, 27, 52, 0.72));
   min-height: 36px;
   display: grid;
   place-items: center;
-  color: rgba(228, 217, 245, 0.68);
-  box-shadow: inset 0 0 0 1px rgba(223, 206, 250, 0.08);
+  color: rgba(226, 216, 245, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(223, 206, 250, 0.12),
+    0 4px 14px rgba(7, 8, 22, 0.24);
   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
 }
 
 body[data-page='full'] .full-celtic-preview__slot.is-filled {
-  border-color: rgba(228, 208, 255, 0.64);
-  background: rgba(77, 54, 121, 0.32);
+  border-color: rgba(226, 193, 255, 0.88);
+  background: linear-gradient(160deg, rgba(112, 76, 171, 0.78), rgba(84, 53, 145, 0.74));
   box-shadow:
-    inset 0 0 0 1px rgba(228, 208, 255, 0.26),
-    0 8px 20px rgba(8, 8, 23, 0.2);
+    inset 0 0 0 1px rgba(238, 214, 255, 0.34),
+    0 10px 26px rgba(10, 10, 28, 0.34),
+    0 0 0 1px rgba(209, 158, 255, 0.2);
+}
+
+body[data-page='full'] .full-celtic-preview__slot.is-latest {
+  transform: translateY(-1px) scale(1.02);
+  border-color: rgba(241, 221, 255, 0.96);
+  background: linear-gradient(162deg, rgba(94, 50, 166, 0.94), rgba(66, 34, 130, 0.92));
+  box-shadow:
+    inset 0 0 0 1px rgba(244, 225, 255, 0.54),
+    0 14px 30px rgba(11, 10, 30, 0.46),
+    0 0 0 3px rgba(181, 129, 255, 0.2),
+    0 0 24px rgba(173, 118, 255, 0.36);
 }
 
 body[data-page='full'] .full-celtic-preview__slot.is-next {
@@ -5227,7 +5242,9 @@ body[data-page='full'] .full-celtic-preview__order {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.84;
+  opacity: 0.96;
+  font-weight: 600;
+  color: rgba(244, 236, 255, 0.96);
 }
 
 body[data-page='full'] .full-celtic-preview__slot--present { grid-area: 2 / 2; }
