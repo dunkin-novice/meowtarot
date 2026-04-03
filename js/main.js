@@ -9,6 +9,7 @@ import {
   normalizeId,
 } from './data.js';
 import { applyTapSwap, buildNextDrawBoard } from './full-reading-flow.js';
+import { serializeReadingStateToUrl } from './reading-url.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -123,16 +124,14 @@ function setRitualCtaLabel(button, hasDealt) {
 function saveSelectionAndGo({ mode, spread, topic, cards }) {
   const payload = { mode, spread, topic, cards };
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  const params = new URLSearchParams({
+  const destination = localizePath('/reading.html', state.currentLang);
+  window.location.href = serializeReadingStateToUrl({
     mode,
     spread,
     topic,
-    ids: cards.join(','),
-    cards: cards.join(','),
+    cards,
     lang: state.currentLang,
-  });
-  const destination = localizePath('/reading.html', state.currentLang);
-  window.location.href = `${destination}?${params.toString()}`;
+  }, { path: destination });
 }
 
 function formatCopy(template, values = {}) {

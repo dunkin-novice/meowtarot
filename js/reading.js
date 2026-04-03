@@ -33,9 +33,11 @@ import { orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-ord
 import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
+import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
 
 const params = new URLSearchParams(window.location.search);
-const hasUrlSelection = ['cards', 'card', 'id', 'mode', 'topic', 'spread'].some((key) => params.has(key));
+const initialUrlState = parseReadingStateFromUrl(window.location.search);
+const hasUrlSelection = initialUrlState.hasAnySelection || ['mode', 'topic', 'spread', 'm', 't', 's'].some((key) => params.has(key));
 
 function readStoredSelection() {
   if (hasUrlSelection) return null;
@@ -74,32 +76,44 @@ function hydrateSpread(rawSpread, mode) {
 }
 
 function parseSelectedIds() {
-  const single = params.get('card') || params.get('id');
-  if (single) return [single.trim()].filter(Boolean);
-
-  const paramCards = params.get('ids') || params.get('cards');
+  const paramCards = initialUrlState.cards;
   const storedCards = storageSelection?.cards;
 
-  const combined = paramCards || (Array.isArray(storedCards) ? storedCards.join(',') : storedCards);
-  if (!combined) return [];
+  if (Array.isArray(paramCards) && paramCards.length) {
+    return paramCards.map((id) => String(id || '').trim()).filter(Boolean);
+  }
 
-  return combined
-    .toString()
+  const combined = Array.isArray(storedCards) ? storedCards.join(',') : storedCards;
+  return String(combined || '')
     .split(',')
     .map((id) => id.trim())
     .filter(Boolean);
 }
 
-const rawHydratedMode = params.get('mode') || storageSelection?.mode || 'daily';
+const rawHydratedMode = initialUrlState.mode || storageSelection?.mode || 'daily';
 const hydratedMode = normalizeMode(rawHydratedMode);
 
 const state = {
-  currentLang: params.get('lang') || (pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en'),
+  currentLang: initialUrlState.lang || (pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en'),
   mode: hydratedMode,
-  spread: hydrateSpread(params.get('spread') || storageSelection?.spread, hydratedMode),
-  topic: params.get('topic') || storageSelection?.topic || 'generic',
+  spread: hydrateSpread(initialUrlState.spread || storageSelection?.spread, hydratedMode),
+  topic: initialUrlState.topic || storageSelection?.topic || 'generic',
   selectedIds: parseSelectedIds(),
 };
+
+function getCanonicalReadingUrl() {
+  return buildShareUrl({
+    origin: window.location.origin,
+    path: window.location.pathname,
+    state: {
+      mode: state.mode,
+      spread: state.spread,
+      topic: state.topic,
+      lang: state.currentLang,
+      cards: state.selectedIds,
+    },
+  });
+}
 
 let dataLoaded = false;
 let translationsReady = false;
@@ -616,6 +630,17 @@ function ensureOrientation(card, targetOrientation = toOrientation(card)) {
 
 function findCard(id) {
   if (!id) return null;
+  const compactMatch = String(id).trim().toLowerCase().match(/^(\d{1,3})([ur])$/);
+  if (compactMatch) {
+    const [, numberPart, orientationSuffix] = compactMatch;
+    const orientation = orientationSuffix === 'r' ? 'reversed' : 'upright';
+    const prefix = `${Number(numberPart)}-`;
+    const hit = meowTarotCards.find((card) => {
+      const base = getBaseCardId(card?.id || card?.card_id || card?.image_id || '', normalizeId);
+      return base.startsWith(prefix) && toOrientation(card) === orientation;
+    });
+    if (hit) return hit;
+  }
 
   const targetOrientation = toOrientation(id);
   const direct = findCardById(meowTarotCards, id, normalizeId);
@@ -677,6 +702,13 @@ function validateReadingState() {
   }
 
   return true;
+}
+
+function normalizeBrowserUrlIfNeeded() {
+  const canonicalUrl = getCanonicalReadingUrl();
+  if (canonicalUrl !== window.location.href) {
+    window.history.replaceState({}, '', canonicalUrl);
+  }
 }
 
 function resolveImageIds(card, targetOrientation = toOrientation(card)) {
@@ -2709,7 +2741,7 @@ function buildSharePayload() {
       colors: normalizeColorArray(findCard(state.selectedIds[0])?.color_palette).slice(0, 6),
       avoidColors: normalizeColorArray(findCard(state.selectedIds[0])?.avoid_color_palette).slice(0, 6),
     },
-    canonicalUrl: window.location.href,
+    canonicalUrl: getCanonicalReadingUrl(),
   };
 
   if (state.mode === 'question') {
@@ -2980,8 +3012,7 @@ async function saveImage() {
 
 async function shareReadingLink() {
   try {
-    const { url: shareUrl } = await buildSharePageUrl();
-    const copied = await copyTextWithFallback(shareUrl);
+    const copied = await copyTextWithFallback(getCanonicalReadingUrl());
     if (copied) {
       showTemporaryToast(state.currentLang === 'th' ? 'คัดลอกลิงก์แล้ว ส่งให้เพื่อนอ่านคำทำนายของคุณ 🔮' : 'Link copied! Send it to a friend to read your tarot reading 🔮');
       return;
@@ -3079,6 +3110,7 @@ function handleTranslations(dict) {
 
   if (dataLoaded) {
     if (!validateReadingState()) return;
+    normalizeBrowserUrlIfNeeded();
     renderReading(dict);
     hasRendered = true;
   }
@@ -3087,6 +3119,7 @@ function handleTranslations(dict) {
 function maybeRenderReading() {
   if (hasRendered || !dataLoaded || !translationsReady) return;
   if (!validateReadingState()) return;
+  normalizeBrowserUrlIfNeeded();
   renderReading(activeDict);
   hasRendered = true;
 }
@@ -3100,9 +3133,9 @@ function switchLanguageInPlace(nextLang) {
   imageSourceCache.clear();
   imagePreloadCache.clear();
 
-  const url = new URL(window.location.href);
-  url.searchParams.set('lang', nextLang);
-  window.history.replaceState({}, '', url.toString());
+  if (validateReadingState()) {
+    normalizeBrowserUrlIfNeeded();
+  }
 
   applyTranslations(nextLang, handleTranslations);
   applyLocaleMeta(nextLang);
