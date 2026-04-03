@@ -868,10 +868,24 @@ function renderOverall() {
     }, FULL_DEAL_ANIMATION_DURATION);
   };
 
+  const handleShuffle = () => {
+    if (stage === 'draw') {
+      clearPickAnimation();
+      isPickAnimating = false;
+      drawBoardCards = buildDrawBoardCards();
+      syncUi();
+      return;
+    }
+
+    if (stage === 'deal') {
+      resetFullFlow();
+    }
+  };
+
   toolbar.hidden = false;
   actions.hidden = false;
   continueBtn.disabled = true;
-  shuffleBtn.onclick = () => resetFullFlow();
+  shuffleBtn.onclick = () => handleShuffle();
   drawDeck.onclick = null;
   continueBtn.onclick = () => {
     if (selectedCards.length !== CELTIC_CROSS_COUNT) return;
