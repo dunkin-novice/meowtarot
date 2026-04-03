@@ -14,6 +14,23 @@ const CELTIC_CROSS_STANDALONE_FIELD_BY_POSITION = {
   outcome: 'standalone_future',
 };
 
+const CELTIC_CROSS_SLOT_FIELD_BY_POSITION = {
+  present: 'present',
+  challenge: 'challenge',
+  above: 'above',
+  below: 'below',
+  past: 'past',
+  future: 'future',
+  advice: 'self',
+  self: 'self',
+  external: 'environment',
+  environment: 'environment',
+  hopes: 'hopes_fears',
+  hopes_fears: 'hopes_fears',
+  outcome: 'outcome',
+  challenge_advice: 'challenge_advice',
+};
+
 function normalizeLanguage(lang = 'en') {
   return String(lang || '').toLowerCase().startsWith('th') ? 'th' : 'en';
 }
@@ -151,14 +168,25 @@ export function getCelticCrossStandaloneField(position = '') {
   return CELTIC_CROSS_STANDALONE_FIELD_BY_POSITION[String(position || '').toLowerCase()] || 'standalone_present';
 }
 
+export function getCelticCrossSlotText(card, slotKey = '', lang = 'en', fallbackText = '') {
+  if (!card) return fallbackText || '';
+  const normalizedSlot = String(slotKey || '').toLowerCase();
+  const dedicatedField = CELTIC_CROSS_SLOT_FIELD_BY_POSITION[normalizedSlot];
+  if (!dedicatedField) return fallbackText || '';
+
+  const dedicatedText = String(getLocalizedCardField(card, `celtic_cross_${dedicatedField}`, lang) || '').trim();
+  return dedicatedText || fallbackText || '';
+}
+
 export function getCelticCrossInterpretation(card, position = '', lang = 'en') {
   if (!card) return '';
 
-  return getLocalizedCardField(card, getCelticCrossStandaloneField(position), lang)
+  const fallbackText = getLocalizedCardField(card, getCelticCrossStandaloneField(position), lang)
     || getLocalizedCardField(card, 'general_meaning', lang)
     || getLocalizedCardField(card, 'tarot_imply', lang)
     || getLocalizedCardField(card, 'card_desc', lang)
     || '';
+  return getCelticCrossSlotText(card, position, lang, fallbackText);
 }
 
 export function getCelticCrossIntegration(cards = [], lang = 'en') {

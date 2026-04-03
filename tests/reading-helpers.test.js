@@ -13,6 +13,7 @@ import {
   getBaseId,
   getCelticCrossIntegration,
   getCelticCrossInterpretation,
+  getCelticCrossSlotText,
   getCelticCrossStandaloneField,
   getQuestionMeaningField,
   getOrientation,
@@ -114,6 +115,8 @@ test('getCelticCrossStandaloneField maps each Celtic Cross position to the corre
 
 test('getCelticCrossInterpretation uses localized standalone buckets before generic fallbacks', () => {
   const card = {
+    celtic_cross_challenge_en: 'Dedicated challenge EN.',
+    celtic_cross_outcome_th: 'ผลลัพธ์เฉพาะภาษาไทย',
     standalone_past_en: 'Past bucket EN.',
     standalone_past_th: 'อดีตภาษาไทย',
     standalone_present_en: 'Present bucket EN.',
@@ -124,11 +127,28 @@ test('getCelticCrossInterpretation uses localized standalone buckets before gene
   };
 
   assert.strictEqual(getCelticCrossInterpretation(card, 'below', 'en'), 'Past bucket EN.');
-  assert.strictEqual(getCelticCrossInterpretation(card, 'challenge', 'en'), 'Present bucket EN.');
+  assert.strictEqual(getCelticCrossInterpretation(card, 'challenge', 'en'), 'Dedicated challenge EN.');
   assert.strictEqual(getCelticCrossInterpretation(card, 'hopes', 'en'), 'What are you afraid to hope for?');
   assert.strictEqual(getCelticCrossInterpretation(card, 'advice', 'en'), 'Take one concrete step.');
   assert.strictEqual(getCelticCrossInterpretation(card, 'past', 'th'), 'อดีตภาษาไทย');
+  assert.strictEqual(getCelticCrossInterpretation(card, 'outcome', 'th'), 'ผลลัพธ์เฉพาะภาษาไทย');
   assert.strictEqual(getCelticCrossInterpretation({ general_meaning_en: 'Generic EN.' }, 'present', 'en'), 'Generic EN.');
+});
+
+test('getCelticCrossSlotText trims whitespace and falls back per language', () => {
+  const card = {
+    celtic_cross_present_en: '  Dedicated present text.  ',
+    celtic_cross_present_th: '   ',
+  };
+
+  assert.strictEqual(
+    getCelticCrossSlotText(card, 'present', 'en', 'Fallback EN'),
+    'Dedicated present text.',
+  );
+  assert.strictEqual(
+    getCelticCrossSlotText(card, 'present', 'th', 'ข้อความสำรอง'),
+    'ข้อความสำรอง',
+  );
 });
 
 test('getCelticCrossIntegration returns single-source integration content with required fallbacks', () => {
