@@ -51,6 +51,7 @@ function createDefaultProgress() {
     streak_current: 0,
     streak_best: 0,
     total_daily_reads: 0,
+    recent_daily_cards: [],
     collected_base_cards: [],
     collected_oriented_cards: [],
     achievements: {
@@ -77,6 +78,17 @@ function sanitizeProgress(raw) {
     ? [...new Set(raw.collected_oriented_cards.map((id) => normalizeId(id)).filter(Boolean))]
     : [];
 
+  const recentDailyCards = Array.isArray(raw.recent_daily_cards)
+    ? raw.recent_daily_cards
+      .map((entry) => ({
+        date: typeof entry?.date === 'string' ? entry.date : '',
+        id: normalizeId(entry?.id),
+        orientation: String(entry?.orientation || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright',
+      }))
+      .filter((entry) => entry.date && entry.id)
+      .slice(-30)
+    : [];
+
   const next = {
     ...fallback,
     ...raw,
@@ -88,6 +100,7 @@ function sanitizeProgress(raw) {
     streak_current: Math.max(0, Number(raw.streak_current) || 0),
     streak_best: Math.max(0, Number(raw.streak_best) || 0),
     total_daily_reads: Math.max(0, Number(raw.total_daily_reads) || 0),
+    recent_daily_cards: recentDailyCards,
     collected_base_cards: baseCards,
     collected_oriented_cards: orientedCards,
     achievements: normalizeBooleanMap(raw.achievements, fallback.achievements),
@@ -227,6 +240,16 @@ export function trackCompletedDailyReading(card = null) {
   progress.last_daily_read_date = today;
 
   const { baseId, orientedId } = getCardIdentity(card);
+  if (baseId) {
+    progress.recent_daily_cards = [
+      ...(Array.isArray(progress.recent_daily_cards) ? progress.recent_daily_cards : []).filter((entry) => entry?.date !== today),
+      {
+        date: today,
+        id: baseId,
+        orientation: isReversedCard(card) ? 'reversed' : 'upright',
+      },
+    ].slice(-30);
+  }
   const firstReversed = isFirstReversed(progress, card);
   const firstMajorArcana = isFirstMajorArcana(progress, card);
   if (baseId && !progress.collected_base_cards.includes(baseId)) {
@@ -268,6 +291,7 @@ export function getRetentionViewModel(result = null) {
   const nextMilestone = getNextStreakMilestone(progress);
 
   return {
+    progress,
     streakCurrent: progress.streak_current,
     streakBest: progress.streak_best,
     collectionCount: progress.collected_base_cards.length,

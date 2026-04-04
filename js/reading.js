@@ -36,6 +36,7 @@ import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
 import { getRetentionViewModel, trackCompletedDailyReading } from './progress.js';
+import { computePhase } from './phase.js';
 import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from './reading-hydration.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
@@ -2260,6 +2261,7 @@ function buildRetentionText(dict, key, fallback = '') {
 
 function buildDailyShareIdentity(dict = translations[state.currentLang], retentionState = dailyUiState.retention) {
   const vm = getRetentionViewModel(retentionState);
+  const phase = computePhase(vm?.progress, dict, translations.en);
   const dayLabel = formatReadingTemplate(
     buildRetentionText(dict, 'retentionStreakValue', state.currentLang === 'th' ? 'สตรีค {count} วัน' : 'Day {count} streak'),
     { count: vm.streakCurrent || 0 },
@@ -2270,7 +2272,40 @@ function buildDailyShareIdentity(dict = translations[state.currentLang], retenti
     streakLabel: dayLabel,
     journeyDays: vm.journeyDays || 1,
     softMessage,
+    phase,
   };
+}
+
+function renderPhasePanel(dict, retentionState) {
+  const phase = computePhase(retentionState?.progress, dict, translations.en);
+  const panel = document.createElement('section');
+  panel.className = 'panel phase-panel';
+
+  const title = document.createElement('h3');
+  title.textContent = buildRetentionText(
+    dict,
+    'phase_current_title',
+    state.currentLang === 'th' ? 'ช่วงพลังปัจจุบันของคุณ' : 'Your current phase',
+  );
+  panel.appendChild(title);
+
+  const label = document.createElement('p');
+  label.className = 'phase-panel__label';
+  label.textContent = buildRetentionText(
+    dict,
+    'phase_current_format',
+    state.currentLang === 'th' ? 'ช่วงพลังปัจจุบันของคุณ: {label}' : 'Your current phase: {label}',
+  ).replace('{label}', phase.label || '');
+  panel.appendChild(label);
+
+  if (phase.description) {
+    const desc = document.createElement('p');
+    desc.className = 'phase-panel__desc';
+    desc.textContent = phase.description;
+    panel.appendChild(desc);
+  }
+
+  return panel;
 }
 
 function renderRetentionPanel(dict, retentionState) {
@@ -2465,6 +2500,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   void syncLocalProgressIfLoggedIn();
   renderDailyDetails(cards, dict, stageRefs.stage);
   stageRefs.stage.appendChild(renderRetentionPanel(dict, dailyUiState.retention));
+  stageRefs.stage.appendChild(renderPhasePanel(dict, dailyUiState.retention));
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
 }
