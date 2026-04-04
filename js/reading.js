@@ -36,6 +36,7 @@ import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
 import { getRetentionViewModel, trackCompletedDailyReading } from './progress.js';
+import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from './reading-hydration.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
 
@@ -639,10 +640,10 @@ function ensureOrientation(card, targetOrientation = toOrientation(card)) {
 
 function findCard(id) {
   if (!id) return null;
-  const compactMatch = String(id).trim().toLowerCase().match(/^(\d{1,3})([ur])$/);
-  if (compactMatch) {
-    const [, numberPart, orientationSuffix] = compactMatch;
-    const orientation = orientationSuffix === 'r' ? 'reversed' : 'upright';
+  const hydratedId = normalizeHydratedCardId(id);
+  const numericOrientationMatch = String(hydratedId).trim().toLowerCase().match(/^(\d{1,3})-(upright|reversed)$/);
+  if (numericOrientationMatch) {
+    const [, numberPart, orientation] = numericOrientationMatch;
     const prefix = `${Number(numberPart)}-`;
     const hit = meowTarotCards.find((card) => {
       const base = getBaseCardId(card?.id || card?.card_id || card?.image_id || '', normalizeId);
@@ -651,11 +652,12 @@ function findCard(id) {
     if (hit) return hit;
   }
 
-  const targetOrientation = toOrientation(id);
-  const direct = findCardById(meowTarotCards, id, normalizeId);
+  const lookupId = hydratedId || id;
+  const targetOrientation = toOrientation(lookupId);
+  const direct = findCardById(meowTarotCards, lookupId, normalizeId);
   if (direct) return toOrientation(direct) === targetOrientation ? direct : ensureOrientation(direct, targetOrientation);
 
-  const mapped = resolveLegacyMajorId(id);
+  const mapped = resolveLegacyMajorId(lookupId);
   if (mapped) {
     const mappedCard = findCardById(meowTarotCards, mapped, normalizeId);
     if (mappedCard) {
@@ -684,8 +686,33 @@ function redirectToSafeEntry(mode = 'daily') {
   window.location.replace(localizePath(getEntryPathForMode(mode), state.currentLang));
 }
 
+function logHydrationWarning(event, details = {}) {
+  const payload = {
+    event,
+    mode: state.mode,
+    spread: state.spread,
+    topic: state.topic,
+    lang: state.currentLang,
+    ...details,
+  };
+  try {
+    if (typeof window !== 'undefined' && typeof window.__MEOWTAROT_HYDRATION_HOOK === 'function') {
+      window.__MEOWTAROT_HYDRATION_HOOK(payload);
+    }
+  } catch (_) {
+    // Ignore telemetry hook errors.
+  }
+  if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+    console.warn('[meowtarot][hydration]', payload);
+  }
+}
+
 function validateReadingState() {
   if (!isValidMode(rawHydratedMode)) {
+    logHydrationWarning('redirect_invalid_mode', {
+      action: 'redirect',
+      rawMode: rawHydratedMode,
+    });
     redirectToSafeEntry('daily');
     return false;
   }
@@ -696,16 +723,45 @@ function validateReadingState() {
   if (state.mode === 'daily') {
     if (selectedCount && selectedCount !== expectedCount) state.selectedIds = [];
   } else if (selectedCount !== expectedCount) {
+    logHydrationWarning('redirect_count_mismatch', {
+      action: 'redirect',
+      expectedCount,
+      selectedCount,
+    });
     redirectToSafeEntry(state.mode);
     return false;
   }
 
-  const resolvedCount = state.selectedIds.map((id) => findCard(id)).filter(Boolean).length;
+  const resolutionEntries = state.selectedIds.map((id) => ({ id, card: findCard(id) }));
+  const resolvedCount = resolutionEntries.filter((entry) => Boolean(entry.card)).length;
   if (resolvedCount !== selectedCount) {
+    const unresolvedIds = resolutionEntries.filter((entry) => !entry.card).map((entry) => entry.id);
     if (state.mode === 'daily') {
+      logHydrationWarning('daily_unresolved_ids', {
+        action: 'clear_selection',
+        selectedCount,
+        resolvedCount,
+        unresolvedIds,
+      });
       state.selectedIds = [];
       return true;
     }
+    if (shouldUseRecoverableHydrationFallback(state.mode)) {
+      logHydrationWarning('recoverable_unresolved_ids', {
+        action: 'recoverable_fallback',
+        selectedCount,
+        resolvedCount,
+        unresolvedIds,
+      });
+      state.selectedIds = [];
+      return true;
+    }
+    logHydrationWarning('redirect_unresolved_ids', {
+      action: 'redirect',
+      selectedCount,
+      resolvedCount,
+      unresolvedIds,
+    });
     redirectToSafeEntry(state.mode);
     return false;
   }
