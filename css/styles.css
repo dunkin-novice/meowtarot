@@ -3634,12 +3634,21 @@ body.is-modal-open {
   color: #3d3452;
 }
 
+.card-sheet-meaning-meta {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 0.86rem;
+  color: rgba(61, 52, 82, 0.78);
+}
+
 .card-sheet-actions {
   display: grid;
   gap: 10px;
 }
 
+.card-sheet-actions .primary,
 .card-sheet-actions .ghost {
+  width: 100%;
   text-align: center;
 }
 
