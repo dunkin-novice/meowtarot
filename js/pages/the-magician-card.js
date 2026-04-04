@@ -1,7 +1,7 @@
 import { initShell } from '../common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from '../data.js';
 
-const CARD_ID_PREFIX = '01-the-fool';
+const CARD_ID_PREFIX = '02-the-magician';
 const BASE_URL = 'https://www.meowtarot.com';
 
 const labels = {
@@ -95,7 +95,7 @@ function getLang() {
 }
 
 function getPagePath(lang = 'en') {
-  return lang === 'th' ? '/th/cards/the-fool/' : '/cards/the-fool/';
+  return lang === 'th' ? '/th/cards/the-magician/' : '/cards/the-magician/';
 }
 
 function getPageUrl(lang = 'en') {
@@ -193,7 +193,7 @@ function updateSeo(card) {
   const pageUrl = getPageUrl(state.lang);
   const orientation = state.orientation;
   const orientationLabel = orientation === 'reversed' ? 'Reversed' : 'Upright';
-  const baseTitle = `${card.card_name_en || 'The Fool'} Tarot Meaning (${orientationLabel}) | MeowTarot`;
+  const baseTitle = `${card.card_name_en || 'The Magician'} Tarot Meaning (${orientationLabel}) | MeowTarot`;
   const description = state.lang === 'th'
     ? (card.meta_description_th || card.meta_description_en || '')
     : (card.meta_description_en || card.meta_description_th || '');
@@ -244,7 +244,7 @@ function updateSchema(card) {
           {
             '@type': 'ListItem',
             position: 3,
-            name: card.card_name_en || 'The Fool',
+            name: card.card_name_en || 'The Magician',
             item: pageUrl,
           },
         ],
@@ -281,13 +281,13 @@ function render() {
   if (crumbMeanings) crumbMeanings.setAttribute('href', localize('/tarot-card-meanings/'));
   if (footerHome) footerHome.setAttribute('href', localize('/'));
   if (footerIndex) footerIndex.setAttribute('href', localize('/tarot-card-meanings/'));
-  if (footerNext) footerNext.setAttribute('href', localize('/cards/the-magician/'));
+  if (footerNext) footerNext.setAttribute('href', localize('/cards/the-high-priestess/'));
   if (footerDaily) footerDaily.setAttribute('href', localize('/daily.html'));
   if (footerFull) footerFull.setAttribute('href', localize('/full.html'));
   if (footerQuestion) footerQuestion.setAttribute('href', localize('/question.html'));
 
   dom.orientationLabel.textContent = orientationText(state.orientation);
-  dom.cardNameHeading.textContent = card.card_name_en || 'The Fool';
+  dom.cardNameHeading.textContent = card.card_name_en || 'The Magician';
   dom.cardAlias.textContent = card.alias_th ? `${currentLabels.aliasPrefix} ${card.alias_th}` : '';
   dom.cardArchetype.textContent = `${currentLabels.archetypePrefix}: ${getLocalized(card, 'archetype')}`;
   dom.introLine.textContent = getLocalized(card, 'tarot_imply');

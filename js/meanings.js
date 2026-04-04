@@ -1,5 +1,6 @@
 import { initShell } from './common.js';
 import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
+import { CANONICAL_CARD_ORDER, getCanonicalCardPath, normalizeCanonicalSlug } from './canonical-card-routes.js';
 
 const state = {
   currentLang: 'en',
@@ -18,6 +19,7 @@ const searchResultsEl = document.getElementById('searchResults');
 const quickChips = Array.from(document.querySelectorAll('[data-quick]'));
 const clearSearchBtn = document.getElementById('clearSearch');
 const featuredGrid = document.getElementById('featuredCards');
+const canonicalGrid = document.getElementById('canonicalCards');
 const filterNote = document.getElementById('categoryFilterNote');
 
 const featuredSlugs = [
@@ -108,10 +110,8 @@ function renderCategoryCounts() {
 
 function buildResultHref(card) {
   const normalizedSlug = String(card.seo_slug_en || '').toLowerCase();
-  const isFool = String(card.card_id || '').startsWith('01-the-fool') || normalizedSlug.startsWith('the-fool');
-  if (isFool) {
-    return state.currentLang === 'th' ? '/cards/the-fool/?lang=th' : '/cards/the-fool/';
-  }
+  const canonicalPath = getCanonicalCardPath(normalizedSlug, state.currentLang);
+  if (canonicalPath) return canonicalPath;
 
   const slug = card.seo_slug_en || normalizeId(getCardName(card));
   const basePath = state.currentLang === 'th' ? '/th/tarot-card-meanings/' : '/tarot-card-meanings/';
@@ -256,6 +256,40 @@ function renderFeaturedCards() {
   });
 }
 
+function renderCanonicalCards() {
+  if (!canonicalGrid) return;
+  canonicalGrid.innerHTML = '';
+
+  const cards = getUprightCards();
+  const canonicalCards = CANONICAL_CARD_ORDER.map((canonicalSlug) => cards.find((card) => {
+    const normalized = normalizeCanonicalSlug(card.seo_slug_en || card.card_id || card.id || '');
+    return normalized === canonicalSlug;
+  })).filter(Boolean);
+
+  canonicalCards.forEach((card) => {
+    const item = document.createElement('li');
+    item.className = 'featured-link-item';
+
+    const name = getCardName(card);
+    const summary = getCardSummary(card);
+    const cta = state.currentLang === 'th' ? 'เปิดหน้าความหมายเต็ม' : 'Open full meaning page';
+    const liveLabel = state.currentLang === 'th' ? 'หน้าความหมายเต็ม (Live)' : 'Live full meaning page';
+
+    item.innerHTML = `
+      <a class="featured-link" href="${buildResultHref(card)}">
+        <div>
+          <p class="result-meta">${liveLabel}</p>
+          <h3>${name}</h3>
+          ${summary ? `<p class="result-summary">${summary}</p>` : ''}
+        </div>
+        <span>${cta}</span>
+      </a>
+    `;
+
+    canonicalGrid.appendChild(item);
+  });
+}
+
 function attachEvents() {
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -300,6 +334,7 @@ function applyInitialQuery() {
 
 function handleTranslations() {
   renderCategoryCounts();
+  renderCanonicalCards();
   renderFeaturedCards();
   renderSearchResults(searchInput ? searchInput.value : '');
   renderFilterNote();

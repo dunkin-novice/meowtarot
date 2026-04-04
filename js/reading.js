@@ -38,6 +38,7 @@ import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
 import { getRetentionViewModel, trackCompletedDailyReading } from './progress.js';
 import { computePhase } from './phase.js';
 import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from './reading-hydration.js';
+import { getCanonicalCardUrl } from './canonical-card-routes.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
 
@@ -209,6 +210,7 @@ const cardSheetEls = {
   title: null,
   saveBtn: null,
   meaningBtn: null,
+  meaningMeta: null,
 };
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 const SHARE_POSTER_SELECTOR = '#share-poster-root';
@@ -337,6 +339,8 @@ function getCardSelectionId(card) {
 function buildCardMeaningUrl(card) {
   const slug = getCardBaseSlug(card);
   if (!slug) return null;
+  const canonicalUrl = getCanonicalCardUrl(slug, state.currentLang);
+  if (canonicalUrl) return canonicalUrl;
   const prefix = state.currentLang === 'th' ? '/th' : '';
   return `https://www.meowtarot.com${prefix}/tarot-card-meanings/${slug}/?lang=${state.currentLang}`;
 }
@@ -400,7 +404,23 @@ function openCardSheet(card) {
   }).catch(() => {});
   cardSheetEls.image.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   cardSheetEls.title.textContent = getName(card);
-  cardSheetEls.meaningBtn.href = buildCardMeaningUrl(card) || '#';
+  const slug = getCardBaseSlug(card);
+  const canonicalUrl = getCanonicalCardUrl(slug, state.currentLang);
+  const meaningUrl = canonicalUrl || buildCardMeaningUrl(card) || '#';
+  const isCanonical = Boolean(canonicalUrl);
+  const meaningLabel = isCanonical
+    ? (state.currentLang === 'th' ? 'เปิดหน้าความหมายเต็ม (Live)' : 'Open Live Full Meaning Page')
+    : (state.currentLang === 'th' ? 'อ่านความหมายไพ่' : 'Read Card Meaning');
+  const meaningMeta = isCanonical
+    ? (state.currentLang === 'th' ? 'หน้านี้เป็นหน้า Canonical แบบเต็ม' : 'This card has a dedicated canonical full page.')
+    : (state.currentLang === 'th' ? 'ไปยังหน้าความหมายไพ่แบบมาตรฐาน' : 'Open the standard card meaning page.');
+
+  cardSheetEls.meaningBtn.href = meaningUrl;
+  cardSheetEls.meaningBtn.textContent = meaningLabel;
+  cardSheetEls.meaningBtn.classList.toggle('primary', isCanonical);
+  cardSheetEls.meaningBtn.classList.toggle('ghost', !isCanonical);
+  cardSheetEls.meaningMeta.textContent = meaningMeta;
+  cardSheetEls.meaningMeta.hidden = false;
 
   cardSheetEls.overlay.classList.add('is-open');
   cardSheetEls.overlay.setAttribute('aria-hidden', 'false');
@@ -421,9 +441,10 @@ function ensureCardSheet() {
         <img class="card-sheet-media" alt="" />
       </div>
       <p class="card-sheet-title"></p>
+      <p class="card-sheet-meaning-meta" id="cardSheetMeaningMeta"></p>
       <div class="card-sheet-actions">
-        <button class="primary" type="button" id="cardSheetSaveBtn">Save Image</button>
         <a class="ghost" id="cardSheetMeaningBtn" href="#">Read Card Meaning</a>
+        <button class="primary" type="button" id="cardSheetSaveBtn">Save Image</button>
       </div>
     </section>
   `;
@@ -435,6 +456,7 @@ function ensureCardSheet() {
   cardSheetEls.title = wrap.querySelector('.card-sheet-title');
   cardSheetEls.saveBtn = wrap.querySelector('#cardSheetSaveBtn');
   cardSheetEls.meaningBtn = wrap.querySelector('#cardSheetMeaningBtn');
+  cardSheetEls.meaningMeta = wrap.querySelector('#cardSheetMeaningMeta');
 
   wrap.addEventListener('click', (event) => {
     if (event.target?.hasAttribute('data-sheet-close')) closeCardSheet();
