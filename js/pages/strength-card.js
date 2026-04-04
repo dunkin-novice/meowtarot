@@ -2,7 +2,7 @@ import { initShell } from '../common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from '../data.js';
 import { CANONICAL_CARD_ORDER, getCanonicalCardPath } from '../canonical-card-routes.js';
 
-const CARD_ID_PREFIX = '06-the-hierophant';
+const CARD_ID_PREFIX = '09-strength';
 const BASE_URL = 'https://www.meowtarot.com';
 
 const labels = {
@@ -96,7 +96,7 @@ function getLang() {
 }
 
 function getPagePath(lang = 'en') {
-  return lang === 'th' ? '/th/cards/the-hierophant/' : '/cards/the-hierophant/';
+  return getCanonicalCardPath('strength', lang) || (lang === 'th' ? '/th/cards/strength/' : '/cards/strength/');
 }
 
 function getPageUrl(lang = 'en') {
@@ -194,7 +194,7 @@ function updateSeo(card) {
   const pageUrl = getPageUrl(state.lang);
   const orientation = state.orientation;
   const orientationLabel = orientation === 'reversed' ? 'Reversed' : 'Upright';
-  const baseTitle = `${card.card_name_en || 'The Hierophant'} Tarot Meaning (${orientationLabel}) | MeowTarot`;
+  const baseTitle = `${card.card_name_en || 'Strength'} Tarot Meaning (${orientationLabel}) | MeowTarot`;
   const description = state.lang === 'th'
     ? (card.meta_description_th || card.meta_description_en || '')
     : (card.meta_description_en || card.meta_description_th || '');
@@ -245,7 +245,7 @@ function updateSchema(card) {
           {
             '@type': 'ListItem',
             position: 3,
-            name: card.card_name_en || 'The Hierophant',
+            name: card.card_name_en || 'Strength',
             item: pageUrl,
           },
         ],
@@ -277,7 +277,7 @@ function render() {
   const footerDaily = document.getElementById('footerDailyLink');
   const footerFull = document.getElementById('footerFullLink');
   const footerQuestion = document.getElementById('footerQuestionLink');
-  const nextCanonicalSlug = CANONICAL_CARD_ORDER[CANONICAL_CARD_ORDER.indexOf('the-hierophant') + 1] || '';
+  const nextCanonicalSlug = CANONICAL_CARD_ORDER[CANONICAL_CARD_ORDER.indexOf('strength') + 1] || '';
   const nextCanonicalPath = getCanonicalCardPath(nextCanonicalSlug, state.lang);
 
   if (crumbHome) crumbHome.setAttribute('href', localize('/'));
@@ -285,7 +285,7 @@ function render() {
   if (footerHome) footerHome.setAttribute('href', localize('/'));
   if (footerIndex) footerIndex.setAttribute('href', localize('/tarot-card-meanings/'));
   if (footerNext) {
-    const fallbackNext = localize('/tarot-card-meanings/the-lovers-tarot-meaning/');
+    const fallbackNext = localize('/cards/the-hermit/');
     footerNext.setAttribute('href', nextCanonicalPath || fallbackNext);
   }
   if (footerDaily) footerDaily.setAttribute('href', localize('/daily.html'));
@@ -293,7 +293,7 @@ function render() {
   if (footerQuestion) footerQuestion.setAttribute('href', localize('/question.html'));
 
   dom.orientationLabel.textContent = orientationText(state.orientation);
-  dom.cardNameHeading.textContent = card.card_name_en || 'The Hierophant';
+  dom.cardNameHeading.textContent = card.card_name_en || 'Strength';
   dom.cardAlias.textContent = card.alias_th ? `${currentLabels.aliasPrefix} ${card.alias_th}` : '';
   dom.cardArchetype.textContent = `${currentLabels.archetypePrefix}: ${getLocalized(card, 'archetype')}`;
   dom.introLine.textContent = getLocalized(card, 'tarot_imply');

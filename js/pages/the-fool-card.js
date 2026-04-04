@@ -1,5 +1,6 @@
 import { initShell } from '../common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from '../data.js';
+import { CANONICAL_CARD_ORDER, getCanonicalCardPath } from '../canonical-card-routes.js';
 
 const CARD_ID_PREFIX = '01-the-fool';
 const BASE_URL = 'https://www.meowtarot.com';
@@ -95,7 +96,7 @@ function getLang() {
 }
 
 function getPagePath(lang = 'en') {
-  return lang === 'th' ? '/th/cards/the-fool/' : '/cards/the-fool/';
+  return getCanonicalCardPath('the-fool', lang) || (lang === 'th' ? '/th/cards/the-fool/' : '/cards/the-fool/');
 }
 
 function getPageUrl(lang = 'en') {
@@ -276,12 +277,17 @@ function render() {
   const footerDaily = document.getElementById('footerDailyLink');
   const footerFull = document.getElementById('footerFullLink');
   const footerQuestion = document.getElementById('footerQuestionLink');
+  const nextCanonicalSlug = CANONICAL_CARD_ORDER[CANONICAL_CARD_ORDER.indexOf('the-fool') + 1] || '';
+  const nextCanonicalPath = getCanonicalCardPath(nextCanonicalSlug, state.lang);
 
   if (crumbHome) crumbHome.setAttribute('href', localize('/'));
   if (crumbMeanings) crumbMeanings.setAttribute('href', localize('/tarot-card-meanings/'));
   if (footerHome) footerHome.setAttribute('href', localize('/'));
   if (footerIndex) footerIndex.setAttribute('href', localize('/tarot-card-meanings/'));
-  if (footerNext) footerNext.setAttribute('href', localize('/cards/the-magician/'));
+  if (footerNext) {
+    const fallbackNext = localize('/cards/the-magician/');
+    footerNext.setAttribute('href', nextCanonicalPath || fallbackNext);
+  }
   if (footerDaily) footerDaily.setAttribute('href', localize('/daily.html'));
   if (footerFull) footerFull.setAttribute('href', localize('/full.html'));
   if (footerQuestion) footerQuestion.setAttribute('href', localize('/question.html'));

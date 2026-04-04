@@ -5,6 +5,10 @@ const CANONICAL_CARD_SLUGS = new Set([
   'the-empress',
   'the-emperor',
   'the-hierophant',
+  'the-lovers',
+  'the-chariot',
+  'strength',
+  'the-hermit',
 ]);
 
 export const CANONICAL_CARD_ORDER = Object.freeze([
@@ -14,6 +18,10 @@ export const CANONICAL_CARD_ORDER = Object.freeze([
   'the-empress',
   'the-emperor',
   'the-hierophant',
+  'the-lovers',
+  'the-chariot',
+  'strength',
+  'the-hermit',
 ]);
 
 export function normalizeCanonicalSlug(slug = '') {
