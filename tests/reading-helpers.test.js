@@ -72,6 +72,18 @@ test('findCardById prefers the requested orientation', () => {
   assert.strictEqual(reversedHit?.id, reversed.id);
 });
 
+test('findCardById resolves compact and expanded compact numeric tokens', () => {
+  const upright = findCardById(deck, '1u');
+  const reversed = findCardById(deck, '1r');
+  const expandedUpright = findCardById(deck, '1-upright');
+  const expandedReversed = findCardById(deck, '1-reversed');
+
+  assert.strictEqual(upright?.id, '01-the-fool-upright');
+  assert.strictEqual(reversed?.id, '01-the-fool-reversed');
+  assert.strictEqual(expandedUpright?.id, '01-the-fool-upright');
+  assert.strictEqual(expandedReversed?.id, '01-the-fool-reversed');
+});
+
 test('each base card appears in both upright and reversed orientations', () => {
   const baseIds = new Set(deck.map((card) => getBaseId(card.id)));
 
@@ -206,6 +218,20 @@ test('buildQuestionReadingInputPayload derives question input from selected card
     payload.reading_summary_preview_en,
     deck.find((card) => card.id === '02-the-magician-reversed')?.reading_summary_preview_en || '',
   );
+});
+
+test('buildQuestionReadingInputPayload supports compact-expanded ids from reading URL hydration', () => {
+  const payload = buildQuestionReadingInputPayload({
+    topic: 'career',
+    selectedIds: ['1-upright', '2-reversed', '3-upright'],
+    cards: deck,
+  });
+
+  assert.deepStrictEqual(payload.cards.map((card) => [card.position, card.card]), [
+    ['past', 'The Fool'],
+    ['present', 'The Magician'],
+    ['future', 'The High Priestess'],
+  ]);
 });
 
 test('generateQuestionReading is a pure transformation of llmInput and uses positions instead of array order', () => {

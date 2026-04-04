@@ -43,6 +43,7 @@ import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLogged
 const params = new URLSearchParams(window.location.search);
 const initialUrlState = parseReadingStateFromUrl(window.location.search);
 const hasUrlSelection = initialUrlState.hasAnySelection || ['mode', 'topic', 'spread', 'm', 't', 's'].some((key) => params.has(key));
+let didAttemptNonDailyStorageRecovery = false;
 
 function readStoredSelection() {
   if (hasUrlSelection) return null;
@@ -55,6 +56,14 @@ function readStoredSelection() {
 
 const storageSelection = readStoredSelection();
 const DEBUG_CAPTURE_ERRORS = false;
+
+function readStoredSelectionForRecovery() {
+  try {
+    return JSON.parse(sessionStorage.getItem('meowtarot_selection') || 'null');
+  } catch (_) {
+    return null;
+  }
+}
 
 function isValidMode(raw = '') {
   const val = String(raw || '').toLowerCase().trim();
@@ -92,6 +101,15 @@ function parseSelectedIds() {
   return String(combined || '')
     .split(',')
     .map((id) => id.trim())
+    .filter(Boolean);
+}
+
+function parseStoredSelectionCards(storedSelection) {
+  const rawCards = storedSelection?.cards;
+  const combined = Array.isArray(rawCards) ? rawCards.join(',') : rawCards;
+  return String(combined || '')
+    .split(',')
+    .map((id) => String(id || '').trim())
     .filter(Boolean);
 }
 
@@ -640,22 +658,17 @@ function ensureOrientation(card, targetOrientation = toOrientation(card)) {
 
 function findCard(id) {
   if (!id) return null;
-  const hydratedId = normalizeHydratedCardId(id);
-  const numericOrientationMatch = String(hydratedId).trim().toLowerCase().match(/^(\d{1,3})-(upright|reversed)$/);
-  if (numericOrientationMatch) {
-    const [, numberPart, orientation] = numericOrientationMatch;
-    const prefix = `${Number(numberPart)}-`;
-    const hit = meowTarotCards.find((card) => {
-      const base = getBaseCardId(card?.id || card?.card_id || card?.image_id || '', normalizeId);
-      return base.startsWith(prefix) && toOrientation(card) === orientation;
-    });
-    if (hit) return hit;
-  }
 
+  const hydratedId = normalizeHydratedCardId(id);
   const lookupId = hydratedId || id;
   const targetOrientation = toOrientation(lookupId);
   const direct = findCardById(meowTarotCards, lookupId, normalizeId);
-  if (direct) return toOrientation(direct) === targetOrientation ? direct : ensureOrientation(direct, targetOrientation);
+
+  if (direct) {
+    return toOrientation(direct) === targetOrientation
+      ? direct
+      : ensureOrientation(direct, targetOrientation);
+  }
 
   const mapped = resolveLegacyMajorId(lookupId);
   if (mapped) {
@@ -707,6 +720,28 @@ function logHydrationWarning(event, details = {}) {
   }
 }
 
+function tryRecoverNonDailySelectionFromStorage() {
+  if (state.mode === 'daily') return false;
+  if (didAttemptNonDailyStorageRecovery) return false;
+  didAttemptNonDailyStorageRecovery = true;
+
+  const recovered = readStoredSelectionForRecovery();
+  if (!recovered || typeof recovered !== 'object') return false;
+  if (normalizeMode(recovered.mode) !== state.mode) return false;
+
+  const recoveredCards = parseStoredSelectionCards(recovered);
+  const expectedCount = getExpectedCardCount(state.mode);
+  if (recoveredCards.length !== expectedCount) return false;
+
+  const resolvedCount = recoveredCards.map((id) => findCard(id)).filter(Boolean).length;
+  if (resolvedCount !== recoveredCards.length) return false;
+
+  state.selectedIds = recoveredCards;
+  if (!initialUrlState.topic && recovered.topic) state.topic = recovered.topic;
+  if (!initialUrlState.spread && recovered.spread) state.spread = recovered.spread;
+  return true;
+}
+
 function validateReadingState() {
   if (!isValidMode(rawHydratedMode)) {
     logHydrationWarning('redirect_invalid_mode', {
@@ -723,6 +758,7 @@ function validateReadingState() {
   if (state.mode === 'daily') {
     if (selectedCount && selectedCount !== expectedCount) state.selectedIds = [];
   } else if (selectedCount !== expectedCount) {
+    if (tryRecoverNonDailySelectionFromStorage()) return true;
     logHydrationWarning('redirect_count_mismatch', {
       action: 'redirect',
       expectedCount,
@@ -756,6 +792,7 @@ function validateReadingState() {
       state.selectedIds = [];
       return true;
     }
+    if (tryRecoverNonDailySelectionFromStorage()) return true;
     logHydrationWarning('redirect_unresolved_ids', {
       action: 'redirect',
       selectedCount,
@@ -3475,3 +3512,16 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+export const __internalFindCard = findCard;
+export const __internalValidateReadingState = validateReadingState;
+export const __internalTryRecoverNonDailySelectionFromStorage = tryRecoverNonDailySelectionFromStorage;
+export function __internalResetRecoveryGuard() {
+  didAttemptNonDailyStorageRecovery = false;
+}
+export function __internalSetStateForTest(nextState = {}) {
+  Object.assign(state, nextState || {});
+}
+export function __internalGetStateForTest() {
+  return state;
+}

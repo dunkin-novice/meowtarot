@@ -120,6 +120,24 @@ export function matchesCardId(card, candidateId, normalizeFn = normalizeId, opti
 export function findCardById(cards, id, normalizeFn = normalizeId) {
   const idStr = String(id ?? '');
   if (!idStr) return null;
+  const compactToken = idStr.trim().toLowerCase();
+  const compactMatch = compactToken.match(/^(\d{1,3})([ur])$/);
+  const expandedCompactMatch = compactToken.match(/^(\d{1,3})-(upright|reversed)$/);
+
+  if (compactMatch || expandedCompactMatch) {
+    const numberPart = compactMatch ? compactMatch[1] : expandedCompactMatch[1];
+    const orientation = compactMatch
+      ? (compactMatch[2] === 'r' ? 'reversed' : 'upright')
+      : expandedCompactMatch[2];
+    const targetNumber = Number(numberPart);
+    const deck = Array.isArray(cards) ? cards : [];
+    const hit = deck.find((card) => {
+      const base = getBaseId(card?.id || card?.card_id || card?.image_id || '', normalizeFn);
+      const numberMatch = String(base || '').match(/^(\d{1,3})\b/);
+      return numberMatch && Number(numberMatch[1]) === targetNumber && toOrientation(card) === orientation;
+    });
+    if (hit) return hit;
+  }
 
   const hasOrientationSuffix = /-(upright|reversed|u|r)$/i.test(idStr);
   const targetOrientation = toOrientation(idStr);
