@@ -1,6 +1,10 @@
 export function renderNavbar(container, onLangToggle) {
   if (!container) return () => {};
   const pageTitle = 'MeowTarot';
+  const isThaiPath = window.location.pathname === '/th' || window.location.pathname.startsWith('/th/');
+  const prefix = isThaiPath ? '/th' : '';
+  const homeHref = isThaiPath ? '/th/' : '/';
+  const localizeHref = (path) => `${prefix}${path}`;
 
   container.innerHTML = `
     <div class="site-header primary-nav">
@@ -10,7 +14,7 @@ export function renderNavbar(container, onLangToggle) {
           <span class="bar"></span>
           <span class="bar"></span>
         </button>
-        <a href="index.html" class="header-title nav-brand" data-logo aria-live="polite" aria-label="Go to home">${pageTitle}</a>
+        <a href="${homeHref}" class="header-title nav-brand" data-logo aria-live="polite" aria-label="Go to home">${pageTitle}</a>
         <div class="nav-actions">
           <div class="language-toggle language-toggle--mobile" role="group" aria-label="Language toggle">
             <button class="lang-btn" data-lang="en" type="button">EN</button>
@@ -19,15 +23,15 @@ export function renderNavbar(container, onLangToggle) {
           </div>
         </div>
       </div>
-      <a href="index.html" class="logo-text nav-logo" data-logo aria-label="Go to home">✦</a>
+      <a href="${homeHref}" class="logo-text nav-logo" data-logo aria-label="Go to home">✦</a>
       <button class="nav-backdrop" type="button" aria-hidden="true" tabindex="-1"></button>
       <nav class="nav-panel page-card" id="primary-nav-panel" aria-label="Primary">
         <div class="nav-links">
-          <a href="index.html" class="nav-link" data-page="home" data-i18n="navHome"></a>
-          <a href="daily.html" class="nav-link" data-page="daily" data-i18n="navDaily"></a>
-          <a href="full.html" class="nav-link" data-page="full" data-i18n="navOverall"></a>
-          <a href="question.html" class="nav-link" data-page="question" data-i18n="navQuestion"></a>
-          <a href="tarot-card-meanings/" class="nav-link" data-page="meanings" data-i18n="navMeanings"></a>
+          <a href="${homeHref}" class="nav-link" data-page="home" data-i18n="navHome"></a>
+          <a href="${localizeHref('/daily.html')}" class="nav-link" data-page="daily" data-i18n="navDaily"></a>
+          <a href="${localizeHref('/full.html')}" class="nav-link" data-page="full" data-i18n="navOverall"></a>
+          <a href="${localizeHref('/question.html')}" class="nav-link" data-page="question" data-i18n="navQuestion"></a>
+          <a href="${localizeHref('/tarot-card-meanings/')}" class="nav-link" data-page="meanings" data-i18n="navMeanings"></a>
         </div>
         <div class="nav-meta">
           <div class="language-toggle language-toggle--menu" role="group" aria-label="Language toggle">
