@@ -1399,6 +1399,7 @@ function getDailyStrings(lang = 'en') {
       subtitle: 'คำทำนายรายวัน',
       luckyColors: 'สีมงคลวันนี้',
       identitySeparator: '•',
+      phasePrefix: 'ช่วงพลัง',
     };
   }
   return {
@@ -1406,6 +1407,7 @@ function getDailyStrings(lang = 'en') {
     subtitle: 'Daily Reading',
     luckyColors: 'Lucky Colors',
     identitySeparator: '•',
+    phasePrefix: 'Phase',
   };
 }
 
@@ -2131,7 +2133,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const identity = payload?.identity || {};
     const streakLabel = toSafeText(identity?.streakLabel || '', '').trim();
     const softMessage = toSafeText(identity?.softMessage || '', '').trim();
+    const phaseLabel = toSafeText(identity?.phase?.label || '', '').trim();
     const identityLine = [streakLabel, softMessage].filter(Boolean).join(` ${strings.identitySeparator} `);
+    const phaseLine = phaseLabel ? `${strings.phasePrefix}: ${phaseLabel}` : '';
     const hasReadingPanel = Boolean(mainQuoteText);
     const isUprightTone = resolvedOrientation === 'upright';
     const textPalette = isUprightTone
@@ -2376,6 +2380,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.fillStyle = textPalette.secondary;
         ctx.font = '500 30px "Space Grotesk", sans-serif';
         wrapText(ctx, identityLine, width / 2, identityY, width - safeMargin * 2, 36, 2);
+        if (phaseLine) {
+          ctx.font = '500 28px "Space Grotesk", sans-serif';
+          wrapText(ctx, phaseLine, width / 2, identityY + 40, width - safeMargin * 2, 34, 1);
+        }
       }
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
