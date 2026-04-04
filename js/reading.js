@@ -37,6 +37,8 @@ import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
 import { getRetentionViewModel, trackCompletedDailyReading } from './progress.js';
 import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from './reading-hydration.js';
+import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
+import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
 
 const params = new URLSearchParams(window.location.search);
 const initialUrlState = parseReadingStateFromUrl(window.location.search);
@@ -135,6 +137,10 @@ const dailyUiState = {
   lastSignature: '',
   animationRunId: 0,
   retention: null,
+};
+const authUiState = {
+  user: null,
+  syncing: false,
 };
 const DAILY_VISUAL_STATES = Object.freeze({
   IDLE: 'idle',
@@ -2242,12 +2248,42 @@ function renderRetentionPanel(dict, retentionState) {
     { count: vm.collectionCount, total: vm.collectionTotal },
   );
   stats.appendChild(collectionRow);
+
+  const journeyRow = document.createElement('p');
+  journeyRow.className = 'retention-panel__stat';
+  journeyRow.textContent = formatReadingTemplate(
+    buildRetentionText(dict, 'retentionJourneyStarted', state.currentLang === 'th' ? 'การเดินทางของคุณเริ่มต้นมาแล้ว {count} วัน' : 'Your journey began {count} days ago'),
+    { count: vm.journeyDays || 1 },
+  );
+  stats.appendChild(journeyRow);
   panel.appendChild(stats);
 
   const softLine = document.createElement('p');
   softLine.className = 'retention-panel__soft';
   softLine.textContent = buildRetentionText(dict, vm.softMessageKey, '');
   if (softLine.textContent) panel.appendChild(softLine);
+
+  if (vm.nextMilestone?.remaining > 0) {
+    const milestoneLine = document.createElement('p');
+    milestoneLine.className = 'retention-panel__soft';
+    milestoneLine.textContent = formatReadingTemplate(
+      buildRetentionText(dict, 'retentionNextMilestone', state.currentLang === 'th' ? 'อีก {remaining} วัน เพื่อไปถึงจังหวะถัดไปของคุณ' : '{remaining} more days to reach your next rhythm'),
+      { remaining: vm.nextMilestone.remaining, target: vm.nextMilestone.target, current: vm.nextMilestone.current },
+    );
+    panel.appendChild(milestoneLine);
+  }
+
+  if (vm.firstReversed) {
+    const rareLine = document.createElement('p');
+    rareLine.className = 'retention-panel__soft';
+    rareLine.textContent = buildRetentionText(dict, 'retentionRareReversed', state.currentLang === 'th' ? 'คุณได้พบเงาสะท้อนที่หายาก' : 'You encountered a rare reflection');
+    panel.appendChild(rareLine);
+  } else if (vm.firstMajorArcana) {
+    const majorLine = document.createElement('p');
+    majorLine.className = 'retention-panel__soft';
+    majorLine.textContent = buildRetentionText(dict, 'retentionRareMajor', state.currentLang === 'th' ? 'ไพ่เมเจอร์อาร์คานาได้เข้ามาในการเดินทางของคุณแล้ว' : 'A Major Arcana has entered your journey');
+    panel.appendChild(majorLine);
+  }
 
   if (vm.latestAchievementKey) {
     const unlockLine = document.createElement('p');
@@ -2259,32 +2295,70 @@ function renderRetentionPanel(dict, retentionState) {
     panel.appendChild(unlockLine);
   }
 
-  const ctaWrap = document.createElement('div');
-  ctaWrap.className = 'retention-panel__cta';
-
-  const ctaText = document.createElement('p');
-  ctaText.className = 'retention-panel__cta-copy';
-  ctaText.textContent = buildRetentionText(
-    dict,
-    'retentionSavePrompt',
-    state.currentLang === 'th'
-      ? 'บันทึกการเดินทางของคุณไว้ เพื่อเก็บสตรีคนี้ต่อเนื่องในอนาคต'
-      : 'Save your journey and keep your streak forever',
-  );
-  ctaWrap.appendChild(ctaText);
-
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.className = 'ghost retention-panel__save-btn';
-  saveBtn.textContent = buildRetentionText(dict, 'retentionSaveCta', state.currentLang === 'th' ? 'บันทึกความคืบหน้า' : 'Save Progress');
-  saveBtn.addEventListener('click', () => {
-    showTemporaryToast(
-      buildRetentionText(dict, 'retentionComingSoon', state.currentLang === 'th' ? 'ระบบบัญชีผู้ใช้กำลังมาเร็ว ๆ นี้' : 'Account system coming later'),
+  if (authUiState.user?.id) {
+    const savedLine = document.createElement('p');
+    savedLine.className = 'retention-panel__soft';
+    savedLine.textContent = buildRetentionText(
+      dict,
+      'retentionSaved',
+      state.currentLang === 'th' ? 'เส้นทางของคุณถูกเก็บแล้ว محفوظ / saved' : 'Your journey is now محفوظ / saved',
     );
-  });
-  ctaWrap.appendChild(saveBtn);
+    panel.appendChild(savedLine);
+  } else if (isAuthConfigured()) {
+    const ctaWrap = document.createElement('div');
+    ctaWrap.className = 'retention-panel__cta';
 
-  panel.appendChild(ctaWrap);
+    const ctaText = document.createElement('p');
+    ctaText.className = 'retention-panel__cta-copy';
+    ctaText.textContent = buildRetentionText(
+      dict,
+      'retentionSavePrompt',
+      state.currentLang === 'th'
+        ? 'การเดินทางนี้อยู่บนอุปกรณ์นี้เท่านั้น บันทึกไว้ก่อนที่จะหายไป'
+        : 'Your journey lives only on this device. Save it before it disappears.',
+    );
+    ctaWrap.appendChild(ctaText);
+
+    const googleBtn = document.createElement('button');
+    googleBtn.type = 'button';
+    googleBtn.className = 'ghost retention-panel__save-btn';
+    googleBtn.textContent = buildRetentionText(dict, 'retentionLoginGoogle', state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Google' : 'Continue with Google');
+    googleBtn.addEventListener('click', async () => {
+      try {
+        await loginWithProvider('google');
+      } catch (error) {
+        console.warn('Google login failed', error);
+      }
+    });
+    ctaWrap.appendChild(googleBtn);
+
+    const appleBtn = document.createElement('button');
+    appleBtn.type = 'button';
+    appleBtn.className = 'ghost retention-panel__save-btn';
+    appleBtn.textContent = buildRetentionText(dict, 'retentionLoginApple', state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Apple' : 'Continue with Apple');
+    appleBtn.addEventListener('click', async () => {
+      try {
+        await loginWithProvider('apple');
+      } catch (error) {
+        console.warn('Apple login failed', error);
+      }
+    });
+    ctaWrap.appendChild(appleBtn);
+    panel.appendChild(ctaWrap);
+  }
+
+  if (vm.nextReadAvailableAt) {
+    const returnLine = document.createElement('p');
+    returnLine.className = 'retention-panel__soft';
+    returnLine.textContent = buildRetentionText(
+      dict,
+      'retentionReturnTomorrow',
+      state.currentLang === 'th'
+        ? 'พรุ่งนี้กลับมาเพื่อไพ่ใบถัดไปของคุณ'
+        : 'Come back tomorrow for your next card',
+    );
+    panel.appendChild(returnLine);
+  }
   return panel;
 }
 
@@ -2336,6 +2410,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   dailyUiState.spreadCards = cards.slice();
   dailyUiState.renderCards = cards.slice();
   dailyUiState.retention = trackCompletedDailyReading(cards[0] || null);
+  void syncLocalProgressIfLoggedIn();
   renderDailyDetails(cards, dict, stageRefs.stage);
   stageRefs.stage.appendChild(renderRetentionPanel(dict, dailyUiState.retention));
   dailyUiState.isAnimating = false;
@@ -3333,6 +3408,31 @@ function init() {
   });
 
   configureActionButtons(translations[state.currentLang] || translations.en);
+  subscribeAuthState((nextUser) => {
+    authUiState.user = nextUser || null;
+    if (state.mode === 'daily' && hasRendered) {
+      renderReading(activeDict);
+    }
+  });
+
+  if (isAuthConfigured()) {
+    getCurrentUser()
+      .then(async (user) => {
+        authUiState.user = user || null;
+        if (user) {
+          const migrationResult = await migrateLocalToAccount(user);
+          if (!migrationResult?.ok) {
+            const hydrateResult = await hydrateLocalFromCloud();
+            if (!hydrateResult?.ok) {
+              showTemporaryToast(buildRetentionText(activeDict, 'retentionSyncFailed', state.currentLang === 'th' ? 'ซิงก์ไม่สำเร็จตอนนี้ แต่ข้อมูลในเครื่องยังปลอดภัย' : 'Could not sync now. Your local journey is still safe.'));
+            }
+          }
+        }
+      })
+      .catch((error) => {
+        console.warn('Auth bootstrap failed', error);
+      });
+  }
 
   window.addEventListener('resize', () => {
     const dict = translations[state.currentLang] || translations.en;
