@@ -3,6 +3,7 @@ import { normalizeId } from './data.js';
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
 const PROGRESS_VERSION = 1;
 const TOTAL_BASE_CARDS = 78;
+const STREAK_MILESTONES = Object.freeze([3, 7, 14]);
 
 function generateLocalUserId() {
   try {
@@ -40,10 +41,12 @@ function normalizeBooleanMap(input, defaults) {
 }
 
 function createDefaultProgress() {
+  const now = Date.now();
   return {
     version: PROGRESS_VERSION,
     user_id: generateLocalUserId(),
-    created_at: Date.now(),
+    created_at: now,
+    journey_started_at: now,
     last_daily_read_date: null,
     streak_current: 0,
     streak_best: 0,
@@ -55,6 +58,7 @@ function createDefaultProgress() {
       streak_3: false,
       streak_7: false,
       first_reversed: false,
+      first_major_arcana: false,
       collect_10: false,
       collect_30: false,
       full_deck_78: false,
@@ -79,6 +83,7 @@ function sanitizeProgress(raw) {
     version: PROGRESS_VERSION,
     user_id: String(raw.user_id || fallback.user_id),
     created_at: Number(raw.created_at) || fallback.created_at,
+    journey_started_at: Math.max(1, Number(raw.journey_started_at) || Number(raw.created_at) || fallback.journey_started_at),
     last_daily_read_date: typeof raw.last_daily_read_date === 'string' ? raw.last_daily_read_date : null,
     streak_current: Math.max(0, Number(raw.streak_current) || 0),
     streak_best: Math.max(0, Number(raw.streak_best) || 0),
@@ -128,6 +133,13 @@ function isReversedCard(card = null) {
   return /-reversed$/i.test(rawId);
 }
 
+function isMajorArcanaBaseId(baseId = '') {
+  const match = String(baseId || '').match(/^(\d{1,2})-/);
+  if (!match) return false;
+  const number = Number(match[1]);
+  return Number.isFinite(number) && number >= 1 && number <= 22;
+}
+
 function getCardIdentity(card = null) {
   if (!card) return { baseId: '', orientedId: '' };
 
@@ -156,6 +168,7 @@ function evaluateAchievements(progress) {
   maybeUnlock('streak_3', progress.streak_current >= 3);
   maybeUnlock('streak_7', progress.streak_current >= 7);
   maybeUnlock('first_reversed', progress.collected_oriented_cards.some((id) => /-reversed$/i.test(id)));
+  maybeUnlock('first_major_arcana', progress.collected_base_cards.some((id) => isMajorArcanaBaseId(id)));
   maybeUnlock('collect_10', progress.collected_base_cards.length >= 10);
   maybeUnlock('collect_30', progress.collected_base_cards.length >= 30);
   maybeUnlock('full_deck_78', progress.collected_base_cards.length >= TOTAL_BASE_CARDS);
@@ -203,6 +216,8 @@ export function trackCompletedDailyReading(card = null) {
   progress.last_daily_read_date = today;
 
   const { baseId, orientedId } = getCardIdentity(card);
+  const firstReversed = isFirstReversed(progress, card);
+  const firstMajorArcana = isFirstMajorArcana(progress, card);
   if (baseId && !progress.collected_base_cards.includes(baseId)) {
     progress.collected_base_cards.push(baseId);
   }
@@ -225,6 +240,8 @@ export function trackCompletedDailyReading(card = null) {
     progress,
     didCount: true,
     newlyUnlocked,
+    firstReversed,
+    firstMajorArcana,
     softMessageKey: getSoftMessageKey({
       streakCurrent: progress.streak_current,
       collectionCount: progress.collected_base_cards.length,
@@ -236,6 +253,8 @@ export function trackCompletedDailyReading(card = null) {
 export function getRetentionViewModel(result = null) {
   const progress = result?.progress || getUserProgress();
   const newlyUnlocked = Array.isArray(result?.newlyUnlocked) ? result.newlyUnlocked : [];
+
+  const nextMilestone = getNextStreakMilestone(progress);
 
   return {
     streakCurrent: progress.streak_current,
@@ -250,5 +269,110 @@ export function getRetentionViewModel(result = null) {
       collectionCount: progress.collected_base_cards.length,
       unlockedCount: newlyUnlocked.length,
     }),
+    journeyDays: getJourneyDays(progress),
+    nextMilestone,
+    nextReadAvailableAt: getNextReadAvailableAt(progress),
+    firstReversed: Boolean(result?.firstReversed),
+    firstMajorArcana: Boolean(result?.firstMajorArcana),
+  };
+}
+
+export function getJourneyDays(state = null) {
+  const progress = state || getUserProgress();
+  const startedAt = Number(progress?.journey_started_at) || Number(progress?.created_at) || Date.now();
+  const elapsedMs = Math.max(0, Date.now() - startedAt);
+  return Math.floor(elapsedMs / 86400000) + 1;
+}
+
+export function getNextStreakMilestone(state = null) {
+  const progress = state || getUserProgress();
+  const current = Math.max(0, Number(progress?.streak_current) || 0);
+  const target = STREAK_MILESTONES.find((milestone) => current < milestone);
+  if (!target) return null;
+  return {
+    target,
+    current,
+    remaining: Math.max(0, target - current),
+  };
+}
+
+export function isFirstReversed(state = null, card = null) {
+  const progress = state || getUserProgress();
+  if (!card || !isReversedCard(card)) return false;
+  if (progress?.achievements?.first_reversed) return false;
+  return !progress.collected_oriented_cards.some((id) => /-reversed$/i.test(id));
+}
+
+export function isFirstMajorArcana(state = null, card = null) {
+  const progress = state || getUserProgress();
+  const { baseId } = getCardIdentity(card);
+  if (!baseId || !isMajorArcanaBaseId(baseId)) return false;
+  if (progress?.achievements?.first_major_arcana) return false;
+  return !progress.collected_base_cards.some((id) => isMajorArcanaBaseId(id));
+}
+
+export function getNextReadAvailableAt(state = null) {
+  const progress = state || getUserProgress();
+  if (!progress?.last_daily_read_date) return null;
+  const today = todayLocalIsoDate();
+  if (progress.last_daily_read_date !== today) return null;
+  const next = new Date();
+  next.setHours(24, 0, 0, 0);
+  return next.getTime();
+}
+
+function resetProgress() {
+  const fresh = createDefaultProgress();
+  persistProgress(fresh);
+  return fresh;
+}
+
+function setStreak(n = 0) {
+  const progress = getUserProgress();
+  const parsed = Math.max(0, Number(n) || 0);
+  progress.streak_current = parsed;
+  progress.streak_best = Math.max(progress.streak_best, parsed);
+  persistProgress(progress);
+  return progress;
+}
+
+function addCollected(n = 0) {
+  const progress = getUserProgress();
+  const amount = Math.max(0, Number(n) || 0);
+  const existing = new Set(progress.collected_base_cards);
+  let added = 0;
+  let cursor = 90 + progress.collected_base_cards.length;
+  while (added < amount && existing.size < TOTAL_BASE_CARDS) {
+    const id = `${String(cursor).padStart(2, '0')}-debug-card`;
+    existing.add(id);
+    added += 1;
+    cursor += 1;
+  }
+  progress.collected_base_cards = [...existing];
+  persistProgress(progress);
+  return progress;
+}
+
+function triggerAchievement(name = '') {
+  const progress = getUserProgress();
+  const key = String(name || '').trim();
+  if (!key || !Object.prototype.hasOwnProperty.call(progress.achievements, key)) return progress;
+  progress.achievements[key] = true;
+  persistProgress(progress);
+  return progress;
+}
+
+function isDebugEnvironment() {
+  if (typeof window === 'undefined') return false;
+  const host = String(window.location?.hostname || '').toLowerCase();
+  return host === 'localhost' || host === '127.0.0.1' || host === '';
+}
+
+if (isDebugEnvironment()) {
+  window.__MT_debug = {
+    resetProgress,
+    setStreak,
+    addCollected,
+    triggerAchievement,
   };
 }
