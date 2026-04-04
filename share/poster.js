@@ -1398,12 +1398,14 @@ function getDailyStrings(lang = 'en') {
       title: 'MeowTarot',
       subtitle: 'คำทำนายรายวัน',
       luckyColors: 'สีมงคลวันนี้',
+      identitySeparator: '•',
     };
   }
   return {
     title: 'MeowTarot',
     subtitle: 'Daily Reading',
     luckyColors: 'Lucky Colors',
+    identitySeparator: '•',
   };
 }
 
@@ -1511,16 +1513,16 @@ function resolveDailyReading(payload, cardEntry, lang) {
   const orientedMeaning = cardReading.meaning || '';
   const readingResult = payloadReading.readingResult || payloadReading.result || payloadReading.heading || payloadReading.summary || '';
   const quote = payloadReading.quote || payloadReading.mainQuote || '';
-  const mainQuoteText = hook || actionPrompt || quote || readingResult || orientedMeaning || '';
-  const mainQuoteSource = hook
-    ? 'hook'
-    : (actionPrompt
-      ? 'action_prompt'
-      : (quote
-      ? 'quote'
-      : (readingResult
-        ? 'reading_result'
-        : (orientedMeaning ? 'card_meaning_oriented' : 'none'))));
+  const mainQuoteText = readingResult || hook || actionPrompt || quote || orientedMeaning || '';
+  const mainQuoteSource = readingResult
+    ? 'reading_result'
+    : (hook
+      ? 'hook'
+      : (actionPrompt
+        ? 'action_prompt'
+        : (quote
+          ? 'quote'
+          : (orientedMeaning ? 'card_meaning_oriented' : 'none'))));
   return {
     orientation: getOrientationLabel(resolvedOrientation, lang) || cardReading.orientation || fallbackOrientation,
     archetype: normalizeArchetypeText(payloadReading.archetype || cardReading.archetype || ''),
@@ -2119,6 +2121,17 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const luckyDotColors = luckyColors.map(resolveLuckyColorDot).filter(Boolean).slice(0, 3);
     const mainQuoteText = reading.mainQuoteText || '';
     const archetypeText = reading.archetype || '';
+    const cardName = toSafeText(
+      payload?.cards?.[0]?.title
+      || payload?.cards?.[0]?.name
+      || resolveLocalizedCardName(cardEntry?.card, '', lang)
+      || '',
+      '',
+    ).trim();
+    const identity = payload?.identity || {};
+    const streakLabel = toSafeText(identity?.streakLabel || '', '').trim();
+    const softMessage = toSafeText(identity?.softMessage || '', '').trim();
+    const identityLine = [streakLabel, softMessage].filter(Boolean).join(` ${strings.identitySeparator} `);
     const hasReadingPanel = Boolean(mainQuoteText);
     const isUprightTone = resolvedOrientation === 'upright';
     const textPalette = isUprightTone
@@ -2294,15 +2307,21 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     };
 
     const drawArchetypeLabel = (orientationY) => {
-      if (!archetypeText) return null;
+      if (!archetypeText && !cardName) return null;
       const fallbackY = cardY + cardHeight + 124;
       const archetypeY = (orientationY || fallbackY - 64) + 64;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.primary;
+      if (cardName) {
+        ctx.font = '600 50px "Playfair Display", "Prata", serif';
+        wrapText(ctx, cardName, width / 2, archetypeY, width - safeMargin * 2, 54, 2);
+      }
+      const meaningY = cardName ? archetypeY + 64 : archetypeY;
+      if (!archetypeText) return meaningY;
       ctx.font = '600 42px "Space Grotesk", sans-serif';
-      wrapText(ctx, archetypeText, width / 2, archetypeY, width - safeMargin * 2, 48, 2);
-      return archetypeY;
+      wrapText(ctx, archetypeText, width / 2, meaningY, width - safeMargin * 2, 48, 2);
+      return meaningY;
     };
 
     let quoteY = null;
@@ -2350,6 +2369,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     };
 
     const drawFooter = () => {
+      if (identityLine) {
+        const identityY = Math.min(footerY - 68, height - safeMargin - 68);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = textPalette.secondary;
+        ctx.font = '500 30px "Space Grotesk", sans-serif';
+        wrapText(ctx, identityLine, width / 2, identityY, width - safeMargin * 2, 36, 2);
+      }
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
