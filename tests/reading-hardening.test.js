@@ -118,7 +118,7 @@ test('patch A: count mismatch in question mode recovers once from valid storage 
   assert.strictEqual(hooks.getStateForTest().spread, 'story');
 });
 
-test('patch A: unresolved cards in question mode recover from storage; invalid storage still redirects', async () => {
+test('patch A: unresolved cards in question mode uses recoverable fallback when storage is invalid', async () => {
   const hooks = await importReading('?m=q&s=story&t=love');
   hooks.resetRecoveryGuard();
   hooks.setStateForTest({
@@ -149,8 +149,9 @@ test('patch A: unresolved cards in question mode recover from storage; invalid s
     topic: 'love',
     cards: ['missing-a', 'missing-b', 'missing-c'],
   }));
-  assert.strictEqual(hooks2.validateReadingState(), false);
-  assert.ok(window.location.replacedTo?.includes('/question.html'));
+  assert.strictEqual(hooks2.validateReadingState(), true);
+  assert.deepStrictEqual(hooks2.getStateForTest().selectedIds, []);
+  assert.strictEqual(window.location.replacedTo, null);
 });
 
 test('patch A: recovery is one-shot and daily mode behavior remains unchanged', async () => {
