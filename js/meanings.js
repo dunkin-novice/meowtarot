@@ -107,6 +107,12 @@ function renderCategoryCounts() {
 }
 
 function buildResultHref(card) {
+  const normalizedSlug = String(card.seo_slug_en || '').toLowerCase();
+  const isFool = String(card.card_id || '').startsWith('01-the-fool') || normalizedSlug.startsWith('the-fool');
+  if (isFool) {
+    return state.currentLang === 'th' ? '/cards/the-fool/?lang=th' : '/cards/the-fool/';
+  }
+
   const slug = card.seo_slug_en || normalizeId(getCardName(card));
   const basePath = state.currentLang === 'th' ? '/th/tarot-card-meanings/' : '/tarot-card-meanings/';
   return `${basePath}${slug}/`;
