@@ -542,28 +542,16 @@ function renderOverall() {
 
   const setStageCopy = (mode) => {
     if (mode === 'arrange') {
-      const firstPosition = dict[CELTIC_CROSS_POSITIONS[0].labelKey] || CELTIC_CROSS_POSITIONS[0].key;
-      const lastPosition = dict[CELTIC_CROSS_POSITIONS[CELTIC_CROSS_COUNT - 1].labelKey]
-        || CELTIC_CROSS_POSITIONS[CELTIC_CROSS_COUNT - 1].key;
       stageEyebrow.textContent = dict.fullReadingStageArrangeEyebrow;
       stageTitle.textContent = dict.fullReadingStageArrangeTitle;
-      stageDescription.textContent = formatCopy(dict.fullReadingStageArrangeBody, {
-        firstPosition,
-        lastPosition,
-      });
+      stageDescription.textContent = dict.fullReadingStageArrangeBody;
       return;
     }
 
     if (mode === 'draw') {
-      const current = Math.min(selectedCards.length + 1, CELTIC_CROSS_COUNT);
-      const nextLabelKey = CELTIC_CROSS_POSITIONS[Math.min(selectedCards.length, CELTIC_CROSS_COUNT - 1)]?.labelKey;
-      stageEyebrow.textContent = dict.fullReadingStageDrawEyebrow;
+      stageEyebrow.textContent = '';
       stageTitle.textContent = dict.fullReadingStageDrawTitle;
-      stageDescription.textContent = formatCopy(dict.fullReadingStageDrawBody, {
-        current,
-        total: CELTIC_CROSS_COUNT,
-        position: dict[nextLabelKey] || '',
-      });
+      stageDescription.textContent = '';
       return;
     }
 
@@ -877,10 +865,7 @@ function renderOverall() {
 
       const order = document.createElement('div');
       order.className = 'full-arrange-item__order';
-      order.innerHTML = `
-        <span class="full-arrange-item__order-index">${idx + 1}</span>
-        <span class="full-arrange-item__order-label">${formatCopy(dict.fullReadingPositionPrefix, { index: idx + 1 })}</span>
-      `;
+      order.innerHTML = `<span class="full-arrange-item__order-index">${idx + 1}</span>`;
       item.appendChild(order);
 
       item.appendChild(createCardArt(null, 'full-arrange-item__img', { useBack: true }));
@@ -892,11 +877,6 @@ function renderOverall() {
       position.className = 'full-arrange-item__position';
       position.textContent = dict[CELTIC_CROSS_POSITIONS[idx]?.labelKey] || '';
       meta.appendChild(position);
-
-      const name = document.createElement('h3');
-      name.className = 'full-arrange-item__name';
-      name.textContent = dict.fullReadingFaceDownCard;
-      meta.appendChild(name);
       item.appendChild(meta);
       item.tabIndex = 0;
       item.setAttribute('aria-label', formatCopy(dict.fullReadingSwapCardLabel, { index: idx + 1 }));
