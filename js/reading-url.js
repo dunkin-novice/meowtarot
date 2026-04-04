@@ -1,5 +1,6 @@
 import { normalizeId } from './data.js';
 import { getBaseCardId, toOrientation } from './reading-helpers.js';
+import { normalizeHydratedCardId } from './reading-hydration.js';
 
 const MODE_TO_COMPACT = Object.freeze({ daily: 'd', full: 'f', question: 'q' });
 const COMPACT_TO_MODE = Object.freeze({ d: 'daily', f: 'full', q: 'question' });
@@ -93,12 +94,12 @@ export function normalizeLegacyReadingQuery(searchInput) {
 
 function resolveCompactCardToken(token, resolveCompactTokenToId) {
   const decoded = decodeCompactCardToken(token);
-  if (!decoded) return token;
+  if (!decoded) return normalizeHydratedCardId(token);
   if (typeof resolveCompactTokenToId === 'function') {
     const resolved = resolveCompactTokenToId(decoded);
-    if (resolved) return resolved;
+    if (resolved) return normalizeHydratedCardId(resolved);
   }
-  return `${decoded.cardNumber}-${decoded.orientation}`;
+  return normalizeHydratedCardId(token);
 }
 
 export function parseReadingStateFromUrl(searchInput, options = {}) {
