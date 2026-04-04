@@ -2221,6 +2221,21 @@ function buildRetentionText(dict, key, fallback = '') {
     || fallback;
 }
 
+function buildDailyShareIdentity(dict = translations[state.currentLang], retentionState = dailyUiState.retention) {
+  const vm = getRetentionViewModel(retentionState);
+  const dayLabel = formatReadingTemplate(
+    buildRetentionText(dict, 'retentionStreakValue', state.currentLang === 'th' ? 'สตรีค {count} วัน' : 'Day {count} streak'),
+    { count: vm.streakCurrent || 0 },
+  );
+  const softMessage = buildRetentionText(dict, vm.softMessageKey, '');
+  return {
+    streakCurrent: vm.streakCurrent || 0,
+    streakLabel: dayLabel,
+    journeyDays: vm.journeyDays || 1,
+    softMessage,
+  };
+}
+
 function renderRetentionPanel(dict, retentionState) {
   const vm = getRetentionViewModel(retentionState);
   const panel = document.createElement('section');
@@ -2996,6 +3011,9 @@ function buildSharePayload() {
       state.selectedIds.map((id) => findCard(id)).filter(Boolean),
     );
   }
+  if (state.mode === 'daily') {
+    payload.identity = buildDailyShareIdentity(dict, dailyUiState.retention);
+  }
 
   payload.cards = orderedCards.map((card, index) => {
     const withPosterPayload = { ...buildPosterCardPayload(card), id: card.id, orientation: card.orientation };
@@ -3269,14 +3287,19 @@ function configureSaveButton(dict = translations[state.currentLang]) {
     saveBtn.removeEventListener('click', saveButtonHandler);
   }
 
-  if (isMobile()) {
+  if (state.mode === 'daily') {
     saveBtn.textContent = state.currentLang === 'th' ? 'แชร์' : 'Share';
     saveButtonHandler = () => openSharePage();
+  } else if (isMobile()) {
+    saveBtn.textContent = state.currentLang === 'th' ? 'บันทึกภาพ' : 'Save image';
+    saveButtonHandler = saveImage;
   } else {
     saveBtn.textContent = dict.save || saveBtn.textContent;
     saveButtonHandler = saveImage;
   }
 
+  saveBtn.disabled = state.selectedIds.length === 0;
+  saveBtn.setAttribute('aria-disabled', saveBtn.disabled ? 'true' : 'false');
   saveBtn.addEventListener('click', saveButtonHandler);
 }
 
