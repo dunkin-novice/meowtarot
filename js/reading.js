@@ -36,6 +36,8 @@ import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
 import { getRetentionViewModel, trackCompletedDailyReading } from './progress.js';
+import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
+import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
 
 const params = new URLSearchParams(window.location.search);
 const initialUrlState = parseReadingStateFromUrl(window.location.search);
@@ -134,6 +136,10 @@ const dailyUiState = {
   lastSignature: '',
   animationRunId: 0,
   retention: null,
+};
+const authUiState = {
+  user: null,
+  syncing: false,
 };
 const DAILY_VISUAL_STATES = Object.freeze({
   IDLE: 'idle',
@@ -2233,32 +2239,57 @@ function renderRetentionPanel(dict, retentionState) {
     panel.appendChild(unlockLine);
   }
 
-  const ctaWrap = document.createElement('div');
-  ctaWrap.className = 'retention-panel__cta';
-
-  const ctaText = document.createElement('p');
-  ctaText.className = 'retention-panel__cta-copy';
-  ctaText.textContent = buildRetentionText(
-    dict,
-    'retentionSavePrompt',
-    state.currentLang === 'th'
-      ? 'การเดินทางนี้อยู่บนอุปกรณ์นี้เท่านั้น บันทึกไว้ก่อนที่จะหายไป'
-      : 'Your journey lives only on this device. Save it before it disappears.',
-  );
-  ctaWrap.appendChild(ctaText);
-
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.className = 'ghost retention-panel__save-btn';
-  saveBtn.textContent = buildRetentionText(dict, 'retentionSaveCta', state.currentLang === 'th' ? 'อย่าปล่อยให้สตรีคของคุณหายไป' : 'Don’t lose your streak');
-  saveBtn.addEventListener('click', () => {
-    showTemporaryToast(
-      buildRetentionText(dict, 'retentionComingSoon', state.currentLang === 'th' ? 'ระบบบัญชีผู้ใช้กำลังมาเร็ว ๆ นี้' : 'Account system coming later'),
+  if (authUiState.user?.id) {
+    const savedLine = document.createElement('p');
+    savedLine.className = 'retention-panel__soft';
+    savedLine.textContent = buildRetentionText(
+      dict,
+      'retentionSaved',
+      state.currentLang === 'th' ? 'เส้นทางของคุณถูกเก็บแล้ว محفوظ / saved' : 'Your journey is now محفوظ / saved',
     );
-  });
-  ctaWrap.appendChild(saveBtn);
+    panel.appendChild(savedLine);
+  } else if (isAuthConfigured()) {
+    const ctaWrap = document.createElement('div');
+    ctaWrap.className = 'retention-panel__cta';
 
-  panel.appendChild(ctaWrap);
+    const ctaText = document.createElement('p');
+    ctaText.className = 'retention-panel__cta-copy';
+    ctaText.textContent = buildRetentionText(
+      dict,
+      'retentionSavePrompt',
+      state.currentLang === 'th'
+        ? 'การเดินทางนี้อยู่บนอุปกรณ์นี้เท่านั้น บันทึกไว้ก่อนที่จะหายไป'
+        : 'Your journey lives only on this device. Save it before it disappears.',
+    );
+    ctaWrap.appendChild(ctaText);
+
+    const googleBtn = document.createElement('button');
+    googleBtn.type = 'button';
+    googleBtn.className = 'ghost retention-panel__save-btn';
+    googleBtn.textContent = buildRetentionText(dict, 'retentionLoginGoogle', state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Google' : 'Continue with Google');
+    googleBtn.addEventListener('click', async () => {
+      try {
+        await loginWithProvider('google');
+      } catch (error) {
+        console.warn('Google login failed', error);
+      }
+    });
+    ctaWrap.appendChild(googleBtn);
+
+    const appleBtn = document.createElement('button');
+    appleBtn.type = 'button';
+    appleBtn.className = 'ghost retention-panel__save-btn';
+    appleBtn.textContent = buildRetentionText(dict, 'retentionLoginApple', state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Apple' : 'Continue with Apple');
+    appleBtn.addEventListener('click', async () => {
+      try {
+        await loginWithProvider('apple');
+      } catch (error) {
+        console.warn('Apple login failed', error);
+      }
+    });
+    ctaWrap.appendChild(appleBtn);
+    panel.appendChild(ctaWrap);
+  }
 
   if (vm.nextReadAvailableAt) {
     const returnLine = document.createElement('p');
@@ -2323,6 +2354,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   dailyUiState.spreadCards = cards.slice();
   dailyUiState.renderCards = cards.slice();
   dailyUiState.retention = trackCompletedDailyReading(cards[0] || null);
+  void syncLocalProgressIfLoggedIn();
   renderDailyDetails(cards, dict, stageRefs.stage);
   stageRefs.stage.appendChild(renderRetentionPanel(dict, dailyUiState.retention));
   dailyUiState.isAnimating = false;
@@ -3320,6 +3352,31 @@ function init() {
   });
 
   configureActionButtons(translations[state.currentLang] || translations.en);
+  subscribeAuthState((nextUser) => {
+    authUiState.user = nextUser || null;
+    if (state.mode === 'daily' && hasRendered) {
+      renderReading(activeDict);
+    }
+  });
+
+  if (isAuthConfigured()) {
+    getCurrentUser()
+      .then(async (user) => {
+        authUiState.user = user || null;
+        if (user) {
+          const migrationResult = await migrateLocalToAccount(user);
+          if (!migrationResult?.ok) {
+            const hydrateResult = await hydrateLocalFromCloud();
+            if (!hydrateResult?.ok) {
+              showTemporaryToast(buildRetentionText(activeDict, 'retentionSyncFailed', state.currentLang === 'th' ? 'ซิงก์ไม่สำเร็จตอนนี้ แต่ข้อมูลในเครื่องยังปลอดภัย' : 'Could not sync now. Your local journey is still safe.'));
+            }
+          }
+        }
+      })
+      .catch((error) => {
+        console.warn('Auth bootstrap failed', error);
+      });
+  }
 
   window.addEventListener('resize', () => {
     const dict = translations[state.currentLang] || translations.en;

@@ -125,6 +125,17 @@ export function getUserProgress() {
   }
 }
 
+
+export function getAnonymousUserId() {
+  return getUserProgress().user_id;
+}
+
+export function setUserProgress(nextProgress = null) {
+  const sanitized = sanitizeProgress(nextProgress);
+  persistProgress(sanitized);
+  return sanitized;
+}
+
 function isReversedCard(card = null) {
   const orientation = String(card?.orientation || '').toLowerCase();
   if (orientation === 'reversed') return true;
