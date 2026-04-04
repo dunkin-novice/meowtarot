@@ -3220,6 +3220,51 @@ body[data-page='reading'] .primary:active:not(:disabled) {
   margin-inline: auto;
 }
 
+.retention-panel {
+  max-width: 760px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.retention-panel h3 {
+  margin-bottom: 10px;
+}
+
+.retention-panel__stats {
+  display: grid;
+  gap: 4px;
+}
+
+.retention-panel__stat {
+  margin: 0;
+  color: #4e4565;
+  font-weight: 600;
+}
+
+.retention-panel__soft,
+.retention-panel__unlock,
+.retention-panel__cta-copy {
+  margin: 10px 0 0;
+  color: #5d5175;
+  line-height: 1.7;
+}
+
+.retention-panel__unlock {
+  color: #4a3f67;
+  font-weight: 600;
+}
+
+.retention-panel__cta {
+  margin-top: 12px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.retention-panel__save-btn {
+  min-width: 160px;
+}
+
 .energy-balance {
   display: grid;
   gap: 16px;

@@ -35,6 +35,7 @@ import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, e
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
+import { getRetentionViewModel, trackCompletedDailyReading } from './progress.js';
 
 const params = new URLSearchParams(window.location.search);
 const initialUrlState = parseReadingStateFromUrl(window.location.search);
@@ -132,6 +133,7 @@ const dailyUiState = {
   selectedCardId: '',
   lastSignature: '',
   animationRunId: 0,
+  retention: null,
 };
 const DAILY_VISUAL_STATES = Object.freeze({
   IDLE: 'idle',
@@ -2149,6 +2151,87 @@ function renderDailyDetails(cards, dict, stage) {
   stage.appendChild(createDailyMultiCardDetails(cards, dict));
 }
 
+function buildRetentionText(dict, key, fallback = '') {
+  if (!key) return fallback;
+  return dict?.[key]
+    || translations[state.currentLang]?.[key]
+    || translations.en?.[key]
+    || fallback;
+}
+
+function renderRetentionPanel(dict, retentionState) {
+  const vm = getRetentionViewModel(retentionState);
+  const panel = document.createElement('section');
+  panel.className = 'panel retention-panel';
+
+  const title = document.createElement('h3');
+  title.textContent = buildRetentionText(dict, 'retentionPanelTitle', state.currentLang === 'th' ? 'การเดินทางของคุณ' : 'Your journey');
+  panel.appendChild(title);
+
+  const stats = document.createElement('div');
+  stats.className = 'retention-panel__stats';
+
+  const streakRow = document.createElement('p');
+  streakRow.className = 'retention-panel__stat';
+  streakRow.textContent = formatReadingTemplate(
+    buildRetentionText(dict, 'retentionStreakValue', state.currentLang === 'th' ? 'สตรีค {count} วัน' : 'Day {count} streak'),
+    { count: vm.streakCurrent || 0 },
+  );
+  stats.appendChild(streakRow);
+
+  const collectionRow = document.createElement('p');
+  collectionRow.className = 'retention-panel__stat';
+  collectionRow.textContent = formatReadingTemplate(
+    buildRetentionText(dict, 'retentionCollectionValue', state.currentLang === 'th' ? 'สะสมไพ่ {count} / {total}' : '{count} / {total} cards collected'),
+    { count: vm.collectionCount, total: vm.collectionTotal },
+  );
+  stats.appendChild(collectionRow);
+  panel.appendChild(stats);
+
+  const softLine = document.createElement('p');
+  softLine.className = 'retention-panel__soft';
+  softLine.textContent = buildRetentionText(dict, vm.softMessageKey, '');
+  if (softLine.textContent) panel.appendChild(softLine);
+
+  if (vm.latestAchievementKey) {
+    const unlockLine = document.createElement('p');
+    unlockLine.className = 'retention-panel__unlock';
+    unlockLine.textContent = formatReadingTemplate(
+      buildRetentionText(dict, 'retentionAchievementUnlocked', state.currentLang === 'th' ? 'คุณปลดล็อก: {name}' : 'You unlocked: {name}'),
+      { name: buildRetentionText(dict, vm.latestAchievementLabelKey, vm.latestAchievementKey) },
+    );
+    panel.appendChild(unlockLine);
+  }
+
+  const ctaWrap = document.createElement('div');
+  ctaWrap.className = 'retention-panel__cta';
+
+  const ctaText = document.createElement('p');
+  ctaText.className = 'retention-panel__cta-copy';
+  ctaText.textContent = buildRetentionText(
+    dict,
+    'retentionSavePrompt',
+    state.currentLang === 'th'
+      ? 'บันทึกการเดินทางของคุณไว้ เพื่อเก็บสตรีคนี้ต่อเนื่องในอนาคต'
+      : 'Save your journey and keep your streak forever',
+  );
+  ctaWrap.appendChild(ctaText);
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'ghost retention-panel__save-btn';
+  saveBtn.textContent = buildRetentionText(dict, 'retentionSaveCta', state.currentLang === 'th' ? 'บันทึกความคืบหน้า' : 'Save Progress');
+  saveBtn.addEventListener('click', () => {
+    showTemporaryToast(
+      buildRetentionText(dict, 'retentionComingSoon', state.currentLang === 'th' ? 'ระบบบัญชีผู้ใช้กำลังมาเร็ว ๆ นี้' : 'Account system coming later'),
+    );
+  });
+  ctaWrap.appendChild(saveBtn);
+
+  panel.appendChild(ctaWrap);
+  return panel;
+}
+
 async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}) {
   if (!readingContent) return;
 
@@ -2196,7 +2279,9 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   dailyUiState.selectedCardId = state.selectedIds[0] || '';
   dailyUiState.spreadCards = cards.slice();
   dailyUiState.renderCards = cards.slice();
+  dailyUiState.retention = trackCompletedDailyReading(cards[0] || null);
   renderDailyDetails(cards, dict, stageRefs.stage);
+  stageRefs.stage.appendChild(renderRetentionPanel(dict, dailyUiState.retention));
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
 }
