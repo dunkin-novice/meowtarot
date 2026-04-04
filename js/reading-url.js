@@ -60,7 +60,7 @@ export function encodeCompactCardToken(cardId = '') {
   const orientation = toOrientation(cardId) === 'reversed' ? 'r' : 'u';
   const baseId = getBaseCardId(cardId, normalizeId);
   const cardNumber = String(baseId || '').match(/^(\d{1,3})\b/);
-  if (!cardNumber) return `${baseId}${orientation}`;
+  if (!cardNumber) return `${baseId}-${orientation === 'r' ? 'reversed' : 'upright'}`;
   return `${Number(cardNumber[1])}${orientation}`;
 }
 

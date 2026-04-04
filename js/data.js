@@ -122,6 +122,8 @@ const FULL_DECK_STORAGE_KEY = 'meowtarot_cards_full';
 const MANIFEST_STORAGE_KEY = 'meowtarot_cards_manifest';
 let fullDeckLoaded = false;
 let manifestLoaded = false;
+const MIN_EXPECTED_DECK_SIZE = 120;
+const MIN_EXPECTED_MANIFEST_SIZE = 120;
 
 export function normalizeId(value = '') {
   return value
@@ -161,6 +163,27 @@ export function normalizeCards(cards) {
         || (orientation === 'reversed' ? 'ไพ่กลับหัว' : 'ไพ่ปกติ'),
     };
   });
+}
+
+function isCanonicalOrientedId(id = '') {
+  return /^\d{1,3}-.+-(upright|reversed)$/.test(normalizeId(id));
+}
+
+function hasExpectedDeckShape(cards = [], minimumSize = MIN_EXPECTED_DECK_SIZE) {
+  if (!Array.isArray(cards) || cards.length < minimumSize) return false;
+  const orientedCount = cards.filter((card) =>
+    isCanonicalOrientedId(card?.id || card?.card_id || card?.image_id || '')
+  ).length;
+  return orientedCount >= Math.ceil(cards.length * 0.9);
+}
+
+function clearCachedKey(key) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`Failed to remove ${key} from localStorage`, error);
+  }
 }
 
 function extractCards(data) {
@@ -250,12 +273,18 @@ export function loadTarotManifest() {
 
   const cached = readLocalJSON(MANIFEST_STORAGE_KEY);
   if (Array.isArray(cached) && cached.length) {
-    meowTarotManifest = cached;
-    manifestLoaded = true;
-    if (typeof window !== 'undefined') {
-      window.meowTarotManifest = meowTarotManifest;
+    const normalizedManifest = normalizeCards(cached.map(minimalizeCard));
+    if (hasExpectedDeckShape(normalizedManifest, MIN_EXPECTED_MANIFEST_SIZE)) {
+      meowTarotManifest = normalizedManifest;
+      manifestLoaded = true;
+      writeLocalJSON(MANIFEST_STORAGE_KEY, meowTarotManifest);
+      if (typeof window !== 'undefined') {
+        window.meowTarotManifest = meowTarotManifest;
+      }
+      return Promise.resolve(meowTarotManifest);
     }
-    return Promise.resolve(meowTarotManifest);
+    console.warn('Ignoring stale tarot manifest cache; refetching manifest payload.');
+    clearCachedKey(MANIFEST_STORAGE_KEY);
   }
 
   return fetch(CARDS_JSON_URL, { cache: 'force-cache' })
@@ -293,12 +322,18 @@ export function loadTarotData() {
 
   const cached = readLocalJSON(FULL_DECK_STORAGE_KEY);
   if (Array.isArray(cached) && cached.length) {
-    meowTarotCards = cached;
-    fullDeckLoaded = true;
-    if (typeof window !== 'undefined') {
-      window.meowTarotCards = meowTarotCards;
+    const normalizedDeck = normalizeCards(cached);
+    if (hasExpectedDeckShape(normalizedDeck, MIN_EXPECTED_DECK_SIZE)) {
+      meowTarotCards = normalizedDeck;
+      fullDeckLoaded = true;
+      writeLocalJSON(FULL_DECK_STORAGE_KEY, meowTarotCards);
+      if (typeof window !== 'undefined') {
+        window.meowTarotCards = meowTarotCards;
+      }
+      return Promise.resolve(meowTarotCards);
     }
-    return Promise.resolve(meowTarotCards);
+    console.warn('Ignoring stale tarot full-deck cache; refetching cards payload.');
+    clearCachedKey(FULL_DECK_STORAGE_KEY);
   }
 
   return fetch(CARDS_JSON_URL, { cache: 'force-cache' })
