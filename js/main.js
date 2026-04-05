@@ -1022,8 +1022,8 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
     iconImage.className = 'topic-card__icon-image';
     iconImage.src = topic.iconPath;
     iconImage.alt = '';
-    iconImage.width = 24;
-    iconImage.height = 24;
+    iconImage.width = 50;
+    iconImage.height = 50;
     iconImage.decoding = 'async';
     iconImage.addEventListener('error', () => {
       if (!fallbackIconPath || iconImage.dataset.fallbackApplied === 'true') return;
