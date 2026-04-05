@@ -6815,6 +6815,11 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
   text-transform: uppercase;
 }
 
+.question-draw-header #question-selected-topic-title {
+  color: #f3ddab;
+  text-shadow: 0 1px 0 rgba(8, 9, 22, 0.3);
+}
+
 .question-spread-chip {
   flex-shrink: 0;
 }
@@ -6951,7 +6956,8 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
   }
 
   .question-draw-shell {
-    padding-bottom: 48px;
+    padding-top: clamp(84px, 17vw, 102px);
+    padding-bottom: 24px;
   }
 
   .question-flow-intro {
@@ -7089,6 +7095,63 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
   body[data-page='home'] .home-hero-actions--subtle {
     width: 100%;
     margin-top: 2px;
+  }
+
+  body[data-page='question-draw'] .question-draw-panel {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  body[data-page='question-draw'] .question-draw-header {
+    gap: 6px;
+  }
+
+  body[data-page='question-draw'] .question-selected-label {
+    margin-bottom: 2px;
+    font-size: 0.72rem;
+  }
+
+  body[data-page='question-draw'] .question-draw-header h2 {
+    font-size: clamp(1.32rem, 5.6vw, 1.72rem);
+    line-height: 1.08;
+  }
+
+  body[data-page='question-draw'] .board-toolbar {
+    margin: 2px 0 0;
+    gap: 8px;
+  }
+
+  body[data-page='question-draw'] .board-toolbar button {
+    padding: 9px 12px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    line-height: 1.1;
+  }
+
+  body[data-page='question-draw'] .selection-counter {
+    padding: 6px 10px;
+    font-size: 0.86rem;
+  }
+
+  body[data-page='question-draw'] #question-card-board.card-board--three {
+    gap: 6px;
+    margin: 0;
+    padding: 8px 6px;
+    min-height: 0;
+  }
+
+  body[data-page='question-draw'] #question-card-board.card-board--three .card-slot {
+    width: clamp(60px, 17.2vw, 68px);
+  }
+
+  body[data-page='question-draw'] #question-actions {
+    margin-top: 2px;
+  }
+
+  body[data-page='question-draw'] #question-actions button {
+    flex-basis: 100%;
+    min-height: 42px;
+    padding: 10px 14px;
   }
 }
 
