@@ -2126,12 +2126,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       || '',
       '',
     ).trim();
-    const identity = payload?.identity || {};
-    const streakLabel = toSafeText(identity?.streakLabel || '', '').trim();
-    const softMessage = toSafeText(identity?.softMessage || '', '').trim();
-    const phaseLabel = toSafeText(identity?.phase?.label || '', '').trim();
-    const identityLine = [streakLabel, softMessage].filter(Boolean).join(` ${strings.identitySeparator} `);
-    const phaseLine = phaseLabel ? `${strings.phasePrefix}: ${phaseLabel}` : '';
     const hasReadingPanel = Boolean(mainQuoteText);
     const isUprightTone = resolvedOrientation === 'upright';
     const textPalette = isUprightTone
@@ -2369,18 +2363,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     };
 
     const drawFooter = () => {
-      if (identityLine) {
-        const identityY = Math.min(footerY - 68, height - safeMargin - 68);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillStyle = textPalette.secondary;
-        ctx.font = '500 30px "Space Grotesk", sans-serif';
-        wrapText(ctx, identityLine, width / 2, identityY, width - safeMargin * 2, 36, 2);
-        if (phaseLine) {
-          ctx.font = '500 28px "Space Grotesk", sans-serif';
-          wrapText(ctx, phaseLine, width / 2, identityY + 40, width - safeMargin * 2, 34, 1);
-        }
-      }
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
