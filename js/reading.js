@@ -2513,8 +2513,6 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   dailyUiState.retention = trackCompletedDailyReading(cards[0] || null);
   void syncLocalProgressIfLoggedIn();
   renderDailyDetails(cards, dict, stageRefs.stage);
-  stageRefs.stage.appendChild(renderRetentionPanel(dict, dailyUiState.retention));
-  stageRefs.stage.appendChild(renderPhasePanel(dict, dailyUiState.retention));
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
 }
