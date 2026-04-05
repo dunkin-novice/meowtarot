@@ -1007,7 +1007,6 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
   const topicGrid = document.getElementById('question-topic-grid');
   if (!topicGrid) return;
   const topics = getAskQuestionTopics();
-  const fallbackIconPath = topics.find((topic) => topic.key === 'other')?.iconPath || '';
 
   const buildTopicCard = (topic) => {
     const button = document.createElement('button');
@@ -1018,19 +1017,8 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
     const icon = document.createElement('span');
     icon.className = 'topic-card__icon';
 
-    const iconImage = document.createElement('img');
-    iconImage.className = 'topic-card__icon-image';
-    iconImage.src = topic.iconPath;
-    iconImage.alt = '';
-    iconImage.width = 50;
-    iconImage.height = 50;
-    iconImage.decoding = 'async';
-    iconImage.addEventListener('error', () => {
-      if (!fallbackIconPath || iconImage.dataset.fallbackApplied === 'true') return;
-      iconImage.dataset.fallbackApplied = 'true';
-      iconImage.src = fallbackIconPath;
-    });
-    icon.appendChild(iconImage);
+    icon.textContent = topic.emoji || '🔮';
+    icon.setAttribute('aria-hidden', 'true');
 
     button.appendChild(icon);
 
