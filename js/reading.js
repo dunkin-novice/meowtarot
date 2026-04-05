@@ -3236,7 +3236,7 @@ async function openSharePage({ action } = {}) {
 function updateContextCopy(dict = translations[state.currentLang]) {
   if (state.mode === 'question') {
     if (contextCopy) contextCopy.textContent = getQuestionResultKicker(dict);
-    if (readingSubcontext) readingSubcontext.textContent = dict?.questionResultContext || '';
+    if (readingSubcontext) readingSubcontext.textContent = '';
     return;
   }
 
