@@ -2342,14 +2342,6 @@ function renderRetentionPanel(dict, retentionState) {
   const stats = document.createElement('div');
   stats.className = 'retention-panel__stats';
 
-  const streakRow = document.createElement('p');
-  streakRow.className = 'retention-panel__stat';
-  streakRow.textContent = formatReadingTemplate(
-    buildRetentionText(dict, 'retentionStreakValue', state.currentLang === 'th' ? 'สตรีค {count} วัน' : 'Day {count} streak'),
-    { count: vm.streakCurrent || 0 },
-  );
-  stats.appendChild(streakRow);
-
   const collectionRow = document.createElement('p');
   collectionRow.className = 'retention-panel__stat';
   collectionRow.textContent = formatReadingTemplate(
