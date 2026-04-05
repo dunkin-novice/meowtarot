@@ -2025,10 +2025,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.fill();
     ctx.restore();
 
-    ctx.fillStyle = 'rgba(250, 243, 229, 0.94)';
-    ctx.font = '600 30px "Space Grotesk", sans-serif';
-    ctx.fillText('Energy Balance', graphCenterX, graphPanelY + 58);
-
     for (let ring = 1; ring <= 4; ring += 1) {
       const ringRadius = (graphRadius / 4) * ring;
       ctx.beginPath();
@@ -2089,7 +2085,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx,
       energyBalance.interpretation.join(' '),
       graphCenterX,
-      graphPanelY + 396,
+      graphPanelY + 428,
       graphPanelW - 132,
       30,
       3,
