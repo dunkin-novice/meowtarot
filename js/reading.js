@@ -3374,7 +3374,7 @@ function configureSaveButton(dict = translations[state.currentLang]) {
     saveBtn.removeEventListener('click', saveButtonHandler);
   }
 
-  if (state.mode === 'daily') {
+  if (state.mode === 'daily' || state.mode === 'question') {
     saveBtn.textContent = state.currentLang === 'th' ? 'แชร์' : 'Share';
     saveButtonHandler = () => openSharePage();
   } else if (isMobile()) {
