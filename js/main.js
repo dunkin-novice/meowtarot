@@ -1007,6 +1007,7 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
   const topicGrid = document.getElementById('question-topic-grid');
   if (!topicGrid) return;
   const topics = getAskQuestionTopics();
+  const fallbackIconPath = topics.find((topic) => topic.key === 'other')?.iconPath || '';
 
   const buildTopicCard = (topic) => {
     const button = document.createElement('button');
@@ -1016,18 +1017,27 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
 
     const icon = document.createElement('span');
     icon.className = 'topic-card__icon';
-    icon.textContent = topic.icon;
+
+    const iconImage = document.createElement('img');
+    iconImage.className = 'topic-card__icon-image';
+    iconImage.src = topic.iconPath;
+    iconImage.alt = '';
+    iconImage.width = 24;
+    iconImage.height = 24;
+    iconImage.decoding = 'async';
+    iconImage.addEventListener('error', () => {
+      if (!fallbackIconPath || iconImage.dataset.fallbackApplied === 'true') return;
+      iconImage.dataset.fallbackApplied = 'true';
+      iconImage.src = fallbackIconPath;
+    });
+    icon.appendChild(iconImage);
+
     button.appendChild(icon);
 
     const title = document.createElement('span');
     title.className = 'topic-card__title';
     title.textContent = dict[topic.titleKey] || topic.key;
     button.appendChild(title);
-
-    const body = document.createElement('span');
-    body.className = 'topic-card__body';
-    body.textContent = dict[topic.descriptionKey] || '';
-    button.appendChild(body);
 
     button.addEventListener('click', () => {
       state.questionTopic = topic.key;
