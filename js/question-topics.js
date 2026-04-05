@@ -1,14 +1,14 @@
 import { buildAssetUrl } from './asset-config.js';
 
 const TOPIC_ICON_PATHS = {
-  love: 'icons/topics/cat-love.png',
-  finance: 'icons/topics/cat-finance.png',
-  career: 'icons/topics/cat-career.png',
-  self: 'icons/topics/cat-self.png',
-  family: 'icons/topics/cat-family.png',
-  travel: 'icons/topics/cat-travel.png',
-  health: 'icons/topics/cat-health.png',
-  other: 'icons/topics/cat-other.png',
+  love: 'assets/images/features/ask-a-question/icons/cat-love.webp',
+  finance: 'assets/images/features/ask-a-question/icons/cat-finance.webp',
+  career: 'assets/images/features/ask-a-question/icons/cat-career.webp',
+  self: 'assets/images/features/ask-a-question/icons/cat-self.webp',
+  family: 'assets/images/features/ask-a-question/icons/cat-family.webp',
+  travel: 'assets/images/features/ask-a-question/icons/cat-travel.webp',
+  health: 'assets/images/features/ask-a-question/icons/cat-health.webp',
+  other: 'assets/images/features/ask-a-question/icons/cat-other.webp',
 };
 
 export const ASK_QUESTION_TOPICS = [
