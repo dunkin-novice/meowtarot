@@ -711,9 +711,22 @@ function getQuestionPosterStrings(payload = {}) {
   };
 }
 
+const QUESTION_TOPIC_SUMMARY_PREFIX = {
+  love: 'love',
+  finance: 'finance',
+  career: 'career',
+  self: 'self',
+  family: 'family',
+  travel: 'travel',
+  health: 'health',
+};
+
 function resolveQuestionPosterSummaries(payload = {}, cardEntries = []) {
+  const lang = normalizePosterLanguage(payload?.lang || 'en');
   const reading = payload?.reading || {};
   const slots = ['past', 'present', 'future'];
+  const topic = String(payload?.topic || '').toLowerCase();
+  const topicPrefix = QUESTION_TOPIC_SUMMARY_PREFIX[topic] || '';
   const pickFirst = (candidates = []) => {
     for (const item of candidates) {
       const text = toSafeText(item, '').trim();
@@ -725,11 +738,19 @@ function resolveQuestionPosterSummaries(payload = {}, cardEntries = []) {
   return slots.map((slot, idx) => {
     const card = cardEntries[idx]?.card || {};
     return pickFirst([
+      topicPrefix ? getLocalizedField(card, `${topicPrefix}_${slot}`, lang) : '',
+      topicPrefix ? card[`${topicPrefix}_${slot}`] : '',
+      topicPrefix ? reading[`${topicPrefix}_${slot}_${lang}`] : '',
+      topicPrefix ? reading[`${topicPrefix}_${slot}`] : '',
+      getLocalizedField(card, `reading_summary_${slot}`, lang),
+      reading[`reading_summary_${slot}_${lang}`],
       reading[`reading_summary_${slot}`],
-      reading[`reading_summary_${slot}_en`],
+      card[`reading_summary_${slot}`],
+      card[`reflection_question_${slot}_${lang}`],
       card[`reflection_question_${slot}`],
+      getLocalizedField(card, 'reflection_question', lang),
       card.reflection_question_en,
-      card[`reading_summary_${slot}_en`],
+      getLocalizedField(card, 'general_meaning', lang),
       card.general_meaning_en,
     ]);
   });
@@ -2589,4 +2610,4 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   return { blob, width, height, perf };
 }
 
-export { PRESETS };
+export { PRESETS, resolveQuestionPosterSummaries };
