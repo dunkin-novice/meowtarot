@@ -10,3 +10,4 @@ Date: 2026-04-20
 Type: UI polish
 Goal: Show readable card names on profile recent history rows.
 Done: Mapped saved reading card IDs to localized card names (TH alias / EN name) with slug-pretty fallback when metadata is unavailable.
+Fix/Note: Added base-ID fallback mapping so persisted non-oriented IDs (for history rows) resolve to human-readable names.
