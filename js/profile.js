@@ -121,8 +121,10 @@ function resolveCardLabel(cardEntry = {}) {
   const baseCanonicalId = normalizeId(rawCardId.replace(/-(upright|reversed)$/i, ''));
   const cardMeta = state.cardNameById.get(canonicalId) || state.cardNameById.get(baseCanonicalId);
   if (cardMeta) {
-    if (state.currentLang === 'th') return cardMeta.alias_th || cardMeta.card_name_en || cardMeta.fallback || rawCardId;
-    return cardMeta.card_name_en || cardMeta.alias_th || cardMeta.fallback || rawCardId;
+    if (state.currentLang === 'th') {
+      return cardMeta.alias_th || cardMeta.name_th || cardMeta.card_name_en || cardMeta.fallback || rawCardId;
+    }
+    return cardMeta.card_name_en || cardMeta.name_th || cardMeta.alias_th || cardMeta.fallback || rawCardId;
   }
 
   return prettifyCardId(rawCardId) || rawCardId;
@@ -232,6 +234,7 @@ async function refreshCardNameMap() {
       if (!cardId || nextMap.has(cardId)) return;
       const cardMeta = {
         card_name_en: card.card_name_en || card.name_en || '',
+        name_th: card.name_th || '',
         alias_th: card.alias_th || card.name_th || '',
         fallback: prettifyCardId(cardId),
       };
