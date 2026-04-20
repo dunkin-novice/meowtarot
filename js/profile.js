@@ -66,8 +66,8 @@ function renderIdentity(dict) {
     loginBtn.addEventListener('click', async () => {
       try {
         await loginWithProvider('google');
-      } catch (_) {
-        // ignore
+      } catch (err) {
+        console.error('[Auth] login failed:', err);
       }
     });
     card.appendChild(loginBtn);

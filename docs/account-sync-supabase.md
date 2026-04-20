@@ -20,11 +20,14 @@
 3. Add redirect URLs:
    - `https://www.meowtarot.com/reading.html`
    - `https://www.meowtarot.com/th/reading.html`
+   - `https://www.meowtarot.com/profile.html`
+   - `https://www.meowtarot.com/th/profile.html`
    - localhost variants for development.
 4. Run the SQL schema below in **SQL Editor**.
-5. Provide frontend config before loading app JS:
+5. Provide frontend config before loading app JS (for Profile pages, `supabase.config.js` is loaded before `js/profile.js`):
 
 ```html
+<script src="/supabase.config.js"></script>
 <script>
   window.__MEOWTAROT_SUPABASE__ = {
     url: 'https://YOUR_PROJECT.supabase.co',

@@ -137,3 +137,9 @@ Type: UX fix
 Goal: Add a clear sign-in CTA on signed-out Profile pages (EN/TH).
 Done: Added a Profile Account sign-in button wired to existing Google auth trigger.
 Fix/Note: Kept signed-in Profile, Journey summary, and reading history logic unchanged.
+
+Date: 2026-04-20
+Type: Auth setup
+Goal: Make Profile Google sign-in CTA testable end-to-end.
+Done: Added runtime Supabase config hook on Profile pages, documented Profile OAuth return URLs, and exposed Profile login errors in console.
+Fix/Note: Uses `supabase.config.js` placeholder file; real Supabase values must be injected for live OAuth.
