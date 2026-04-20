@@ -32,6 +32,7 @@ export function renderNavbar(container, onLangToggle) {
           <a href="${localizeHref('/full.html')}" class="nav-link" data-page="full" data-i18n="navOverall"></a>
           <a href="${localizeHref('/question.html')}" class="nav-link" data-page="question" data-i18n="navQuestion"></a>
           <a href="${localizeHref('/tarot-card-meanings/')}" class="nav-link" data-page="meanings" data-i18n="navMeanings"></a>
+          <a href="${localizeHref('/profile.html')}" class="nav-link" data-page="profile" data-i18n="navProfile"></a>
         </div>
         <div class="nav-meta">
           <div class="language-toggle language-toggle--menu" role="group" aria-label="Language toggle">

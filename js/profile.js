@@ -1,0 +1,232 @@
+import {
+  applyLocaleMeta,
+  applyTranslations,
+  initShell,
+  pathHasThaiPrefix,
+  translations,
+} from './common.js';
+import { computePhase } from './phase.js';
+import { getUserProgress } from './progress.js';
+import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
+import { loadReadings } from './reading-history.js';
+
+const state = {
+  currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
+  user: null,
+  history: [],
+};
+
+const els = {
+  identity: document.getElementById('profile-identity'),
+  streak: document.getElementById('profile-streak'),
+  history: document.getElementById('profile-history'),
+  cta: document.getElementById('profile-cta'),
+};
+
+function renderIdentity(dict) {
+  if (!els.identity) return;
+  els.identity.innerHTML = '';
+
+  const card = document.createElement('section');
+  card.className = 'panel';
+
+  const title = document.createElement('h2');
+  title.textContent = dict.profileIdentityTitle || (state.currentLang === 'th' ? 'บัญชี' : 'Account');
+  card.appendChild(title);
+
+  const line = document.createElement('p');
+  if (state.user) {
+    const displayName = state.user.user_metadata?.full_name || state.user.user_metadata?.name || state.user.email || state.user.id;
+    line.textContent = displayName;
+  } else {
+    line.textContent = dict.profileGuestLabel || (state.currentLang === 'th' ? 'ยังไม่ได้เข้าสู่ระบบ' : 'Not signed in');
+  }
+  card.appendChild(line);
+
+  if (state.user) {
+    const logoutBtn = document.createElement('button');
+    logoutBtn.type = 'button';
+    logoutBtn.className = 'ghost';
+    logoutBtn.textContent = dict.profileLogout || (state.currentLang === 'th' ? 'ออกจากระบบ' : 'Log out');
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await logout();
+      } catch (_) {
+        // ignore
+      }
+    });
+    card.appendChild(logoutBtn);
+  }
+
+  els.identity.appendChild(card);
+}
+
+function renderStreak(dict) {
+  if (!els.streak) return;
+  els.streak.innerHTML = '';
+  const progress = getUserProgress();
+
+  const card = document.createElement('section');
+  card.className = 'panel';
+
+  const title = document.createElement('h2');
+  title.textContent = dict.profileStreakTitle || (state.currentLang === 'th' ? 'สรุปการเดินทาง' : 'Journey summary');
+  card.appendChild(title);
+
+  const streak = document.createElement('p');
+  streak.textContent = (dict.profileStreakCurrent || (state.currentLang === 'th' ? 'สตรีคปัจจุบัน: {count} วัน' : 'Current streak: {count} days'))
+    .replace('{count}', String(progress.streak_current || 0));
+  card.appendChild(streak);
+
+  const total = document.createElement('p');
+  total.textContent = (dict.profileReadingsTotal || (state.currentLang === 'th' ? 'อ่านรายวันทั้งหมด: {count}' : 'Total daily readings: {count}'))
+    .replace('{count}', String(progress.total_daily_reads || 0));
+  card.appendChild(total);
+
+  const phase = computePhase(progress, translations[state.currentLang] || translations.en, translations.en);
+  if (phase?.label) {
+    const phaseLine = document.createElement('p');
+    phaseLine.textContent = (dict.profilePhaseLine || (state.currentLang === 'th' ? 'ช่วงพลัง: {label}' : 'Current phase: {label}'))
+      .replace('{label}', phase.label);
+    card.appendChild(phaseLine);
+  }
+
+  els.streak.appendChild(card);
+}
+
+function readingLabel(mode = '') {
+  if (mode === 'question') return state.currentLang === 'th' ? 'ถามคำถาม' : 'Question';
+  if (mode === 'full') return state.currentLang === 'th' ? 'เซลติกครอส' : 'Full';
+  return state.currentLang === 'th' ? 'รายวัน' : 'Daily';
+}
+
+function renderHistory(dict) {
+  if (!els.history) return;
+  els.history.innerHTML = '';
+
+  const card = document.createElement('section');
+  card.className = 'panel';
+
+  const title = document.createElement('h2');
+  title.textContent = dict.profileHistoryTitle || (state.currentLang === 'th' ? 'ประวัติการเปิดไพ่ล่าสุด' : 'Recent reading history');
+  card.appendChild(title);
+
+  if (!state.user) {
+    const empty = document.createElement('p');
+    empty.textContent = dict.profileHistoryLoginHint || (state.currentLang === 'th' ? 'เข้าสู่ระบบเพื่อดูประวัติการเปิดไพ่' : 'Sign in to view reading history.');
+    card.appendChild(empty);
+    els.history.appendChild(card);
+    return;
+  }
+
+  if (!state.history.length) {
+    const empty = document.createElement('p');
+    empty.textContent = dict.profileHistoryEmpty || (state.currentLang === 'th' ? 'ยังไม่มีประวัติการเปิดไพ่' : 'No history yet.');
+    card.appendChild(empty);
+    els.history.appendChild(card);
+    return;
+  }
+
+  const list = document.createElement('ul');
+  list.className = 'history-list';
+  state.history.forEach((entry) => {
+    const item = document.createElement('li');
+    const cards = (entry.reading_cards || []).map((c) => c.card_id).filter(Boolean).join(', ');
+    const date = entry.read_date || '';
+    item.textContent = `${date} · ${readingLabel(entry.mode)} · ${cards}`;
+    list.appendChild(item);
+  });
+  card.appendChild(list);
+  els.history.appendChild(card);
+}
+
+function renderLoginCta(dict) {
+  if (!els.cta) return;
+  els.cta.innerHTML = '';
+  if (state.user || !isAuthConfigured()) return;
+
+  const panel = document.createElement('section');
+  panel.className = 'panel';
+  const title = document.createElement('h2');
+  title.textContent = dict.profileLoginTitle || (state.currentLang === 'th' ? 'บันทึกการเดินทางของคุณ' : 'Save your journey');
+  panel.appendChild(title);
+
+  const body = document.createElement('p');
+  body.textContent = dict.profileLoginBody || (state.currentLang === 'th'
+    ? 'เข้าสู่ระบบเพื่อเก็บประวัติการเปิดไพ่ล่าสุดของคุณ'
+    : 'Sign in to keep your recent reading history.');
+  panel.appendChild(body);
+
+  const google = document.createElement('button');
+  google.type = 'button';
+  google.className = 'ghost';
+  google.textContent = dict.retentionLoginGoogle || 'Continue with Google';
+  google.addEventListener('click', async () => {
+    try {
+      await loginWithProvider('google');
+    } catch (_) {
+      // ignore
+    }
+  });
+  panel.appendChild(google);
+
+  const apple = document.createElement('button');
+  apple.type = 'button';
+  apple.className = 'ghost';
+  apple.textContent = dict.retentionLoginApple || 'Continue with Apple';
+  apple.addEventListener('click', async () => {
+    try {
+      await loginWithProvider('apple');
+    } catch (_) {
+      // ignore
+    }
+  });
+  panel.appendChild(apple);
+
+  els.cta.appendChild(panel);
+}
+
+async function refreshHistory() {
+  if (!state.user?.id) {
+    state.history = [];
+    return;
+  }
+  state.history = await loadReadings(state.user.id, 20);
+}
+
+async function renderAll(dict = translations[state.currentLang] || translations.en) {
+  await refreshHistory();
+  renderIdentity(dict);
+  renderStreak(dict);
+  renderHistory(dict);
+  renderLoginCta(dict);
+}
+
+function onTranslations(dict) {
+  renderAll(dict);
+}
+
+function switchLanguageInPlace(nextLang) {
+  if (!nextLang || nextLang === state.currentLang) return;
+  state.currentLang = nextLang;
+  applyTranslations(nextLang, onTranslations);
+  applyLocaleMeta(nextLang);
+}
+
+function init() {
+  initShell(state, onTranslations, 'profile', {
+    onLangToggle: switchLanguageInPlace,
+  });
+
+  subscribeAuthState((nextUser) => {
+    state.user = nextUser || null;
+    renderAll();
+  });
+
+  getCurrentUser().then((user) => {
+    state.user = user || null;
+    renderAll();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
