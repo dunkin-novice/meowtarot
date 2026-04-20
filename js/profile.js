@@ -118,7 +118,8 @@ function resolveCardLabel(cardEntry = {}) {
   if (!rawCardId) return '';
 
   const canonicalId = normalizeId(rawCardId);
-  const cardMeta = state.cardNameById.get(canonicalId);
+  const baseCanonicalId = normalizeId(rawCardId.replace(/-(upright|reversed)$/i, ''));
+  const cardMeta = state.cardNameById.get(canonicalId) || state.cardNameById.get(baseCanonicalId);
   if (cardMeta) {
     if (state.currentLang === 'th') return cardMeta.alias_th || cardMeta.card_name_en || cardMeta.fallback || rawCardId;
     return cardMeta.card_name_en || cardMeta.alias_th || cardMeta.fallback || rawCardId;
@@ -229,11 +230,15 @@ async function refreshCardNameMap() {
     (manifest || []).forEach((card) => {
       const cardId = normalizeId(card?.card_id || card?.id || '');
       if (!cardId || nextMap.has(cardId)) return;
-      nextMap.set(cardId, {
+      const cardMeta = {
         card_name_en: card.card_name_en || card.name_en || '',
         alias_th: card.alias_th || card.name_th || '',
         fallback: prettifyCardId(cardId),
-      });
+      };
+      nextMap.set(cardId, cardMeta);
+
+      const baseCardId = normalizeId(cardId.replace(/-(upright|reversed)$/i, ''));
+      if (baseCardId && !nextMap.has(baseCardId)) nextMap.set(baseCardId, cardMeta);
     });
     state.cardNameById = nextMap;
   } catch (_) {
