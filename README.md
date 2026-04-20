@@ -129,3 +129,11 @@ cwebp -q 85 -metadata none input.png -o output.webp
 ```
 
 Keep WebP as primary delivery format, with runtime JPG/back-image fallback where needed.
+
+## Log
+
+Date: 2026-04-20
+Type: UX fix
+Goal: Add a clear sign-in CTA on signed-out Profile pages (EN/TH).
+Done: Added a Profile Account sign-in button wired to existing Google auth trigger.
+Fix/Note: Kept signed-in Profile, Journey summary, and reading history logic unchanged.
