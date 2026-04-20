@@ -2650,6 +2650,17 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
   });
 }
 
+function persistNonDailyReadingHistoryAfterAuth() {
+  if (!authUiState.user?.id || !hasRendered) return;
+  if (state.mode !== 'question' && state.mode !== 'full') return;
+
+  const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
+  if (!cards.length) return;
+
+  const cardsToPersist = state.mode === 'question' ? orderQuestionCards(cards).slice(0, 3) : cards;
+  persistReadingHistory(state.mode, cardsToPersist, { userId: authUiState.user.id });
+}
+
 function renderFull(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
@@ -3574,6 +3585,7 @@ function init() {
   configureActionButtons(translations[state.currentLang] || translations.en);
   subscribeAuthState((nextUser) => {
     authUiState.user = nextUser || null;
+    persistNonDailyReadingHistoryAfterAuth();
     if (state.mode === 'daily' && hasRendered) {
       renderReading(activeDict);
     }
