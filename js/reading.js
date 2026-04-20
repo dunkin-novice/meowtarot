@@ -41,6 +41,7 @@ import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from '
 import { getCanonicalCardUrl } from './canonical-card-routes.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
+import { saveReadingRecord } from './reading-history.js';
 
 const params = new URLSearchParams(window.location.search);
 const initialUrlState = parseReadingStateFromUrl(window.location.search);
@@ -162,6 +163,7 @@ const authUiState = {
   user: null,
   syncing: false,
 };
+const persistedReadingSessionKeys = new Set();
 const DAILY_VISUAL_STATES = Object.freeze({
   IDLE: 'idle',
   GATHERING: 'gathering',
@@ -2512,6 +2514,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   dailyUiState.renderCards = cards.slice();
   dailyUiState.retention = trackCompletedDailyReading(cards[0] || null);
   void syncLocalProgressIfLoggedIn();
+  persistReadingHistory('daily', cards);
   renderDailyDetails(cards, dict, stageRefs.stage);
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
@@ -2596,9 +2599,61 @@ function renderDaily(cards, dict) {
   startDailyReadingFlow(resolvedCards, dict, { gatherCurrent: false });
 }
 
+function getReadingSessionKey(mode = 'daily', cards = []) {
+  const cardKey = cards
+    .map((card, index) => {
+      const baseId = getBaseCardId(card, normalizeId) || normalizeId(card?.id || '');
+      const orientation = toOrientation(card);
+      const position = mode === 'question'
+        ? (QUESTION_CARD_POSITIONS[index] || '')
+        : mode === 'full'
+          ? getFullReadingPositionAt(index, cards.length, { legacyKeys: LEGACY_FULL_POSITION_KEYS })
+          : '';
+      return `${baseId}:${orientation}:${position}`;
+    })
+    .join('|');
+  return [mode, state.spread || '', state.topic || '', cardKey].join('::');
+}
+
+function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
+  const userId = options.userId || authUiState.user?.id;
+  if (!userId || !Array.isArray(cards) || !cards.length) return;
+
+  const sessionKey = options.sessionKey || getReadingSessionKey(mode, cards);
+  if (!sessionKey || persistedReadingSessionKeys.has(sessionKey)) return;
+  persistedReadingSessionKeys.add(sessionKey);
+
+  const normalizedCards = cards.map((card, index) => {
+    const baseId = getBaseCardId(card, normalizeId) || normalizeId(card?.id || '');
+    const orientation = toOrientation(card);
+    const position = mode === 'question'
+      ? (QUESTION_CARD_POSITIONS[index] || null)
+      : mode === 'full'
+        ? getFullReadingPositionAt(index, cards.length, { legacyKeys: LEGACY_FULL_POSITION_KEYS })
+        : null;
+    return {
+      card_id: baseId,
+      orientation,
+      position,
+      sort_order: index,
+    };
+  }).filter((entry) => entry.card_id);
+
+  if (!normalizedCards.length) return;
+
+  void saveReadingRecord(userId, {
+    mode,
+    spread: state.spread,
+    topic: state.topic,
+    lang: state.currentLang,
+    cards: normalizedCards,
+  });
+}
+
 function renderFull(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
+  persistReadingHistory('full', cards);
 
   const topic = String(state.topic || 'generic').toLowerCase();
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
@@ -2793,6 +2848,7 @@ function renderQuestion(cards, dict) {
   const topic = String(state.topic || 'generic').toLowerCase();
   const positions = QUESTION_CARD_POSITIONS;
   const orderedCards = orderQuestionCards(cards).slice(0, 3);
+  persistReadingHistory('question', orderedCards);
 
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
