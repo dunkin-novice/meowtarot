@@ -16,15 +16,16 @@ function normalizeReadingMode(mode = '') {
   return 'full';
 }
 
-function sanitizeReadingRecord(userId, record = {}) {
+function sanitizeReadingRecord(userId, record = {}, options = {}) {
   const cards = Array.isArray(record.cards) ? record.cards : [];
+  const now = options.now instanceof Date ? options.now : new Date();
   return {
     user_id: userId,
     mode: normalizeReadingMode(record.mode),
     spread: String(record.spread || '').trim() || null,
     topic: String(record.topic || '').trim() || null,
     lang: String(record.lang || '').trim() || null,
-    read_date: toLocalIsoDate(new Date()) || toLocalIsoDate(),
+    read_date: toLocalIsoDate(now) || toLocalIsoDate(),
     cards: cards
       .map((card, index) => {
         const cardId = String(card?.card_id || card?.id || '').trim();
@@ -42,12 +43,12 @@ function sanitizeReadingRecord(userId, record = {}) {
   };
 }
 
-export async function saveReadingRecord(userId, record = {}) {
+export async function saveReadingRecord(userId, record = {}, options = {}) {
   try {
-    const client = await getSupabaseClient();
+    const client = options.client || await getSupabaseClient();
     if (!client || !userId) return null;
 
-    const payload = sanitizeReadingRecord(userId, record);
+    const payload = sanitizeReadingRecord(userId, record, { now: options.now });
     if (!payload.cards.length) return null;
 
     const { data: inserted, error: readingError } = await client
@@ -81,9 +82,9 @@ export async function saveReadingRecord(userId, record = {}) {
   }
 }
 
-export async function loadReadings(userId, limit = 20) {
+export async function loadReadings(userId, limit = 20, options = {}) {
   try {
-    const client = await getSupabaseClient();
+    const client = options.client || await getSupabaseClient();
     if (!client || !userId) return [];
     const safeLimit = Math.max(1, Math.min(100, Number(limit) || 20));
 
@@ -122,3 +123,4 @@ export async function loadReadings(userId, limit = 20) {
 }
 
 export { toLocalIsoDate };
+export { sanitizeReadingRecord };
