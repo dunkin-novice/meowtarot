@@ -2615,15 +2615,8 @@ function getReadingSessionKey(mode = 'daily', cards = []) {
   return [mode, state.spread || '', state.topic || '', cardKey].join('::');
 }
 
-function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
-  const userId = options.userId || authUiState.user?.id;
-  if (!userId || !Array.isArray(cards) || !cards.length) return;
-
-  const sessionKey = options.sessionKey || getReadingSessionKey(mode, cards);
-  if (!sessionKey || persistedReadingSessionKeys.has(sessionKey)) return;
-  persistedReadingSessionKeys.add(sessionKey);
-
-  const normalizedCards = cards.map((card, index) => {
+function buildNormalizedReadingCards(mode = 'daily', cards = []) {
+  return cards.map((card, index) => {
     const baseId = getBaseCardId(card, normalizeId) || normalizeId(card?.id || '');
     const orientation = toOrientation(card);
     const position = mode === 'question'
@@ -2638,6 +2631,23 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
       sort_order: index,
     };
   }).filter((entry) => entry.card_id);
+}
+
+function shouldDeferNonDailyHistorySave({ userId, rendered, mode, selectedIds }) {
+  if (!userId || !rendered) return false;
+  if (mode !== 'question' && mode !== 'full') return false;
+  return Array.isArray(selectedIds) && selectedIds.length > 0;
+}
+
+function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
+  const userId = options.userId || authUiState.user?.id;
+  if (!userId || !Array.isArray(cards) || !cards.length) return;
+
+  const sessionKey = options.sessionKey || getReadingSessionKey(mode, cards);
+  if (!sessionKey || persistedReadingSessionKeys.has(sessionKey)) return;
+  persistedReadingSessionKeys.add(sessionKey);
+
+  const normalizedCards = buildNormalizedReadingCards(mode, cards);
 
   if (!normalizedCards.length) return;
 
@@ -2651,8 +2661,12 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
 }
 
 function persistNonDailyReadingHistoryAfterAuth() {
-  if (!authUiState.user?.id || !hasRendered) return;
-  if (state.mode !== 'question' && state.mode !== 'full') return;
+  if (!shouldDeferNonDailyHistorySave({
+    userId: authUiState.user?.id,
+    rendered: hasRendered,
+    mode: state.mode,
+    selectedIds: state.selectedIds,
+  })) return;
 
   const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
   if (!cards.length) return;
@@ -3641,3 +3655,6 @@ export function __internalSetStateForTest(nextState = {}) {
 export function __internalGetStateForTest() {
   return state;
 }
+export const __internalGetReadingSessionKey = getReadingSessionKey;
+export const __internalBuildNormalizedReadingCards = buildNormalizedReadingCards;
+export const __internalShouldDeferNonDailyHistorySave = shouldDeferNonDailyHistorySave;
