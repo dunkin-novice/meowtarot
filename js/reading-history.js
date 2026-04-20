@@ -24,7 +24,7 @@ function sanitizeReadingRecord(userId, record = {}) {
     spread: String(record.spread || '').trim() || null,
     topic: String(record.topic || '').trim() || null,
     lang: String(record.lang || '').trim() || null,
-    read_date: toLocalIsoDate(new Date()) || toLocalIsoDate(),
+    read_date: toLocalIsoDate(record.readDate || new Date()) || toLocalIsoDate(),
     cards: cards
       .map((card, index) => {
         const cardId = String(card?.card_id || card?.id || '').trim();
