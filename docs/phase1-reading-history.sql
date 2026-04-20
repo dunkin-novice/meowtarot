@@ -26,6 +26,22 @@ create table if not exists public.reading_cards (
   sort_order int not null default 0
 );
 
+
+alter table public.readings
+  add column if not exists spread text,
+  add column if not exists lang text check (lang in ('en', 'th')),
+  add column if not exists read_date date;
+
+update public.readings
+set read_date = created_at::date
+where read_date is null;
+
+alter table public.readings
+  alter column read_date set not null;
+
+alter table public.reading_cards
+  add column if not exists sort_order int not null default 0;
+
 create index if not exists idx_readings_user_created_at
   on public.readings (user_id, created_at desc);
 
