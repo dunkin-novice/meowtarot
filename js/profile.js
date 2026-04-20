@@ -58,7 +58,7 @@ function renderIdentity(dict) {
       }
     });
     card.appendChild(logoutBtn);
-  } else if (isAuthConfigured()) {
+  } else {
     const loginBtn = document.createElement('button');
     loginBtn.type = 'button';
     loginBtn.className = 'primary';
