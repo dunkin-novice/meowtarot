@@ -58,6 +58,19 @@ function renderIdentity(dict) {
       }
     });
     card.appendChild(logoutBtn);
+  } else if (isAuthConfigured()) {
+    const loginBtn = document.createElement('button');
+    loginBtn.type = 'button';
+    loginBtn.className = 'primary';
+    loginBtn.textContent = dict.profileSignInCta || (state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Google' : 'Sign in with Google');
+    loginBtn.addEventListener('click', async () => {
+      try {
+        await loginWithProvider('google');
+      } catch (_) {
+        // ignore
+      }
+    });
+    card.appendChild(loginBtn);
   }
 
   els.identity.appendChild(card);
@@ -186,32 +199,6 @@ function renderLoginCta(dict) {
     ? 'เข้าสู่ระบบเพื่อเก็บประวัติการเปิดไพ่ล่าสุดของคุณ'
     : 'Sign in to keep your recent reading history.');
   panel.appendChild(body);
-
-  const google = document.createElement('button');
-  google.type = 'button';
-  google.className = 'ghost';
-  google.textContent = dict.retentionLoginGoogle || 'Continue with Google';
-  google.addEventListener('click', async () => {
-    try {
-      await loginWithProvider('google');
-    } catch (_) {
-      // ignore
-    }
-  });
-  panel.appendChild(google);
-
-  const apple = document.createElement('button');
-  apple.type = 'button';
-  apple.className = 'ghost';
-  apple.textContent = dict.retentionLoginApple || 'Continue with Apple';
-  apple.addEventListener('click', async () => {
-    try {
-      await loginWithProvider('apple');
-    } catch (_) {
-      // ignore
-    }
-  });
-  panel.appendChild(apple);
 
   els.cta.appendChild(panel);
 }
