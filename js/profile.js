@@ -5,6 +5,7 @@ import {
   pathHasThaiPrefix,
   translations,
 } from './common.js';
+import { loadTarotManifest, normalizeId } from './data.js';
 import { computePhase } from './phase.js';
 import { getUserProgress } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
@@ -14,6 +15,7 @@ const state = {
   currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
   user: null,
   history: [],
+  cardNameById: new Map(),
 };
 
 const els = {
@@ -100,6 +102,31 @@ function readingLabel(mode = '') {
   return state.currentLang === 'th' ? 'รายวัน' : 'Daily';
 }
 
+function prettifyCardId(value = '') {
+  const normalized = normalizeId(String(value || '').replace(/-(upright|reversed)$/i, ''));
+  if (!normalized) return '';
+  return normalized
+    .split('-')
+    .filter(Boolean)
+    .map((part) => (/^\d+$/.test(part) ? null : `${part.charAt(0).toUpperCase()}${part.slice(1)}`))
+    .filter(Boolean)
+    .join(' ');
+}
+
+function resolveCardLabel(cardEntry = {}) {
+  const rawCardId = String(cardEntry?.card_id || cardEntry?.id || '').trim();
+  if (!rawCardId) return '';
+
+  const canonicalId = normalizeId(rawCardId);
+  const cardMeta = state.cardNameById.get(canonicalId);
+  if (cardMeta) {
+    if (state.currentLang === 'th') return cardMeta.alias_th || cardMeta.card_name_en || cardMeta.fallback || rawCardId;
+    return cardMeta.card_name_en || cardMeta.alias_th || cardMeta.fallback || rawCardId;
+  }
+
+  return prettifyCardId(rawCardId) || rawCardId;
+}
+
 function renderHistory(dict) {
   if (!els.history) return;
   els.history.innerHTML = '';
@@ -131,7 +158,7 @@ function renderHistory(dict) {
   list.className = 'history-list';
   state.history.forEach((entry) => {
     const item = document.createElement('li');
-    const cards = (entry.reading_cards || []).map((c) => c.card_id).filter(Boolean).join(', ');
+    const cards = (entry.reading_cards || []).map((c) => resolveCardLabel(c)).filter(Boolean).join(', ');
     const date = entry.read_date || '';
     item.textContent = `${date} · ${readingLabel(entry.mode)} · ${cards}`;
     list.appendChild(item);
@@ -194,7 +221,28 @@ async function refreshHistory() {
   state.history = await loadReadings(state.user.id, 20);
 }
 
+async function refreshCardNameMap() {
+  if (state.cardNameById.size) return;
+  try {
+    const manifest = await loadTarotManifest();
+    const nextMap = new Map();
+    (manifest || []).forEach((card) => {
+      const cardId = normalizeId(card?.card_id || card?.id || '');
+      if (!cardId || nextMap.has(cardId)) return;
+      nextMap.set(cardId, {
+        card_name_en: card.card_name_en || card.name_en || '',
+        alias_th: card.alias_th || card.name_th || '',
+        fallback: prettifyCardId(cardId),
+      });
+    });
+    state.cardNameById = nextMap;
+  } catch (_) {
+    state.cardNameById = new Map();
+  }
+}
+
 async function renderAll(dict = translations[state.currentLang] || translations.en) {
+  await refreshCardNameMap();
   await refreshHistory();
   renderIdentity(dict);
   renderStreak(dict);
