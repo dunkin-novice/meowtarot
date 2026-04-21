@@ -1,6 +1,7 @@
 import { initShell } from '../common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from '../data.js';
 import { CANONICAL_CARD_ORDER, getCanonicalCardPath } from '../canonical-card-routes.js';
+import { buildCardSchema } from '../card-seo-schema.js';
 
 const CARD_ID_PREFIX = '08-the-chariot';
 const BASE_URL = 'https://www.meowtarot.com';
@@ -223,50 +224,12 @@ function updateSeo(card) {
 function updateSchema(card) {
   if (!dom.schema) return;
   const pageUrl = getPageUrl(state.lang);
-  const isThai = state.lang === 'th';
-
-  const schema = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebPage',
-        '@id': `${pageUrl}#webpage`,
-        url: pageUrl,
-        name: isThai
-          ? `${getDisplayName(card)} ความหมายไพ่ทาโรต์`
-          : `${getDisplayName(card)} Tarot Meaning`,
-        description: isThai
-          ? (card.meta_description_th || card.meta_description_en || '')
-          : (card.meta_description_en || card.meta_description_th || ''),
-        inLanguage: isThai ? 'th-TH' : 'en-US',
-      },
-      {
-        '@type': 'BreadcrumbList',
-        '@id': `${pageUrl}#breadcrumbs`,
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: isThai ? 'หน้าแรก' : 'Home',
-            item: isThai ? `${BASE_URL}/th/` : `${BASE_URL}/`,
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: isThai ? 'ความหมายไพ่ทาโรต์' : 'Tarot Card Meanings',
-            item: isThai ? `${BASE_URL}/th/tarot-card-meanings/` : `${BASE_URL}/tarot-card-meanings/`,
-          },
-          {
-            '@type': 'ListItem',
-            position: 3,
-            name: isThai
-              ? (card.alias_th || card.card_name_en || 'The Chariot',
-            item: pageUrl,
-          },
-        ],
-      },
-    ],
-  };
+  const schema = buildCardSchema(card, {
+    lang: state.lang,
+    pageUrl,
+    baseUrl: BASE_URL,
+    displayName: getDisplayName(card),
+  });
 
   dom.schema.textContent = JSON.stringify(schema);
 }
