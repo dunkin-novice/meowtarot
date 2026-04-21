@@ -9,6 +9,11 @@ const BASE_URL = (process.env.BASE_URL || 'https://www.meowtarot.com').replace(/
 const SEPARATE_LANG_SITEMAPS = String(process.env.SEPARATE_LANG_SITEMAPS || '').toLowerCase() === 'true';
 
 const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests', 'node_modules'];
+const SITEMAP_EXCLUDED_HTML = new Set([
+  'share/index.html',
+  'docs/poster/full-reading-poster.html',
+  'docs/poster/celtic-cross-poster.html',
+]);
 
 function asPosix(p) {
   return p.split(path.sep).join('/');
@@ -78,6 +83,7 @@ async function buildStaticPages() {
   const urls = [];
 
   for (const file of htmlFiles) {
+    if (SITEMAP_EXCLUDED_HTML.has(file)) continue;
     const html = await fs.readFile(path.join(ROOT_DIR, file), 'utf8');
     if (/<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(html)) continue;
     const lastmod = formatDate((await fs.stat(path.join(ROOT_DIR, file))).mtime);

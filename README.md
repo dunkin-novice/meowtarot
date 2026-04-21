@@ -139,6 +139,10 @@ Done: Added a Profile Account sign-in button wired to existing Google auth trigg
 Fix/Note: Kept signed-in Profile, Journey summary, and reading history logic unchanged.
 
 Date: 2026-04-21
+Type: SEO cleanup
+Goal: Keep utility/docs/share HTML surfaces out of sitemap output.
+Done: Updated sitemap generator with explicit exclusions for `/share/index.html` and poster reference pages under `/docs/poster/`.
+Fix/Note: Preserved canonical card routes and core indexable content pages.
 Type: Reliability fix
 Goal: Prevent duplicate signed-in reading-history saves after hard refresh/reload of the same result page.
 Done: Hydrated reading-session dedupe keys from sessionStorage and persisted keys back after successful save.
