@@ -143,3 +143,8 @@ Type: SEO cleanup
 Goal: Keep utility/docs/share HTML surfaces out of sitemap output.
 Done: Updated sitemap generator with explicit exclusions for `/share/index.html` and poster reference pages under `/docs/poster/`.
 Fix/Note: Preserved canonical card routes and core indexable content pages.
+Type: Reliability fix
+Goal: Prevent duplicate signed-in reading-history saves after hard refresh/reload of the same result page.
+Done: Hydrated reading-session dedupe keys from sessionStorage and persisted keys back after successful save.
+Fix/Note: Kept auth, schema, and existing reading-history flow behavior unchanged.
+

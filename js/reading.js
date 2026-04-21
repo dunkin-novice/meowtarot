@@ -163,7 +163,33 @@ const authUiState = {
   user: null,
   syncing: false,
 };
-const persistedReadingSessionKeys = new Set();
+const READING_HISTORY_SESSION_KEYS_STORAGE_KEY = 'meowtarot_persisted_reading_session_keys';
+
+function readPersistedReadingSessionKeys() {
+  try {
+    if (!window.sessionStorage) return [];
+    const raw = window.sessionStorage.getItem(READING_HISTORY_SESSION_KEYS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((entry) => String(entry || '').trim())
+      .filter(Boolean);
+  } catch (_) {
+    return [];
+  }
+}
+
+function writePersistedReadingSessionKeys(keys = []) {
+  try {
+    if (!window.sessionStorage) return;
+    window.sessionStorage.setItem(READING_HISTORY_SESSION_KEYS_STORAGE_KEY, JSON.stringify(keys));
+  } catch (_) {
+    // Ignore sessionStorage write failures to avoid blocking reading flow.
+  }
+}
+
+const persistedReadingSessionKeys = new Set(readPersistedReadingSessionKeys());
 const DAILY_VISUAL_STATES = Object.freeze({
   IDLE: 'idle',
   GATHERING: 'gathering',
@@ -2645,7 +2671,6 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
 
   const sessionKey = options.sessionKey || getReadingSessionKey(mode, cards);
   if (!sessionKey || persistedReadingSessionKeys.has(sessionKey)) return;
-  persistedReadingSessionKeys.add(sessionKey);
 
   const normalizedCards = buildNormalizedReadingCards(mode, cards);
 
@@ -2657,6 +2682,10 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
     topic: state.topic,
     lang: state.currentLang,
     cards: normalizedCards,
+  }).then((readingId) => {
+    if (!readingId) return;
+    persistedReadingSessionKeys.add(sessionKey);
+    writePersistedReadingSessionKeys([...persistedReadingSessionKeys]);
   });
 }
 
