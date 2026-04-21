@@ -13,6 +13,10 @@ const CANONICAL_CARD_SLUGS = new Set([
   'justice',
   'the-hanged-man',
   'death',
+  'temperance',
+  'the-devil',
+  'the-tower',
+  'the-star',
 ]);
 
 export const CANONICAL_CARD_ORDER = Object.freeze([
@@ -30,6 +34,10 @@ export const CANONICAL_CARD_ORDER = Object.freeze([
   'justice',
   'the-hanged-man',
   'death',
+  'temperance',
+  'the-devil',
+  'the-tower',
+  'the-star',
 ]);
 
 export function normalizeCanonicalSlug(slug = '') {
