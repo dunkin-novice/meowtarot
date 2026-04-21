@@ -189,11 +189,21 @@ function renderTimeline(container, items) {
   `).join('');
 }
 
+function getDisplayName(card) {
+  if (state.lang === 'th') return card.alias_th || card.card_name_en || 'ไพ่ทาโรต์';
+  return card.card_name_en || card.alias_th || 'Tarot Card';
+}
+
 function updateSeo(card) {
   const pageUrl = getPageUrl(state.lang);
   const orientation = state.orientation;
-  const orientationLabel = orientation === 'reversed' ? 'Reversed' : 'Upright';
-  const baseTitle = `${card.card_name_en || 'The Emperor'} Tarot Meaning (${orientationLabel}) | MeowTarot`;
+  const orientationLabel = orientation === 'reversed'
+    ? (state.lang === 'th' ? 'กลับหัว' : 'Reversed')
+    : (state.lang === 'th' ? 'ตั้งตรง' : 'Upright');
+  const displayName = getDisplayName(card);
+  const baseTitle = state.lang === 'th'
+    ? `${displayName} ความหมายไพ่ทาโรต์ (${orientationLabel}) | MeowTarot`
+    : `${displayName} Tarot Meaning (${orientationLabel}) | MeowTarot`;
   const description = state.lang === 'th'
     ? (card.meta_description_th || card.meta_description_en || '')
     : (card.meta_description_en || card.meta_description_th || '');
@@ -221,8 +231,12 @@ function updateSchema(card) {
         '@type': 'WebPage',
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
-        name: `${card.card_name_en} Tarot Meaning` ,
-        description: card.meta_description_en || '',
+        name: isThai
+          ? `${getDisplayName(card)} ความหมายไพ่ทาโรต์`
+          : `${getDisplayName(card)} Tarot Meaning`,
+        description: isThai
+          ? (card.meta_description_th || card.meta_description_en || '')
+          : (card.meta_description_en || card.meta_description_th || ''),
         inLanguage: isThai ? 'th-TH' : 'en-US',
       },
       {
@@ -244,7 +258,8 @@ function updateSchema(card) {
           {
             '@type': 'ListItem',
             position: 3,
-            name: card.card_name_en || 'The Emperor',
+            name: isThai
+              ? (card.alias_th || card.card_name_en || 'The Emperor',
             item: pageUrl,
           },
         ],
@@ -287,7 +302,7 @@ function render() {
   if (footerQuestion) footerQuestion.setAttribute('href', localize('/question.html'));
 
   dom.orientationLabel.textContent = orientationText(state.orientation);
-  dom.cardNameHeading.textContent = card.card_name_en || 'The Emperor';
+  dom.cardNameHeading.textContent = getDisplayName(card);
   dom.cardAlias.textContent = card.alias_th ? `${currentLabels.aliasPrefix} ${card.alias_th}` : '';
   dom.cardArchetype.textContent = `${currentLabels.archetypePrefix}: ${getLocalized(card, 'archetype')}`;
   dom.introLine.textContent = getLocalized(card, 'tarot_imply');

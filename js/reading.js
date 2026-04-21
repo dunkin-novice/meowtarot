@@ -344,7 +344,7 @@ function buildCardMeaningUrl(card) {
   const canonicalUrl = getCanonicalCardUrl(slug, state.currentLang);
   if (canonicalUrl) return canonicalUrl;
   const prefix = state.currentLang === 'th' ? '/th' : '';
-  return `https://www.meowtarot.com${prefix}/tarot-card-meanings/${slug}/?lang=${state.currentLang}`;
+  return `https://www.meowtarot.com${prefix}/cards/${slug}/`;
 }
 
 function setBodyScrollLocked(locked) {

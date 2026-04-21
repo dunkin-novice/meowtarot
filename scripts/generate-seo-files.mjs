@@ -8,11 +8,6 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const BASE_URL = (process.env.BASE_URL || 'https://www.meowtarot.com').replace(/\/$/, '');
 const SEPARATE_LANG_SITEMAPS = String(process.env.SEPARATE_LANG_SITEMAPS || '').toLowerCase() === 'true';
 
-const LOCALES = [
-  { code: 'en', prefix: '' },
-  { code: 'th', prefix: 'th' },
-];
-
 const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests', 'node_modules'];
 
 function asPosix(p) {
@@ -21,18 +16,6 @@ function asPosix(p) {
 
 function isDevLike(filePath) {
   return DEVLIKE_SEGMENTS.some((segment) => filePath.split(path.sep).includes(segment));
-}
-
-function normalizeSlug(value = '') {
-  const normalized = value
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-  return normalized.replace(/-(upright|reversed)(?=-|$)/g, '').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
 }
 
 async function walkHtmlFiles(startDir) {
@@ -56,29 +39,6 @@ async function walkHtmlFiles(startDir) {
   }
 
   return files;
-}
-
-async function loadCardSlugs() {
-  const cardsPath = path.join(ROOT_DIR, 'data', 'cards.json');
-  try {
-    const raw = await fs.readFile(cardsPath, 'utf8');
-    const parsed = JSON.parse(raw);
-    const cards = Array.isArray(parsed) ? parsed : Array.isArray(parsed.cards) ? parsed.cards : [];
-
-    const baseSlugs = new Set();
-    for (const card of cards) {
-      const candidate =
-        card.seo_slug_en || card.card_id || card.id || card.slug || card.card_name_en || card.name_en || card.name;
-      if (!candidate) continue;
-      const slug = normalizeSlug(candidate);
-      if (slug) baseSlugs.add(slug);
-    }
-
-    return { slugs: Array.from(baseSlugs.values()).sort(), lastmod: (await fs.stat(cardsPath)).mtime };
-  } catch (error) {
-    console.warn('No card data found at data/cards.json; card-specific URLs will be skipped.');
-    return { slugs: [], lastmod: undefined };
-  }
 }
 
 function formatDate(date) {
@@ -118,25 +78,13 @@ async function buildStaticPages() {
   const urls = [];
 
   for (const file of htmlFiles) {
+    const html = await fs.readFile(path.join(ROOT_DIR, file), 'utf8');
+    if (/<meta[^>]+name=["']robots["'][^>]+content=["'][^"']*noindex/i.test(html)) continue;
     const lastmod = formatDate((await fs.stat(path.join(ROOT_DIR, file))).mtime);
-    const urlPath = file === 'index.html' ? '' : asPosix(file);
+    const urlPath = file === 'index.html'
+      ? ''
+      : asPosix(file).replace(/\/index\.html$/i, '/').replace(/index\.html$/i, '');
     urls.push({ loc: `${BASE_URL}/${urlPath}`, lastmod });
-  }
-
-  return urls;
-}
-
-function buildCardUrls(slugs, lastmod) {
-  if (!slugs.length) return [];
-  const lastmodDate = formatDate(lastmod);
-  const urls = [];
-
-  for (const { prefix } of LOCALES) {
-    const basePath = prefix ? `${prefix}/tarot-card-meanings/` : 'tarot-card-meanings/';
-    for (const slug of slugs) {
-      const loc = `${BASE_URL}/${basePath}${slug}/`;
-      urls.push({ loc, lastmod: lastmodDate });
-    }
   }
 
   return urls;
@@ -160,11 +108,10 @@ async function writeFileIfChanged(targetPath, content) {
 }
 
 async function generate() {
-  const [staticPages, cardData] = await Promise.all([buildStaticPages(), loadCardSlugs()]);
-  const cardUrls = buildCardUrls(cardData.slugs, cardData.lastmod);
+  const staticPages = await buildStaticPages();
   const urlMap = new Map();
 
-  for (const entry of [...staticPages, ...cardUrls]) {
+  for (const entry of staticPages) {
     urlMap.set(entry.loc, entry);
   }
 
