@@ -45,6 +45,32 @@ function replaceById(html, id, value) {
   return html.replace(pattern, `$1${safe}$3`);
 }
 
+
+
+function replaceMetaContent(html, selector, value) {
+  if (!value) return html;
+  const escaped = String(value).replace(/"/g, '&quot;');
+  const withMetaFirst = new RegExp(`(<meta[^>]*data-card-meta="${selector}"[^>]*\scontent=")[^"]*(")`, 'i');
+  if (withMetaFirst.test(html)) return html.replace(withMetaFirst, `$1${escaped}$2`);
+
+  const withContentFirst = new RegExp(`(<meta[^>]*\scontent=")[^"]*("[^>]*data-card-meta="${selector}"[^>]*>)`, 'i');
+  if (withContentFirst.test(html)) return html.replace(withContentFirst, `$1${escaped}$2`);
+
+  return html;
+}
+
+function replaceTitleText(html, value) {
+  if (!value) return html;
+  const escaped = escHtml(value);
+  const pattern = /(<title[^>]*data-card-meta="title"[^>]*>)([\s\S]*?)(<\/title>)/i;
+  return pattern.test(html) ? html.replace(pattern, `$1${escaped}$3`) : html;
+}
+
+function buildThaiSeoTitle(card, mode = 'both') {
+  const displayName = card.alias_th || card.card_name_en || 'ไพ่ทาโรต์';
+  const suffix = mode === 'single' ? 'ไพ่ตั้งตรง' : 'ไพ่ตั้งตรงและกลับหัว';
+  return `ความหมายไพ่ ${displayName} (${suffix}) | MeowTarot`;
+}
 function injectFaqSection(html, lang, card) {
   if (html.includes('id="seoFaqSection"')) return html;
   const isThai = lang === 'th';
@@ -74,6 +100,13 @@ async function updateFile(filePath, card, lang) {
   html = replaceById(html, 'lightKeywords', card.keywords_light || '');
   html = replaceById(html, 'shadowKeywords', card.keywords_shadow || '');
   html = injectFaqSection(html, lang, card);
+
+  if (isThai) {
+    const title = buildThaiSeoTitle(card, 'both');
+    html = replaceTitleText(html, title);
+    html = replaceMetaContent(html, 'og-title', title);
+    html = replaceMetaContent(html, 'twitter-title', title);
+  }
 
   await fs.writeFile(filePath, html, 'utf8');
 }

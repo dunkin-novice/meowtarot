@@ -203,7 +203,7 @@ function updateSeo(card) {
     : (state.lang === 'th' ? 'ตั้งตรง' : 'Upright');
   const displayName = getDisplayName(card);
   const baseTitle = state.lang === 'th'
-    ? `${displayName} ความหมายไพ่ทาโรต์ (${orientationLabel}) | MeowTarot`
+    ? `ความหมายไพ่ ${displayName} (${orientationLabel}) | MeowTarot`
     : `${displayName} Tarot Meaning (${orientationLabel}) | MeowTarot`;
   const description = state.lang === 'th'
     ? (card.meta_description_th || card.meta_description_en || '')
