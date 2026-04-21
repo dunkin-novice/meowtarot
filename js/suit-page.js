@@ -1,5 +1,6 @@
 import { initShell } from './common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
+import { getCanonicalCardPath } from './canonical-card-routes.js';
 
 const SUIT_RANGES = {
   major: { start: 1, end: 22 },
@@ -13,7 +14,7 @@ const SUIT_COPY = {
   major: {
     name: 'Major Arcana',
     slug: 'major',
-    path: '/tarot-card-meanings/major',
+    path: '/tarot-card-meanings/major/',
     title: 'Major Arcana Tarot Card Meanings',
     intro:
       'The Major Arcana follows the Fool’s journey through every life milestone. Each archetype reveals a turning point—awakening, challenge, or integration—that ripples across every area of your life.',
@@ -64,7 +65,7 @@ const SUIT_COPY = {
   wands: {
     name: 'Wands',
     slug: 'wands',
-    path: '/tarot-card-meanings/wands',
+    path: '/tarot-card-meanings/wands/',
     title: 'Wands Tarot Card Meanings',
     intro:
       'Wands is the fire suit—sparks of action, creativity, and confidence. It tracks how you start, commit to, and protect your momentum.',
@@ -111,7 +112,7 @@ const SUIT_COPY = {
   cups: {
     name: 'Cups',
     slug: 'cups',
-    path: '/tarot-card-meanings/cups',
+    path: '/tarot-card-meanings/cups/',
     title: 'Cups Tarot Card Meanings',
     intro:
       'Cups is the water suit of feelings, intuition, and relationships. It reveals how you give, receive, and refill emotional energy.',
@@ -158,7 +159,7 @@ const SUIT_COPY = {
   swords: {
     name: 'Swords',
     slug: 'swords',
-    path: '/tarot-card-meanings/swords',
+    path: '/tarot-card-meanings/swords/',
     title: 'Swords Tarot Card Meanings',
     intro:
       'Swords is the air suit of mindset, truth, and decisions. It shows how thoughts cut through fog—or create it.',
@@ -205,7 +206,7 @@ const SUIT_COPY = {
   pentacles: {
     name: 'Pentacles',
     slug: 'pentacles',
-    path: '/tarot-card-meanings/pentacles',
+    path: '/tarot-card-meanings/pentacles/',
     title: 'Pentacles Tarot Card Meanings',
     intro:
       'Pentacles is the earth suit of money, body, and sustainable growth. It shows how you build resources and security over time.',
@@ -288,7 +289,7 @@ function getSuitCards(cards, suitKey) {
 
 function buildCardHref(card) {
   const slug = card.seo_slug_en || normalizeId(card.card_name_en || card.name_en || card.name || card.id);
-  return `/meanings.html?card=${slug}`;
+  return getCanonicalCardPath(slug, 'en') || `/cards/${normalizeId(slug)}/`;
 }
 
 function getCardSummary(card) {
@@ -465,6 +466,9 @@ function setSeo(config) {
   setContent('meta[name="twitter:title"][data-suit-meta="twitter-title"]', title);
   setContent('meta[name="twitter:description"][data-suit-meta="twitter-description"]', description);
   setContent('link[rel="canonical"][data-suit-meta="canonical"]', canonicalUrl, 'href');
+  setContent('link[rel="alternate"][data-suit-meta="hreflang-en"]', canonicalUrl, 'href');
+  setContent('link[rel="alternate"][data-suit-meta="hreflang-th"]', `https://www.meowtarot.com/th/tarot-card-meanings/?category=${config.slug}`, 'href');
+  setContent('link[rel="alternate"][data-suit-meta="hreflang-x"]', canonicalUrl, 'href');
 
   const faqEntities = (config.faqs || []).map((item) => ({
     '@type': 'Question',

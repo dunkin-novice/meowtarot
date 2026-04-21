@@ -111,7 +111,7 @@ function findBaseCard(slug) {
 
 function buildCardUrl(slug, lang = 'en') {
   const prefix = lang === 'th' ? '/th' : '';
-  return `https://www.meowtarot.com${prefix}/tarot-card-meanings/${slug}/`;
+  return `https://www.meowtarot.com${prefix}/cards/${slug}/`;
 }
 
 function orientationLabel(orientation, mode) {
@@ -160,11 +160,11 @@ function getGroupMeta(card) {
   const raw = card.card_id || card.id || '';
   const match = `${raw}`.match(/^(\d{2})/);
   const number = match ? parseInt(match[1], 10) : 0;
-  if (!number || number <= 22) return { label: 'Major Arcana', href: '/tarot-card-meanings/major.html' };
-  if (number <= 36) return { label: 'Wands', href: '/tarot-card-meanings/wands.html' };
-  if (number <= 50) return { label: 'Cups', href: '/tarot-card-meanings/cups.html' };
-  if (number <= 64) return { label: 'Swords', href: '/tarot-card-meanings/swords.html' };
-  return { label: 'Pentacles', href: '/tarot-card-meanings/pentacles.html' };
+  if (!number || number <= 22) return { label: 'Major Arcana', href: '/tarot-card-meanings/major/' };
+  if (number <= 36) return { label: 'Wands', href: '/tarot-card-meanings/wands/' };
+  if (number <= 50) return { label: 'Cups', href: '/tarot-card-meanings/cups/' };
+  if (number <= 64) return { label: 'Swords', href: '/tarot-card-meanings/swords/' };
+  return { label: 'Pentacles', href: '/tarot-card-meanings/pentacles/' };
 }
 
 function localizeLink(path, mode) {

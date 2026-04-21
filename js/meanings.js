@@ -114,7 +114,7 @@ function buildResultHref(card) {
   if (canonicalPath) return canonicalPath;
 
   const slug = card.seo_slug_en || normalizeId(getCardName(card));
-  const basePath = state.currentLang === 'th' ? '/th/tarot-card-meanings/' : '/tarot-card-meanings/';
+  const basePath = state.currentLang === 'th' ? '/th/cards/' : '/cards/';
   return `${basePath}${slug}/`;
 }
 

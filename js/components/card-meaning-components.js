@@ -237,7 +237,7 @@ export function renderRelatedLinks({
         : showBoth
           ? `${card.card_name_en}${card.alias_th ? ` (${card.alias_th})` : ''}`
           : card.card_name_en;
-      const href = isThai ? `/th/tarot-card-meanings/${card.slug}/` : `/tarot-card-meanings/${card.slug}/`;
+      const href = isThai ? `/th/cards/${card.slug}/` : `/cards/${card.slug}/`;
       return `<li><a href="${href}">${label}</a></li>`;
     }).join('')
     : `<li><span>${isThai ? 'ยังไม่มีรายการไพ่ที่เกี่ยวข้อง' : 'No related cards available yet.'}</span></li>`;
