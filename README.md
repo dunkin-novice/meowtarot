@@ -137,3 +137,10 @@ Type: UX fix
 Goal: Add a clear sign-in CTA on signed-out Profile pages (EN/TH).
 Done: Added a Profile Account sign-in button wired to existing Google auth trigger.
 Fix/Note: Kept signed-in Profile, Journey summary, and reading history logic unchanged.
+
+Date: 2026-04-21
+Type: Reliability fix
+Goal: Prevent duplicate signed-in reading-history saves after hard refresh/reload of the same result page.
+Done: Hydrated reading-session dedupe keys from sessionStorage and persisted keys back after successful save.
+Fix/Note: Kept auth, schema, and existing reading-history flow behavior unchanged.
+
