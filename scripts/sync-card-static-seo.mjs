@@ -102,7 +102,9 @@ async function updateFile(filePath, card, lang) {
   html = injectFaqSection(html, lang, card);
 
   if (isThai) {
+    const thaiDisplayName = card.alias_th || card.name_th || card.card_name_en || 'ไพ่ทาโรต์';
     const title = buildThaiSeoTitle(card, 'both');
+    html = replaceById(html, 'cardNameHeading', thaiDisplayName);
     html = replaceTitleText(html, title);
     html = replaceMetaContent(html, 'og-title', title);
     html = replaceMetaContent(html, 'twitter-title', title);

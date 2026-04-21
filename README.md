@@ -148,3 +148,8 @@ Goal: Prevent duplicate signed-in reading-history saves after hard refresh/reloa
 Done: Hydrated reading-session dedupe keys from sessionStorage and persisted keys back after successful save.
 Fix/Note: Kept auth, schema, and existing reading-history flow behavior unchanged.
 
+Date: 2026-04-21
+Type: Localization fix
+Goal: Ensure Thai canonical card pages render Thai H1 card names by default.
+Done: Updated static card SEO sync to write Thai `cardNameHeading` from existing Thai card-name fields and regenerated TH canonical card pages.
+Fix/Note: EN canonical pages and existing canonical/hreflang metadata behavior were left unchanged.
