@@ -137,3 +137,9 @@ Type: UX fix
 Goal: Add a clear sign-in CTA on signed-out Profile pages (EN/TH).
 Done: Added a Profile Account sign-in button wired to existing Google auth trigger.
 Fix/Note: Kept signed-in Profile, Journey summary, and reading history logic unchanged.
+
+Date: 2026-04-21
+Type: SEO cleanup
+Goal: Keep utility/docs/share HTML surfaces out of sitemap output.
+Done: Updated sitemap generator with explicit exclusions for `/share/index.html` and poster reference pages under `/docs/poster/`.
+Fix/Note: Preserved canonical card routes and core indexable content pages.
