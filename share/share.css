@@ -67,6 +67,40 @@ body {
   line-height: 1.55;
 }
 
+.share-copy {
+  width: min(100%, 420px);
+  display: grid;
+  gap: 8px;
+}
+
+.share-copy__label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.share-copy__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.share-chip {
+  border: 1px solid rgba(248, 215, 122, 0.3);
+  background: rgba(248, 215, 122, 0.08);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.share-chip:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 .poster-loading {
   margin-top: 12px;
   font-size: 0.9rem;
