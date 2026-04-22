@@ -173,3 +173,10 @@ Type: SEO cleanup
 Goal: Align EN/TH canonical card page titles to explicitly cover upright and reversed meanings with a compact, consistent pattern.
 Done: Updated EN canonical `/cards/*/` `<title>` tags to use `Card Meaning (Upright & Reversed) | MeowTarot`, verified TH canonical `/th/cards/*/` titles already include both orientations, and updated the premium SEO generator title template accordingly.
 Fix/Note: Titles-only metadata pass; body content and on-page meaning copy were not changed.
+
+Date: 2026-04-22
+Type: SEO cleanup
+Goal: Remove legacy `/overall.html` crawl targets while keeping Full Reading routes intact.
+Done: Removed EN/TH `overall.html` URLs from sitemap, added hard 301 redirects to EN/TH `full.html`, and added noindex headers/meta on legacy alias pages.
+Fix/Note: Preserved existing Full Reading behavior and legacy alias forwarding for users with old links.
+

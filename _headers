@@ -6,3 +6,10 @@
 
 /share/*
   Cache-Control: public, max-age=3600
+
+/overall.html
+  X-Robots-Tag: noindex, nofollow
+
+/th/overall.html
+  X-Robots-Tag: noindex, nofollow
+
