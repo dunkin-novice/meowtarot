@@ -2,3 +2,7 @@
 https://meowtarot.app/* https://www.meowtarot.com/:splat 301!
 https://www.meowtarot.app/* https://www.meowtarot.com/:splat 301!
 https://meowtarot.com/* https://www.meowtarot.com/:splat 301!
+
+# Legacy full-reading aliases (crawl cleanup)
+/overall.html /full.html 301!
+/th/overall.html /th/full.html 301!
