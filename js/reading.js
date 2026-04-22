@@ -374,6 +374,54 @@ function buildCardMeaningUrl(card) {
   return `https://www.meowtarot.com${prefix}/cards/${slug}/`;
 }
 
+function buildReadingEntryLinks() {
+  const isThai = state.currentLang === 'th';
+  const base = isThai ? '/th' : '';
+  return [
+    { href: `${base}/daily.html`, label: isThai ? 'เริ่ม Daily Reading' : 'Start Daily Reading' },
+    { href: `${base}/question.html`, label: isThai ? 'เริ่ม Question Reading' : 'Start Question Reading' },
+    { href: `${base}/full.html`, label: isThai ? 'เริ่ม Full Reading' : 'Start Full Reading' },
+  ];
+}
+
+function appendReadingInternalLinks(container, cards = []) {
+  if (!container || !Array.isArray(cards) || !cards.length) return;
+
+  const panel = document.createElement('section');
+  panel.className = 'panel panel--internal-links';
+
+  const heading = document.createElement('h3');
+  heading.textContent = state.currentLang === 'th' ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related Internal Links';
+  panel.appendChild(heading);
+
+  const cardLinks = document.createElement('ul');
+  const seen = new Set();
+  cards.forEach((card) => {
+    const meaningUrl = buildCardMeaningUrl(card);
+    if (!meaningUrl || seen.has(meaningUrl)) return;
+    seen.add(meaningUrl);
+
+    const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = meaningUrl;
+    link.textContent = state.currentLang === 'th' ? `อ่านความหมาย: ${getName(card)}` : `Read meaning: ${getName(card)}`;
+    li.appendChild(link);
+    cardLinks.appendChild(li);
+  });
+  if (cardLinks.children.length) panel.appendChild(cardLinks);
+
+  const entryLinks = document.createElement('p');
+  buildReadingEntryLinks().forEach((entry, index) => {
+    const link = document.createElement('a');
+    link.href = entry.href;
+    link.textContent = entry.label;
+    entryLinks.appendChild(link);
+    if (index < 2) entryLinks.appendChild(document.createTextNode(' · '));
+  });
+  panel.appendChild(entryLinks);
+  container.appendChild(panel);
+}
+
 function setBodyScrollLocked(locked) {
   document.body.classList.toggle('is-modal-open', locked);
 }
@@ -2296,10 +2344,12 @@ function renderDailyDetails(cards, dict, stage) {
     detailsWrap.className = 'daily-reading-details';
     detailsWrap.appendChild(createDailyDetails(cards[0]));
     stage.appendChild(detailsWrap);
+    appendReadingInternalLinks(stage, cards);
     return;
   }
 
   stage.appendChild(createDailyMultiCardDetails(cards, dict));
+  appendReadingInternalLinks(stage, cards);
 }
 
 function buildRetentionText(dict, key, fallback = '') {
@@ -2900,6 +2950,8 @@ function renderFull(cards, dict) {
     energyPanel.classList.add('energy-panel--subtle');
     readingContent.appendChild(energyPanel);
   }
+
+  appendReadingInternalLinks(readingContent, cards);
 }
 
 function renderQuestion(cards, dict) {
@@ -3002,6 +3054,8 @@ function renderQuestion(cards, dict) {
     energyPanel.classList.add('energy-panel--subtle');
     readingContent.appendChild(energyPanel);
   }
+
+  appendReadingInternalLinks(readingContent, orderedCards);
 }
 
 function renderReading(dict) {
