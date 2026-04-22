@@ -18,6 +18,8 @@ BASE_URL="https://www.meowtarot.com" node scripts/generate-seo-files.mjs
 ```
 The command updates `sitemap*.xml` and `robots.txt` in the project root. Commit the changes to publish them.
 
+Domain canonicalization is enforced in `_redirects` so `meowtarot.app`, `www.meowtarot.app`, and apex `meowtarot.com` 301 to `https://www.meowtarot.com/:splat`.
+
 ### Verifying after deployment
 - After GitHub Pages deploys, confirm the endpoints:
   - `https://<your-domain>/robots.txt`
