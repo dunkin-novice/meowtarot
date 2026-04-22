@@ -190,6 +190,7 @@ function writePersistedReadingSessionKeys(keys = []) {
 }
 
 const persistedReadingSessionKeys = new Set(readPersistedReadingSessionKeys());
+const inFlightReadingSessionKeys = new Set();
 const DAILY_VISUAL_STATES = Object.freeze({
   IDLE: 'idle',
   GATHERING: 'gathering',
@@ -2628,7 +2629,8 @@ function renderDaily(cards, dict) {
 function getReadingSessionKey(mode = 'daily', cards = []) {
   const cardKey = cards
     .map((card, index) => {
-      const baseId = getBaseCardId(card, normalizeId) || normalizeId(card?.id || '');
+      const sourceId = card?.id || card?.card_id || card?.image_id || '';
+      const baseId = getBaseCardId(sourceId, normalizeId) || normalizeId(sourceId);
       const orientation = toOrientation(card);
       const position = mode === 'question'
         ? (QUESTION_CARD_POSITIONS[index] || '')
@@ -2643,7 +2645,8 @@ function getReadingSessionKey(mode = 'daily', cards = []) {
 
 function buildNormalizedReadingCards(mode = 'daily', cards = []) {
   return cards.map((card, index) => {
-    const baseId = getBaseCardId(card, normalizeId) || normalizeId(card?.id || '');
+    const sourceId = card?.id || card?.card_id || card?.image_id || '';
+    const baseId = getBaseCardId(sourceId, normalizeId) || normalizeId(sourceId);
     const orientation = toOrientation(card);
     const position = mode === 'question'
       ? (QUESTION_CARD_POSITIONS[index] || null)
@@ -2670,11 +2673,13 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
   if (!userId || !Array.isArray(cards) || !cards.length) return;
 
   const sessionKey = options.sessionKey || getReadingSessionKey(mode, cards);
-  if (!sessionKey || persistedReadingSessionKeys.has(sessionKey)) return;
+  if (!sessionKey || persistedReadingSessionKeys.has(sessionKey) || inFlightReadingSessionKeys.has(sessionKey)) return;
 
   const normalizedCards = buildNormalizedReadingCards(mode, cards);
 
   if (!normalizedCards.length) return;
+
+  inFlightReadingSessionKeys.add(sessionKey);
 
   void saveReadingRecord(userId, {
     mode,
@@ -2686,6 +2691,8 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
     if (!readingId) return;
     persistedReadingSessionKeys.add(sessionKey);
     writePersistedReadingSessionKeys([...persistedReadingSessionKeys]);
+  }).finally(() => {
+    inFlightReadingSessionKeys.delete(sessionKey);
   });
 }
 

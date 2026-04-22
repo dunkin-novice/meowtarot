@@ -16,6 +16,16 @@ function normalizeReadingMode(mode = '') {
   return 'full';
 }
 
+function resolveCardIdToken(card) {
+  const raw = card?.card_id ?? card?.id ?? '';
+  if (typeof raw === 'string') return raw.trim();
+  if (raw && typeof raw === 'object') {
+    const nested = raw.card_id ?? raw.id ?? raw.image_id ?? '';
+    return typeof nested === 'string' ? nested.trim() : String(nested || '').trim();
+  }
+  return String(raw || '').trim();
+}
+
 function sanitizeReadingRecord(userId, record = {}, options = {}) {
   const cards = Array.isArray(record.cards) ? record.cards : [];
   const now = options.now instanceof Date ? options.now : new Date();
@@ -28,7 +38,7 @@ function sanitizeReadingRecord(userId, record = {}, options = {}) {
     read_date: toLocalIsoDate(now) || toLocalIsoDate(),
     cards: cards
       .map((card, index) => {
-        const cardId = String(card?.card_id || card?.id || '').trim();
+        const cardId = resolveCardIdToken(card);
         if (!cardId) return null;
         const orientation = String(card?.orientation || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright';
         const position = String(card?.position || '').trim() || null;
