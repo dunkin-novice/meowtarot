@@ -1,5 +1,4 @@
 import { initShell, localizePath, translations } from './common.js';
-import { getAskQuestionTopics } from './question-topics.js';
 import {
   loadTarotManifest,
   getCardBackUrl,
@@ -8,7 +7,6 @@ import {
   applyImageFallback,
   normalizeId,
 } from './data.js';
-import { applyTapSwap, buildNextDrawBoard } from './full-reading-flow.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
 
 const BOARD_CARD_COUNT = 12;
@@ -50,6 +48,8 @@ const state = {
   questionTopic: 'love',
 };
 let overallFlowCleanup = null;
+let fullReadingFlowModulePromise = null;
+let questionTopicsModulePromise = null;
 
 const staticCardBacks = document.querySelectorAll('.card-back');
 
@@ -142,12 +142,31 @@ function createCardArt(card, className = '', { useBack = false, alt = '' } = {})
   const img = document.createElement('img');
   img.className = className;
   img.alt = alt;
+  img.width = 360;
+  img.height = 600;
+  img.decoding = 'async';
+  img.loading = 'lazy';
+  img.fetchPriority = 'low';
   if (useBack) {
     applyCardBackBackground(img);
     return img;
   }
   applyImageFallback(img, getCardImageUrl(card), [CARD_BACK_URL, CARD_BACK_FALLBACK_URL]);
   return img;
+}
+
+function getFullReadingFlowModule() {
+  if (!fullReadingFlowModulePromise) {
+    fullReadingFlowModulePromise = import('./full-reading-flow.js');
+  }
+  return fullReadingFlowModulePromise;
+}
+
+function getQuestionTopicsModule() {
+  if (!questionTopicsModulePromise) {
+    questionTopicsModulePromise = import('./question-topics.js');
+  }
+  return questionTopicsModulePromise;
 }
 
 function animateBoard(boardEl) {
@@ -451,7 +470,7 @@ function renderDaily() {
   };
 }
 
-function renderOverall() {
+async function renderOverall() {
   const toolbar = document.getElementById('overall-toolbar');
   const shuffleBtn = document.getElementById('overall-shuffle');
   const counter = document.getElementById('overall-counter');
@@ -483,7 +502,9 @@ function renderOverall() {
     || !dealStage
     || !arrangeStage
     || !arrangeList
-  ) return;
+  ) return null;
+
+  const { applyTapSwap, buildNextDrawBoard } = await getFullReadingFlowModule();
 
   const dict = translations[state.currentLang] || translations.en;
   const DRAW_BOARD_SIZE = 10;
@@ -1003,9 +1024,10 @@ function renderOverall() {
   };
 }
 
-function renderQuestion(dict = translations[state.currentLang] || translations.en) {
+async function renderQuestion(dict = translations[state.currentLang] || translations.en) {
   const topicGrid = document.getElementById('question-topic-grid');
   if (!topicGrid) return;
+  const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
 
   const buildTopicCard = (topic) => {
@@ -1041,7 +1063,7 @@ function renderQuestion(dict = translations[state.currentLang] || translations.e
   topics.forEach((topic) => topicGrid.appendChild(buildTopicCard(topic)));
 }
 
-function renderQuestionDraw(dict = translations[state.currentLang] || translations.en) {
+async function renderQuestionDraw(dict = translations[state.currentLang] || translations.en) {
   const board = document.getElementById('question-card-board');
   const shuffleBtn = document.getElementById('question-reset');
   const continueBtn = document.getElementById('question-continue');
@@ -1050,6 +1072,7 @@ function renderQuestionDraw(dict = translations[state.currentLang] || translatio
   if (!board || !shuffleBtn || !continueBtn || !counter || !selectedTopicTitle) return;
 
   let latestSelection = [];
+  const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
   const queryTopic = new URLSearchParams(window.location.search).get('topic') || '';
   const isKnownTopic = topics.some((item) => item.key === queryTopic);
@@ -1079,33 +1102,33 @@ function renderQuestionDraw(dict = translations[state.currentLang] || translatio
   };
 }
 
-function renderPage(dict) {
+async function renderPage(dict) {
   const page = document.body.dataset.page;
   overallFlowCleanup?.();
   overallFlowCleanup = null;
   if (page === 'daily') renderDaily(dict);
-  if (page === 'overall' || page === 'full') overallFlowCleanup = renderOverall(dict) || null;
-  if (page === 'question') renderQuestion(dict);
-  if (page === 'question-draw') renderQuestionDraw(dict);
+  if (page === 'overall' || page === 'full') overallFlowCleanup = await renderOverall(dict) || null;
+  if (page === 'question') await renderQuestion(dict);
+  if (page === 'question-draw') await renderQuestionDraw(dict);
 }
 
 function init() {
   const page = document.body.dataset.page;
   const navPage = page === 'question-draw' ? 'question' : page;
-  initShell(state, (dict) => renderPage(dict), navPage);
+  initShell(state, (dict) => { void renderPage(dict); }, navPage);
 
   if (page === 'home') {
-    renderPage(translations[state.currentLang] || translations.en);
+    void renderPage(translations[state.currentLang] || translations.en);
     return;
   }
 
   loadTarotManifest()
     .then((cards) => {
       state.cards = cards;
-      renderPage(translations[state.currentLang] || translations.en);
+      void renderPage(translations[state.currentLang] || translations.en);
     })
     .catch(() => {
-      renderPage(translations[state.currentLang] || translations.en);
+      void renderPage(translations[state.currentLang] || translations.en);
     });
 }
 
