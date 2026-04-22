@@ -153,3 +153,9 @@ Type: Localization fix
 Goal: Ensure Thai canonical card pages render Thai H1 card names by default.
 Done: Updated static card SEO sync to write Thai `cardNameHeading` from existing Thai card-name fields and regenerated TH canonical card pages.
 Fix/Note: EN canonical pages and existing canonical/hreflang metadata behavior were left unchanged.
+
+Date: 2026-04-22
+Type: Reliability fix
+Goal: Stop duplicate initial signed-in reading saves and prevent invalid reading card IDs.
+Done: Added in-flight reading-session save dedupe and fixed card ID normalization for reading history persistence.
+Fix/Note: Kept auth/sessionStorage dedupe behavior and reading history schema unchanged.
