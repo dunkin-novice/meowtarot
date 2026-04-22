@@ -1,0 +1,4 @@
+# Primary domain enforcement
+https://meowtarot.app/* https://www.meowtarot.com/:splat 301!
+https://www.meowtarot.app/* https://www.meowtarot.com/:splat 301!
+https://meowtarot.com/* https://www.meowtarot.com/:splat 301!
