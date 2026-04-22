@@ -243,6 +243,7 @@ export function renderRelatedLinks({
     : `<li><span>${isThai ? 'ยังไม่มีรายการไพ่ที่เกี่ยวข้อง' : 'No related cards available yet.'}</span></li>`;
 
   const dailyHref = isThai ? '/th/daily.html' : '/daily.html';
+  const questionHref = isThai ? '/th/question.html' : '/question.html';
   const fullHref = isThai ? '/th/full.html' : '/full.html';
 
   return `
@@ -252,6 +253,7 @@ export function renderRelatedLinks({
       <li><a href="${hubPath}">${hubLabel}</a></li>
       ${relatedItems}
       <li><a href="${dailyHref}">${isThai ? 'เริ่ม Daily Reading' : 'Start Daily Reading'}</a></li>
+      <li><a href="${questionHref}">${isThai ? 'เริ่ม Question Reading' : 'Start Question Reading'}</a></li>
       <li><a href="${fullHref}">${isThai ? 'เริ่ม Full Reading' : 'Start Full Reading'}</a></li>
     </ul>
   `;
