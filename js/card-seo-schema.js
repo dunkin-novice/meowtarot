@@ -8,6 +8,31 @@ function pickLocalized(card, fieldBase, lang = 'en') {
   return lang === 'th' ? (th || en) : (en || th);
 }
 
+
+function getCustomFaq(card, { lang = 'en', displayName = '' } = {}) {
+  const id = text(card?.card_id);
+
+  if (id.startsWith('01-the-fool')) {
+    return {
+      question: lang === 'th' ? 'ไพ่ The Fool หมายถึงอะไรในเรื่องความรัก?' : `What does ${displayName} mean in love?`,
+      answer: lang === 'th'
+        ? 'ในการอ่านความรัก ไพ่ The Fool สื่อถึงการเริ่มต้นใหม่ ความจริงใจแบบเปิดใจ และการกล้าเสี่ยงด้วยหัวใจ สำหรับคนโสดอาจหมายถึงการพบคนใหม่ที่น่าตื่นเต้น ส่วนคนมีคู่คือการเริ่มบทใหม่ด้วยความเชื่อใจกันมากขึ้น'
+        : `In love readings, ${displayName} points to fresh starts, honest curiosity, and taking a heartfelt risk. For singles, it can signal exciting new connections; for couples, it invites trying a new chapter with openness and trust.`,
+    };
+  }
+
+  if (id.startsWith('13-death')) {
+    return {
+      question: lang === 'th' ? 'ไพ่ Death เป็นไพ่ไม่ดีไหม?' : `Is ${displayName} card bad?`,
+      answer: lang === 'th'
+        ? 'โดยมากไม่ใช่ค่ะ ในทาโรต์ ไพ่ Death แทบไม่สื่อถึงความตายตามตัวอักษร แต่สื่อถึงการจบสิ่งเดิม การปล่อยวาง และการเปลี่ยนผ่านเพื่อเริ่มต้นสิ่งใหม่ที่ดีกว่า'
+        : `Usually no. In tarot, ${displayName} rarely predicts literal death; it marks necessary endings, release, and transformation so something healthier can begin.`,
+    };
+  }
+
+  return null;
+}
+
 function splitKeywords(raw = '') {
   return text(raw)
     .split(',')
@@ -48,6 +73,7 @@ export function buildCardSchema(card, {
       acceptedAnswer: { '@type': 'Answer', text: readingSummary },
     });
   }
+
   if (lightKeywords.length || shadowKeywords.length) {
     const answer = isThai
       ? `คำด้านสว่าง: ${lightKeywords.join(', ') || '-'} | คำด้านเงา: ${shadowKeywords.join(', ') || '-'}`
@@ -56,6 +82,15 @@ export function buildCardSchema(card, {
       '@type': 'Question',
       name: isThai ? `${displayName} มีคีย์เวิร์ดสำคัญอะไรบ้าง?` : `What key themes are associated with ${displayName}?`,
       acceptedAnswer: { '@type': 'Answer', text: answer },
+    });
+  }
+
+  const customFaq = getCustomFaq(card, { lang, displayName });
+  if (customFaq?.question && customFaq?.answer) {
+    faq.push({
+      '@type': 'Question',
+      name: customFaq.question,
+      acceptedAnswer: { '@type': 'Answer', text: customFaq.answer },
     });
   }
 
