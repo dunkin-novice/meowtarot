@@ -1615,6 +1615,63 @@ body[data-page='full'] #overall-actions[hidden] {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.profile-history-item {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.profile-history-item__title,
+.profile-history-item__cards {
+  margin: 0;
+}
+
+.profile-history-item__cards {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.profile-history-item__actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-history-item__action {
+  text-decoration: none;
+  font-size: 14px;
+  padding: 9px 12px;
+}
+
+.profile-empty-state {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-empty-state__title,
+.profile-empty-state__body {
+  margin: 0;
+}
+
+.profile-empty-state__body {
+  color: var(--muted);
+}
+
+.profile-empty-state__cta {
+  justify-self: flex-start;
+  text-decoration: none;
+}
+
 .card-heading h2 {
   margin: 0 0 6px;
 }

@@ -2,6 +2,7 @@ import {
   applyLocaleMeta,
   applyTranslations,
   initShell,
+  localizePath,
   pathHasThaiPrefix,
   translations,
 } from './common.js';
@@ -24,6 +25,33 @@ const els = {
   history: document.getElementById('profile-history'),
   cta: document.getElementById('profile-cta'),
 };
+
+function createLocalizedHref(pathname = '/') {
+  return localizePath(pathname, state.currentLang);
+}
+
+function getModeHref(mode = 'daily') {
+  if (mode === 'question') return createLocalizedHref('/question.html');
+  if (mode === 'full') return createLocalizedHref('/overall.html');
+  return createLocalizedHref('/daily.html');
+}
+
+function parseDate(value = '') {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+}
+
+function formatReadingDate(value = '') {
+  const parsed = parseDate(value);
+  if (!parsed) return value;
+  const locale = state.currentLang === 'th' ? 'th-TH' : 'en-US';
+  return new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(parsed);
+}
 
 function renderIdentity(dict) {
   if (!els.identity) return;
@@ -106,7 +134,87 @@ function renderStreak(dict) {
     card.appendChild(phaseLine);
   }
 
+  const monthlyStreak = document.createElement('p');
+  const monthDays = getMonthlyReadingDays(state.history);
+  monthlyStreak.textContent = (dict.profileMonthlyStreak || (state.currentLang === 'th' ? 'สตรีคเดือนนี้: {count} วัน' : 'Monthly streak: {count} days'))
+    .replace('{count}', String(computeConsecutiveStreak(monthDays)));
+  card.appendChild(monthlyStreak);
+
+  const energy = document.createElement('p');
+  energy.textContent = (dict.profileMostCommonEnergy || (state.currentLang === 'th' ? 'พลังที่พบบ่อยที่สุด: {label}' : 'Most common energy: {label}'))
+    .replace('{label}', getMostCommonEnergyLabel(dict, state.history));
+  card.appendChild(energy);
+
   els.streak.appendChild(card);
+}
+
+function getMonthlyReadingDays(history = []) {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  const days = new Set();
+  history.forEach((entry) => {
+    const parsed = parseDate(entry?.read_date || entry?.created_at || '');
+    if (!parsed) return;
+    if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month) return;
+    const dateToken = parsed.toISOString().slice(0, 10);
+    days.add(dateToken);
+  });
+  return Array.from(days).sort();
+}
+
+function computeConsecutiveStreak(days = []) {
+  if (!days.length) return 0;
+  let longest = 1;
+  let current = 1;
+  for (let i = 1; i < days.length; i += 1) {
+    const prev = parseDate(days[i - 1]);
+    const next = parseDate(days[i]);
+    if (!prev || !next) continue;
+    const dayDiff = Math.round((next.getTime() - prev.getTime()) / 86400000);
+    if (dayDiff === 1) {
+      current += 1;
+      longest = Math.max(longest, current);
+    } else {
+      current = 1;
+    }
+  }
+  return longest;
+}
+
+function inferEnergyFromCardId(cardId = '') {
+  const id = normalizeId(cardId);
+  if (!id) return 'major';
+  if (id.includes('wands')) return 'fire';
+  if (id.includes('cups')) return 'water';
+  if (id.includes('swords')) return 'air';
+  if (id.includes('pentacles')) return 'earth';
+  return 'major';
+}
+
+function getMostCommonEnergyLabel(dict, history = []) {
+  const tally = {
+    fire: 0,
+    water: 0,
+    air: 0,
+    earth: 0,
+    major: 0,
+  };
+
+  history.forEach((entry) => {
+    (entry?.reading_cards || []).forEach((cardEntry) => {
+      const cardId = cardEntry?.card_id || cardEntry?.id || '';
+      const energyKey = inferEnergyFromCardId(cardId);
+      if (tally[energyKey] !== undefined) tally[energyKey] += 1;
+    });
+  });
+
+  const topKey = Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || 'major';
+  if (topKey === 'fire') return dict.profileEnergyFire || (state.currentLang === 'th' ? 'ไฟ (Wands)' : 'Fire (Wands)');
+  if (topKey === 'water') return dict.profileEnergyWater || (state.currentLang === 'th' ? 'น้ำ (Cups)' : 'Water (Cups)');
+  if (topKey === 'air') return dict.profileEnergyAir || (state.currentLang === 'th' ? 'ลม (Swords)' : 'Air (Swords)');
+  if (topKey === 'earth') return dict.profileEnergyEarth || (state.currentLang === 'th' ? 'ดิน (Pentacles)' : 'Earth (Pentacles)');
+  return dict.profileEnergyMajor || (state.currentLang === 'th' ? 'เมเจอร์อาร์คานา' : 'Major Arcana');
 }
 
 function readingLabel(mode = '') {
@@ -155,16 +263,44 @@ function renderHistory(dict) {
   card.appendChild(title);
 
   if (!state.user) {
-    const empty = document.createElement('p');
-    empty.textContent = dict.profileHistoryLoginHint || (state.currentLang === 'th' ? 'เข้าสู่ระบบเพื่อดูประวัติการเปิดไพ่' : 'Sign in to view reading history.');
+    const empty = document.createElement('div');
+    empty.className = 'profile-empty-state';
+
+    const emptyTitle = document.createElement('p');
+    emptyTitle.className = 'profile-empty-state__title';
+    emptyTitle.textContent = dict.profileHistoryLoginHint || (state.currentLang === 'th' ? 'เข้าสู่ระบบเพื่อดูประวัติการเปิดไพ่' : 'Sign in to view reading history.');
+    empty.appendChild(emptyTitle);
+
+    const emptyBody = document.createElement('p');
+    emptyBody.className = 'profile-empty-state__body';
+    emptyBody.textContent = dict.profileHistoryLoginBody || (state.currentLang === 'th' ? 'เมื่อเข้าสู่ระบบ คุณจะย้อนดูผลเดิมและติดตามพลังที่เด่นได้ง่ายขึ้น' : 'When signed in, you can revisit past readings and track your dominant energy.');
+    empty.appendChild(emptyBody);
+
     card.appendChild(empty);
     els.history.appendChild(card);
     return;
   }
 
   if (!state.history.length) {
-    const empty = document.createElement('p');
-    empty.textContent = dict.profileHistoryEmpty || (state.currentLang === 'th' ? 'ยังไม่มีประวัติการเปิดไพ่' : 'No history yet.');
+    const empty = document.createElement('div');
+    empty.className = 'profile-empty-state';
+
+    const emptyTitle = document.createElement('p');
+    emptyTitle.className = 'profile-empty-state__title';
+    emptyTitle.textContent = dict.profileHistoryEmpty || (state.currentLang === 'th' ? 'ยังไม่มีประวัติการเปิดไพ่' : 'No history yet.');
+    empty.appendChild(emptyTitle);
+
+    const emptyBody = document.createElement('p');
+    emptyBody.className = 'profile-empty-state__body';
+    emptyBody.textContent = dict.profileHistoryEmptyBody || (state.currentLang === 'th' ? 'เริ่มเปิดไพ่ครั้งแรก แล้วกลับมาที่นี่เพื่ออ่านซ้ำและค้นหาไพ่ใกล้เคียง' : 'Draw your first reading, then come back here to revisit and explore similar cards.');
+    empty.appendChild(emptyBody);
+
+    const startLink = document.createElement('a');
+    startLink.className = 'ghost profile-empty-state__cta';
+    startLink.href = getModeHref('daily');
+    startLink.textContent = dict.profileHistoryStartCta || (state.currentLang === 'th' ? 'เริ่มเปิดไพ่รายวัน' : 'Start a daily reading');
+    empty.appendChild(startLink);
+
     card.appendChild(empty);
     els.history.appendChild(card);
     return;
@@ -174,9 +310,38 @@ function renderHistory(dict) {
   list.className = 'history-list';
   state.history.forEach((entry) => {
     const item = document.createElement('li');
+    item.className = 'profile-history-item';
+
     const cards = (entry.reading_cards || []).map((c) => resolveCardLabel(c)).filter(Boolean).join(', ');
-    const date = entry.read_date || '';
-    item.textContent = `${date} · ${readingLabel(entry.mode)} · ${cards}`;
+    const heading = document.createElement('p');
+    heading.className = 'profile-history-item__title';
+    const date = formatReadingDate(entry.read_date || entry.created_at || '');
+    heading.textContent = `${date} · ${readingLabel(entry.mode)}`;
+    item.appendChild(heading);
+
+    const cardsLine = document.createElement('p');
+    cardsLine.className = 'profile-history-item__cards';
+    cardsLine.textContent = cards;
+    item.appendChild(cardsLine);
+
+    const actions = document.createElement('div');
+    actions.className = 'profile-history-item__actions';
+
+    const readAgain = document.createElement('a');
+    readAgain.className = 'ghost profile-history-item__action';
+    readAgain.href = getModeHref(entry.mode);
+    readAgain.textContent = dict.profileReadAgain || (state.currentLang === 'th' ? 'อ่านอีกครั้ง' : 'Read Again');
+    actions.appendChild(readAgain);
+
+    const firstCard = entry?.reading_cards?.[0];
+    const similar = document.createElement('a');
+    const similarCardId = normalizeId(firstCard?.card_id || firstCard?.id || '');
+    similar.className = 'ghost profile-history-item__action';
+    similar.href = `${createLocalizedHref('/meanings.html')}?card=${encodeURIComponent(similarCardId || '')}`;
+    similar.textContent = dict.profileSeeSimilar || (state.currentLang === 'th' ? 'ดูไพ่ใกล้เคียง' : 'See Similar Cards');
+    actions.appendChild(similar);
+
+    item.appendChild(actions);
     list.appendChild(item);
   });
   card.appendChild(list);
