@@ -461,6 +461,7 @@ export const translations = {
 
 const LANG_STORAGE_KEY = 'meowtarot_lang';
 let navbarCleanup = null;
+let viewportBindingAttached = false;
 
 function normalizeLang(value) {
   return value === 'th' ? 'th' : value === 'en' ? 'en' : null;
@@ -584,8 +585,28 @@ export function initShell(state, afterApply, activePage, options = {}) {
   renderFooter(document.getElementById('site-footer'));
   highlightActiveNav(activePage);
   attachLogoHome();
+  bindViewportHeightVariable();
   applyTranslations(state.currentLang, afterApply);
   applyLocaleMeta(state.currentLang);
+}
+
+function bindViewportHeightVariable() {
+  if (typeof window === 'undefined' || viewportBindingAttached) return;
+
+  const root = document.documentElement;
+  const applyViewportHeight = () => {
+    const visualHeight = window.visualViewport?.height;
+    const fallbackHeight = window.innerHeight;
+    const height = Number.isFinite(visualHeight) && visualHeight > 0 ? visualHeight : fallbackHeight;
+    if (!height) return;
+    root.style.setProperty('--app-vh', `${height}px`);
+  };
+
+  applyViewportHeight();
+  window.addEventListener('resize', applyViewportHeight, { passive: true });
+  window.addEventListener('orientationchange', applyViewportHeight, { passive: true });
+  window.visualViewport?.addEventListener('resize', applyViewportHeight, { passive: true });
+  viewportBindingAttached = true;
 }
 
 if (typeof window !== 'undefined') {
