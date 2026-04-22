@@ -106,7 +106,7 @@ jobs:
           urls=(
             "https://cdn.meowtarot.com/assets/meow-v2/00-back.webp"
             "https://cdn.meowtarot.com/assets/meow-v1/01-the-fool-upright.webp"
-            "https://cdn.meowtarot.com/backgrounds/bg-000.webp"
+            "https://cdn.meowtarot.com/ackgrounds/bg-000.webp"
           )
 
           {
@@ -128,7 +128,7 @@ jobs:
         run: ls -l tests/fixtures
 
       - name: Ensure Playwright browsers before poster debug
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run poster debug CI script
         env:
