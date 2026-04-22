@@ -161,3 +161,9 @@ Type: Reliability fix
 Goal: Stop duplicate initial signed-in reading saves and prevent invalid reading card IDs.
 Done: Added in-flight reading-session save dedupe and fixed card ID normalization for reading history persistence.
 Fix/Note: Kept auth/sessionStorage dedupe behavior and reading history schema unchanged.
+
+Date: 2026-04-22
+Type: SEO cleanup
+Goal: Remove outdated homepage copy that said Celtic Cross full readings were coming soon.
+Done: Updated EN/TH homepage meta and schema descriptions to reflect that full readings are live.
+Fix/Note: Kept homepage layout and visible UI unchanged.
