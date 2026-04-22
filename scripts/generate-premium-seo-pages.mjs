@@ -98,7 +98,7 @@ function buildTitles(card, lang) {
   const thName = card.alias_th || card.name_th || enName || 'ไพ่ทาโรต์';
   return isThai
     ? `ความหมายไพ่ ${thName} (ไพ่ตั้งตรงและกลับหัว) | MeowTarot`
-    : `${enName} Tarot Meaning (Upright & Reversed) | MeowTarot`;
+    : `${enName} Meaning (Upright & Reversed) | MeowTarot`;
 }
 
 function buildDescriptions(card, lang) {

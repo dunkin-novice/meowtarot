@@ -167,3 +167,9 @@ Type: SEO cleanup
 Goal: Remove outdated homepage copy that said Celtic Cross full readings were coming soon.
 Done: Updated EN/TH homepage meta and schema descriptions to reflect that full readings are live.
 Fix/Note: Kept homepage layout and visible UI unchanged.
+
+Date: 2026-04-22
+Type: SEO cleanup
+Goal: Align EN/TH canonical card page titles to explicitly cover upright and reversed meanings with a compact, consistent pattern.
+Done: Updated EN canonical `/cards/*/` `<title>` tags to use `Card Meaning (Upright & Reversed) | MeowTarot`, verified TH canonical `/th/cards/*/` titles already include both orientations, and updated the premium SEO generator title template accordingly.
+Fix/Note: Titles-only metadata pass; body content and on-page meaning copy were not changed.
