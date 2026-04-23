@@ -186,3 +186,9 @@ Type: Analytics install
 Goal: Add GA4 sitewide tracking with measurement ID G-08TSR2R1ZD.
 Done: Inserted the provided Google tag snippet at the top of `<head>` across live EN/TH pages, reading flows, profile/share, and card meaning pages.
 Fix/Note: Preserved existing SEO/meta/schema tags and avoided duplicate GA snippet insertion per page.
+
+Date: 2026-04-23
+Type: Analytics migration
+Goal: Add GTM container GTM-5FLMLJ6R across live EN/TH pages with minimal risk.
+Done: Replaced hardcoded GA4 gtag snippet with GTM head+noscript snippets across existing tracked HTML surfaces.
+Fix/Note: GA4 page-level gtag code was removed to avoid duplicate firing once GA4 is configured inside GTM.
