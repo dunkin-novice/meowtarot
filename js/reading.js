@@ -405,6 +405,8 @@ function appendReadingInternalLinks(container, cards = []) {
     const li = document.createElement('li');
     const link = document.createElement('a');
     link.href = meaningUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     link.textContent = state.currentLang === 'th' ? `อ่านความหมาย: ${getName(card)}` : `Read meaning: ${getName(card)}`;
     li.appendChild(link);
     cardLinks.appendChild(li);
@@ -494,6 +496,8 @@ function openCardSheet(card) {
     : (state.currentLang === 'th' ? 'ไปยังหน้าความหมายไพ่แบบมาตรฐาน' : 'Open the standard card meaning page.');
 
   cardSheetEls.meaningBtn.href = meaningUrl;
+  cardSheetEls.meaningBtn.target = '_blank';
+  cardSheetEls.meaningBtn.rel = 'noopener noreferrer';
   cardSheetEls.meaningBtn.textContent = meaningLabel;
   cardSheetEls.meaningBtn.classList.toggle('primary', isCanonical);
   cardSheetEls.meaningBtn.classList.toggle('ghost', !isCanonical);
