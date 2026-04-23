@@ -13,6 +13,8 @@ const retryBtn = document.getElementById('retryPoster');
 const backToReading = document.getElementById('backToReading');
 const sharePromptTitleEl = document.getElementById('sharePromptTitle');
 const sharePromptBodyEl = document.getElementById('sharePromptBody');
+const shareCopyPanelEl = document.getElementById('shareCopyPanel');
+const shareCopyLabelEl = document.getElementById('shareCopyLabel');
 
 const SHARE_STORAGE_KEY = 'meowtarot_share_payload';
 const POSTER_DEBUG_STORAGE_KEY = 'POSTER_DEBUG';
@@ -53,6 +55,9 @@ const STRINGS = {
     openImage: 'Opening image…',
     retry: 'Retry',
     retrying: 'Retrying…',
+    shareCopyLabel: 'One-click share text',
+    shareCopyOk: '{platform} text copied',
+    shareCopyFail: 'Copy failed. Please press and copy manually.',
   },
   th: {
     generating: 'กำลังสร้างโปสเตอร์…',
@@ -68,6 +73,9 @@ const STRINGS = {
     openImage: 'กำลังเปิดรูป…',
     retry: 'ลองอีกครั้ง',
     retrying: 'กำลังลองใหม่…',
+    shareCopyLabel: 'ข้อความพร้อมแชร์ในคลิกเดียว',
+    shareCopyOk: 'คัดลอกข้อความสำหรับ {platform} แล้ว',
+    shareCopyFail: 'คัดลอกไม่สำเร็จ โปรดกดค้างเพื่อคัดลอกเอง',
   },
 };
 
@@ -239,14 +247,84 @@ function getShareMessage(payload = {}) {
   return 'My daily reading';
 }
 
+function formatTemplate(template = '', values = {}) {
+  return String(template || '').replace(/\{(\w+)\}/g, (_, key) => values[key] ?? '');
+}
+
+function getShareMode(payload = {}) {
+  return String(payload?.mode || payload?.poster?.mode || 'daily').toLowerCase();
+}
+
+function getPlatformShareText(platform, payload = {}) {
+  const lang = payload?.lang || 'en';
+  const mode = getShareMode(payload);
+  const topicLabel = getTopicLabel(payload);
+  const templates = {
+    en: {
+      tiktok: {
+        daily: 'Today’s tarot vibe ✨ {base}. #MeowTarot #TarotTok',
+        full: 'Did a full tarot spread today 🔮 {base}. #MeowTarot #TarotTok',
+        question: 'Asked tarot about {topic} 💫 {base}. #MeowTarot #TarotTok',
+      },
+      ig_story: {
+        daily: 'Daily pull check-in 🐾 {base}',
+        full: 'Full reading snapshot 📿 {base}',
+        question: 'Q&A reading on {topic} 💭 {base}',
+      },
+      line: {
+        daily: 'My daily tarot: {base}',
+        full: 'My full tarot reading: {base}',
+        question: 'My tarot answer for {topic}: {base}',
+      },
+      x: {
+        daily: 'Daily tarot check: {base} #MeowTarot',
+        full: 'Just finished a full tarot reading: {base} #MeowTarot',
+        question: 'Asked tarot about {topic}: {base} #MeowTarot',
+      },
+    },
+    th: {
+      tiktok: {
+        daily: 'ไพ่วันนี้ของฉัน ✨ {base} #MeowTarot #TarotTok',
+        full: 'เปิดไพ่แบบเต็มวันนี้ 🔮 {base} #MeowTarot #TarotTok',
+        question: 'ถามไพ่เรื่อง{topic} 💫 {base} #MeowTarot #TarotTok',
+      },
+      ig_story: {
+        daily: 'สรุปไพ่ประจำวัน 🐾 {base}',
+        full: 'สรุปการเปิดไพ่แบบเต็ม 📿 {base}',
+        question: 'คำตอบจากไพ่เรื่อง{topic} 💭 {base}',
+      },
+      line: {
+        daily: 'ไพ่ประจำวันของฉัน: {base}',
+        full: 'ผลการเปิดไพ่แบบเต็มของฉัน: {base}',
+        question: 'คำตอบไพ่ของฉันเรื่อง{topic}: {base}',
+      },
+      x: {
+        daily: 'เช็กไพ่รายวัน: {base} #MeowTarot',
+        full: 'เพิ่งเปิดไพ่แบบเต็มเสร็จ: {base} #MeowTarot',
+        question: 'ถามไพ่เรื่อง{topic}: {base} #MeowTarot',
+      },
+    },
+  };
+
+  const base = getShareMessage(payload);
+  const langTemplates = templates[lang] || templates.en;
+  const platformTemplates = langTemplates[platform] || langTemplates.x;
+  const template = platformTemplates[mode] || platformTemplates.daily;
+  const topic = lang === 'th' ? String(topicLabel || '') : String(topicLabel || '').toLowerCase();
+  return formatTemplate(template, { base, topic }).trim();
+}
+
 function applySharePrompt(payload = {}) {
   const lang = payload?.lang || 'en';
+  const strings = getStrings(lang);
   if (sharePromptTitleEl) sharePromptTitleEl.textContent = lang === 'th' ? 'โปสเตอร์พร้อมแชร์แล้ว' : 'Your shareable poster is ready';
   if (sharePromptBodyEl) {
     sharePromptBodyEl.textContent = lang === 'th'
       ? 'บันทึกเก็บไว้หรือโพสต์ตอนที่ข้อความนี้ยังรู้สึกชัดกับใจคุณอยู่'
       : 'Save it for yourself or post it while the message still feels fresh.';
   }
+  if (shareCopyLabelEl) shareCopyLabelEl.textContent = strings.shareCopyLabel;
+  if (shareCopyPanelEl) shareCopyPanelEl.hidden = false;
 }
 
 function base64UrlDecode(input = '') {
@@ -650,6 +728,35 @@ async function handleShare() {
   }
 }
 
+async function handleShareCopyChipClick(event) {
+  const chip = event.target?.closest?.('[data-platform]');
+  if (!chip || !currentPayload) return;
+  const platform = String(chip.dataset.platform || '').trim();
+  if (!platform) return;
+  const strings = getStrings(currentPayload.lang);
+  const platformLabel = chip.textContent?.trim() || platform;
+  const text = getPlatformShareText(platform, currentPayload);
+  const copyWithClipboard = async () => {
+    if (!navigator.clipboard?.writeText) return false;
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+  const copied = await copyWithClipboard();
+  if (copied) {
+    showToast(formatTemplate(strings.shareCopyOk, { platform: platformLabel }));
+    return;
+  }
+
+  const didPrompt = window.prompt('Copy share text:', text);
+  showToast(didPrompt === null ? strings.shareCopyFail : formatTemplate(strings.shareCopyOk, { platform: platformLabel }), {
+    tone: didPrompt === null ? 'warning' : 'info',
+  });
+}
+
 function applyActionFocus() {
   const params = new URLSearchParams(window.location.search);
   const action = params.get('action');
@@ -717,6 +824,7 @@ async function init() {
   applyActionFocus();
 
   shareBtn.addEventListener('click', handleShare);
+  shareCopyPanelEl?.addEventListener('click', handleShareCopyChipClick);
   retryBtn?.addEventListener('click', async () => {
     retryBtn.disabled = true;
     retryBtn.textContent = strings.retrying;
