@@ -11,6 +11,7 @@ import { computePhase } from './phase.js';
 import { getUserProgress } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
+import { trackProfileRevisit } from './analytics.js';
 
 const state = {
   currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
@@ -433,6 +434,7 @@ function init() {
 
   getCurrentUser().then((user) => {
     state.user = user || null;
+    trackProfileRevisit({ locale: state.currentLang, profileId: state.user?.id || 'guest' });
     renderAll();
   });
 }

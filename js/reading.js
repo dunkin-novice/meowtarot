@@ -42,6 +42,7 @@ import { getCanonicalCardUrl } from './canonical-card-routes.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
 import { saveReadingRecord } from './reading-history.js';
+import { trackReadingComplete, trackReadingStart, trackShareClicked } from './analytics.js';
 
 const params = new URLSearchParams(window.location.search);
 const initialUrlState = parseReadingStateFromUrl(window.location.search);
@@ -3075,8 +3076,16 @@ function renderReading(dict) {
     return;
   }
 
+  trackReadingStart({
+    locale: state.currentLang,
+    mode: state.mode,
+    topic: state.topic,
+    cards: state.selectedIds,
+  });
+
   if (state.mode === 'daily') {
     renderDaily(cards, dict);
+    trackReadingComplete({ locale: state.currentLang, mode: state.mode, topic: state.topic, cards: state.selectedIds });
     return;
   }
 
@@ -3084,10 +3093,12 @@ function renderReading(dict) {
 
   if (state.mode === 'question') {
     renderQuestion(cards, dict);
+    trackReadingComplete({ locale: state.currentLang, mode: state.mode, topic: state.topic, cards: state.selectedIds });
     return;
   }
 
   renderFull(cards, dict);
+  trackReadingComplete({ locale: state.currentLang, mode: state.mode, topic: state.topic, cards: state.selectedIds });
 }
 
 function base64UrlEncode(input) {
@@ -3374,6 +3385,7 @@ async function copyTextWithFallback(text) {
 }
 
 async function openSharePage({ action } = {}) {
+  trackShareClicked({ locale: state.currentLang, mode: state.mode, topic: state.topic, shareChannel: action || 'share_page' });
   setShareButtonLoading(true);
   try {
     await waitForShareReady();
@@ -3524,6 +3536,7 @@ async function saveImage() {
 }
 
 async function shareReadingLink() {
+  trackShareClicked({ locale: state.currentLang, mode: state.mode, topic: state.topic, shareChannel: 'copy_link' });
   try {
     const copied = await copyTextWithFallback(getCanonicalReadingUrl());
     if (copied) {

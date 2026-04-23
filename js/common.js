@@ -1,5 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
+import { trackLocaleSwitched } from './analytics.js';
 
 // Shared translations across all pages.
 export const translations = {
@@ -599,6 +600,7 @@ export function initShell(state, afterApply, activePage, options = {}) {
   navbarCleanup?.();
   navbarCleanup = renderNavbar(document.getElementById('site-header'), (lang) => {
     if (lang === state.currentLang) return;
+    trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: lang });
     localStorage.setItem(LANG_STORAGE_KEY, lang);
     if (typeof options?.onLangToggle === 'function') {
       options.onLangToggle(lang);

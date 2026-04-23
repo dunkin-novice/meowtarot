@@ -8,6 +8,7 @@ import {
   normalizeId,
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
+import { trackTopicSelected } from './analytics.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -1051,6 +1052,7 @@ async function renderQuestion(dict = translations[state.currentLang] || translat
 
     button.addEventListener('click', () => {
       state.questionTopic = topic.key;
+      trackTopicSelected({ locale: state.currentLang, mode: 'question', topic: topic.key });
       const destination = localizePath('/question-draw.html', state.currentLang);
       const params = new URLSearchParams({ topic: topic.key });
       window.location.href = `${destination}?${params.toString()}`;
