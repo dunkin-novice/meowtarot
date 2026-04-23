@@ -180,3 +180,9 @@ Goal: Remove legacy `/overall.html` crawl targets while keeping Full Reading rou
 Done: Removed EN/TH `overall.html` URLs from sitemap, added hard 301 redirects to EN/TH `full.html`, and added noindex headers/meta on legacy alias pages.
 Fix/Note: Preserved existing Full Reading behavior and legacy alias forwarding for users with old links.
 
+
+Date: 2026-04-23
+Type: Analytics install
+Goal: Add GA4 sitewide tracking with measurement ID G-08TSR2R1ZD.
+Done: Inserted the provided Google tag snippet at the top of `<head>` across live EN/TH pages, reading flows, profile/share, and card meaning pages.
+Fix/Note: Preserved existing SEO/meta/schema tags and avoided duplicate GA snippet insertion per page.
