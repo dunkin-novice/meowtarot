@@ -192,3 +192,9 @@ Type: Analytics migration
 Goal: Add GTM container GTM-5FLMLJ6R across live EN/TH pages with minimal risk.
 Done: Replaced hardcoded GA4 gtag snippet with GTM head+noscript snippets across existing tracked HTML surfaces.
 Fix/Note: GA4 page-level gtag code was removed to avoid duplicate firing once GA4 is configured inside GTM.
+
+Date: 2026-04-23
+Type: UX fix
+Goal: Keep reading-result users from losing their session before sharing and simplify poster-share actions.
+Done: Opened reading-to-card-meaning exits in a new tab with safe rel attrs and removed the top poster share shortcut chip row.
+Fix/Note: Preserved EN/TH reading behavior and kept core poster preview + primary share flow unchanged.
