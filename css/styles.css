@@ -7305,3 +7305,131 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
     padding: 16px;
   }
 }
+
+.email-capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  padding: max(14px, env(safe-area-inset-top, 0px)) 14px max(14px, env(safe-area-inset-bottom, 0px));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.email-capture-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.email-capture-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 12, 32, 0.58);
+}
+
+.email-capture-modal {
+  position: relative;
+  width: min(100%, 460px);
+  border-radius: 20px;
+  border: 1px solid rgba(198, 183, 255, 0.45);
+  background: linear-gradient(180deg, rgba(13, 22, 56, 0.98) 0%, rgba(9, 16, 44, 0.98) 100%);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  padding: 22px;
+  transform: translateY(18px);
+  transition: transform 0.25s ease;
+}
+
+.email-capture-overlay.is-open .email-capture-modal {
+  transform: translateY(0);
+}
+
+.email-capture-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #f6f3ff;
+  cursor: pointer;
+}
+
+.email-capture-kicker {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.84rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.email-capture-title {
+  margin: 10px 0 8px;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.35rem, 4vw, 1.7rem);
+}
+
+.email-capture-subtitle {
+  margin: 0 0 14px;
+  color: rgba(241, 235, 255, 0.84);
+  line-height: 1.45;
+}
+
+.email-capture-form {
+  display: grid;
+  gap: 8px;
+}
+
+.email-capture-label {
+  font-size: 0.88rem;
+  color: rgba(250, 246, 255, 0.9);
+}
+
+.email-capture-input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(198, 183, 255, 0.5);
+  background: rgba(12, 20, 52, 0.95);
+  color: #fff;
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.email-capture-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242, 219, 166, 0.2);
+}
+
+.email-capture-error {
+  min-height: 1.1em;
+  margin: 0;
+  font-size: 0.84rem;
+  color: #ffb5ca;
+}
+
+.email-capture-success {
+  min-height: 1.2em;
+  margin: 10px 0 0;
+  color: #c6f8dd;
+  line-height: 1.4;
+}
+
+.email-capture-submit,
+.email-capture-later {
+  width: 100%;
+}
+
+.email-capture-later {
+  margin-top: 10px;
+}
+
+@media (max-width: 560px) {
+  .email-capture-modal {
+    padding: 18px;
+    border-radius: 16px;
+  }
+}

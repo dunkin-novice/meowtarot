@@ -9,6 +9,7 @@ import {
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected } from './analytics.js';
+import { initEmailCapture } from './email-capture.js';
 
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
@@ -1116,6 +1117,10 @@ async function renderPage(dict) {
 
 function init() {
   const page = document.body.dataset.page;
+  const emailCaptureEnabledPages = new Set(['home', 'daily', 'question', 'question-draw', 'full', 'overall']);
+  if (emailCaptureEnabledPages.has(page)) {
+    initEmailCapture({ showDelayMs: 45_000 });
+  }
   const navPage = page === 'question-draw' ? 'question' : page;
   initShell(state, (dict) => { void renderPage(dict); }, navPage);
 
