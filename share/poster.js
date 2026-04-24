@@ -1098,6 +1098,23 @@ function strokeRoundedRect(ctx, x, y, width, height, radius, strokeStyle, lineWi
   ctx.restore();
 }
 
+function drawFallbackCardArt(ctx, x, y, width, height, { radius = 16, label = 'MEOW TAROT' } = {}) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
+  gradient.addColorStop(0, 'rgba(255, 244, 214, 0.18)');
+  gradient.addColorStop(1, 'rgba(100, 126, 210, 0.24)');
+  fillRoundedRect(ctx, x, y, width, height, safeRadius, gradient);
+  strokeRoundedRect(ctx, x, y, width, height, safeRadius, 'rgba(255,255,255,0.26)', 1.5);
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.font = `600 ${Math.max(10, Math.round(Math.min(width, height) * 0.072))}px "Space Grotesk", sans-serif`;
+  ctx.fillText(label, x + width / 2, y + height / 2);
+  ctx.restore();
+}
+
 function resolveCelticCrossPresetLayout(preset = 'story', width = 1080, height = 1920) {
   const layouts = {
     story: {
@@ -1874,6 +1891,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         drawCardImage(img, layout.x, layout.y, Boolean(layout.rotated));
       } catch (error) {
         console.warn('[Poster] full card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
+        drawFallbackCardArt(ctx, layout.x - cardW / 2, layout.y - cardH / 2, cardW, cardH, { radius: 18, label: 'MEOW TAROT' });
       }
 
       drawCardLabelBlock({
@@ -1986,6 +2004,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.drawImage(img, x, y, cardW, cardH);
       } catch (error) {
         console.warn('[Poster] question card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
+        drawFallbackCardArt(ctx, x, y, cardW, cardH, { radius: 16, label: 'MEOW TAROT' });
       }
 
       const labelPillW = Math.min(228, cardW - 24);
@@ -2448,6 +2467,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.clip();
         ctx.drawImage(cardImg, cardX, cardY, cardWidth, cardHeight);
         ctx.restore();
+      } else {
+        drawFallbackCardArt(ctx, cardX, cardY, cardWidth, cardHeight, { radius: cardRadius, label: 'MEOW TAROT' });
       }
       posterCiLog('draw_card', {
         executed: Boolean(cardImg),
@@ -2572,6 +2593,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       } catch (error) {
         emitLegacyCardProbe({ ok: false, url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, error: error?.message || String(error) });
         console.warn('[Poster] card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
+        drawFallbackCardArt(ctx, x, y, cardWidth, cardHeight, { radius: 18, label: 'MEOW TAROT' });
       }
     }
   }

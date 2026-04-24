@@ -47,10 +47,12 @@ function buildCdnFallbacks(src) {
   const path = stripLeadingSlash(url.pathname);
   if (!path) return [];
 
+  const sameOriginCandidate = joinPath(window.location.origin, path);
   const cdnBases = getConfiguredCdnBases();
-  return cdnBases
+  return [sameOriginCandidate, ...cdnBases
     .filter(Boolean)
-    .map((base) => joinPath(base, path));
+    .map((base) => joinPath(base, path))]
+    .filter(Boolean);
 }
 
 function shouldTryPngFallback() {
