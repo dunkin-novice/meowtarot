@@ -204,3 +204,9 @@ Type: Homepage visual polish
 Goal: Pilot a premium/magical visual direction on homepage only without changing reading flows.
 Done: Refined homepage-only atmosphere, hero treatment, CTA styling, and reading-path card depth/hover states using existing CSS token palette.
 Fix/Note: No route, JS, or reading-engine logic changes; mobile card grid and homepage content structure preserved.
+
+Date: 2026-04-24
+Type: Mobile layout fix
+Goal: Remove homepage overflow/cropping on small viewports while keeping EN/TH home visuals aligned.
+Done: Tuned home-only mobile grid/title/CTA sizing and spacing, plus a narrow-width single-column fallback for cards/actions.
+Fix/Note: Scoped to `body[data-page="home"]` CSS so reading/card/quiz layouts remain unchanged.
