@@ -85,6 +85,13 @@ function injectFaqSection(html, lang, card) {
   return html.replace(/\n\s*<section class="section-block" id="microCta">/, `${section}\n\n      <section class="section-block" id="microCta">`);
 }
 
+function injectGrowthCtaSection(html, lang) {
+  if (html.includes('id="growthCtaSection"')) return html;
+  const isThai = lang === 'th';
+  const section = `\n\n      <section class="section-block card-meaning-footer-nav" id="growthCtaSection">\n        <h2>${isThai ? 'ดูต่อจากหน้านี้' : 'Discover more from here'}</h2>\n        <div class="reading-cta-buttons" aria-label="${isThai ? 'ลิงก์แนะนำเพิ่มเติม' : 'Additional discovery links'}">\n          <a href="${isThai ? '/th/daily-card/' : '/daily-card/'}" class="footer-nav-pill">${isThai ? 'ดูไพ่ประจำวันนี้' : 'Discover Today’s Card'}</a>\n          <a href="${isThai ? '/th/quiz/tarot-card-personality/' : '/quiz/tarot-card-personality/'}" class="footer-nav-pill">${isThai ? 'ทำแบบทดสอบไพ่บุคลิกภาพ' : 'Take the Tarot Personality Quiz'}</a>\n        </div>\n      </section>`;
+  return html.replace(/\n\s*<footer class="section-block card-meaning-footer-nav">/, `${section}\n\n      <footer class="section-block card-meaning-footer-nav">`);
+}
+
 async function updateFile(filePath, card, lang) {
   let html = await fs.readFile(filePath, 'utf8');
   const isThai = lang === 'th';
@@ -100,6 +107,7 @@ async function updateFile(filePath, card, lang) {
   html = replaceById(html, 'lightKeywords', card.keywords_light || '');
   html = replaceById(html, 'shadowKeywords', card.keywords_shadow || '');
   html = injectFaqSection(html, lang, card);
+  html = injectGrowthCtaSection(html, lang);
 
   if (isThai) {
     const thaiDisplayName = card.alias_th || card.name_th || card.card_name_en || 'ไพ่ทาโรต์';

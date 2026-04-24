@@ -7905,6 +7905,6 @@ body[data-page='home'] .reading-path-card:focus-visible {
 
 @media (min-width: 720px) {
   .quiz-result-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   }
 }
