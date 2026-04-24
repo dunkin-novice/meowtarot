@@ -14,7 +14,7 @@ const SUIT_COPY = {
   major: {
     name: 'Major Arcana',
     slug: 'major',
-    path: '/tarot-card-meanings/major/',
+    path: '/tarot-card-meanings/major.html',
     title: 'Major Arcana Tarot Card Meanings',
     intro:
       'The Major Arcana follows the Fool’s journey through every life milestone. Each archetype reveals a turning point—awakening, challenge, or integration—that ripples across every area of your life.',
@@ -65,7 +65,7 @@ const SUIT_COPY = {
   wands: {
     name: 'Wands',
     slug: 'wands',
-    path: '/tarot-card-meanings/wands/',
+    path: '/tarot-card-meanings/wands.html',
     title: 'Wands Tarot Card Meanings',
     intro:
       'Wands is the fire suit—sparks of action, creativity, and confidence. It tracks how you start, commit to, and protect your momentum.',
@@ -112,7 +112,7 @@ const SUIT_COPY = {
   cups: {
     name: 'Cups',
     slug: 'cups',
-    path: '/tarot-card-meanings/cups/',
+    path: '/tarot-card-meanings/cups.html',
     title: 'Cups Tarot Card Meanings',
     intro:
       'Cups is the water suit of feelings, intuition, and relationships. It reveals how you give, receive, and refill emotional energy.',
@@ -159,7 +159,7 @@ const SUIT_COPY = {
   swords: {
     name: 'Swords',
     slug: 'swords',
-    path: '/tarot-card-meanings/swords/',
+    path: '/tarot-card-meanings/swords.html',
     title: 'Swords Tarot Card Meanings',
     intro:
       'Swords is the air suit of mindset, truth, and decisions. It shows how thoughts cut through fog—or create it.',
@@ -206,7 +206,7 @@ const SUIT_COPY = {
   pentacles: {
     name: 'Pentacles',
     slug: 'pentacles',
-    path: '/tarot-card-meanings/pentacles/',
+    path: '/tarot-card-meanings/pentacles.html',
     title: 'Pentacles Tarot Card Meanings',
     intro:
       'Pentacles is the earth suit of money, body, and sustainable growth. It shows how you build resources and security over time.',
