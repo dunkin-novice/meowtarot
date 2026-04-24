@@ -7732,3 +7732,73 @@ body[data-page='home'] .reading-path-card:focus-visible {
     border-radius: 16px;
   }
 }
+
+.daily-card-page {
+  display: flex;
+  justify-content: center;
+  padding: calc(var(--nav-height) + 36px) 20px 64px;
+}
+
+.daily-card-hero {
+  width: min(760px, 100%);
+  text-align: center;
+}
+
+.daily-card-hero h1 {
+  margin: 8px 0 10px;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.8vw, 2.8rem);
+}
+
+.daily-card-intro {
+  margin: 0 auto 24px;
+  max-width: 62ch;
+  color: var(--color-text-muted);
+}
+
+.daily-card-feature {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.daily-card-date {
+  margin: 0 0 12px;
+  color: var(--color-text-muted-soft);
+}
+
+.daily-card-image {
+  width: min(220px, 60vw);
+  height: auto;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.daily-card-name {
+  margin: 16px 0 8px;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+}
+
+.daily-card-orientation {
+  margin: 0 0 10px;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.daily-card-meaning {
+  margin: 0 auto;
+  max-width: 60ch;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.daily-card-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
