@@ -1,3 +1,5 @@
+import { pathHasThaiPrefix } from './common.js';
+
 const STORAGE_KEYS = Object.freeze({
   dismissedUntil: 'meowtarot_email_capture_dismissed_until',
   signedUp: 'meowtarot_email_capture_signed_up',
@@ -13,6 +15,23 @@ const SESSION_KEYS = Object.freeze({
 const DISMISS_FOR_DAYS = 7;
 const DEFAULT_SHOW_DELAY_MS = 45_000;
 const READING_TRIGGER_DELAY_MS = 1_200;
+
+const COPY = Object.freeze({
+  en: Object.freeze({
+    title: 'Get your free Cat Tarot Starter Guide',
+    subtitle: 'A gentle beginner guide to tarot meanings, daily card pulls, and cute cat-themed reflection prompts.',
+    cta: 'Send me the guide',
+    secondary: 'Maybe later',
+    success: 'Thank you — your guide is reserved. We’ll send it when the guide is ready.',
+  }),
+  th: Object.freeze({
+    title: 'รับคู่มือไพ่แมวฟรี',
+    subtitle: 'คู่มือเริ่มต้นสำหรับอ่านความหมายไพ่ ดึงไพ่ประจำวัน และใช้ไพ่แมวเป็นพื้นที่ทบทวนใจแบบนุ่มนวล',
+    cta: 'ส่งคู่มือให้ฉัน',
+    secondary: 'ไว้ทีหลัง',
+    success: 'ขอบคุณนะ คู่มือของคุณถูกจองไว้แล้ว เราจะส่งให้เมื่อพร้อม',
+  }),
+});
 
 function safeGet(storage, key) {
   try {
@@ -71,7 +90,12 @@ function validateEmail(email = '') {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
 }
 
-function buildPopupMarkup() {
+function getCopy(lang = 'en') {
+  return lang === 'th' ? COPY.th : COPY.en;
+}
+
+function buildPopupMarkup(lang = 'en') {
+  const copy = getCopy(lang);
   const overlay = document.createElement('div');
   overlay.className = 'email-capture-overlay';
   overlay.setAttribute('aria-hidden', 'true');
@@ -81,16 +105,16 @@ function buildPopupMarkup() {
     <section class="email-capture-modal" role="dialog" aria-modal="true" aria-labelledby="email-capture-title">
       <button type="button" class="email-capture-close" aria-label="Close email signup" data-email-capture-close="close">✕</button>
       <p class="email-capture-kicker">Free guide</p>
-      <h2 id="email-capture-title" class="email-capture-title">Get your free Cat Tarot Starter Guide</h2>
-      <p class="email-capture-subtitle">A gentle beginner guide to tarot meanings, daily card pulls, and cute cat-themed reflection prompts.</p>
+      <h2 id="email-capture-title" class="email-capture-title">${copy.title}</h2>
+      <p class="email-capture-subtitle">${copy.subtitle}</p>
       <form class="email-capture-form" novalidate>
         <label class="email-capture-label" for="email-capture-input">Email</label>
         <input id="email-capture-input" class="email-capture-input" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required />
         <p class="email-capture-error" aria-live="polite"></p>
-        <button type="submit" class="primary email-capture-submit">Send me the guide</button>
+        <button type="submit" class="primary email-capture-submit">${copy.cta}</button>
       </form>
       <p class="email-capture-success" aria-live="polite"></p>
-      <button type="button" class="ghost email-capture-later" data-email-capture-close="later">Maybe later</button>
+      <button type="button" class="ghost email-capture-later" data-email-capture-close="later">${copy.secondary}</button>
     </section>
   `;
 
@@ -104,6 +128,8 @@ export function initEmailCapture(options = {}) {
 
   const showDelayMs = Number.isFinite(options.showDelayMs) ? options.showDelayMs : DEFAULT_SHOW_DELAY_MS;
   const readingDelayMs = Number.isFinite(options.readingDelayMs) ? options.readingDelayMs : READING_TRIGGER_DELAY_MS;
+  const currentLang = pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en';
+  const copy = getCopy(currentLang);
 
   let isOpen = false;
   let hasRendered = false;
@@ -111,7 +137,7 @@ export function initEmailCapture(options = {}) {
 
   function render() {
     if (hasRendered) return root;
-    root = buildPopupMarkup();
+    root = buildPopupMarkup(currentLang);
     document.body.appendChild(root);
 
     const form = root.querySelector('.email-capture-form');
@@ -151,7 +177,7 @@ export function initEmailCapture(options = {}) {
       safeSet(window.localStorage, STORAGE_KEYS.updatedAt, new Date().toISOString());
       safeRemove(window.localStorage, STORAGE_KEYS.dismissedUntil);
 
-      successEl.textContent = 'Thank you — your guide is reserved. We’ll send it when the guide is ready.';
+      successEl.textContent = copy.success;
       form.setAttribute('hidden', 'hidden');
       const laterBtn = root.querySelector('.email-capture-later');
       if (laterBtn) laterBtn.setAttribute('hidden', 'hidden');
