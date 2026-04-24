@@ -5882,6 +5882,11 @@ body[data-page='daily'] #daily-board .card-back {
     gap: 10px;
   }
 
+  body[data-page='daily'] .board-actions--daily {
+    position: relative;
+    z-index: 8;
+  }
+
   body[data-page='daily'] .board-header--daily {
     gap: 3px;
     margin-bottom: 0;
@@ -5918,12 +5923,18 @@ body[data-page='daily'] #daily-board .card-back {
     width: min(100%, 274px);
     min-height: 402px;
     margin-inline: auto;
-    padding-bottom: 12px;
+    padding-bottom: 14px;
     grid-template-columns: repeat(2, 120px);
     grid-template-rows: repeat(3, auto);
     justify-content: center;
     align-content: start;
     gap: clamp(8px, 1.8vh, 12px);
+    overflow: clip;
+  }
+
+  body[data-page='daily'] #daily-board .card-slot.is-selected {
+    transform: translateY(-6px) scale(1.03);
+    transform-origin: 50% 18%;
   }
 
   body[data-page='daily'] #daily-board .card-slot {
@@ -5984,9 +5995,9 @@ body[data-page='daily'] #daily-board .card-back {
   }
 
   body[data-page='daily'] .card-board.card-board--daily {
-    --daily-mobile-board-max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 214px);
+    --daily-mobile-board-max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 236px);
     width: min(100%, 272px);
-    max-height: clamp(320px, var(--daily-mobile-board-max-height), 428px);
+    max-height: clamp(304px, var(--daily-mobile-board-max-height), 420px);
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6010,6 +6021,10 @@ body[data-page='daily'] #daily-board .card-back {
 
   body[data-page='daily'] #daily-board .card-slot:not(.is-selected) {
     transform: translateY(0) rotate(0deg) scale(1);
+  }
+
+  body[data-page='daily'] #daily-board .card-slot.is-selected {
+    transform: translateY(-4px) scale(1.02);
   }
 }
 
@@ -6646,6 +6661,9 @@ body[data-page='home'] .home-page {
 
 .home-hero-actions--subtle {
   margin-top: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .home-primary-cta {
@@ -6656,6 +6674,7 @@ body[data-page='home'] .home-page {
 .home-secondary-cta {
   min-width: 190px;
   justify-content: center;
+  text-align: center;
   border-color: rgba(242, 219, 166, 0.44);
   background: linear-gradient(140deg, rgba(51, 39, 98, 0.84), rgba(20, 22, 60, 0.92));
   color: #fff3cf;
@@ -6668,9 +6687,37 @@ body[data-page='home'] .home-page {
   background: linear-gradient(140deg, rgba(65, 47, 121, 0.95), rgba(30, 27, 78, 0.96));
 }
 
+.home-secondary-cta:focus-visible,
+body[data-page='home'] .reading-path-card:focus-visible {
+  outline: 2px solid rgba(242, 219, 166, 0.82);
+  outline-offset: 2px;
+}
+
 .home-hero-note {
   margin: 18px 0 0;
   font-size: 0.96rem;
+}
+
+html[lang='th'] body[data-page='home'] .home-hero-copy--centered .home-hero-title {
+  font-family: 'Noto Sans Thai', 'Sarabun', 'Prompt', 'Inter', system-ui, sans-serif;
+  line-height: 1.14;
+  letter-spacing: 0;
+  max-width: 13ch;
+}
+
+html[lang='th'] body[data-page='home'] .reading-path-card__label {
+  font-family: 'Noto Sans Thai', 'Sarabun', 'Prompt', 'Inter', system-ui, sans-serif;
+  line-height: 1.28;
+  letter-spacing: 0;
+}
+
+html[lang='th'] body[data-page='home'] .reading-path-card__meta {
+  line-height: 1.44;
+  letter-spacing: 0;
+}
+
+html[lang='th'] body[data-page='home'] .home-secondary-cta {
+  min-width: 210px;
 }
 
 .home-hero-aside {
@@ -6753,15 +6800,18 @@ body[data-page='home'] .reading-path-card {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+  align-items: stretch;
 }
 
 .reading-path-card--chooser {
   display: grid;
+  grid-template-rows: auto minmax(2.4em, auto) minmax(2.9em, auto);
   gap: 14px;
-  align-content: center;
+  align-content: start;
   justify-items: center;
   text-align: center;
   padding: 18px;
+  height: 100%;
 }
 
 body[data-page='home'] .reading-path-card--chooser {
@@ -7296,7 +7346,7 @@ body[data-page='home'] .reading-path-card:focus-visible {
   }
 
   body[data-page='home'] .reading-path-card--chooser {
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto minmax(2.2em, auto) minmax(2.6em, auto);
     align-content: start;
     gap: 5px;
     padding: 9px 7px;
