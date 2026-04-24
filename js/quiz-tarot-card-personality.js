@@ -21,6 +21,7 @@ const QUIZ_COPY = {
     resultTitle: 'You are {cardName}',
     resultLead: 'Your personality card',
     dailyCta: 'Get Your Daily Reading',
+    meaningsCta: 'Explore Card Meanings',
     shareCta: 'Share My Result',
     shareText: 'I got {cardName} in the MeowTarot personality quiz. Which tarot card are you?',
     shareSuccess: 'Share link copied to clipboard!',
@@ -35,6 +36,7 @@ const QUIZ_COPY = {
     resultTitle: 'คุณคือ {cardName}',
     resultLead: 'ไพ่ประจำบุคลิกของคุณ',
     dailyCta: 'ดูดวงไพ่ประจำวัน',
+    meaningsCta: 'เปิดคลังความหมายไพ่',
     shareCta: 'แชร์ผลลัพธ์ของฉัน',
     shareText: 'ฉันได้ไพ่ {cardName} จากแบบทดสอบ MeowTarot แล้วคุณได้ใบไหน?',
     shareSuccess: 'คัดลอกลิงก์สำหรับแชร์แล้ว!',
@@ -268,6 +270,7 @@ function renderResult() {
   const resultSummary = document.getElementById('quiz-result-summary');
   const resultImage = document.getElementById('quiz-result-image');
   const dailyCta = document.getElementById('quiz-daily-cta');
+  const meaningsCta = document.getElementById('quiz-meanings-cta');
   const shareCta = document.getElementById('quiz-share-cta');
   const restartCta = document.getElementById('quiz-restart-cta');
 
@@ -278,7 +281,7 @@ function renderResult() {
     ? card?.alias_th || card?.card_name_en || 'Tarot Card'
     : card?.card_name_en || 'Tarot Card';
 
-  if (!quizPanel || !resultPanel || !resultTitle || !resultSummary || !resultImage || !dailyCta || !shareCta || !restartCta) {
+  if (!quizPanel || !resultPanel || !resultTitle || !resultSummary || !resultImage || !dailyCta || !meaningsCta || !shareCta || !restartCta) {
     return;
   }
 
@@ -292,6 +295,8 @@ function renderResult() {
 
   dailyCta.textContent = t('dailyCta');
   dailyCta.href = localizePath('/daily.html', state.currentLang);
+  meaningsCta.textContent = t('meaningsCta');
+  meaningsCta.href = localizePath('/tarot-card-meanings/', state.currentLang);
 
   shareCta.textContent = t('shareCta');
   shareCta.onclick = () => {
