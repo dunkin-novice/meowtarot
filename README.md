@@ -198,3 +198,9 @@ Type: UX fix
 Goal: Keep reading-result users from losing their session before sharing and simplify poster-share actions.
 Done: Opened reading-to-card-meaning exits in a new tab with safe rel attrs and removed the top poster share shortcut chip row.
 Fix/Note: Preserved EN/TH reading behavior and kept core poster preview + primary share flow unchanged.
+
+Date: 2026-04-24
+Type: Homepage visual polish
+Goal: Pilot a premium/magical visual direction on homepage only without changing reading flows.
+Done: Refined homepage-only atmosphere, hero treatment, CTA styling, and reading-path card depth/hover states using existing CSS token palette.
+Fix/Note: No route, JS, or reading-engine logic changes; mobile card grid and homepage content structure preserved.
