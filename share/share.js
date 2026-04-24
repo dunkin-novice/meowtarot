@@ -1,5 +1,6 @@
 import { buildPoster } from './poster.js';
 import { normalizePayload } from './normalize-payload.js';
+import { getCanonicalCardPath, normalizeCanonicalSlug } from '../js/canonical-card-routes.js';
 
 const previewEl = document.getElementById('posterPreview');
 const loadingEl = document.getElementById('posterLoading');
@@ -231,6 +232,29 @@ function getTopicLabel(payload = {}) {
     th: { love: 'ความรัก', career: 'การงาน', finance: 'การเงิน', generic: 'คำถามทั่วไป' },
   };
   return labels[lang]?.[topic] || labels[lang]?.generic || labels.en.generic;
+}
+
+
+function resolveCardMeaningPath(payload = {}) {
+  const primaryCard = Array.isArray(payload?.cards) ? payload.cards[0] : null;
+  if (!primaryCard || typeof primaryCard !== 'object') return null;
+
+  const rawSlug = primaryCard.seo_slug_en
+    || primaryCard.slug
+    || primaryCard.id
+    || primaryCard.card_id
+    || primaryCard.cardId
+    || primaryCard.image_id
+    || primaryCard.name_en
+    || primaryCard.card_name_en
+    || primaryCard.name
+    || '';
+
+  const slug = normalizeCanonicalSlug(rawSlug);
+  if (!slug) return null;
+
+  const lang = payload?.lang === 'th' ? 'th' : 'en';
+  return getCanonicalCardPath(slug, lang) || `${lang === 'th' ? '/th' : ''}/cards/${slug}/`;
 }
 
 function getShareMessage(payload = {}) {
@@ -788,6 +812,7 @@ async function init() {
     showToast(strings.missing, { tone: 'error', persist: true });
     if (backToReading) {
       backToReading.hidden = false;
+      backToReading.textContent = lang === 'th' ? 'กลับหน้าผลการอ่าน' : 'Back to reading';
       backToReading.href = '/reading.html';
     }
     setLoading(false, strings);
@@ -799,8 +824,10 @@ async function init() {
   document.title = `${currentPayload.title || 'MeowTarot'} – Share`;
   applySharePrompt(currentPayload);
   if (backToReading) {
-    backToReading.hidden = true;
-    backToReading.href = currentPayload.canonicalUrl || '/reading.html';
+    const cardMeaningPath = resolveCardMeaningPath(currentPayload);
+    backToReading.hidden = false;
+    backToReading.textContent = lang === 'th' ? 'อ่านความหมายไพ่' : 'Read Card Meaning';
+    backToReading.href = cardMeaningPath || currentPayload.canonicalUrl || '/reading.html';
   }
   if (!isIOS()) {
     hintEl.hidden = true;
