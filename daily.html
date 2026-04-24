@@ -45,19 +45,18 @@
 
   <main class="page-shell board-page">
     <section class="board-shell">
-      <div class="board-header">
+      <div class="board-header board-header--daily">
         <p class="eyebrow" data-i18n="dailyTitle"></p>
-      </div>
-
-      <div class="board-topbar">
-        <div class="board-controls">
-          <button class="primary ritual-cta action-btn" type="button" id="daily-deal-shuffle">Deal</button>
-          <button class="primary continue-btn action-btn" type="button" id="daily-continue" data-i18n="continue" disabled></button>
-        </div>
+        <p class="board-helper">Choose 1 card for today</p>
         <span class="selection-counter" id="daily-counter">0/1</span>
       </div>
 
       <div class="card-board card-board--daily" id="daily-board" aria-live="polite"></div>
+
+      <div class="board-actions board-actions--daily board-actions--center">
+        <button class="primary continue-btn action-btn" type="button" id="daily-continue" data-i18n="continue" disabled></button>
+        <button class="ritual-cta action-btn" type="button" id="daily-deal-shuffle">Deal</button>
+      </div>
     </section>
   </main>
 

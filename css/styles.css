@@ -5270,13 +5270,36 @@ body[data-page='daily'] .board-topbar {
   gap: 10px;
 }
 
-body[data-page='daily'] .board-controls {
+body[data-page='daily'] .board-header--daily {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+body[data-page='daily'] .board-header--daily .eyebrow {
+  margin: 0;
+  letter-spacing: 0.08em;
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  color: rgba(247, 242, 255, 0.98);
+}
+
+body[data-page='daily'] .board-header--daily .board-helper {
+  margin: 0;
+  font-size: clamp(0.8rem, 1.7vw, 0.92rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(226, 216, 245, 0.84);
+}
+
+body[data-page='daily'] .board-actions--daily {
   justify-content: center;
   width: min(100%, 440px);
+  margin-inline: auto;
   gap: 12px;
 }
 
-body[data-page='daily'] .board-controls .action-btn {
+body[data-page='daily'] .board-actions--daily .action-btn {
   min-width: 0;
   min-height: 46px;
   padding: 10px 18px;
@@ -5286,9 +5309,16 @@ body[data-page='daily'] .board-controls .action-btn {
   flex: 1 1 0;
 }
 
-body[data-page='daily'] .board-controls .ritual-cta {
+body[data-page='daily'] .board-actions--daily .ritual-cta {
   line-height: 1;
   gap: 0;
+}
+
+body[data-page='daily'] #daily-deal-shuffle {
+  color: rgba(242, 236, 252, 0.94);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(224, 207, 246, 0.26);
+  box-shadow: inset 0 0 0 1px rgba(244, 231, 255, 0.07);
 }
 
 body[data-page='daily'] #daily-continue {
@@ -5823,38 +5853,40 @@ body[data-page='daily'] #daily-board .card-back {
     height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 16px);
     padding: 12px;
     display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 8px;
-  }
-
-  body[data-page='daily'] .board-header {
-    margin-bottom: 0;
-  }
-
-  body[data-page='daily'] .board-topbar {
-    margin-bottom: 0;
-    gap: 11px;
-  }
-
-  body[data-page='daily'] .board-controls {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: nowrap;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 10px;
   }
 
-  body[data-page='daily'] .board-controls .ritual-cta {
-    flex: 1 1 0;
+  body[data-page='daily'] .board-header--daily {
+    gap: 3px;
+    margin-bottom: 0;
+  }
+
+  body[data-page='daily'] .board-header--daily .eyebrow {
+    font-size: clamp(1.7rem, 7vw, 2rem);
+    letter-spacing: 0.04em;
+  }
+
+  body[data-page='daily'] .board-header--daily .board-helper {
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
   }
 
   body[data-page='daily'] .selection-counter {
-    margin-top: 3px;
+    margin-top: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+    color: rgba(242, 235, 253, 0.88);
+    font-weight: 600;
   }
 
   body[data-page='daily'] .card-board {
     margin: 0;
     min-height: 0;
-    padding: 10px;
+    padding: 6px 10px 10px;
   }
 
   body[data-page='daily'] .card-board.card-board--daily {
@@ -5865,7 +5897,7 @@ body[data-page='daily'] #daily-board .card-back {
     grid-template-columns: repeat(2, 120px);
     grid-template-rows: repeat(3, auto);
     justify-content: center;
-    align-content: center;
+    align-content: start;
     gap: clamp(8px, 1.8vh, 12px);
   }
 
@@ -5875,8 +5907,26 @@ body[data-page='daily'] #daily-board .card-back {
     place-self: center;
   }
 
-  body[data-page='daily'] .board-actions {
-    margin-top: 0;
+  body[data-page='daily'] .board-actions--daily {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  body[data-page='daily'] .board-actions--daily .action-btn {
+    width: 100%;
+    min-height: 48px;
+    flex: none;
+  }
+
+  body[data-page='daily'] #daily-continue {
+    order: 1;
+  }
+
+  body[data-page='daily'] #daily-deal-shuffle {
+    order: 2;
   }
 }
 
@@ -5896,47 +5946,16 @@ body[data-page='daily'] #daily-board .card-back {
   body[data-page='daily'] .board-page .board-shell {
     height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 16px);
     overflow: hidden;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 8px;
   }
 
-  body[data-page='daily'] .board-controls {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 16px;
-    width: 100%;
-    padding: 0;
-    box-sizing: border-box;
+  body[data-page='daily'] .board-header--daily .eyebrow {
+    font-size: clamp(1.54rem, 8vw, 1.9rem);
   }
 
-  body[data-page='daily'] .board-controls .action-btn {
-    flex: 1 1 0;
-    width: 0;
-    min-width: 0;
-    max-width: none;
-    min-height: 46px;
-    border-radius: 999px;
-    font-size: 0.94rem;
-    font-weight: 700;
-    box-sizing: border-box;
-  }
-
-  body[data-page='daily'] #daily-deal-shuffle,
-  body[data-page='daily'] #daily-continue {
-    width: calc(50% - 8px);
-    min-width: unset;
-    max-width: unset;
-    flex: none;
-    box-sizing: border-box;
-    padding-left: 0;
-    padding-right: 0;
-    border-width: 1px;
-    border-style: solid;
-  }
-
-  body[data-page='daily'] #daily-deal-shuffle {
-    border-color: transparent;
+  body[data-page='daily'] .board-header--daily .board-helper {
+    font-size: 0.78rem;
   }
 
   body[data-page='daily'] .card-board.card-board--daily {
@@ -6051,6 +6070,7 @@ body[data-page='daily'] #daily-board .card-slot.is-selected:hover:not(:disabled)
     0 6px 12px rgba(18, 12, 34, 0.12),
     0 0 10px rgba(188, 157, 248, 0.4),
     0 0 14px rgba(198, 172, 255, 0.18);
+  z-index: 2;
 }
 
 body[data-page='daily'] #daily-board .card-slot.is-selected::after {
