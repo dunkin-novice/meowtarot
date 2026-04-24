@@ -95,6 +95,13 @@ export function renderNavbar(container, onLangToggle) {
     }
   };
 
+  const desktopMedia = window.matchMedia('(min-width: 1024px)');
+  const handleDesktopChange = (event) => {
+    if (event.matches) {
+      closeMenu();
+    }
+  };
+
   toggleBtn.addEventListener('click', handleToggleClick);
   backdrop?.addEventListener('click', closeMenu);
 
@@ -115,8 +122,12 @@ export function renderNavbar(container, onLangToggle) {
   document.addEventListener('pointerdown', handleOutsideInteraction);
   document.addEventListener('focusin', handleOutsideInteraction);
   document.addEventListener('keydown', handleEscapeKey);
+  desktopMedia.addEventListener('change', handleDesktopChange);
 
   updateNavHeight();
+  if (desktopMedia.matches) {
+    closeMenu();
+  }
   window.addEventListener('load', updateNavHeight);
   requestAnimationFrame(updateNavHeight);
   window.addEventListener('resize', updateNavHeight, { passive: true });
@@ -133,6 +144,7 @@ export function renderNavbar(container, onLangToggle) {
     document.removeEventListener('pointerdown', handleOutsideInteraction);
     document.removeEventListener('focusin', handleOutsideInteraction);
     document.removeEventListener('keydown', handleEscapeKey);
+    desktopMedia.removeEventListener('change', handleDesktopChange);
     window.removeEventListener('load', updateNavHeight);
     window.removeEventListener('resize', updateNavHeight);
   };
