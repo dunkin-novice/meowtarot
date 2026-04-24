@@ -43,6 +43,7 @@ import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
 import { saveReadingRecord } from './reading-history.js';
 import { trackReadingComplete, trackReadingStart, trackShareClicked } from './analytics.js';
+import { initEmailCapture } from './email-capture.js';
 
 const params = new URLSearchParams(window.location.search);
 const initialUrlState = parseReadingStateFromUrl(window.location.search);
@@ -254,6 +255,14 @@ let shareButtonHandler = null;
 let newReadingButtonHandler = null;
 const HTML2CANVAS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 let html2CanvasPromise = null;
+let emailCaptureController = null;
+let emailCaptureTriggeredForReading = false;
+
+function maybeTriggerEmailCaptureFromReading() {
+  if (!emailCaptureController || emailCaptureTriggeredForReading) return;
+  emailCaptureTriggeredForReading = true;
+  emailCaptureController.triggerFromReadingResult();
+}
 
 function isPosterDebugEnabled() {
   const params = new URLSearchParams(window.location.search || '');
@@ -3648,6 +3657,7 @@ function handleTranslations(dict) {
     normalizeBrowserUrlIfNeeded();
     renderReading(dict);
     hasRendered = true;
+    maybeTriggerEmailCaptureFromReading();
   }
 }
 
@@ -3657,6 +3667,7 @@ function maybeRenderReading() {
   normalizeBrowserUrlIfNeeded();
   renderReading(activeDict);
   hasRendered = true;
+  maybeTriggerEmailCaptureFromReading();
 }
 
 
@@ -3685,6 +3696,8 @@ function init() {
   initShell(state, handleTranslations, 'reading', {
     onLangToggle: switchLanguageInPlace,
   });
+
+  emailCaptureController = initEmailCapture({ showDelayMs: 45_000 });
 
   if (document.body) {
     document.body.setAttribute('data-reading-mode', state.mode || 'daily');
