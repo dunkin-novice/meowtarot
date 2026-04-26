@@ -18,7 +18,6 @@ const labels = {
     keywordTitle: 'Light & Shadow Keywords',
     light: 'Light',
     shadow: 'Shadow',
-    timeline: ['Past', 'Present', 'Future'],
     descriptionSuffix: 'Read both upright and reversed interpretations.',
   },
   th: {
@@ -33,7 +32,6 @@ const labels = {
     keywordTitle: 'คีย์เวิร์ดด้านสว่างและเงา',
     light: 'ด้านสว่าง',
     shadow: 'ด้านเงา',
-    timeline: ['อดีต', 'ปัจจุบัน', 'อนาคต'],
     descriptionSuffix: 'อ่านความหมายทั้งไพ่ตั้งตรงและกลับหัวได้ในหน้าเดียว',
   },
 };
@@ -66,9 +64,7 @@ const dom = {
   symbolicGrid: document.getElementById('symbolicGrid'),
   energyGrid: document.getElementById('energyGrid'),
   tarotImply: document.getElementById('tarotImply'),
-  coreTimeline: document.getElementById('coreTimeline'),
   summaryPreview: document.getElementById('summaryPreview'),
-  summaryTimeline: document.getElementById('summaryTimeline'),
   lightKeywords: document.getElementById('lightKeywords'),
   shadowKeywords: document.getElementById('shadowKeywords'),
   toggles: [...document.querySelectorAll('[data-orientation]')],
@@ -181,14 +177,6 @@ function renderSymbolicProfile(card) {
   }).join('');
 }
 
-function renderTimeline(container, items) {
-  container.innerHTML = items.map((item, idx) => `
-    <article class="meaning-card">
-      <h3>${labels[state.lang].timeline[idx]}</h3>
-      <p>${sanitize(item || '')}</p>
-    </article>
-  `).join('');
-}
 
 function getDisplayName(card) {
   if (state.lang === 'th') return card.alias_th || card.card_name_en || 'ไพ่ทาโรต์';
@@ -281,18 +269,8 @@ function render() {
   renderSymbolicProfile(card);
 
   dom.tarotImply.textContent = getLocalized(card, 'tarot_imply');
-  renderTimeline(dom.coreTimeline, [
-    getLocalized(card, 'standalone_past'),
-    getLocalized(card, 'standalone_present'),
-    getLocalized(card, 'standalone_future'),
-  ]);
 
   dom.summaryPreview.textContent = getLocalized(card, 'reading_summary_preview');
-  renderTimeline(dom.summaryTimeline, [
-    getLocalized(card, 'reading_summary_past'),
-    getLocalized(card, 'reading_summary_present'),
-    getLocalized(card, 'reading_summary_future'),
-  ]);
 
   dom.lightKeywords.textContent = card.keywords_light || '';
   dom.shadowKeywords.textContent = card.keywords_shadow || '';

@@ -2855,6 +2855,8 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   grid-template-columns: 320px 1fr;
   gap: 32px;
   align-items: center;
+  position: relative;
+  z-index: 0;
 }
 
 .card-visual {
@@ -2883,6 +2885,13 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   height: auto;
   border-radius: 14px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  position: relative;
+  z-index: 0;
+}
+
+body[data-page='meanings'] header#site-header,
+body[data-page='meanings'] #site-header .site-header {
+  z-index: 400;
 }
 
 .card-orientation-badge {
