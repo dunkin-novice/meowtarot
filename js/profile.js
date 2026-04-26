@@ -434,7 +434,21 @@ function init() {
 
   getCurrentUser().then((user) => {
     state.user = user || null;
-    trackProfileRevisit({ locale: state.currentLang, profileId: state.user?.id || 'guest' });
+    // GA4: profile_revisit
+    const _profileId = user?.id || 'guest';
+    const _lastVisitRaw = localStorage.getItem('_mt_profile_last_visit');
+    const _lastVisitMs = _lastVisitRaw ? Number(_lastVisitRaw) : null;
+    const _nowMs = Date.now();
+    const _daysSinceLast = _lastVisitMs
+      ? Math.round(((_nowMs - _lastVisitMs) / 86_400_000) * 10) / 10
+      : -1;
+    try { localStorage.setItem('_mt_profile_last_visit', String(_nowMs)); } catch (_) {}
+    trackProfileRevisit({
+      profile_id: _profileId,
+      locale: state.currentLang,
+      days_since_last_visit: _daysSinceLast,
+      entry_path: window.location.pathname,
+    });
     renderAll();
   });
 }
