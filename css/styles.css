@@ -495,7 +495,7 @@ button,
 .section-block {
   padding: 64px 32px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: 28px;
   align-items: center;
 }
@@ -2859,6 +2859,13 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
 .page-card-meaning > article {
   display: grid;
   gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.page-card-meaning .breadcrumbs ol {
+  flex-wrap: wrap;
 }
 
 .card-hero {
@@ -2868,6 +2875,9 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   align-items: center;
   position: relative;
   z-index: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .card-visual {
@@ -2880,6 +2890,10 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
 
 .card-meta {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .card-frame {
@@ -2965,6 +2979,8 @@ body[data-page='meanings'] #site-header .site-header {
   color: var(--text-secondary, var(--color-text-muted-soft));
   font-size: 16px;
   line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .meaning-grid {
