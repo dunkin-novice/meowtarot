@@ -1,3 +1,5 @@
+@import url('./bottom-nav.css');
+
 :root {
   /* Canonical token layer (Phase 1) */
   --color-bg: #0b102b;
@@ -8051,4 +8053,50 @@ body[data-page='home'] .reading-path-card:focus-visible {
   .quiz-result-actions {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   }
+}
+
+.today-page {
+  display: grid;
+  gap: 16px;
+}
+
+.today-card {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+
+.today-streak {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.today-empty-copy,
+.today-meaning {
+  color: var(--color-text-muted);
+}
+
+.today-card__figure {
+  margin: 0;
+}
+
+.today-card__figure img {
+  width: min(280px, 100%);
+  border-radius: var(--radius-md);
+  display: block;
+  margin: 0 auto 12px;
+}
+
+.today-keywords {
+  font-size: 14px;
+  color: var(--color-text-muted-soft);
+  margin-bottom: 14px;
+}
+
+.today-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }

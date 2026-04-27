@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Today | MeowTarot</title>
+  <meta name="description" content="See your daily streak and today's drawn tarot card." />
+  <meta name="robots" content="noindex,follow" />
+  <link rel="canonical" href="https://www.meowtarot.com/today/" />
+  <link rel="alternate" href="https://www.meowtarot.com/today/" hreflang="en" />
+  <link rel="alternate" href="https://www.meowtarot.com/th/today/" hreflang="th-TH" />
+  <link rel="alternate" href="https://www.meowtarot.com/today/" hreflang="x-default" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body data-page="daily">
+  <header id="site-header"></header>
+
+  <main class="page-shell today-page">
+    <section class="today-card">
+      <h1>Today</h1>
+      <p class="today-streak" id="today-streak">🔥 Day 0 streak</p>
+      <div id="today-empty">
+        <p class="today-empty-copy">Draw your card for today and keep the streak going.</p>
+        <a class="btn btn-primary" href="/daily-card/">Draw your card for today</a>
+      </div>
+      <div id="today-filled" hidden>
+        <figure class="today-card__figure">
+          <img id="today-card-image" alt="Today's tarot card" loading="lazy" width="360" height="600" />
+        </figure>
+        <h2 id="today-card-name"></h2>
+        <p class="today-keywords" id="today-card-keywords"></p>
+        <p class="today-meaning" id="today-card-meaning"></p>
+        <div class="today-actions">
+          <button type="button" class="btn btn-secondary" id="today-share">Share</button>
+          <a class="btn btn-secondary" href="/question.html">Want a fuller reading? Ask</a>
+          <a class="btn btn-secondary" href="/full.html">Want a fuller reading? Full</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script type="module" src="/js/today.js"></script>
+</body>
+</html>

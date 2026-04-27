@@ -1,6 +1,7 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
 import { trackLocaleSwitched } from './analytics.js';
+import { renderBottomNav } from './bottom-nav.js';
 
 // Shared translations across all pages.
 export const translations = {
@@ -614,6 +615,7 @@ export function initShell(state, afterApply, activePage, options = {}) {
   bindViewportHeightVariable();
   applyTranslations(state.currentLang, afterApply);
   applyLocaleMeta(state.currentLang);
+  renderBottomNav();
 }
 
 function bindViewportHeightVariable() {
