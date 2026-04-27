@@ -7727,6 +7727,19 @@ body[data-page='home'] .reading-path-card:focus-visible {
   }
 }
 
+@media (max-width: 480px) {
+  .card-board.card-board--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  body[data-page='question-draw'] #question-card-board.card-board--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 8px 4px;
+  }
+}
+
 @media (max-width: 380px) {
   body[data-page='home'] .home-path-grid,
   body[data-page='home'] .home-hero-actions--subtle {
