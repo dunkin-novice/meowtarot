@@ -42,7 +42,13 @@ import { getCanonicalCardUrl } from './canonical-card-routes.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
 import { saveReadingRecord } from './reading-history.js';
-import { trackReadingComplete, trackReadingStart, trackShareClicked } from './analytics.js';
+import {
+  trackDailyStreakIncremented,
+  trackReadingComplete,
+  trackReadingCompletedRaw,
+  trackReadingStart,
+  trackShareClicked,
+} from './analytics.js';
 import { initEmailCapture } from './email-capture.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -166,6 +172,7 @@ const authUiState = {
   syncing: false,
 };
 const READING_HISTORY_SESSION_KEYS_STORAGE_KEY = 'meowtarot_persisted_reading_session_keys';
+const DAILY_CARD_OF_DAY_STORAGE_KEY = 'meowtarot.daily.cardOfTheDay';
 
 function readPersistedReadingSessionKeys() {
   try {
@@ -193,6 +200,7 @@ function writePersistedReadingSessionKeys(keys = []) {
 
 const persistedReadingSessionKeys = new Set(readPersistedReadingSessionKeys());
 const inFlightReadingSessionKeys = new Set();
+let currentReadingStartedAt = 0;
 const DAILY_VISUAL_STATES = Object.freeze({
   IDLE: 'idle',
   GATHERING: 'gathering',
@@ -2603,9 +2611,26 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   dailyUiState.selectedCardId = state.selectedIds[0] || '';
   dailyUiState.spreadCards = cards.slice();
   dailyUiState.renderCards = cards.slice();
+  persistDailyCardOfTheDay(cards[0] || null);
   dailyUiState.retention = trackCompletedDailyReading(cards[0] || null);
+  if (dailyUiState.retention?.didCount) {
+    trackDailyStreakIncremented({
+      locale: state.currentLang,
+      userId: getUserIdForAnalytics(),
+      streakDayCount: dailyUiState.retention?.progress?.streak_current || 0,
+      incrementId: `daily-streak|${toLocalDateIso(new Date())}|${getUserIdForAnalytics()}`,
+    });
+  }
   void syncLocalProgressIfLoggedIn();
-  persistReadingHistory('daily', cards);
+  const completionStamp = new Date().toISOString();
+  persistReadingHistory('daily', cards, {
+    sessionKey: `${getReadingSessionKey('daily', cards)}::${completionStamp}`,
+  });
+  trackRawCompletion({
+    mode: 'daily',
+    cards,
+    completionId: `daily|${completionStamp}|${state.selectedIds.join(',')}`,
+  });
   renderDailyDetails(cards, dict, stageRefs.stage);
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
@@ -2748,7 +2773,7 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
   void saveReadingRecord(userId, {
     mode,
     spread: state.spread,
-    topic: state.topic,
+    topic: mode === 'question' ? state.topic : null,
     lang: state.currentLang,
     cards: normalizedCards,
   }).then((readingId) => {
@@ -2757,6 +2782,70 @@ function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
     writePersistedReadingSessionKeys([...persistedReadingSessionKeys]);
   }).finally(() => {
     inFlightReadingSessionKeys.delete(sessionKey);
+  });
+}
+
+function toLocalDateIso(input = new Date()) {
+  const date = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(date.getTime())) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function getUserIdForAnalytics() {
+  return String(authUiState.user?.id || '').trim() || 'anon';
+}
+
+function getCardSlugToken(card = null) {
+  const sourceId = card?.id || card?.card_id || card?.image_id || '';
+  const baseId = getBaseCardId(sourceId, normalizeId) || normalizeId(sourceId);
+  const stripped = String(baseId || '').replace(/^\d{1,2}-/, '');
+  return stripped || String(baseId || '');
+}
+
+function getCardOrientation(card = null) {
+  return toOrientation(card) === 'reversed' ? 'reversed' : 'upright';
+}
+
+function buildRawCardsPayload(cards = []) {
+  return cards
+    .map((card) => {
+      const slug = getCardSlugToken(card);
+      if (!slug) return '';
+      return `${slug}-${getCardOrientation(card)}`;
+    })
+    .filter(Boolean);
+}
+
+function persistDailyCardOfTheDay(card = null) {
+  const cardSlug = getCardSlugToken(card);
+  if (!cardSlug) return;
+  const now = new Date();
+  const payload = {
+    card_slug: cardSlug,
+    orientation: getCardOrientation(card),
+    date: toLocalDateIso(now),
+    drawn_at: now.toISOString(),
+  };
+  try {
+    window.localStorage?.setItem(DAILY_CARD_OF_DAY_STORAGE_KEY, JSON.stringify(payload));
+  } catch (_) {
+    // Ignore storage write failures.
+  }
+}
+
+function trackRawCompletion({ mode, cards = [], topic = null, completionId = '' } = {}) {
+  const durationMs = currentReadingStartedAt > 0 ? Math.max(0, Date.now() - currentReadingStartedAt) : 0;
+  trackReadingCompletedRaw({
+    locale: state.currentLang,
+    mode,
+    topic: mode === 'question' ? topic : null,
+    cards: buildRawCardsPayload(cards),
+    userId: getUserIdForAnalytics(),
+    durationMs,
+    completionId,
   });
 }
 
@@ -2779,6 +2868,11 @@ function renderFull(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
   persistReadingHistory('full', cards);
+  trackRawCompletion({
+    mode: 'full',
+    cards,
+    completionId: `full|${state.selectedIds.join(',')}`,
+  });
 
   const topic = String(state.topic || 'generic').toLowerCase();
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
@@ -2976,6 +3070,12 @@ function renderQuestion(cards, dict) {
   const positions = QUESTION_CARD_POSITIONS;
   const orderedCards = orderQuestionCards(cards).slice(0, 3);
   persistReadingHistory('question', orderedCards);
+  trackRawCompletion({
+    mode: 'question',
+    topic: state.topic,
+    cards: orderedCards,
+    completionId: `question|${state.topic}|${state.selectedIds.join(',')}`,
+  });
 
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
@@ -3089,6 +3189,7 @@ function renderReading(dict) {
     return;
   }
 
+  currentReadingStartedAt = Date.now();
   trackReadingStart({
     locale: state.currentLang,
     mode: state.mode,
