@@ -1999,6 +1999,7 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   background: transparent;
   padding: 0;
   min-width: 0;
+  white-space: normal;
 }
 
 .reading-spread-card .card-art {
@@ -2009,6 +2010,14 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   display: grid;
   gap: 4px;
   text-align: center;
+  min-width: 0;
+}
+
+.spread-label,
+.spread-orientation {
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .spread-orientation {
