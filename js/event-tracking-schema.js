@@ -6,6 +6,8 @@ const BASE_PROPERTIES = {
   locale: { type: 'string', enum: LOCALES, required: true, description: 'UI locale at event time.' },
   mode: { type: 'string', enum: MODES, required: false, description: 'Reading mode where the event occurred.' },
   topic: { type: 'string', enum: TOPICS, required: false, description: 'Reading topic where applicable.' },
+  session_id: { type: 'string', required: false, description: 'Stable per-device analytics session id.' },
+  user_id: { type: 'string', required: false, description: 'Supabase profile UUID when signed in, otherwise anon.' },
 };
 
 export const EVENT_TRACKING_SCHEMA = {
@@ -22,6 +24,26 @@ export const EVENT_TRACKING_SCHEMA = {
     properties: {
       ...BASE_PROPERTIES,
       card_count: { type: 'number', required: false, description: 'Number of cards shown in the completed reading.' },
+    },
+  },
+  reading_completed_raw: {
+    description: 'Raw reading completion log for all reading features; additive to reading_complete.',
+    required: ['feature', 'locale', 'card_count', 'cards', 'session_id', 'user_id'],
+    properties: {
+      ...BASE_PROPERTIES,
+      feature: { type: 'string', enum: MODES, required: true, description: 'Reading feature completed.' },
+      card_count: { type: 'number', required: true, description: 'Number of cards in the completed reading.' },
+      cards: { type: 'string', required: true, description: 'Comma-separated slug-orientation card tokens, truncated at 100 chars for GA4.' },
+      cards_truncated: { type: 'boolean', required: true, description: 'Whether cards field was truncated.' },
+      duration_ms: { type: 'number', required: true, description: 'Client-observed milliseconds from reading_start to completion.' },
+    },
+  },
+  daily_streak_incremented: {
+    description: 'Fired when daily streak increments from a daily reading completion.',
+    required: ['locale', 'streak_day_count', 'session_id', 'user_id'],
+    properties: {
+      ...BASE_PROPERTIES,
+      streak_day_count: { type: 'number', required: true, description: 'Updated daily streak count after increment.' },
     },
   },
   topic_selected: {

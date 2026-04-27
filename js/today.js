@@ -3,6 +3,7 @@ import { getUserProgress } from './progress.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from './data.js';
 
 const state = { currentLang: 'en' };
+const DAILY_CARD_OF_DAY_STORAGE_KEY = 'meowtarot.daily.cardOfTheDay';
 
 const els = {
   streak: document.getElementById('today-streak'),
@@ -19,14 +20,38 @@ function isThai() {
   return window.location.pathname.startsWith('/th/');
 }
 
-function latestEntry(progress) {
-  const entries = Array.isArray(progress?.recent_daily_cards) ? progress.recent_daily_cards : [];
-  if (!entries.length) return null;
-  return entries[entries.length - 1] || null;
+function toLocalDateIso(input = new Date()) {
+  const date = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(date.getTime())) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function findCardByBaseId(baseId) {
-  return meowTarotCards.find((card) => String(card.image_id || '').startsWith(baseId)) || null;
+function readCardOfTheDay() {
+  try {
+    const raw = window.localStorage?.getItem(DAILY_CARD_OF_DAY_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const date = String(parsed.date || '').trim();
+    const cardSlug = String(parsed.card_slug || '').trim();
+    const orientation = String(parsed.orientation || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright';
+    if (!date || !cardSlug) return null;
+    return { date, card_slug: cardSlug, orientation };
+  } catch (_) {
+    return null;
+  }
+}
+
+function findCardBySlug(slug) {
+  const safe = String(slug || '').trim().toLowerCase();
+  if (!safe) return null;
+  return meowTarotCards.find((card) => {
+    const id = String(card.image_id || card.card_id || card.id || '').toLowerCase();
+    return id.includes(`-${safe}`);
+  }) || null;
 }
 
 function text(card, key) {
@@ -57,20 +82,21 @@ async function onShare() {
 async function renderToday() {
   const progress = getUserProgress();
   const streakCount = Number(progress?.streak_current || 0);
-  const entry = latestEntry(progress);
+  const entry = readCardOfTheDay();
+  const today = toLocalDateIso(new Date());
 
   els.streak.textContent = isThai()
     ? `🔥 สตรีควันที่ ${streakCount}`
     : `🔥 Day ${streakCount} streak`;
 
-  if (!entry?.id) {
+  if (!entry?.card_slug || entry.date !== today) {
     els.empty.hidden = false;
     els.filled.hidden = true;
     return;
   }
 
   await loadTarotData();
-  const card = findCardByBaseId(entry.id);
+  const card = findCardBySlug(entry.card_slug);
   if (!card) {
     els.empty.hidden = false;
     els.filled.hidden = true;
@@ -83,8 +109,12 @@ async function renderToday() {
   const orientation = entry.orientation === 'reversed' ? 'reversed' : 'upright';
   const imageUrl = getCardImageUrl(card, { orientation });
   const keywords = text(card, 'keywords') || text(card, 'tarot_imply');
+  const orientationLabel = orientation === 'reversed'
+    ? (isThai() ? 'ไพ่กลับหัว' : 'Reversed')
+    : (isThai() ? 'ไพ่ปกติ' : 'Upright');
 
-  els.cardName.textContent = text(card, 'card_name') || text(card, 'alias') || 'Tarot card';
+  const cardName = text(card, 'card_name') || text(card, 'alias') || 'Tarot card';
+  els.cardName.textContent = `${cardName} · ${orientationLabel}`;
   els.cardMeaning.textContent = text(card, 'summary_short') || text(card, 'summary') || text(card, 'meta_description');
   els.cardKeywords.textContent = keywords;
   els.cardImage.src = imageUrl;
