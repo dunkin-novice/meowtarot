@@ -45,9 +45,13 @@ jobs:
       - name: Skip if commit is from this workflow
         id: skip_check
         run: |
-          LAST_MSG=$(git log -1 --pretty=%B)
-          if echo "$LAST_MSG" | grep -q '\[auto-log\]'; then
+          # Match [auto-log] only at the start of the commit SUBJECT line.
+          # Using --pretty=%s gives just the subject; anchored ^\[auto-log\]
+          # ensures bodies that mention the tag don't false-positive.
+          LAST_SUBJECT=$(git log -1 --pretty=%s)
+          if echo "$LAST_SUBJECT" | grep -q '^\[auto-log\]'; then
             echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping — this commit is from the auto-log workflow itself."
           else
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
