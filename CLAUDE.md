@@ -84,6 +84,12 @@ in-memory dedup for reading events.
 - Visual QA is manual (Dunkin tests in browser). Don't claim visual
   verification you didn't actually do.
 
+## Backlog
+
+Tasks deferred for later phases.
+
+- **Phase 2.1: Clickable header logo.** Add a logo to the top-left corner of the header that links to the homepage (`/`). Depends on Phase 2 (header globalization). Not started.
+
 ## When in doubt
 
 Ask before:
