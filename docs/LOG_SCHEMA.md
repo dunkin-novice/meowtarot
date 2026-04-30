@@ -19,6 +19,16 @@
 | `commit` | string | Short SHA (7 chars). Auto-filled by workflow if missing. |
 | `branch` | string | Branch name. Auto-filled. |
 
+> **Note on `commit` semantics:** when auto-filled, `commit` refers to the
+> commit that *triggered the workflow run that consumed the draft* — usually
+> the same commit that added the draft entry to `LOG_DRAFT.jsonl`, but not
+> always. If a draft is added in one push and consumed by a later push (e.g.
+> because the earlier push didn't trigger the workflow), the auto-filled
+> `commit` will reflect the later push. To unambiguously reference the
+> commit that introduced specific work, use the `related` field with explicit
+> SHAs, as in `"related": ["d4c72b9","eb13084"]`. The `logged_at` timestamp
+> is the unambiguous "when this entry landed" anchor.
+
 ## Strongly recommended (include when applicable)
 
 | Field | Type | Notes |

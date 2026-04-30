@@ -19,10 +19,6 @@ name: Append to log.jsonl
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'docs/log.jsonl'
-      - 'LOG_DRAFT.jsonl'
-      - '.log-draft-archive/**'
   pull_request:
     types: [closed]
     branches: [main]
