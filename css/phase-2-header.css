@@ -1,0 +1,92 @@
+/*
+ * MeowTarot — Phase 2: Globalized Light Header
+ * css/phase-2-header.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low
+ * SCOPE: All pages that link this file.
+ *
+ * WHAT THIS FILE DOES:
+ *   - Extends the Phase 1 light header to all pages
+ *   - Same selectors as phase-1-home.css §2, with the body[data-page='home']
+ *     prefix removed
+ *
+ * WHAT THIS FILE DOES NOT TOUCH:
+ *   - Body backgrounds (Phase 3+ per page)
+ *   - Reading-path cards, .panel, .board-inner, .card-slot, etc.
+ *   - Result pages, profile pages, share/poster
+ *   - Thai pages (/th/*) — not linked there yet
+ *
+ * PHASE 2 SCOPE NOTE — token uncomment deferred:
+ *   The original Phase 2 plan also uncommented a block of global :root
+ *   token overrides in css/theme-tokens.css. That step was dropped after
+ *   discovery surfaced cascade conflicts on:
+ *     - .primary, .btn-primary  (color: var(--color-bg) → button labels
+ *                                would become unreadable on the gradient)
+ *     - .card .back             (background-color: var(--color-bg) →
+ *                                tarot card backs would flip dark→light;
+ *                                board work belongs to Phases 5–6)
+ *     - .result-card            (background: var(--panel) → result-page
+ *                                surfaces would prematurely flip;
+ *                                result pages belong to Phase 4)
+ *   The token flip will be revisited in a later phase that also updates
+ *   the affected component selectors so the cascade is safe.
+ *
+ * INTERACTION WITH phase-1-home.css:
+ *   The homepage links both files. The homepage-scoped rules in
+ *   phase-1-home.css §2 are now redundant on the homepage but harmless —
+ *   same values, same source order. Cleanup of the redundancy is deferred
+ *   to a later commit; do not edit phase-1-home.css in Phase 2.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* 1. SITE HEADER — global */
+.site-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(172, 130, 210, 0.15);
+  box-shadow: 0 2px 20px rgba(120, 80, 180, 0.07);
+}
+
+.logo-text { color: #3d2c58; }
+.nav-link  { color: #7a5f99; }
+
+.nav-link.active,
+.nav-link:hover {
+  background: rgba(181, 154, 232, 0.12);
+  color: #6b4faa;
+}
+
+.lang-btn         { color: #3d2c58; }
+.lang-btn.active  { color: #6b4faa; }
+
+.language-toggle {
+  border-left-color: rgba(172, 130, 210, 0.20);
+}
+
+.mobile-menu-toggle {
+  background: rgba(181, 154, 232, 0.12);
+  border-color: rgba(181, 154, 232, 0.25);
+}
+
+.mobile-menu-toggle .bar {
+  background: #3d2c58;
+}
+
+@media (max-width: 900px) {
+  .nav-panel {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(172, 130, 210, 0.20);
+    box-shadow: 0 14px 40px rgba(120, 80, 180, 0.14);
+  }
+  .nav-link {
+    border-color: rgba(172, 130, 210, 0.15);
+    background: rgba(181, 154, 232, 0.06);
+    color: #3d2c58;
+  }
+  .nav-meta {
+    border-top-color: rgba(172, 130, 210, 0.20);
+  }
+}
