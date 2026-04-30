@@ -1,0 +1,191 @@
+/*
+ * MeowTarot — Phase 1: Homepage Only
+ * css/phase-1-home.css
+ * ─────────────────────────────────────────────────────────────────────────
+ * RISK LEVEL: Low
+ * SCOPE: body[data-page='home'] — zero bleed to other pages
+ *
+ * WHAT THIS DELIBERATELY DOES NOT TOUCH:
+ *   - .board-inner, .card-slot, .card .back/.front — reading boards
+ *   - .result-card, .summary, .reading-content — result pages
+ *   - .chip, .chip.active — question / full reading controls
+ *   - .panel, .section-block — shared layout utilities
+ *   - .deck-stack-card — full reading visual
+ *   - Any Thai page (/th/)
+ *   - Share/poster flows
+ *
+ * REQUIRES: css/theme-tokens.css loaded first
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* 1. PAGE BACKGROUND — homepage only */
+body[data-page='home'] {
+  background:
+    radial-gradient(ellipse at 12%  8%,  rgba(196, 168, 240, 0.22) 0%, transparent 38%),
+    radial-gradient(ellipse at 88%  6%,  rgba(240, 168, 200, 0.18) 0%, transparent 35%),
+    radial-gradient(ellipse at 50%  85%, rgba(148, 204, 248, 0.15) 0%, transparent 42%),
+    linear-gradient(165deg, #fcf5ff 0%, #fff5fb 45%, #f0f8ff 100%);
+  color: var(--color-plum, #3d2c58);
+}
+
+
+/* 2. SITE HEADER — homepage scope only */
+body[data-page='home'] .site-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(172, 130, 210, 0.15);
+  box-shadow: 0 2px 20px rgba(120, 80, 180, 0.07);
+}
+
+body[data-page='home'] .logo-text { color: #3d2c58; }
+body[data-page='home'] .nav-link  { color: #7a5f99; }
+
+body[data-page='home'] .nav-link.active,
+body[data-page='home'] .nav-link:hover {
+  background: rgba(181, 154, 232, 0.12);
+  color: #6b4faa;
+}
+
+body[data-page='home'] .lang-btn         { color: #3d2c58; }
+body[data-page='home'] .lang-btn.active  { color: #6b4faa; }
+
+body[data-page='home'] .language-toggle {
+  border-left-color: rgba(172, 130, 210, 0.20);
+}
+
+body[data-page='home'] .mobile-menu-toggle {
+  background: rgba(181, 154, 232, 0.12);
+  border-color: rgba(181, 154, 232, 0.25);
+}
+
+body[data-page='home'] .mobile-menu-toggle .bar {
+  background: #3d2c58;
+}
+
+@media (max-width: 900px) {
+  body[data-page='home'] .nav-panel {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(172, 130, 210, 0.20);
+    box-shadow: 0 14px 40px rgba(120, 80, 180, 0.14);
+  }
+  body[data-page='home'] .nav-link {
+    border-color: rgba(172, 130, 210, 0.15);
+    background: rgba(181, 154, 232, 0.06);
+    color: #3d2c58;
+  }
+  body[data-page='home'] .nav-meta {
+    border-top-color: rgba(172, 130, 210, 0.20);
+  }
+}
+
+
+/* 3. HERO COPY — homepage only */
+body[data-page='home'] .eyebrow { color: #9270d0; }
+
+body[data-page='home'] .home-hero-title,
+body[data-page='home'] .home-hero-copy h1,
+body[data-page='home'] h1 {
+  color: #3d2c58;
+}
+
+body[data-page='home'] p { color: #7a5f99; }
+
+
+/* 4. READING PATH CARDS */
+body[data-page='home'] .reading-path-card {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1.5px solid rgba(172, 130, 210, 0.18);
+  border-radius: 24px;
+  box-shadow:
+    0 6px 24px rgba(120, 80, 180, 0.09),
+    0 2px 8px  rgba(120, 80, 180, 0.05);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+body[data-page='home'] .reading-path-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 14px 40px rgba(120, 80, 180, 0.14),
+    0 0 36px rgba(181, 154, 232, 0.22);
+  border-color: rgba(181, 154, 232, 0.38);
+}
+
+body[data-page='home'] .reading-path-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    108deg,
+    transparent 38%,
+    rgba(196, 168, 240, 0.12) 50%,
+    transparent 62%
+  );
+  background-size: 250% 100%;
+  background-position: -250% 0;
+  pointer-events: none;
+  transition: background-position 0.8s ease;
+}
+
+body[data-page='home'] .reading-path-card:hover::after {
+  background-position: 250% 0;
+}
+
+body[data-page='home'] .reading-path-card__label {
+  color: #3d2c58;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+body[data-page='home'] .reading-path-card__meta {
+  color: #9270d0;
+}
+
+
+/* 5. HOMEPAGE CTA BUTTONS */
+body[data-page='home'] .home-secondary-cta,
+body[data-page='home'] .home-hero-actions .btn,
+body[data-page='home'] .home-hero-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.82);
+  color: #6b4faa;
+  border: 1.5px solid rgba(172, 130, 210, 0.30);
+  box-shadow: 0 2px 12px rgba(120, 80, 180, 0.07);
+}
+
+body[data-page='home'] .home-secondary-cta:hover,
+body[data-page='home'] .home-hero-actions .btn:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(181, 154, 232, 0.55);
+  box-shadow: 0 0 28px rgba(181, 154, 232, 0.22), 0 4px 20px rgba(120, 80, 180, 0.10);
+  transform: translateY(-1px);
+}
+
+
+/* 6. HOME GRID CONTAINER — strip dark chooser shell */
+body[data-page='home'] .home-hero-card,
+body[data-page='home'] .home-hero-card--chooser {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+
+/* 7. FOOTER — homepage only */
+body[data-page='home'] .site-footer {
+  color: #9270d0;
+  border-top: 1px solid rgba(172, 130, 210, 0.15);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+
+/* 8. SCROLLBAR — homepage only */
+body[data-page='home'] ::-webkit-scrollbar-thumb {
+  background: rgba(172, 130, 210, 0.28);
+}
+
+body[data-page='home'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(172, 130, 210, 0.45);
+}
