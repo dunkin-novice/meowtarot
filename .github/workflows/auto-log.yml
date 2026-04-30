@@ -1,0 +1,99 @@
+name: Append to log.jsonl
+
+# Triggers:
+# - Any push to main (catches direct pushes from Claude Code or terminal)
+# - PR merged into main
+#
+# What it does:
+# - Reads LOG_DRAFT.jsonl (Claude Code writes one or more JSON-line entries here)
+# - For each line, fills in any missing auto-fields (commit, branch, pr, pushed_at)
+# - Appends to docs/log.jsonl
+# - Archives + clears LOG_DRAFT.jsonl
+# - Commits back to main with [auto-log] tag (which the workflow ignores to prevent loops)
+#
+# What it does NOT do:
+# - Generate semantic content. Claude Code writes goal/done/root_cause/fix.
+# - If LOG_DRAFT.jsonl is empty or missing, the workflow logs a stub-only entry
+#   so the push isn't lost. AI can still reconstruct from git later.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/log.jsonl'
+      - 'LOG_DRAFT.jsonl'
+      - '.log-draft-archive/**'
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  append-log:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Skip if commit is from this workflow
+        id: skip_check
+        run: |
+          LAST_MSG=$(git log -1 --pretty=%B)
+          if echo "$LAST_MSG" | grep -q '\[auto-log\]'; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Python
+        if: steps.skip_check.outputs.skip == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Process draft and append entries
+        if: steps.skip_check.outputs.skip == 'false'
+        env:
+          EVENT_NAME:    ${{ github.event_name }}
+          GITHUB_SHA:    ${{ github.sha }}
+          GITHUB_REF:    ${{ github.ref }}
+          PR_NUMBER:     ${{ github.event.pull_request.number }}
+          PR_TITLE:      ${{ github.event.pull_request.title }}
+          PR_BODY:       ${{ github.event.pull_request.body }}
+          PR_MERGED_AT:  ${{ github.event.pull_request.merged_at }}
+          PR_AUTHOR:     ${{ github.event.pull_request.user.login }}
+          PUSHER:        ${{ github.event.pusher.name }}
+          PUSHED_AT:     ${{ github.event.head_commit.timestamp }}
+          BRANCH_NAME:   ${{ github.head_ref }}
+        run: python3 scripts/append_log.py
+
+      - name: Archive consumed draft
+        if: steps.skip_check.outputs.skip == 'false'
+        run: |
+          if [ -f LOG_DRAFT.jsonl ] && [ -s LOG_DRAFT.jsonl ]; then
+            mkdir -p .log-draft-archive
+            TS=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+            cp LOG_DRAFT.jsonl ".log-draft-archive/draft-${TS}.jsonl"
+            : > LOG_DRAFT.jsonl
+          fi
+
+      - name: Commit
+        if: steps.skip_check.outputs.skip == 'false'
+        run: |
+          git config user.name "meowtarot-auto-log"
+          git config user.email "auto-log@users.noreply.github.com"
+          git add docs/log.jsonl LOG_DRAFT.jsonl .log-draft-archive/ 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            git commit -m "[auto-log] append entry for ${SHORT_SHA}"
+            git push
+          fi

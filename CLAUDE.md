@@ -100,3 +100,29 @@ Ask before:
 - Adding any copy to the love vertical without confirming emotional safety
 
 Default to the smallest possible change that satisfies the goal.
+
+---
+
+## Session logging (mandatory)
+
+This repo has an automated log at `docs/log.jsonl`. It is consumed by AI agents (you, future Claude sessions, other coding agents) for historical context when debugging or recalling past work. Humans do not read it.
+
+**At the end of any session that ships code (commits, PRs, merges), append one or more JSON-line entries to `LOG_DRAFT.jsonl` at repo root before pushing.**
+
+Rules:
+- One entry per logical patch (not per commit). A 5-commit branch that ships one fix = one entry.
+- Each entry is a single line of valid JSON. Minimum: `id`, `type`, `status`, `goal`, `done`.
+- `id` format: `YYYY-MM-DD-shortslug`. Must be unique.
+- For bug fixes, always include `files`, `root_cause`, `fix`, `verified`, `guardrails_preserved`.
+- For QA failures, still write the entry with `status: "qa-failed"` — this is high-value context.
+- For multi-pass work that supersedes an earlier failed attempt, set `supersedes` to the prior entry id.
+- Use `filed` (array) for new bugs surfaced but not fixed in this session.
+
+Full schema: `docs/LOG_SCHEMA.md`. Read it before writing your first entry.
+
+The GitHub Action processes `LOG_DRAFT.jsonl` automatically on push, fills in commit/branch/PR fields, appends to `docs/log.jsonl`, and clears the draft. You don't need to do any of that — just write the entries.
+
+**Guardrails to declare in `guardrails_preserved` when applicable:**
+`asset-resolver-untouched`, `en-th-parity`, `i18n-via-common-only`, `free-core-complete`, `legacy-share-links-compat`, `no-direct-gtag`, `desktop-unchanged`.
+
+If you skip writing a draft entry, the workflow logs an `auto-stub` instead — which is recoverable but lower quality. Always write the draft yourself when you have the context fresh.
