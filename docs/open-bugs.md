@@ -69,9 +69,11 @@ Verify on real iPhone Safari with URL variants: ?l=th, ?lang=th, ?l=th&lang=en (
 
 ## BUG-002 — Daily reading "Today card" reflects latest draw, not first draw of the day
 
-**Status:** Reported, not yet verified by code inspection.
+**Status:** Fix implemented, pending verification on device.
 **Priority:** Medium
 **Reported:** 2026-05-01
+
+**Fix:** write guard added at `reading.js` line ~2833. Skips localStorage write if slot already holds a card for today's `date` field. Supabase persist path unchanged.
 
 ### Symptom
 

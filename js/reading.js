@@ -2830,6 +2830,23 @@ function persistDailyCardOfTheDay(card = null) {
     drawn_at: now.toISOString(),
   };
   try {
+    let existingForToday = false;
+    try {
+      const raw = window.localStorage?.getItem(DAILY_CARD_OF_DAY_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        existingForToday = !!(
+          parsed
+          && typeof parsed === 'object'
+          && parsed.card_slug
+          && parsed.date === payload.date
+        );
+      }
+    } catch (_) {
+      // Unparseable slot — treat as empty and proceed to write.
+    }
+    // First draw of the day is canonical; subsequent draws don't displace it.
+    if (existingForToday) return;
     window.localStorage?.setItem(DAILY_CARD_OF_DAY_STORAGE_KEY, JSON.stringify(payload));
   } catch (_) {
     // Ignore storage write failures.
