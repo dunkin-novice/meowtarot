@@ -189,3 +189,26 @@ body[data-page='home'] ::-webkit-scrollbar-thumb {
 body[data-page='home'] ::-webkit-scrollbar-thumb:hover {
   background: rgba(172, 130, 210, 0.45);
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 9. HERO TYPOGRAPHY REFINEMENT (homepage chooser only)
+ *
+ * Bumps Playfair Display h1 weight from default 400 to 700, tightens
+ * letter-spacing for elegance, and refines the eyebrow pill for
+ * stronger hierarchy. Specificity (0,3,1) beats styles.css's plain
+ * .home-hero-copy--centered .home-hero-title at (0,2,0).
+ * ───────────────────────────────────────────────────────────────────────── */
+
+body[data-page='home'] .home-hero-copy--centered .home-hero-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.94;
+}
+
+body[data-page='home'] .home-hero-copy--centered .eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  padding: 7px 16px;
+}
