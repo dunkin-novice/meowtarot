@@ -89,6 +89,7 @@ in-memory dedup for reading events.
 Tasks deferred for later phases.
 
 - **Phase 2.1: Clickable header logo.** Add a logo to the top-left corner of the header that links to the homepage (`/`). Depends on Phase 2 (header globalization). Not started.
+- **Bottom nav theming.** The mobile bottom-nav bar (Features/Today/Draw/Cards/Profile) currently renders dark navy alongside the light header. Decide whether to leave dark (legitimate iOS-native pattern) or theme it pastel (consistency). Lives in css/bottom-nav.css. Not blocking; visual decision.
 
 ## When in doubt
 
