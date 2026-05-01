@@ -108,3 +108,65 @@ Before any code change, a product decision is needed: should the second daily dr
 4. Make the product decision (a/b/c above) before writing any code.
 5. Implement the chosen behavior on a scoped branch with a LOG_DRAFT.jsonl entry.
 6. Verify on real iPhone: draw twice in one day, confirm "Today card" shows the first.
+
+
+## BUG-003 — Stale `cardOfTheDay` slot displays as Today card across day boundaries
+
+**Status:** Reported, not yet verified.
+**Priority:** Medium
+**Reported:** 2026-05-02
+
+### Symptom
+
+`js/today.js` reads the `meowtarot.daily.cardOfTheDay` localStorage slot and renders whatever it finds without comparing the stored `date` to today's local date. A slot written by a previous day's draw will continue to display as the "Today card" on `today.html` until the user makes a new daily draw that overwrites it. Surfaced as a follow-up while fixing BUG-002 (the write side now correctly pins the first-of-day card, but that fix doesn't help users who skip a day before returning).
+
+### Suspected root cause
+
+`readCardOfTheDay()` in `js/today.js` (around line 32) parses the slot and returns `{ date, card_slug, orientation }` as long as `date` and `cardSlug` are non-empty. There's no check that `parsed.date === toLocalDateIso(new Date())`, so yesterday's slot is accepted as valid input and rendered as today's card.
+
+### Reported fix
+
+```js
+// js/today.js — readCardOfTheDay (around line 32)
+function readCardOfTheDay() {
+  try {
+    const raw = window.localStorage?.getItem(DAILY_CARD_OF_DAY_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const date = String(parsed.date || '').trim();
+    const cardSlug = String(parsed.card_slug || '').trim();
+    const orientation = String(parsed.orientation || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright';
+    if (!date || !cardSlug) return null;
+    if (date !== toLocalDateIso(new Date())) return null;  // ← new: reject stale slot
+    return { date, card_slug: cardSlug, orientation };
+  } catch (_) {
+    return null;
+  }
+}
+```
+
+### Why this isn't a drive-by fix
+
+- Product decision needed: when the slot is stale, should `today.html` show its empty state (prompting a fresh daily draw) or display yesterday's card with a "draw today's card" CTA? The reported fix returns `null`, which falls into whatever the current empty-branch UX does — verify that branch is the desired behavior before shipping.
+- Bounded but real impact — only affects users who skip at least one day between draws. The displayed card is at least *a* card, not a crash, so this is quality not severity.
+- Related to BUG-002 but a separate file (consumer side, not write site). The two fixes together fully resolve the "Today card freshness" story.
+
+### Files involved
+
+- `js/today.js` (`readCardOfTheDay`, lines ~32-46) — read-and-return path that needs date validation
+- `today.html` — verify the empty-state branch handles `null` cleanly (no broken image, copy renders, draw CTA visible)
+
+### Files explicitly off-limits
+
+- `js/asset-resolver.js` — never modify (CLAUDE.md hard rule)
+- `js/common.js` — never modify (CLAUDE.md hard rule)
+- `share/normalize-payload.js` — never modify (share payload schema is contractual)
+
+### Suggested first session
+
+1. Reproduce on device: draw a daily card today, change the iPhone's date to tomorrow (Settings → General → Date & Time), open `today.html`. Confirm yesterday's card displays as "Today card."
+2. Make the product decision: stale slot → empty state (default), or display-with-CTA. Decide before patching.
+3. Patch `readCardOfTheDay` per the reported fix. Verify the empty-state UI on `today.html` renders cleanly when `readCardOfTheDay()` returns `null`.
+4. Add a `LOG_DRAFT.jsonl` entry referencing BUG-003 and noting the BUG-002 follow-up linkage.
+5. Verify on device after toggling system date forward by one day.
