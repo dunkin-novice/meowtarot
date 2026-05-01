@@ -90,3 +90,30 @@
     border-top-color: rgba(172, 130, 210, 0.20);
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Phase 2.0.1 — bottom-nav specificity fix
+ *
+ * css/bottom-nav.css line 83 declares:
+ *   body.has-bottom-nav .site-header { background: rgba(5, 9, 26, 0.88); }
+ *
+ * That selector has specificity (0,2,1) and beat Phase 2's plain
+ * .site-header at (0,1,0), causing the mobile header to revert to
+ * dark navy on every page where the bottom-nav is active (all mobile
+ * widths ≤768px).
+ *
+ * Match specificity here so source order wins: phase-2-header.css
+ * loads after bottom-nav.css (which is @import-ed at the top of
+ * styles.css), so a tied (0,2,1) selector wins by being later.
+ *
+ * Only background and border-bottom-color overridden — padding kept
+ * intentionally to preserve bottom-nav's compact 8px 12px on mobile.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  body.has-bottom-nav .site-header {
+    background: rgba(255, 255, 255, 0.82);
+    border-bottom-color: rgba(172, 130, 210, 0.15);
+  }
+}
