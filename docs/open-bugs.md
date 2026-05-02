@@ -170,3 +170,109 @@ function readCardOfTheDay() {
 3. Patch `readCardOfTheDay` per the reported fix. Verify the empty-state UI on `today.html` renders cleanly when `readCardOfTheDay()` returns `null`.
 4. Add a `LOG_DRAFT.jsonl` entry referencing BUG-003 and noting the BUG-002 follow-up linkage.
 5. Verify on device after toggling system date forward by one day.
+
+---
+
+## BUG-004 — Ask-a-question "Other" topic: per-card meanings missing from reading
+
+**Status:** Reported, not yet verified or triaged.
+**Priority:** Medium (to confirm — affects a specific question-mode topic).
+**Reported:** 2026-05-02.
+
+### Symptom
+
+In Ask-a-question mode, when the topic is set to "Other", the per-card reading/meaning text for each drawn card does not appear in the on-screen reading. Other topics render the per-card meanings as expected.
+
+### Suspected root cause (unverified)
+
+Possibly a missing topic key for "other" in the question-mode reading text mapping, or a fallback path in the reading renderer that doesn't fire for the "other" topic. Likely lives in the question-mode reading flow rather than the shared per-card meaning lookup.
+
+### Files likely involved
+
+- `js/reading.js` (question-mode reading flow / per-card meaning rendering)
+- `js/reading-helpers.js` (per-card text resolution by topic)
+- `cards.json` (verify whether "other" topic-keyed fields exist for each card)
+
+### Files explicitly off-limits
+
+- `js/asset-resolver.js`
+- `js/common.js` shell (i18n routing only)
+- `share/normalize-payload.js`
+
+### Suggested first session
+
+1. Reproduce on live site: Ask-a-question → topic = Other → submit → confirm per-card meanings missing.
+2. Compare DOM/state vs. another topic (e.g. Love) for the same cards — pinpoint where the text drops out.
+3. Trace the topic key flow from input → reading state → per-card meaning lookup.
+4. Decide whether to add the missing key, add a fallback to a generic per-card meaning, or treat "other" specially.
+
+---
+
+## BUG-005 — Ask-a-question poster: per-card meanings truncated mid-paragraph
+
+**Status:** Reported, not yet verified or triaged.
+**Priority:** Medium (to confirm — affects shareable poster output for question mode).
+**Reported:** 2026-05-02.
+
+### Symptom
+
+On the Ask-a-question poster (the share/result poster), per-card meaning text is cut off and does not finish the paragraph. The visible text ends mid-sentence rather than at a clean paragraph or section boundary.
+
+### Suspected root cause (unverified)
+
+Likely a fixed-height text region or a character/line-count cap in the poster layout that truncates without ellipsis or completion. Could also be a font-size/wrap mismatch between the on-screen reading length and the poster's allotted text box.
+
+### Files likely involved
+
+- `share/poster.js` (poster rendering / text layout)
+- `js/share-payload.js` (payload assembly — verify full text is being passed in, not pre-truncated)
+- Question-mode poster template (whichever file owns the per-card text region)
+
+### Files explicitly off-limits
+
+- `js/asset-resolver.js`
+- `share/normalize-payload.js` (share payload schema is contractual — payload shape cannot change)
+- `resolvePosterCardImageSources` call order
+
+### Suggested first session
+
+1. Reproduce on live site: generate an Ask-a-question poster and inspect where text ends.
+2. Verify whether the truncation is in the payload (text passed to poster is already short) or in the layout (full text passed but rendered region clips).
+3. If layout-side: decide between auto-resize, scrollable region, summary/excerpt, or paragraph-aware truncation with ellipsis.
+4. If payload-side: trace where text gets truncated upstream — but do NOT modify `share/normalize-payload.js`.
+
+---
+
+## BUG-006 — Shuffle button stays darkened after press until tab focus changes
+
+**Status:** Reported, not yet verified or triaged.
+**Priority:** Low-to-Medium (to confirm — UX/affordance issue, doesn't block flow).
+**Reported:** 2026-05-02.
+
+### Symptom
+
+After tapping the Shuffle button, it stays in a darkened (pressed/disabled-looking) state. The yellow active state only returns after the user switches browser tabs and back. Expected behaviour: the button should return to the yellow active state immediately so the user can see it's tappable again for a re-shuffle.
+
+### Suspected root cause (unverified)
+
+Likely a CSS `:active` / `:focus` state not being cleared after tap on mobile, or a JS-applied "pressed"/"loading" class that isn't being removed when the shuffle animation/operation completes. The fact that tab-switching restores it points to a render/repaint trigger rather than a real state issue — the underlying state may already be correct but the visual doesn't refresh until the page regains focus.
+
+### Files likely involved
+
+- `js/reading.js` or wherever shuffle handler lives
+- Shuffle-button CSS (active/focus/pressed states, transition timing)
+- Possibly the shuffle animation completion callback (does it `blur()` the button or remove a state class?)
+
+### Files explicitly off-limits
+
+- `js/asset-resolver.js`
+- `js/common.js` shell
+
+### Suggested first session
+
+1. Reproduce on real iPhone Safari (the report mentions tab-switching as the workaround — phone behaviour matters).
+2. Inspect computed styles on the shuffle button immediately after tap vs. after tab refocus.
+3. Check whether a class is stuck applied or whether it's purely a `:active`/`:focus` retention issue on touch.
+4. Common fixes to consider: `button.blur()` after handler completes; `-webkit-tap-highlight-color` adjustments; explicit class removal in the shuffle complete callback.
+
+---
