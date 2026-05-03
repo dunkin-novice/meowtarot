@@ -276,3 +276,224 @@ Likely a CSS `:active` / `:focus` state not being cleared after tap on mobile, o
 4. Common fixes to consider: `button.blur()` after handler completes; `-webkit-tap-highlight-color` adjustments; explicit class removal in the shuffle complete callback.
 
 ---
+
+## BUG-007 — daily.html regression (pre-existing on main)
+
+**Status:** Reported, not yet diagnosed.
+**Priority:** High (visible on production, breaks core daily-card flow).
+**Reported:** 2026-05-03.
+
+### Symptom
+
+On `daily.html`: shuffle button missing, cards overlap the Continue button, Continue button overlaps the bottom nav, header font color wrong (likely too light against frosted-glass background).
+
+### Suspected root cause
+
+Confirmed pre-existing on `main` before today's Phase 4 work — the section 10 audit during the Phase 4 ship cleared the new code rule-by-rule, and three independent checks confirmed `daily.html` doesn't even load `phase-1-home.css`. Most likely culprits, in order: `phase-2-1-logo.css` (most recent shared-component CSS change, touched bottom-nav theming), `phase-2-header.css` (header globalization including the 2.0.1 mobile fix), or the `js/reading.js` daily card pin commit (`d2804da` — though this seems unlikely to affect button visibility or layout).
+
+### Why this isn't a drive-by fix
+
+Multiple plausible root-cause files, all of which ship to every page including `daily.html`. Need a discovery-first grep pass against `phase-2-*.css` for shuffle/continue/bottom-nav/header rules before any edit. Cascade specificity is fragile — Phase 2.0.1 already had to fight `bottom-nav.css` line 83 specificity. A blind fix risks the same trap.
+
+### Files involved
+
+- `daily.html`
+- `css/phase-2-header.css`
+- `css/phase-2-1-logo.css`
+- `css/bottom-nav.css`
+- Possibly `js/reading.js`
+
+### Files explicitly off-limits
+
+- `css/styles.css` — never edit (CLAUDE.md hard rule)
+- `js/asset-resolver.js` — never modify (CLAUDE.md hard rule)
+- `js/common.js` shell — never modify (CLAUDE.md hard rule)
+- `share/normalize-payload.js` — never modify (share payload schema is contractual)
+- Anything under `/share/` or `/th/`
+
+### Suggested first session
+
+1. Grep `phase-2-header.css`, `phase-2-1-logo.css`, `bottom-nav.css` for selectors matching `.shuffle`, `.continue`, `.card-slot`, `.site-header`, `.bottom-nav`, `.has-bottom-nav`.
+2. Inspect `daily.html` rendered DOM in Safari devtools to see which rule wins on each broken element.
+3. Identify whether the regression is one root cause or several stacking.
+4. Patch with discovery-first + matching-specificity overrides per the Phase 2.0.1 pattern.
+
+---
+
+## BUG-008 — daily.html topic font unreadable
+
+**Status:** Reported.
+**Priority:** Medium (readability — affects every daily-card user).
+**Reported:** 2026-05-03.
+
+### Symptom
+
+The topic/heading text on `daily.html` is too light against the background. Hard to read.
+
+### Suspected root cause
+
+Likely a token color value (`--color-plum-soft` or similar) being applied where a darker variant (`--color-plum` or `--color-plum-mid`) would be more readable. May also be related to the broader BUG-007 regression — could be a single fix or could be separate.
+
+### Why this isn't a drive-by fix
+
+The color token system is shared. Changing the value globally affects everywhere it's used; changing it scoped requires identifying every usage. Worth bundling diagnosis with BUG-007 in the same session since they're the same page.
+
+### Files involved
+
+- `daily.html`
+- `css/theme-tokens.css`
+- Possibly `css/styles.css` (read-only — find the rule, override elsewhere)
+
+### Files explicitly off-limits
+
+- `css/styles.css` — never edit
+- Standard hard-rules list (asset-resolver, common.js shell, normalize-payload, /share/, /th/)
+
+### Suggested first session
+
+1. Bundle with BUG-007 diagnosis.
+2. Inspect computed color in Safari devtools.
+3. Identify the source rule.
+4. Decide whether to override globally (token change) or scoped to `daily.html`.
+
+---
+
+## BUG-009 — daily.html "Re-draw" button is redundant
+
+**Status:** Reported.
+**Priority:** Low (UX cleanup, not a defect).
+**Reported:** 2026-05-03.
+
+### Symptom
+
+`daily.html` has a "Re-draw" button. The bottom-nav menu already has a "Draw" action. Two ways to do the same thing creates friction and visual clutter.
+
+### Suspected root cause
+
+Predates the bottom-nav addition. Was the only draw entry point before; now duplicated.
+
+### Why this isn't a drive-by fix
+
+Removing UI requires confirming no behavioral difference between "Re-draw" and bottom-nav "Draw" — they may handle existing-card state differently (e.g., Re-draw replaces the current card, Draw goes to a fresh state). Verify behavior parity before deletion. Also bundle with BUG-007 diagnosis since same page.
+
+### Files involved
+
+- `daily.html`
+- `js/daily.js` or wherever the Re-draw handler lives
+
+### Files explicitly off-limits
+
+- Standard hard-rules list
+
+### Suggested first session
+
+1. Bundle with BUG-007 + BUG-008.
+2. Confirm Re-draw and bottom-nav Draw produce identical UX.
+3. Then remove the Re-draw button markup + handler.
+
+---
+
+## BUG-010 — /today page unscrollable, image too large
+
+**Status:** Reported, URL needs verification.
+**Priority:** Medium (page is unusable on mobile).
+**Reported:** 2026-05-03.
+
+### Symptom
+
+The page at `meowtarot.com/today` cannot be scrolled. The hero image takes up so much viewport that content below is unreachable.
+
+### Suspected root cause
+
+Likely a `height: 100vh` / `overflow: hidden` combination on the page container, plus an unconstrained image size. The `100dvh` fix used in Phase 4 may apply here too.
+
+### Why this isn't a drive-by fix
+
+First — verify the actual URL. Is `/today` a separate page, or a redirect to `/daily-card/`, or to `daily.html`? Identify the route before touching anything. Second — image sizing on cat-tarot illustrations is sensitive; many existing image rules cap at specific dimensions to preserve the artwork's framing. Don't shrink blindly.
+
+### Files involved
+
+- TBD pending URL identification. Likely `today.html` or `daily-card/index.html` plus its CSS.
+
+### Files explicitly off-limits
+
+- Standard hard-rules list
+
+### Suggested first session
+
+1. Resolve `/today` to an actual file/route (`grep -rn "today" *.html` or check the server config).
+2. Inspect on iPhone Safari, identify what's blocking scroll.
+3. Tighten image `max-height` and ensure container scrolls.
+
+---
+
+## BUG-011 — Features tab in bottom nav points to outdated features.html
+
+**Status:** Reported. Decision made: repoint Features tab to homepage (`/`) instead of `features.html`.
+**Priority:** Medium (currently routes users to the old chooser layout that Phase 4 replaced).
+**Reported:** 2026-05-03.
+
+### Symptom
+
+The bottom-nav "Features" tab links to `/features.html`, which is the old 3-card chooser layout. Now that Phase 4 is live, this is a confusing detour to a stale design.
+
+### Decision (made, not pending)
+
+Repoint the Features tab `href` to `/` (the new Phase 4 homepage). Do not delete `features.html` — leaving it as an orphaned `noindex` URL is fine and preserves any inbound links.
+
+### Why this isn't a drive-by fix
+
+The bottom nav is rendered by `js/common.js` (off-limits hard rule) or by inline HTML on each page. Identify which before editing. If it's in `js/common.js`, this likely violates the off-limits rule and needs a workaround (e.g., override the link via CSS or a small post-injection JS hook on each page). If it's hardcoded HTML, it's a multi-file find-and-replace across all EN pages.
+
+### Files involved
+
+- TBD pending grep — `js/common.js` (off-limits — read-only inspection), each EN page's bottom-nav markup if hardcoded.
+
+### Files explicitly off-limits
+
+- `js/common.js` shell — never modify. If the nav is rendered there, find another path.
+- Standard hard-rules list otherwise.
+
+### Suggested first session
+
+1. `grep -rn "features.html" --include='*.html' --include='*.js'` to locate every reference.
+2. If `common.js`: design a workaround (hint: per-page override, or a config object `common.js` reads).
+3. If hardcoded: edit each page consistently.
+4. Update TH equivalents only if Phase 7 has shipped — otherwise note as deferred.
+
+---
+
+## BUG-012 — Pages build fails on every user push, auto-log push recovers it
+
+**Status:** Reported, root cause hypothesis only.
+**Priority:** Low (no production impact — site stays current).
+**Reported:** 2026-05-03.
+
+### Symptom
+
+Every push to `main` since 2026-05-01 produces an `errored` Pages build. The auto-log workflow's follow-up push (8–10 seconds later) always succeeds. Six builds confirm the pattern.
+
+### Suspected root cause
+
+Jekyll on GitHub Pages tries to process `LOG_DRAFT.jsonl` and fails. The auto-log workflow archives the draft to `.log-draft-archive/` and removes it from the root before its push, so its push has no offending file. Hypothesis only; not verified.
+
+### Why this isn't a drive-by fix
+
+The fix is probably one of: (a) add `LOG_DRAFT.jsonl` to a `.nojekyll` exclude, (b) add `_config.yml` exclude rule, (c) move `LOG_DRAFT.jsonl` to a directory Jekyll ignores by default. Wrong choice could break the auto-log workflow itself. Need to read auto-log workflow source before deciding.
+
+### Files involved
+
+- `.github/workflows/*.yml` (read-only inspection)
+- Possibly new `.nojekyll` or `_config.yml`
+
+### Files explicitly off-limits
+
+- Don't touch the auto-log workflow logic itself — it's working.
+
+### Suggested first session
+
+1. Read the failed build error from `gh api repos/dunkin-novice/meowtarot/pages/builds/<failed-id>` to confirm the `LOG_DRAFT.jsonl` hypothesis.
+2. If confirmed, check whether `.nojekyll` already exists at repo root.
+3. Pick the least-invasive fix.
+
+---

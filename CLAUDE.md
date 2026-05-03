@@ -90,6 +90,8 @@ Tasks deferred for later phases.
 
 - **Phase 2.1: Clickable header logo.** Add a logo to the top-left corner of the header that links to the homepage (`/`). Depends on Phase 2 (header globalization). Not started.
 - **Bottom nav theming.** The mobile bottom-nav bar (Features/Today/Draw/Cards/Profile) currently renders dark navy alongside the light header. Decide whether to leave dark (legitimate iOS-native pattern) or theme it pastel (consistency). Lives in css/bottom-nav.css. Not blocking; visual decision.
+- **TH homepage parity gap.** `th/index.html` was not updated as part of Phase 4 and still serves the old 3-card chooser layout. Per the `/th/` off-limits rule, deferred to Phase 7. When Phase 7 ships, sync the Phase 4 hero CTA + tile grid markup and CSS scope into the TH homepage equivalent.
+- **Dead-weight CSS in phase-1-home.css sections 4-5.** The old hero classes (`.reading-path-card`, `.home-secondary-cta`, `.home-hero-actions`) are still defined in sections 4-5 but no longer referenced by `index.html` after Phase 4. They remain in use on `/features.html` so they cannot simply be deleted. Future cleanup: split into "homepage-only (now dead)" and "features-page-shared (still active)" subsections, or move features-only rules to a dedicated `phase-1-features.css` file.
 
 ## When in doubt
 
