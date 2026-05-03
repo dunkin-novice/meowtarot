@@ -322,9 +322,25 @@ Multiple plausible root-cause files, all of which ship to every page including `
 
 ## BUG-008 — daily.html topic font unreadable
 
-**Status:** Reported.
+**Status:** Diagnosis inconclusive — scope corrected, live device evidence needed.
 **Priority:** Medium (readability — affects every daily-card user).
 **Reported:** 2026-05-03.
+
+**Diagnostic update (2026-05-03):** The original framing of this bug as a `<header id="site-header">` text-color issue was disproven during the BUG-007 bundled-fix session. On mobile (`@media (max-width: 768px)` + `body.has-bottom-nav`), `css/bottom-nav.css:89-94` hides `.mobile-menu-toggle`, `.nav-panel`, `.nav-logo`, and `.header-title` with `display: none !important`. The only visible site-header element on mobile is the `.lang-btn` EN/TH toggle, already `#3d2c58` dark plum (`css/phase-2-header.css:62`) — readable.
+
+Scope re-targeted to the page-body topic text — `<p class="eyebrow" data-i18n="dailyTitle">` (renders "Daily Reading" / "ดูดวงรายวัน") inside `<section class="board-shell">` at `daily.html:54`. Re-diagnosis (READ-ONLY, Step 2 of post-Phase-4 cleanup) traced the cascade:
+
+- Effective `.eyebrow` color: `rgba(247, 242, 255, 0.98)` (near-white) from `body[data-page='daily'] .board-header--daily .eyebrow` at `css/styles.css:5494` (specificity 0,3,0 — wins).
+- Effective `.board-shell` background: dark navy gradient (`#060b22` → `#0c1440`) from `body { background: … }` at `css/styles.css:62`. No rule overrides body background on `body[data-page='daily']`.
+- White-on-dark is high-contrast; static cascade does not reproduce the "unreadable" symptom.
+
+Possible explanations the read-only diagnosis cannot resolve:
+
+1. Reporter saw a post-deal JS-rendered state (`js/reading.js:3769` swaps `readingTitle.textContent = dict.dailyTitle` into a different element — not yet traced).
+2. Reporter conflated `daily.html` with `index.html`, where Phase 2 added a light frosted header on a light pastel body and `css/phase-1-home.css:85` sets `body[data-page='home'] .eyebrow { color: #9270d0 }` (lavender on cream — genuinely low-contrast).
+3. iOS Safari rendering quirk (forced colors, smart invert, increased contrast) invisible to static CSS analysis.
+
+Next step: live-device inspection (Mac Safari → Develop → iPhone) to capture the actual unreadable element, its computed color, and inherited background. Do not author a fix from speculation.
 
 ### Symptom
 
@@ -360,9 +376,15 @@ The color token system is shared. Changing the value globally affects everywhere
 
 ## BUG-009 — daily.html "Re-draw" button is redundant
 
-**Status:** Reported.
+**Status:** Closed — not reproducible.
 **Priority:** Low (UX cleanup, not a defect).
 **Reported:** 2026-05-03.
+
+**Closing note (2026-05-03):** Verified during the BUG-007 bundled-fix session. There is no Re-draw button in `daily.html` markup — `grep -nE "redraw|re-draw|Re-draw|Redraw" daily.html` returns zero matches. The static markup contains only `id="daily-continue"` (Continue) and `id="daily-deal-shuffle"` (Deal).
+
+The "Re-draw" / "เปิดไพ่อีกครั้ง" string at `js/reading.js:3730` targets `document.getElementById('newReadingBtn')` (`js/reading.js:234`). No HTML page in the repo contains an element with `id="newReadingBtn"`. The lookup returns `null` and all surrounding handlers (`if (newReadingBtn)`, `newReadingBtn?.addEventListener`) cleanly null-guard, so the entire code path no-ops at runtime.
+
+The dead `newReadingBtn` code path is filed separately as **BUG-013**.
 
 ### Symptom
 
@@ -495,5 +517,43 @@ The fix is probably one of: (a) add `LOG_DRAFT.jsonl` to a `.nojekyll` exclude, 
 1. Read the failed build error from `gh api repos/dunkin-novice/meowtarot/pages/builds/<failed-id>` to confirm the `LOG_DRAFT.jsonl` hypothesis.
 2. If confirmed, check whether `.nojekyll` already exists at repo root.
 3. Pick the least-invasive fix.
+
+---
+
+## BUG-013 — Dead `newReadingBtn` handler in `js/reading.js`
+
+**Status:** Reported.
+**Priority:** Low (no user-visible effect; code path doesn't run).
+**Reported:** 2026-05-03.
+
+### Symptom
+
+`js/reading.js:3713-3757` contains a "Re-draw" / "เปิดไพ่อีกครั้ง" code path keyed off `document.getElementById('newReadingBtn')` (lookup at `js/reading.js:234`). No HTML page in the repo has an element with `id="newReadingBtn"`, so the lookup returns `null` and all handlers null-guard (`if (newReadingBtn)`, `newReadingBtn?.addEventListener`) to no-op. The entire code path is unreachable at runtime.
+
+Surfaced during BUG-009's closing diagnosis — the "Re-draw" button BUG-009 reported was actually never present in `daily.html`; the JS for it exists but has no DOM target.
+
+### Suspected root cause
+
+Scaffolding that never landed, or markup removed in a refactor without removing the JS handler. Git blame would tell.
+
+### Why this isn't a drive-by fix
+
+Two reasonable directions: (a) delete the dead JS code path (smallest diff, but loses a feature that may have been in-flight), or (b) restore the missing markup (re-introduces the redundancy BUG-009 worried about). Need a product call: was `newReadingBtn` ever supposed to exist, and if so where? Also worth a sweep for other dead `getElementById` lookups before patching just this one.
+
+### Files involved
+
+- `js/reading.js` — lines 234 (lookup), 3713–3757 (handler block)
+- `js/common.js` — i18n entries `dailyRedraw` at lines 30 (EN) and 269 (TH)
+
+### Files explicitly off-limits
+
+- `js/asset-resolver.js`, `js/common.js` shell, `share/normalize-payload.js`, `/share/`, `/th/` (standard hard-rules list)
+- The `dailyRedraw` i18n keys themselves should not be removed without confirming they're not used elsewhere.
+
+### Suggested first session
+
+1. `git blame -L 234,234 js/reading.js` and `git blame -L 3713,3757 js/reading.js` to find when the handler was added and what markup change might have removed the button.
+2. Decide direction (a) vs (b) above.
+3. Sweep for other null-target `getElementById` calls in `js/reading.js` while scoped to this area.
 
 ---
