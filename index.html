@@ -135,100 +135,40 @@
 
   <main class="page-shell home-page">
     <section class="home-hero-card home-hero-card--chooser" aria-labelledby="home-hero-title">
-      <div class="home-hero-copy home-hero-copy--centered">
-        <p class="eyebrow">MeowTarot</p>
-        <h1 class="home-hero-title" id="home-hero-title">Choose your reading</h1>
-      </div>
+      <a href="daily.html" class="home-hero-cta" aria-labelledby="home-hero-title">
+        <h1 id="home-hero-title">Your card awaits today</h1>
+        <p>Take a quiet moment for yourself</p>
+        <span class="home-hero-cta__btn" aria-hidden="true">Draw my card</span>
+      </a>
 
-      <div class="home-path-grid" role="list" aria-label="Reading paths">
-        <a class="reading-path-card reading-path-card--chooser" href="daily.html" role="listitem" aria-label="Choose Today reading">
-          <span class="reading-path-card__media">
-            <img
-              class="reading-path-card__image reading-path-card__image--default"
-              src="https://cdn.meowtarot.com/assets/images/features/daily-default.webp"
-              alt="Daily Reading feature preview"
-              width="360"
-              height="600"
-              loading="eager"
-              fetchpriority="high"
-            />
-            <img
-              class="reading-path-card__image reading-path-card__image--active"
-              src="https://cdn.meowtarot.com/assets/images/features/daily-active.webp"
-              alt=""
-              aria-hidden="true"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-          </span>
-          <h2 class="reading-path-card__label">How’s today looking?</h2>
-          <p class="reading-path-card__meta">Daily Reading</p>
+      <div class="home-readings-label">Readings</div>
+
+      <div class="home-reading-grid">
+        <a href="question.html" class="home-reading-tile" aria-label="Ask a Question reading">
+          <div class="home-reading-tile__icon" aria-hidden="true">?</div>
+          <div class="home-reading-tile__label">Ask a Question</div>
+          <div class="home-reading-tile__sub">Past · Present · Future</div>
         </a>
-
-        <a class="reading-path-card reading-path-card--chooser" href="full.html" role="listitem" aria-label="Choose Recent Path reading">
-          <span class="reading-path-card__media">
-            <img
-              class="reading-path-card__image reading-path-card__image--default"
-              src="https://cdn.meowtarot.com/assets/images/features/celtic-default.webp"
-              alt="Celtic Cross feature preview"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-            <img
-              class="reading-path-card__image reading-path-card__image--active"
-              src="https://cdn.meowtarot.com/assets/images/features/celtic-active.webp"
-              alt=""
-              aria-hidden="true"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-          </span>
-          <h2 class="reading-path-card__label">How’s my life lately?</h2>
-          <p class="reading-path-card__meta">Reading for the next 6–12 months</p>
+        <a href="full.html" class="home-reading-tile" aria-label="Celtic Cross reading">
+          <div class="home-reading-tile__icon" aria-hidden="true">✦</div>
+          <div class="home-reading-tile__label">Celtic Cross</div>
+          <div class="home-reading-tile__sub">10-card deep reading</div>
         </a>
-
-        <a class="reading-path-card reading-path-card--chooser" href="question.html" role="listitem" aria-label="Choose Ask reading">
-          <span class="reading-path-card__media">
-            <img
-              class="reading-path-card__image reading-path-card__image--default"
-              src="https://cdn.meowtarot.com/assets/images/features/question-default.webp"
-              alt="Ask a Question feature preview"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-            <img
-              class="reading-path-card__image reading-path-card__image--active"
-              src="https://cdn.meowtarot.com/assets/images/features/question-active.webp"
-              alt=""
-              aria-hidden="true"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-          </span>
-          <h2 class="reading-path-card__label">Ask a Question</h2>
-          <p class="reading-path-card__meta">Best for exploring one topic at a time over the next 3–6 months.</p>
+        <a href="/tarot-card-meanings/" class="home-reading-tile" aria-label="Browse the card library">
+          <div class="home-reading-tile__icon" aria-hidden="true">≡</div>
+          <div class="home-reading-tile__label">Card Library</div>
+          <div class="home-reading-tile__sub">78 arcana &amp; meanings</div>
         </a>
-      </div>
-
-      <div class="home-hero-actions home-hero-actions--subtle">
-        <a href="question.html?topic=other" class="btn btn-secondary home-secondary-cta" aria-label="Draw a quick card with Ask reading">Draw a quick card</a>
-        <a href="/daily-card/" class="btn btn-secondary home-secondary-cta" aria-label="Open Tarot Card of the Day page">Tarot Card of the Day</a>
-        <a href="/quiz/tarot-card-personality/" class="btn btn-secondary home-secondary-cta" aria-label="Open Which Tarot Card Are You personality quiz">Which Tarot Card Are You?</a>
+        <a href="profile.html" class="home-reading-tile" aria-label="View your reading history">
+          <div class="home-reading-tile__icon" aria-hidden="true">↗</div>
+          <div class="home-reading-tile__label">My Journey</div>
+          <div class="home-reading-tile__sub">Your reading history</div>
+        </a>
       </div>
     </section>
   </main>
 
-  <footer id="site-footer"></footer>
+  <footer id="site-footer" style="padding: 12px 24px;"></footer>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
