@@ -5495,7 +5495,7 @@ body[data-page='daily'] .board-header--daily .eyebrow {
   margin: 0;
   letter-spacing: 0.08em;
   font-size: clamp(1.35rem, 2.4vw, 1.9rem);
-  color: rgba(247, 242, 255, 0.98);
+  color: var(--mystic-text);
 }
 
 body[data-page='daily'] .board-header--daily .board-helper {
@@ -6109,8 +6109,9 @@ body[data-page='daily'] #daily-board .card-back {
   }
 
   body[data-page='daily'] .card-board.card-board--daily {
+    --daily-mobile-board-max-height: calc(100dvh - var(--nav-height) - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px) - 236px);
     width: min(100%, 274px);
-    min-height: 402px;
+    max-height: clamp(304px, var(--daily-mobile-board-max-height), 420px);
     margin-inline: auto;
     padding-bottom: 14px;
     grid-template-columns: repeat(2, 120px);
@@ -6184,7 +6185,7 @@ body[data-page='daily'] #daily-board .card-back {
   }
 
   body[data-page='daily'] .card-board.card-board--daily {
-    --daily-mobile-board-max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - 236px);
+    --daily-mobile-board-max-height: calc(100dvh - var(--nav-height) - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px) - 236px);
     width: min(100%, 272px);
     max-height: clamp(304px, var(--daily-mobile-board-max-height), 420px);
     margin: 0 auto;
