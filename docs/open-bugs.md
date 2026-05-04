@@ -112,9 +112,15 @@ Before any code change, a product decision is needed: should the second daily dr
 
 ## BUG-003 — Stale `cardOfTheDay` slot displays as Today card across day boundaries
 
-**Status:** Reported, not yet verified.
+**Status:** Closed — not reproducible as filed.
 **Priority:** Medium
 **Reported:** 2026-05-02
+
+**Closing note (2026-05-04):** The date-equality check already exists at `js/today.js:92` (`entry.date !== today` → empty-state branch). That check landed in commit `acb00537` on 2026-04-27, five days before BUG-003 was filed (2026-05-02). The bug record's claim that today.js renders without comparing the stored date to today's local date is incorrect.
+
+The `#today-empty` branch in `today/index.html` already exposes a display-with-CTA ("Draw your card for today" → `/daily.html`), so the product decision the bug record asked for (empty state vs. display-with-CTA) is moot — both options are effectively implemented.
+
+If a different stale-display symptom surfaces on iPhone testing (service-worker cache, timezone edge case in `toLocalDateIso`, etc.), file as a new bug with concrete repro steps. Don't reopen BUG-003.
 
 ### Symptom
 
