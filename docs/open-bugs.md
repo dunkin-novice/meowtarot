@@ -279,9 +279,13 @@ Likely a CSS `:active` / `:focus` state not being cleared after tap on mobile, o
 
 ## BUG-007 — daily.html regression (pre-existing on main)
 
-**Status:** Reported, not yet diagnosed.
+**Status:** Take-2 fix shipped — pending production verification.
 **Priority:** High (visible on production, breaks core daily-card flow).
 **Reported:** 2026-05-03.
+
+**Status update (2026-05-03 take 2):** Initial fix at `css/styles.css:6067` and `:6172` (subtracting `var(--bottom-nav-height)` from `.board-shell` height calc) shipped in commit `5436645` but introduced new failures on production: Continue button floating mid-screen, Shuffle button pushed below shell, BUG-008 eyebrow text exposed as white-on-white. Root cause: `.card-board.card-board--daily` inner sizing was independent of `.board-shell` height. The container shrunk; the rigid card content didn't.
+
+Take-2 fix updates `--daily-mobile-board-max-height` calc at `styles.css:6186` (≤480) and `:6111` (≤640) to subtract `var(--bottom-nav-height)`, hoists the variable into the ≤640 scope, removes rigid `min-height: 402px`. Also fixes BUG-008 in the same patch (`.eyebrow` color → `var(--mystic-text)`).
 
 ### Symptom
 
