@@ -15,14 +15,14 @@ function getLocaleConfig(pathname) {
     prefix,
     labels: isThai
       ? {
-        features: 'ฟีเจอร์',
+        home: 'หน้าแรก',
         today: 'วันนี้',
         draw: 'สุ่มไพ่',
         cards: 'ความหมายไพ่',
         profile: 'โปรไฟล์',
       }
       : {
-        features: 'Features',
+        home: 'Home',
         today: 'Today',
         draw: 'Draw',
         cards: 'Cards',
@@ -38,7 +38,7 @@ function shouldExclude(pathname) {
 
 function getActiveTab(pathname) {
   const normalized = normalizePath(pathname.replace(/^\/th/, '') || '/');
-  if (normalized.startsWith('/features.html/')) return 'features';
+  if (normalized === '/' || normalized.startsWith('/index.html/')) return 'home';
   if (normalized.startsWith('/today/')) return 'today';
   if (normalized.startsWith('/daily.html/')) return 'draw';
   if (normalized.startsWith('/tarot-card-meanings/') || normalized.startsWith('/cards/')) return 'cards';
@@ -51,7 +51,7 @@ function buildNavMarkup(pathname) {
   const active = getActiveTab(pathname);
 
   const tabs = [
-    { key: 'features', href: `${prefix}/features.html`, icon: '✨', label: labels.features },
+    { key: 'home', href: `${prefix}/index.html`, icon: '🏠', label: labels.home },
     { key: 'today', href: `${prefix}/today/`, icon: '📅', label: labels.today },
     { key: 'draw', href: `${prefix}/daily.html`, icon: '🐾', label: labels.draw, center: true },
     { key: 'cards', href: `${prefix}/tarot-card-meanings/`, icon: '📚', label: labels.cards },
@@ -60,7 +60,7 @@ function buildNavMarkup(pathname) {
 
   return `
     <nav class="bottom-nav" aria-label="Mobile app navigation">
-      <a class="bottom-nav__item ${active === 'features' ? 'is-active' : ''}" href="${tabs[0].href}">
+      <a class="bottom-nav__item ${active === 'home' ? 'is-active' : ''}" href="${tabs[0].href}">
         <span class="bottom-nav__icon" aria-hidden="true">${tabs[0].icon}</span>
         <span class="bottom-nav__label">${tabs[0].label}</span>
       </a>

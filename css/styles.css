@@ -5503,7 +5503,7 @@ body[data-page='daily'] .board-header--daily .board-helper {
   font-size: clamp(0.8rem, 1.7vw, 0.92rem);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(226, 216, 245, 0.84);
+  color: var(--mystic-muted);
 }
 
 body[data-page='daily'] .board-actions--daily {
@@ -5529,10 +5529,9 @@ body[data-page='daily'] .board-actions--daily .ritual-cta {
 }
 
 body[data-page='daily'] #daily-deal-shuffle {
-  color: rgba(242, 236, 252, 0.94);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(224, 207, 246, 0.26);
-  box-shadow: inset 0 0 0 1px rgba(244, 231, 255, 0.07);
+  color: #54496a;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(168, 137, 196, 0.3);
 }
 
 body[data-page='daily'] #daily-continue {
@@ -6098,7 +6097,7 @@ body[data-page='daily'] #daily-board .card-back {
     background: transparent;
     font-size: 1rem;
     letter-spacing: 0.03em;
-    color: rgba(242, 235, 253, 0.88);
+    color: var(--mystic-muted);
     font-weight: 600;
   }
 
@@ -6147,11 +6146,11 @@ body[data-page='daily'] #daily-board .card-back {
     flex: none;
   }
 
-  body[data-page='daily'] #daily-continue {
+  body[data-page='daily'] #daily-deal-shuffle {
     order: 1;
   }
 
-  body[data-page='daily'] #daily-deal-shuffle {
+  body[data-page='daily'] #daily-continue {
     order: 2;
   }
 }
