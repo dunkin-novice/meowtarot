@@ -285,13 +285,15 @@ Likely a CSS `:active` / `:focus` state not being cleared after tap on mobile, o
 
 ## BUG-007 — daily.html regression (pre-existing on main)
 
-**Status:** Take-2 fix shipped — pending production verification.
+**Status:** Closed — fixed in 94de5d5 (take-2 fix). Production verified 2026-05-07 after hard cache refresh.
 **Priority:** High (visible on production, breaks core daily-card flow).
 **Reported:** 2026-05-03.
 
 **Status update (2026-05-03 take 2):** Initial fix at `css/styles.css:6067` and `:6172` (subtracting `var(--bottom-nav-height)` from `.board-shell` height calc) shipped in commit `5436645` but introduced new failures on production: Continue button floating mid-screen, Shuffle button pushed below shell, BUG-008 eyebrow text exposed as white-on-white. Root cause: `.card-board.card-board--daily` inner sizing was independent of `.board-shell` height. The container shrunk; the rigid card content didn't.
 
 Take-2 fix updates `--daily-mobile-board-max-height` calc at `styles.css:6186` (≤480) and `:6111` (≤640) to subtract `var(--bottom-nav-height)`, hoists the variable into the ≤640 scope, removes rigid `min-height: 402px`. Also fixes BUG-008 in the same patch (`.eyebrow` color → `var(--mystic-text)`).
+
+**Closing note (2026-05-07):** Verified closed on production after the founder's hard cache refresh on iPhone Safari. Static-cascade re-tracing during the 2026-05-06 read-only diagnosis confirmed the take-2 fix's correctness end-to-end: `.board-shell` height calc at `styles.css:6067` (≤640) and `:6172` (≤480) correctly subtracts `var(--nav-height)`, `var(--bottom-nav-height)`, `env(safe-area-inset-bottom)`, and a 16px buffer; `--daily-mobile-board-max-height` at `:6112` and `:6188` propagates that to `.card-board.card-board--daily`'s `max-height: clamp(304px, var, 420px)`; `.card-slot` at `:6202` reads its row height from the grid; `js/reading.js:2235-2236` measures slots via `getBoundingClientRect()` and applies the live pixel dimensions to motion-card overlays — adaptive, not hardcoded. The "Continue floats / Shuffle below shell" symptoms reported on production iPhone 2026-05-05 to 2026-05-06 were stale-cache renders of the pre-take-2 (`5436645`) state.
 
 ### Symptom
 
@@ -332,7 +334,7 @@ Multiple plausible root-cause files, all of which ship to every page including `
 
 ## BUG-008 — daily.html topic font unreadable
 
-**Status:** Diagnosis inconclusive — scope corrected, live device evidence needed.
+**Status:** Closed — fixed in 94de5d5 (2026-05-04). Production verified 2026-05-07 after hard cache refresh.
 **Priority:** Medium (readability — affects every daily-card user).
 **Reported:** 2026-05-03.
 
@@ -351,6 +353,15 @@ Possible explanations the read-only diagnosis cannot resolve:
 3. iOS Safari rendering quirk (forced colors, smart invert, increased contrast) invisible to static CSS analysis.
 
 Next step: live-device inspection (Mac Safari → Develop → iPhone) to capture the actual unreadable element, its computed color, and inherited background. Do not author a fix from speculation.
+
+**Cascade correction (2026-05-07):** The 2026-05-03 diagnostic update above contained two factual errors about the cascade. Recording the corrections here rather than rewriting the dated entry:
+
+- Body background on `daily.html` is NOT the dark navy gradient at `css/styles.css:62-72`. A later `body { ... }` rule at `css/styles.css:3948-3958` (same specificity, later in source order) overrides it with a pastel gradient (`var(--mystic-top) → var(--mystic-mid) → var(--mystic-bottom)`) and `color: var(--mystic-text)` foreground.
+- `.board-shell` background is NOT body bg either. The combined selector at `css/styles.css:4065-4091` (which includes `.board-page .board-shell`) sets `background: var(--mystic-card)` = `rgba(255, 255, 255, 0.95)` (near-white).
+
+Net cascade: pre-fix eyebrow was `rgba(247, 242, 255, 0.98)` (near-white) on `.board-shell`'s near-white surface. That IS the reported "white-on-white" — the static cascade *did* reproduce the symptom; the 2026-05-03 trace just looked at the wrong background layer.
+
+**Closing note (2026-05-07):** Verified closed on production after the founder's hard cache refresh. Take-2 patch at `styles.css:5494` replaced the near-white eyebrow color with `var(--mystic-text)` (`#332f42`), giving dark plum on near-white shell — readable. The "white-on-white" reports from 2026-05-05 to 2026-05-06 were stale-cache renders of the pre-take-2 state. Closed concurrently with BUG-007.
 
 ### Symptom
 
