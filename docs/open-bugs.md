@@ -472,9 +472,11 @@ First — verify the actual URL. Is `/today` a separate page, or a redirect to `
 
 ## BUG-011 — Features tab in bottom nav points to outdated features.html
 
-**Status:** Reported. Decision made: repoint Features tab to homepage (`/`) instead of `features.html`.
+**Status:** Closed — superseded by 9c1231b (2026-05-06).
 **Priority:** Medium (currently routes users to the old chooser layout that Phase 4 replaced).
 **Reported:** 2026-05-03.
+
+**Closing note (2026-05-07):** Closed by commit `9c1231b` (2026-05-06). Implementation differs from the original spec — instead of just rerouting the Features tab to `/`, the bottom-nav tab was relabeled "Home" with `href="/index.html"` and 🏠 icon, with parallel TH treatment ("หน้าแรก", `/th/index.html`). Lives in `js/bottom-nav.js` (NOT `js/common.js` — the off-limits worry in the original BUG-011 entry was misplaced; bottom nav is JS-injected via `bottom-nav.js`, not `common.js`).
 
 ### Symptom
 
