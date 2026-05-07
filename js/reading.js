@@ -3559,7 +3559,7 @@ function downscaleCanvas(canvas, maxWidth = 1080) {
   return c;
 }
 
-async function downloadPoster(canvas, fileName = 'meowtarot-reading.png') {
+async function downloadPoster(canvas, fileName = 'meowtarot-reading.jpg') {
   if (!canvas || typeof canvas.toBlob !== 'function') {
     throw new Error('Poster canvas is unavailable for download');
   }
@@ -3568,7 +3568,7 @@ async function downloadPoster(canvas, fileName = 'meowtarot-reading.png') {
     canvas.toBlob((result) => {
       if (result) resolve(result);
       else reject(new Error('Failed to create poster blob'));
-    }, 'image/png', 0.95);
+    }, 'image/jpeg', 0.85);
   });
 
   const url = URL.createObjectURL(blob);
@@ -3639,13 +3639,13 @@ async function saveImage() {
     const downscaled = downscaleCanvas(canvas);
 
     if (downscaled.toBlob) {
-      await downloadPoster(downscaled, `meowtarot-${state.mode}-reading.png`);
+      await downloadPoster(downscaled, `meowtarot-${state.mode}-reading.jpg`);
       return;
     }
 
     const fallbackLink = document.createElement('a');
-    fallbackLink.href = downscaled.toDataURL('image/png');
-    fallbackLink.download = `meowtarot-${state.mode}-reading.png`;
+    fallbackLink.href = downscaled.toDataURL('image/jpeg', 0.85);
+    fallbackLink.download = `meowtarot-${state.mode}-reading.jpg`;
     fallbackLink.rel = 'noopener';
     fallbackLink.style.display = 'none';
     document.body.appendChild(fallbackLink);
