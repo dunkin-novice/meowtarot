@@ -6,7 +6,6 @@ import {
   getCardImageUrl,
   loadTarotData,
 } from './data.js';
-import { initEmailCapture } from './email-capture.js';
 
 const LANG = pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en';
 
@@ -316,9 +315,6 @@ function renderResult() {
 
   quizPanel.hidden = true;
   resultPanel.hidden = false;
-
-  const emailCapture = initEmailCapture({ showDelayMs: 90000, readingDelayMs: 600 });
-  emailCapture.triggerFromReadingResult();
 }
 
 function applyStaticCopy() {
