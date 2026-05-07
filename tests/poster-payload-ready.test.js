@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { resolveCardFacePath } from '../js/asset-resolver.js';
+import { DEFAULT_DECK_ID } from '../js/data.js';
 import { buildPosterCardPayload, buildPosterConfig } from '../js/share-payload.js';
 
-test('poster payload defaults to meow-v2 asset pack', () => {
+test('poster payload defaults to the default deck asset pack', () => {
   const poster = buildPosterConfig({ mode: 'daily', orientation: 'upright' });
-  assert.equal(poster.assetPack, 'meow-v2');
-  assert.equal(poster.backPack, 'meow-v2');
+  assert.equal(poster.assetPack, DEFAULT_DECK_ID);
+  assert.equal(poster.backPack, DEFAULT_DECK_ID);
 });
 
-test('card face resolver points to meow-v2 pack path', () => {
+test('card face resolver points to default deck pack path', () => {
   const path = resolveCardFacePath({ id: '01-the-fool-upright' });
-  assert.equal(path, 'assets/meow-v2/01-the-fool-upright.webp');
+  assert.equal(path, `assets/${DEFAULT_DECK_ID}/01-the-fool-upright.webp`);
 });
 
 test('poster card payload keeps orientation image fields', () => {

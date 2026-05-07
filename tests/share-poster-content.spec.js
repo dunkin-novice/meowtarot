@@ -4,6 +4,7 @@ import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { test } from '@playwright/test';
+import { DEFAULT_DECK_ID } from '../js/data.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -229,8 +230,8 @@ test('share payload and poster render include card + reading content', async ({ 
     poster: {
       mode: 'daily',
       orientation: 'upright',
-      assetPack: 'meow-v2',
-      backPack: 'meow-v2',
+      assetPack: DEFAULT_DECK_ID,
+      backPack: DEFAULT_DECK_ID,
       backgroundPath: 'backgrounds/bg-daily-upright-v2.webp',
       revision: 'ci-debug',
     },
@@ -282,8 +283,8 @@ test('share payload and poster render include card + reading content', async ({ 
     assert.ok(typeof decodedPayload.reading.subHeading === 'string', 'Expected payload.reading.subHeading string');
     assert.ok(typeof decodedPayload.reading.keywords === 'string', 'Expected payload.reading.keywords string');
     assert.ok(typeof decodedPayload.reading.summary === 'string', 'Expected payload.reading.summary string');
-    assert.ok(decodedPayload.poster && decodedPayload.poster.assetPack === 'meow-v2', 'Expected payload.poster.assetPack to be meow-v2');
-    assert.ok(decodedPayload.poster.backPack === 'meow-v2', 'Expected payload.poster.backPack to be meow-v2');
+    assert.ok(decodedPayload.poster && decodedPayload.poster.assetPack === DEFAULT_DECK_ID, `Expected payload.poster.assetPack to be ${DEFAULT_DECK_ID}`);
+    assert.ok(decodedPayload.poster.backPack === DEFAULT_DECK_ID, `Expected payload.poster.backPack to be ${DEFAULT_DECK_ID}`);
     assert.ok(decodedPayload.poster.mode === 'daily', 'Expected payload.poster.mode to be daily');
     assert.ok(decodedPayload.cards[0] && typeof decodedPayload.cards[0] === 'object', 'Expected payload.cards entries to be objects');
     assert.ok(typeof decodedPayload.cards[0].keywords === 'string', 'Expected payload.cards[0].keywords string');

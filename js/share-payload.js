@@ -1,10 +1,11 @@
 import { ASSET_REVISION } from './asset-config.js';
+import { DEFAULT_DECK_ID } from './data.js';
 
 function toText(value) {
   return value ? String(value) : '';
 }
 
-export function buildPosterConfig({ mode = 'full', orientation = 'upright', backgroundPath, assetPack = 'meow-v2', backPack = 'meow-v2' } = {}) {
+export function buildPosterConfig({ mode = 'full', orientation = 'upright', backgroundPath, assetPack = DEFAULT_DECK_ID, backPack = DEFAULT_DECK_ID } = {}) {
   return {
     mode: mode === 'daily' ? 'daily' : mode === 'question' ? 'question' : 'full',
     orientation: orientation === 'reversed' ? 'reversed' : 'upright',

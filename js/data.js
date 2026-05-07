@@ -25,7 +25,7 @@ export function getActiveDeck() {
 }
 
 export function getCardBackUrl(options = {}) {
-  const preferredPack = options.preferredPack || 'meow-v2';
+  const preferredPack = options.preferredPack || DEFAULT_DECK_ID;
   return buildAssetUrl(resolveCardBackPath({ preferredPack }), { versioned: true });
 }
 
@@ -35,7 +35,7 @@ export function getFallbackDeck(id = activeDeckId) {
 }
 
 export function getCardBackFallbackUrl(options = {}) {
-  const primaryBackPath = resolveCardBackPath({ preferredPack: options.preferredPack || 'meow-v2' });
+  const primaryBackPath = resolveCardBackPath({ preferredPack: options.preferredPack || DEFAULT_DECK_ID });
   const fallbackPath = resolveCardBackFallbackPath();
   if (!fallbackPath || fallbackPath === primaryBackPath) return null;
   return buildAssetUrl(fallbackPath, { versioned: true });

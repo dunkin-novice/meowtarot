@@ -14,6 +14,7 @@ import {
   getCardBackUrl,
   getCardBackFallbackUrl,
   applyImgFallback,
+  DEFAULT_DECK_ID,
 } from './data.js';
 import {
   buildQuestionReadingInputPayload,
@@ -3358,8 +3359,8 @@ function buildSharePayload() {
     backgroundPath: resolvePosterBackgroundPath({
       payload: { mode: state.mode, cards: orderedCards.map(({ id, orientation, position }) => ({ id, orientation, position })) },
     }),
-    assetPack: 'meow-v2',
-    backPack: 'meow-v2',
+    assetPack: DEFAULT_DECK_ID,
+    backPack: DEFAULT_DECK_ID,
   });
   poster.title = modeTitle;
   poster.subtitle = modeSubtitle;
