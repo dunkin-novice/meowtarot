@@ -940,7 +940,9 @@ async function renderOverall() {
   const goToArrangeStage = () => {
     clearPickAnimation();
     stage = 'arrange';
-    syncUi();
+    requestAnimationFrame(() => {
+      syncUi();
+    });
   };
 
   const resetFullFlow = () => {
