@@ -3559,7 +3559,7 @@ function downscaleCanvas(canvas, maxWidth = 1080) {
   return c;
 }
 
-async function downloadPoster(canvas, fileName = 'meowtarot-daily-reading.png') {
+async function downloadPoster(canvas, fileName = 'meowtarot-reading.png') {
   if (!canvas || typeof canvas.toBlob !== 'function') {
     throw new Error('Poster canvas is unavailable for download');
   }
@@ -3639,13 +3639,13 @@ async function saveImage() {
     const downscaled = downscaleCanvas(canvas);
 
     if (downscaled.toBlob) {
-      await downloadPoster(downscaled, 'meowtarot-daily-reading.png');
+      await downloadPoster(downscaled, `meowtarot-${state.mode}-reading.png`);
       return;
     }
 
     const fallbackLink = document.createElement('a');
     fallbackLink.href = downscaled.toDataURL('image/png');
-    fallbackLink.download = 'meowtarot-daily-reading.png';
+    fallbackLink.download = `meowtarot-${state.mode}-reading.png`;
     fallbackLink.rel = 'noopener';
     fallbackLink.style.display = 'none';
     document.body.appendChild(fallbackLink);
