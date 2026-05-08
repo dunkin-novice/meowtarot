@@ -3602,6 +3602,7 @@ async function loadHtml2Canvas() {
 }
 
 async function saveImage() {
+  trackShareClicked({ locale: state.currentLang, mode: state.mode, topic: state.topic, shareChannel: 'save_image' });
   const html2c = await loadHtml2Canvas();
   if (!resultsSection || !html2c) {
     console.error('Save as image unavailable: missing target or html2canvas');
