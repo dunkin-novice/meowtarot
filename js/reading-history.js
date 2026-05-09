@@ -74,6 +74,19 @@ export async function saveReadingRecord(userId, record = {}, options = {}) {
       .select('id')
       .single();
 
+    if (readingError?.code === '23505' && payload.mode === 'daily') {
+      // Phase 4 unique index hit — first daily of the day is canonical.
+      // Return existing row id; do NOT insert reading_cards (already there).
+      const { data: existing } = await client
+        .from('readings')
+        .select('id')
+        .eq('user_id', payload.user_id)
+        .eq('mode', 'daily')
+        .eq('read_date', payload.read_date)
+        .maybeSingle();
+      return existing?.id || null;
+    }
+
     if (readingError || !inserted?.id) return null;
 
     const rows = payload.cards.map((card) => ({
@@ -87,6 +100,62 @@ export async function saveReadingRecord(userId, record = {}, options = {}) {
     if (!rows.length) return inserted.id;
     await client.from('reading_cards').insert(rows);
     return inserted.id;
+  } catch (_) {
+    return null;
+  }
+}
+
+export async function upsertCanonicalDailyReading(userId, card, options = {}) {
+  if (!userId || !card) return null;
+  return saveReadingRecord(userId, {
+    mode: 'daily',
+    spread: 'quick',
+    topic: 'generic',
+    lang: options.lang || null,
+    cards: [card],
+  }, options);
+}
+
+export async function fetchCanonicalDailyReading(userId, readDate, options = {}) {
+  try {
+    const client = options.client || await getSupabaseClient();
+    if (!client || !userId || !readDate) return null;
+
+    const { data, error } = await client
+      .from('readings')
+      .select(`
+        id,
+        read_date,
+        reading_cards (
+          card_id,
+          orientation,
+          sort_order
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('mode', 'daily')
+      .eq('read_date', readDate)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const cardRow = Array.isArray(data.reading_cards) && data.reading_cards.length
+      ? [...data.reading_cards].sort((a, b) => (Number(a?.sort_order) || 0) - (Number(b?.sort_order) || 0))[0]
+      : null;
+    if (!cardRow?.card_id) return null;
+
+    // Defensive: strip leading numeric prefix so consumers receive the un-prefixed slug
+    // regardless of how the row was originally inserted.
+    const cardSlug = String(cardRow.card_id).replace(/^\d{1,2}-/, '');
+    if (!cardSlug) return null;
+
+    return {
+      card_slug: cardSlug,
+      orientation: cardRow.orientation === 'reversed' ? 'reversed' : 'upright',
+      date: data.read_date,
+    };
   } catch (_) {
     return null;
   }

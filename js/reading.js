@@ -42,7 +42,7 @@ import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from '
 import { getCanonicalCardUrl } from './canonical-card-routes.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
-import { saveReadingRecord } from './reading-history.js';
+import { saveReadingRecord, upsertCanonicalDailyReading } from './reading-history.js';
 import {
   trackDailyStreakIncremented,
   trackReadingComplete,
@@ -2820,6 +2820,14 @@ function persistDailyCardOfTheDay(card = null) {
     date: toLocalDateIso(now),
     drawn_at: now.toISOString(),
   };
+  const userId = String(authUiState.user?.id || '').trim();
+  if (userId) {
+    void upsertCanonicalDailyReading(userId, card, { lang: state.currentLang });
+  }
+  writeDailyCardOfTheDayCache(payload);
+}
+
+function writeDailyCardOfTheDayCache(payload) {
   try {
     let existingForToday = false;
     try {

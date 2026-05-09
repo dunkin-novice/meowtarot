@@ -1,6 +1,8 @@
 import { initShell } from './common.js';
 import { getUserProgress } from './progress.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from './data.js';
+import { getCurrentUser } from './auth.js';
+import { fetchCanonicalDailyReading } from './reading-history.js';
 
 const state = { currentLang: 'en' };
 const DAILY_CARD_OF_DAY_STORAGE_KEY = 'meowtarot.daily.cardOfTheDay';
@@ -45,6 +47,17 @@ function readCardOfTheDay() {
   }
 }
 
+async function readCardOfTheDayForUser(userId, today) {
+  if (!userId) return readCardOfTheDay();
+  try {
+    const remote = await fetchCanonicalDailyReading(userId, today);
+    if (remote?.card_slug && remote.date === today) return remote;
+  } catch (_) {
+    // Network/Supabase failure — fall back to localStorage cache.
+  }
+  return readCardOfTheDay();
+}
+
 function findCardBySlug(slug) {
   const safe = String(slug || '').trim().toLowerCase();
   if (!safe) return null;
@@ -82,8 +95,9 @@ async function onShare() {
 async function renderToday() {
   const progress = getUserProgress();
   const streakCount = Number(progress?.streak_current || 0);
-  const entry = readCardOfTheDay();
   const today = toLocalDateIso(new Date());
+  const user = await getCurrentUser().catch(() => null);
+  const entry = await readCardOfTheDayForUser(String(user?.id || '').trim(), today);
 
   els.streak.textContent = isThai()
     ? `🔥 สตรีควันที่ ${streakCount}`
