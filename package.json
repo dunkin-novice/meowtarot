@@ -6,13 +6,19 @@
     "test": "node --test",
     "test:export": "playwright test tests/export.spec.js",
     "test:install-browsers": "playwright install --with-deps",
-    "debug:cdn-headers": "node scripts/debug-cdn-headers.mjs"
+    "debug:cdn-headers": "node scripts/debug-cdn-headers.mjs",
+    "stage:cap": "bash scripts/stage-cap-www.sh",
+    "sync:cap": "npm run stage:cap && npx cap sync ios",
+    "open:ios": "open ios/App/App.xcodeproj"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@capacitor/cli": "8.3.1",
+    "@capacitor/core": "8.3.1",
+    "@capacitor/ios": "8.3.1",
     "@playwright/test": "^1.44.1"
   }
 }
