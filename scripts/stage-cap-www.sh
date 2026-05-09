@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Stage the Capacitor webDir at <repo>/www from a curated subset of the repo.
-# Founder decision (Track 1.11): only interactive surfaces ship to the iOS app.
-# SEO landers (cards/, tarot-card-meanings/, quiz/, today/, daily-card/, plus
-# their TH mirrors) are deliberately excluded from the bundle.
+# 1.12 follow-up: the 1.11 trim ("SEO landers vs in-app surfaces") was wrong —
+# bottom-nav.js routes Today→/today/ and Cards→/tarot-card-meanings/, and
+# meanings.html / card pages link into /cards/, /quiz/, /daily-card/. All five
+# routes are reachable from staged in-app navigation, so all five ship.
+# Total disk cost ~3.5 MB across en + th, which is trivial.
 #
 # Idempotent: nukes www/ and rebuilds. Run before `npx cap sync ios`.
 
@@ -43,7 +45,10 @@ done
 # Whole directories that ship as-is (with .DS_Store stripped).
 ROOT_DIRS=(js css assets data share sharekit)
 
-for d in "${ROOT_DIRS[@]}"; do
+# Sub-route directories reachable from staged in-app nav — see header comment.
+ROUTE_DIRS=(today daily-card quiz tarot-card-meanings cards)
+
+for d in "${ROOT_DIRS[@]}" "${ROUTE_DIRS[@]}"; do
   if [ ! -d "$d" ]; then
     echo "stage-cap-www: missing dir '$d' — aborting" >&2
     exit 1
@@ -51,13 +56,23 @@ for d in "${ROOT_DIRS[@]}"; do
   rsync "${RSYNC_OPTS[@]}" "$d/" "$WWW/$d/"
 done
 
-# TH mirror: same HTML subset only. SEO landers under th/ are excluded.
+# TH mirror: same HTML subset + same route dirs. The HTML subset is required;
+# the route dirs warn-but-continue (TH parity may legitimately lag for some
+# routes — that's a known repo state, not a staging failure).
 mkdir -p "$WWW/th"
 for f in "${ROOT_HTML[@]}"; do
   if [ -f "th/$f" ]; then
     rsync "${RSYNC_OPTS[@]}" "th/$f" "$WWW/th/$f"
   else
     echo "stage-cap-www: missing th/$f — TH mirror parity gap" >&2
+  fi
+done
+
+for d in "${ROUTE_DIRS[@]}"; do
+  if [ -d "th/$d" ]; then
+    rsync "${RSYNC_OPTS[@]}" "th/$d/" "$WWW/th/$d/"
+  else
+    echo "stage-cap-www: missing th/$d/ — TH route mirror parity gap" >&2
   fi
 done
 
