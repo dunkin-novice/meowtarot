@@ -7,6 +7,10 @@ function trimSlashes(value = '') {
 
 function isLocalDevHost() {
   if (typeof window === 'undefined') return false;
+  // Capacitor's WKWebView serves the bundle at capacitor://localhost — same hostname,
+  // but it is NOT dev. Skip the cache-buster branch so card art uses the immutable CDN
+  // revision and isn't redownloaded on every Simulator reload.
+  if (window.location.protocol === 'capacitor:') return false;
   const host = window.location.hostname || '';
   return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
 }
