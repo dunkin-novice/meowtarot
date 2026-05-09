@@ -103,6 +103,10 @@ Add a trigger button somewhere on the page:
 - The Playwright job prints `SELFTEST_JSON`, target visibility, and any cross-origin image URLs to the logs.
 - Download the `export-selftest-artifacts` attachment from the workflow run to grab screenshots and the Playwright report.
 
+## Supabase heartbeat workflow
+- `.github/workflows/supabase-heartbeat.yml` runs at 03:00 UTC every Monday and Thursday, with manual `workflow_dispatch` support.
+- It sends a read-only REST request to `/rest/v1/readings?select=id&limit=1` using the `SUPABASE_URL` and `SUPABASE_ANON_KEY` GitHub secrets.
+
 ## Frontend regression test setup (Playwright)
 Use these commands locally/CI to run browser-based regressions reliably:
 
