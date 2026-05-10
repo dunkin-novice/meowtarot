@@ -580,3 +580,66 @@ Two reasonable directions: (a) delete the dead JS code path (smallest diff, but 
 3. Sweep for other null-target `getElementById` calls in `js/reading.js` while scoped to this area.
 
 ---
+
+## BUG-014 — Celtic Cross share — spurious `alert()` before poster
+
+**Status:** Reported and verified — poster works, alert is the only defect.
+**Priority:** High (P1 before promotion window — confuses users on every Celtic Cross share).
+**Reported:** 2026-05-10.
+
+### Symptom
+
+Tapping the nav Share button on a Celtic Cross (full mode) reading result triggers an `alert()` dialog reading "Share data is too large (8268 chars). Using fallback link and copying it for you." After the user dismisses the alert, navigation completes and the poster renders correctly on `/share/index.html`. The poster output itself is fine — the alert is a spurious blocking dialog that adds nothing and reads as an error to the user.
+
+### Suspected root cause
+
+In `js/reading.js`'s `openSharePage()` at ~line 3510, when `buildSharePageUrl()` returns an oversized payload (>`SHARE_HASH_MAX_CHARS`), the `oversizedHash` branch:
+
+1. Copies the no-hash URL to clipboard via `navigator.clipboard.writeText`
+2. Fires an `alert()` with the size warning ← **the bug**
+3. Proceeds to `window.location.href = shareUrl` (no-hash URL)
+
+`/share/index.html` already reads the payload from `sessionStorage` as a fallback when there's no `#p=` hash, so the navigation path works correctly without the alert. The alert is doing nothing useful — the share completes either way, and the user doesn't need to be warned about a payload size limit they can't influence.
+
+### Reported fix
+
+Remove the `alert()` call from the oversized branch. Keep the clipboard copy as a silent fallback (some users may want the URL accessible elsewhere — clipboard write is invisible and harmless). Pseudocode:
+
+```js
+// js/reading.js — openSharePage(), oversized branch (~:3510)
+if (oversizedHash) {
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(shareUrl);
+  } catch (_) {
+    // ignore clipboard errors
+  }
+  // (alert removed)
+}
+window.location.href = shareUrl;
+```
+
+### Why this isn't a drive-by fix
+
+- The fix is small but worth a moment of thought on whether ANY user-facing signal should fire when the oversized branch runs. Current verdict: no signal needed because the share completes successfully — the alert is misleading. If a future debug aid is wanted, log to console rather than alert.
+- The 8268-char threshold only triggers on Celtic Cross (10 cards × full per-card payload). Daily and Question stay under the limit. So this branch's behaviour is exercised exclusively on Celtic Cross — easy to forget it exists, easy to under-test after the change.
+- Already-shipped behaviour stays intact: `/share/index.html`'s sessionStorage fallback path is what's keeping the poster working today. Don't accidentally break that path by re-shaping how the payload travels.
+
+### Files involved
+
+- `js/reading.js` — `openSharePage()` (~lines 3496-3524), specifically the `if (oversizedHash) { ... alert(...) }` block at ~line 3510-3517
+
+### Files explicitly off-limits
+
+- `share/*` — never modify (hard rule). The sessionStorage fallback on this side is the load-bearing piece making the current behaviour work; do not touch.
+- `share/normalize-payload.js` — never modify (share payload schema is contractual)
+- `js/asset-resolver.js`, `js/common.js` — standard hard-rules list
+
+### Suggested first session
+
+1. **Reproduce.** Open a Celtic Cross reading (10 cards), tap nav Share. Confirm: alert fires, dismiss, poster renders correctly on `/share/index.html`.
+2. **Delete the `alert()` call.** Keep the clipboard write. One-line removal at ~`js/reading.js:3515-3517`. Drop the surrounding `if (oversizedHash)` shell only if it becomes empty after — leave the clipboard write inside.
+3. **Verify both paths still work.** Tap Share on (a) Celtic Cross — should silently navigate to poster, no dialog, (b) Daily / Question — should still navigate to poster with hash, unchanged.
+4. **Verify TH parity.** No string change is needed since the alert is being removed; just confirm the TH Celtic Cross flow has identical post-fix behaviour.
+5. **Add a `LOG_DRAFT.jsonl` entry** referencing BUG-014.
+
+---
