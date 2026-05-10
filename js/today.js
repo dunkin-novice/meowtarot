@@ -1,6 +1,6 @@
 import { initShell } from './common.js';
 import { getUserProgress } from './progress.js';
-import { getCardImageUrl, loadTarotData, meowTarotCards } from './data.js';
+import { getCardImageUrl, getDailyVibe, loadTarotData, meowTarotCards } from './data.js';
 import { getCurrentUser } from './auth.js';
 import { fetchCanonicalDailyReading } from './reading-history.js';
 
@@ -129,7 +129,9 @@ async function renderToday() {
 
   const cardName = text(card, 'card_name') || text(card, 'alias') || 'Tarot card';
   els.cardName.textContent = `${cardName} · ${orientationLabel}`;
-  els.cardMeaning.textContent = text(card, 'summary_short') || text(card, 'summary') || text(card, 'meta_description');
+  const vibeCardId = `${card.card_id.replace(/-upright|-reversed$/, '')}-${entry.orientation || 'upright'}`;
+  const vibe = await getDailyVibe(vibeCardId, isThai() ? 'th' : 'en');
+  els.cardMeaning.textContent = vibe || text(card, 'summary_short') || text(card, 'meta_description');
   els.cardKeywords.textContent = keywords;
   els.cardImage.src = imageUrl;
   els.cardImage.alt = els.cardName.textContent;

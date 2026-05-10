@@ -1,0 +1,2654 @@
+[
+  {
+    "card_id": "01-the-fool-upright",
+    "vibes": [
+      {
+        "vibe_en": "Today brings a chance to try something completely new.",
+        "vibe_th": "วันนี้ลองเริ่มทำอะไรใหม่ๆ ดูไหม"
+      },
+      {
+        "vibe_en": "Follow a sudden whim and enjoy the fresh mood.",
+        "vibe_th": "ลองตามใจตัวเองดูบ้างก็น่าสนุกนะ"
+      },
+      {
+        "vibe_en": "Your next step feels light and full of hope.",
+        "vibe_th": "มั่นใจแล้วก้าวแรกออกไปเลย"
+      }
+    ]
+  },
+  {
+    "card_id": "01-the-fool-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Watch your step and keep things simple for now.",
+        "vibe_th": "เช็กแผนให้ชัวร์ก่อนเริ่มนะวันนี้"
+      },
+      {
+        "vibe_en": "A bit of caution makes your morning go smoother.",
+        "vibe_th": "หยุดคิดสักนิดจะช่วยให้ไม่พลาดเรื่องง่ายๆ"
+      },
+      {
+        "vibe_en": "Think about where you want to land before jumping.",
+        "vibe_th": "ดูรายละเอียดให้ดีก่อนตัดสินใจนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "02-the-magician-upright",
+    "vibes": [
+      {
+        "vibe_en": "You have everything you need to make things happen.",
+        "vibe_th": "เธอมีของดีในตัวอยู่แล้ว ลุยเลย"
+      },
+      {
+        "vibe_en": "Focus your energy on the task right in front.",
+        "vibe_th": "โฟกัสกับสิ่งที่อยู่ตรงหน้าให้เต็มที่นะ"
+      },
+      {
+        "vibe_en": "Today is a great day to show your skills.",
+        "vibe_th": "วันนี้เป็นโอกาสดีที่จะโชว์ฝีมือแล้ว"
+      }
+    ]
+  },
+  {
+    "card_id": "02-the-magician-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Double check your tools before starting a big project.",
+        "vibe_th": "ตรวจอุปกรณ์ให้พร้อมก่อนเริ่มงานใหญ่นะ"
+      },
+      {
+        "vibe_en": "Notice if you feel a bit scattered or distracted.",
+        "vibe_th": "ถ้ารู้สึกวอกแวก ลองตั้งสติใหม่ดู"
+      },
+      {
+        "vibe_en": "Try to finish one small thing at a time.",
+        "vibe_th": "ค่อยๆ ทำทีละอย่างให้เสร็จนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "03-the-high-priestess-upright",
+    "vibes": [
+      {
+        "vibe_en": "Trust your gut feeling about a quiet choice today.",
+        "vibe_th": "เชื่อสัญชาตญาณตัวเองดูนะวันนี้"
+      },
+      {
+        "vibe_en": "A peaceful moment helps you see the clear truth.",
+        "vibe_th": "ความเงียบจะช่วยให้เห็นคำตอบที่ชัดเจน"
+      },
+      {
+        "vibe_en": "Listen to what your mood is trying to say.",
+        "vibe_th": "ลองฟังเสียงความรู้สึกข้างในดูซิ"
+      }
+    ]
+  },
+  {
+    "card_id": "03-the-high-priestess-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Look past the surface to find what is hidden.",
+        "vibe_th": "มองให้ลึกกว่าที่เห็นแล้วจะเจอคำตอบ"
+      },
+      {
+        "vibe_en": "Stop and listen when things feel a little off.",
+        "vibe_th": "ถ้าตะขิดตะขวงใจ ลองหยุดฟังดูสักนิด"
+      },
+      {
+        "vibe_en": "A quiet break helps clear up a confusing thought.",
+        "vibe_th": "พักสักหน่อยแล้วความคิดจะโปร่งขึ้นนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "04-the-empress-upright",
+    "vibes": [
+      {
+        "vibe_en": "Good things grow when you take care of them.",
+        "vibe_th": "ดูแลสิ่งที่มีอยู่ให้ดี แล้วมันจะเติบโตนะ"
+      },
+      {
+        "vibe_en": "Surround yourself with soft colors and warm vibes today.",
+        "vibe_th": "วันนี้หาอะไรสวยๆ งามๆ ใส่ตัวหน่อยนะ"
+      },
+      {
+        "vibe_en": "A small act of kindness makes your day brighter.",
+        "vibe_th": "ทำสิ่งดีๆ ให้คนอื่นแล้วใจจะฟูมาก"
+      }
+    ]
+  },
+  {
+    "card_id": "04-the-empress-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Remember to save some energy for your own needs.",
+        "vibe_th": "อย่าลืมเผื่อพลังงานไว้ดูแลตัวเองบ้างนะ"
+      },
+      {
+        "vibe_en": "Focus on making your home space feel more cozy.",
+        "vibe_th": "ลองจัดมุมพักผ่อนที่บ้านให้ดูน่านั่งขึ้นซิ"
+      },
+      {
+        "vibe_en": "Take it slow and nurture your own peace first.",
+        "vibe_th": "ค่อยเป็นค่อยไป รักตัวเองให้มากนะวันนี้"
+      }
+    ]
+  },
+  {
+    "card_id": "05-the-emperor-upright",
+    "vibes": [
+      {
+        "vibe_en": "Set a simple routine to keep your day steady.",
+        "vibe_th": "วางแผนชีวิตให้เป็นระเบียบจะช่วยให้ง่ายขึ้น"
+      },
+      {
+        "vibe_en": "Lead the way with a clear and calm mind.",
+        "vibe_th": "ใช้เหตุผลนำทาง แล้วทุกอย่างจะเรียบร้อย"
+      },
+      {
+        "vibe_en": "Organize your space to find more focus today.",
+        "vibe_th": "จัดโต๊ะทำงานใหม่ช่วยให้มีสมาธิขึ้นเยอะเลย"
+      }
+    ]
+  },
+  {
+    "card_id": "05-the-emperor-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Be kind to yourself when things feel a bit messy.",
+        "vibe_th": "ใจดีกับตัวเองบ้างถ้าอะไรๆ ไม่เป็นดั่งใจ"
+      },
+      {
+        "vibe_en": "Let go of the need to control every detail.",
+        "vibe_th": "ปล่อยวางความเนี้ยบลงนิด แล้วจะสบายใจขึ้น"
+      },
+      {
+        "vibe_en": "Try a more flexible approach to your morning plan.",
+        "vibe_th": "ลองปรับแผนใหม่ให้ยืดหยุ่นดูนะวันนี้"
+      }
+    ]
+  },
+  {
+    "card_id": "06-the-hierophant-upright",
+    "vibes": [
+      {
+        "vibe_en": "Following a proven path brings a sense of comfort.",
+        "vibe_th": "ทำตามระเบียบเดิมๆ บ้างก็สบายใจดีนะ"
+      },
+      {
+        "vibe_en": "Reach out to someone with more experience for advice.",
+        "vibe_th": "ลองปรึกษาผู้ใหญ่ดู น่าจะได้คำแนะนำดีๆ"
+      },
+      {
+        "vibe_en": "Today is perfect for learning a useful new skill.",
+        "vibe_th": "วันนี้เหมาะกับการเริ่มเรียนรู้อะไรใหม่ๆ มาก"
+      }
+    ]
+  },
+  {
+    "card_id": "06-the-hierophant-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Do what feels right for you, even if unusual.",
+        "vibe_th": "ทำตามที่ใจเชื่อ แม้จะไม่เหมือนคนอื่นก็ตาม"
+      },
+      {
+        "vibe_en": "Listen to your own voice instead of the crowd.",
+        "vibe_th": "ฟังเสียงตัวเองบ้าง ไม่ต้องทำตามใครหมดหรอก"
+      },
+      {
+        "vibe_en": "Today invites you to try a very different way.",
+        "vibe_th": "ลองเปลี่ยนวิธีทำแบบเดิมๆ ดูบ้างก็น่าสนใจ"
+      }
+    ]
+  },
+  {
+    "card_id": "07-the-lovers-upright",
+    "vibes": [
+      {
+        "vibe_en": "A good choice today brings more harmony to life.",
+        "vibe_th": "การเลือกที่ถูกต้องจะทำให้ชีวิตราบรื่นนะ"
+      },
+      {
+        "vibe_en": "Follow your heart when making a simple daily decision.",
+        "vibe_th": "เลือกสิ่งที่ใจชอบจริงๆ แล้วจะมีความสุข"
+      },
+      {
+        "vibe_en": "Trust the bond you share with someone close today.",
+        "vibe_th": "เชื่อมั่นในความสัมพันธ์ดีๆ ที่มีอยู่ตอนนี้"
+      }
+    ]
+  },
+  {
+    "card_id": "07-the-lovers-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Focus on being honest with yourself about your needs.",
+        "vibe_th": "ซื่อสัตย์กับความรู้สึกตัวเองให้มากนะวันนี้"
+      },
+      {
+        "vibe_en": "A quiet talk helps fix a small misunderstanding today.",
+        "vibe_th": "ค่อยๆ คุยกันนะ จะได้เข้าใจกันมากขึ้น"
+      },
+      {
+        "vibe_en": "Balance your own wishes with what others want too.",
+        "vibe_th": "บาลานซ์ความต้องการตัวเองกับคนอื่นให้ดี"
+      }
+    ]
+  },
+  {
+    "card_id": "08-the-chariot-upright",
+    "vibes": [
+      {
+        "vibe_en": "Keep moving forward with a clear goal in mind.",
+        "vibe_th": "มุ่งหน้าต่อไปนะ เป้าหมายอยู่ไม่ไกลแล้ว"
+      },
+      {
+        "vibe_en": "You have the drive to finish what you started.",
+        "vibe_th": "เธอทำสำเร็จแน่ แค่ลุยไปให้สุดทาง"
+      },
+      {
+        "vibe_en": "Stay focused and handle your tasks with steady hands.",
+        "vibe_th": "ตั้งสติให้ดีแล้วจัดการงานให้เสร็จนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "08-the-chariot-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Slow down if you feel like you are rushing.",
+        "vibe_th": "ถ้ารู้สึกเหนื่อย ลองลดความเร็วลงหน่อยนะ"
+      },
+      {
+        "vibe_en": "Check your direction before you pick up more speed.",
+        "vibe_th": "เช็กทิศทางให้ดีก่อนจะเร่งรีบไปมากกว่านี้"
+      },
+      {
+        "vibe_en": "A small detour might be exactly what you need.",
+        "vibe_th": "อ้อมหน่อยก็ได้ ถ้ามันทำให้ถึงจุดหมายชัวร์ๆ"
+      }
+    ]
+  },
+  {
+    "card_id": "09-strength-upright",
+    "vibes": [
+      {
+        "vibe_en": "A gentle touch works better than force today.",
+        "vibe_th": "ใช้ความอ่อนโยนแก้ปัญหาดีกว่าใช้กำลังนะ"
+      },
+      {
+        "vibe_en": "Stay patient and keep a calm heart through challenges.",
+        "vibe_th": "อดทนเข้าไว้ ความใจเย็นคือไม้ตายของเธอ"
+      },
+      {
+        "vibe_en": "You are much stronger than you give yourself credit.",
+        "vibe_th": "จริงๆ แล้วเธอเก่งและแกร่งกว่าที่คิดนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "09-strength-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Admit when you feel a little tired or unsure.",
+        "vibe_th": "ยอมรับว่าเหนื่อยได้นะ ไม่ต้องฝืนตลอดหรอก"
+      },
+      {
+        "vibe_en": "Find your inner quiet when things get too loud.",
+        "vibe_th": "หาความสงบให้ใจเวลาคนรอบข้างวุ่นวาย"
+      },
+      {
+        "vibe_en": "It takes real courage to be soft with yourself.",
+        "vibe_th": "การใจดีกับตัวเองคือความกล้าหาญอย่างหนึ่ง"
+      }
+    ]
+  },
+  {
+    "card_id": "10-the-hermit-upright",
+    "vibes": [
+      {
+        "vibe_en": "A little time alone helps you find your focus.",
+        "vibe_th": "อยู่กับตัวเองเงียบๆ จะเจอคำตอบที่ตามหา"
+      },
+      {
+        "vibe_en": "Look inside for the answers you need today.",
+        "vibe_th": "ลองมองย้อนดูข้างในใจดูนะวันนี้"
+      },
+      {
+        "vibe_en": "Peace is found in a quiet corner of your day.",
+        "vibe_th": "ความสงบเล็กๆ ระหว่างวันช่วยให้ใจนิ่งขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "10-the-hermit-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Come out of your shell and connect with someone.",
+        "vibe_th": "ออกไปเจอผู้คนบ้าง จะช่วยให้หายเหงานะ"
+      },
+      {
+        "vibe_en": "Sharing a thought helps clear away a lonely mood.",
+        "vibe_th": "ลองคุยกับคนข้างๆ ดู จะได้ไม่คิดมากคนเดียว"
+      },
+      {
+        "vibe_en": "Notice the world around you instead of hiding away.",
+        "vibe_th": "สนใจโลกรอบตัวบ้าง อย่ามัวแต่เก็บตัวนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "11-wheel-of-fortune-upright",
+    "vibes": [
+      {
+        "vibe_en": "Expect a small but lucky change in your day.",
+        "vibe_th": "เตรียมรับเรื่องดีๆ ที่กำลังจะเข้ามานะ"
+      },
+      {
+        "vibe_en": "Go with the flow and see where timing leads.",
+        "vibe_th": "ปล่อยให้เป็นเรื่องของจังหวะเวลาดูบ้าง"
+      },
+      {
+        "vibe_en": "A new door opens when you least expect it.",
+        "vibe_th": "โอกาสใหม่ๆ มักมาตอนที่เราไม่ทันตั้งตัว"
+      }
+    ]
+  },
+  {
+    "card_id": "11-wheel-of-fortune-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Wait for the right moment before you make a move.",
+        "vibe_th": "รอก่อนนะ จังหวะที่ดียังมาไม่ถึงตอนนี้"
+      },
+      {
+        "vibe_en": "Some things are simply out of your hands today.",
+        "vibe_th": "บางเรื่องก็ต้องปล่อยไปตามทางของมันนะ"
+      },
+      {
+        "vibe_en": "Be patient while the timing sorts itself out.",
+        "vibe_th": "อดทนรออีกนิด เดี๋ยวอะไรๆ ก็ลงตัวเอง"
+      }
+    ]
+  },
+  {
+    "card_id": "12-justice-upright",
+    "vibes": [
+      {
+        "vibe_en": "Be fair and honest in everything you do today.",
+        "vibe_th": "ทำทุกอย่างด้วยความซื่อสัตย์แล้วจะสบายใจ"
+      },
+      {
+        "vibe_en": "A balanced choice leads to a much better outcome.",
+        "vibe_th": "ทางสายกลางจะช่วยให้ผลลัพธ์ออกมาดีนะ"
+      },
+      {
+        "vibe_en": "The truth comes out in a very simple way.",
+        "vibe_th": "ความจริงจะปรากฏออกมาแบบเรียบง่ายที่สุด"
+      }
+    ]
+  },
+  {
+    "card_id": "12-justice-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Own up to a small mistake and move on.",
+        "vibe_th": "ยอมรับความผิดพลาดแล้วเริ่มใหม่ให้ถูกต้อง"
+      },
+      {
+        "vibe_en": "Check if you are being too hard on someone.",
+        "vibe_th": "ลองดูว่าเธอเข้มงวดกับคนอื่นเกินไปไหม"
+      },
+      {
+        "vibe_en": "Look at both sides before you pick a side.",
+        "vibe_th": "ฟังหูไว้หู ฟังความให้ครบทั้งสองข้างนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "13-the-hanged-man-upright",
+    "vibes": [
+      {
+        "vibe_en": "Try looking at your problem from a new angle.",
+        "vibe_th": "ลองมองปัญหาจากมุมอื่นดูบ้าง อาจจะง่ายขึ้น"
+      },
+      {
+        "vibe_en": "A short pause gives you a fresh point of view.",
+        "vibe_th": "หยุดนิ่งสักพัก จะเห็นภาพอะไรชัดเจนขึ้นเยอะ"
+      },
+      {
+        "vibe_en": "Let things be and wait for a better time.",
+        "vibe_th": "ปล่อยให้ทุกอย่างเป็นไป รอเวลาที่ใช่กว่านี้"
+      }
+    ]
+  },
+  {
+    "card_id": "13-the-hanged-man-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Stop waiting and take a small step forward today.",
+        "vibe_th": "เลิกรอแล้วเริ่มก้าวเดินต่อได้แล้วนะ"
+      },
+      {
+        "vibe_en": "It is finally time to let go and move.",
+        "vibe_th": "ถึงเวลาที่ต้องปล่อยมือและเดินไปข้างหน้า"
+      },
+      {
+        "vibe_en": "A quick change of heart helps you get unstuck.",
+        "vibe_th": "เปลี่ยนใจตอนนี้ยังทันนะ จะได้ไม่ติดอยู่ที่เดิม"
+      }
+    ]
+  },
+  {
+    "card_id": "14-death-upright",
+    "vibes": [
+      {
+        "vibe_en": "Close one door to let a new one open.",
+        "vibe_th": "จบเรื่องเก่าเพื่อเริ่มเรื่องใหม่ที่ดีกว่าเดิม"
+      },
+      {
+        "vibe_en": "Letting go of old habits makes room for better.",
+        "vibe_th": "ปล่อยนิสัยเดิมๆ ทิ้งไป แล้วชีวิตจะดีขึ้น"
+      },
+      {
+        "vibe_en": "Today marks the end of a long, busy cycle.",
+        "vibe_th": "วันนี้คือการสิ้นสุดช่วงเวลาที่แสนวุ่นวาย"
+      }
+    ]
+  },
+  {
+    "card_id": "14-death-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Don't be afraid to leave the past behind you.",
+        "vibe_th": "ไม่ต้องกลัวที่จะทิ้งอดีตไว้ข้างหลังนะ"
+      },
+      {
+        "vibe_en": "A slow change is still a good change today.",
+        "vibe_th": "การเปลี่ยนแปลงช้าๆ ก็เป็นการเริ่มต้นที่ดี"
+      },
+      {
+        "vibe_en": "Release what no longer fits your life right now.",
+        "vibe_th": "เลิกแบกสิ่งที่มันไม่เหมาะกับเราได้แล้ว"
+      }
+    ]
+  },
+  {
+    "card_id": "15-temperance-upright",
+    "vibes": [
+      {
+        "vibe_en": "Find a middle ground to keep your day calm.",
+        "vibe_th": "หาจุดสมดุลให้ได้ แล้ววันนี้จะราบรื่น"
+      },
+      {
+        "vibe_en": "Mixing different ideas brings a great new result.",
+        "vibe_th": "ผสมผสานไอเดียใหม่ๆ จะได้ผลลัพธ์ที่ว้าวมาก"
+      },
+      {
+        "vibe_en": "Practice moderation in all your choices today.",
+        "vibe_th": "ทำอะไรพอดีๆ จะดีต่อใจที่สุดนะวันนี้"
+      }
+    ]
+  },
+  {
+    "card_id": "15-temperance-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Notice if you are going to extremes today.",
+        "vibe_th": "ลองดูว่าวันนี้เธอทำอะไรสุดโต่งไปหรือเปล่า"
+      },
+      {
+        "vibe_en": "A little balance helps fix a restless mood.",
+        "vibe_th": "ปรับสมดุลหน่อยนะ จะได้ไม่รู้สึกว้าวุ่นใจ"
+      },
+      {
+        "vibe_en": "Bring things back to center with a deep breath.",
+        "vibe_th": "หายใจเข้าลึกๆ แล้วค่อยๆ ดึงสติกลับมานะ"
+      }
+    ]
+  },
+  {
+    "card_id": "16-the-devil-upright",
+    "vibes": [
+      {
+        "vibe_en": "Notice a habit that is holding you back today.",
+        "vibe_th": "สังเกตดูนะว่านิสัยไหนที่ฉุดรักษเธออยู่"
+      },
+      {
+        "vibe_en": "You have the power to break a toxic cycle.",
+        "vibe_th": "เธอเลิกทำนิสัยเดิมๆ ที่มันไม่ดีได้นะ"
+      },
+      {
+        "vibe_en": "Don't let a small temptation ruin your progress.",
+        "vibe_th": "อย่าให้สิ่งยั่วยุเล็กน้อยมาทำลายความตั้งใจ"
+      }
+    ]
+  },
+  {
+    "card_id": "16-the-devil-reversed",
+    "vibes": [
+      {
+        "vibe_en": "You are finally breaking free from a heavy mood.",
+        "vibe_th": "ในที่สุดเธอก็หลุดพ้นจากความรู้สึกแย่ๆ"
+      },
+      {
+        "vibe_en": "A hard truth helps you see a better way.",
+        "vibe_th": "ความจริงบางอย่างจะช่วยให้เธอเจอทางสว่าง"
+      },
+      {
+        "vibe_en": "Let go of the fear that keeps you stuck.",
+        "vibe_th": "ปล่อยวางความกลัวที่ทำให้เธอไม่กล้าไปไหน"
+      }
+    ]
+  },
+  {
+    "card_id": "17-the-tower-upright",
+    "vibes": [
+      {
+        "vibe_en": "A sudden change clears the air for something better.",
+        "vibe_th": "เรื่องเซอร์ไพรส์วันนี้จะช่วยให้ทุกอย่างชัดขึ้น"
+      },
+      {
+        "vibe_en": "Let the old plans fall to make room for new.",
+        "vibe_th": "แผนพังไม่เป็นไร เริ่มใหม่ให้ปังกว่าเดิม"
+      },
+      {
+        "vibe_en": "Truth hits hard but helps you start fresh today.",
+        "vibe_th": "ความจริงอาจจะเจ็บ แต่ช่วยให้เริ่มใหม่ได้นะ"
+      }
+    ]
+  },
+  {
+    "card_id": "17-the-tower-reversed",
+    "vibes": [
+      {
+        "vibe_en": "You narrowly avoided a messy situation today.",
+        "vibe_th": "เกือบไปแล้วนะวันนี้ ดีที่รอดมาได้"
+      },
+      {
+        "vibe_en": "Pick up the pieces and build something more solid.",
+        "vibe_th": "เก็บกวาดเรื่องวุ่นวายแล้วสร้างใหม่ให้มั่นคง"
+      },
+      {
+        "vibe_en": "A small shake-up helps you see what matters most.",
+        "vibe_th": "เรื่องวุ่นๆ วันนี้จะทำให้รู้ว่าอะไรสำคัญที่สุด"
+      }
+    ]
+  },
+  {
+    "card_id": "18-the-star-upright",
+    "vibes": [
+      {
+        "vibe_en": "Keep your head up and focus on the light.",
+        "vibe_th": "เงยหน้าเข้าไว้ แล้วมองไปที่จุดหมายนะ"
+      },
+      {
+        "vibe_en": "Today brings a sense of calm and quiet hope.",
+        "vibe_th": "วันนี้มีความหวังเล็กๆ มาให้ชื่นใจแล้ว"
+      },
+      {
+        "vibe_en": "Believe in the good things coming your way soon.",
+        "vibe_th": "เชื่อเถอะว่าสิ่งดีๆ กำลังจะเกิดขึ้นกับเธอ"
+      }
+    ]
+  },
+  {
+    "card_id": "18-the-star-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Don't lose heart when things feel a bit dark.",
+        "vibe_th": "อย่าเพิ่งท้อนะ แม้วันนี้จะดูมืดมนไปหน่อย"
+      },
+      {
+        "vibe_en": "A little self-care helps you find your glow again.",
+        "vibe_th": "ดูแลใจตัวเองหน่อยนะ จะได้กลับมาสดใส"
+      },
+      {
+        "vibe_en": "Remember your own worth even on a quiet day.",
+        "vibe_th": "อย่าลืมว่าเธอน่ะเก่งและมีค่ามากแค่ไหน"
+      }
+    ]
+  },
+  {
+    "card_id": "19-the-moon-upright",
+    "vibes": [
+      {
+        "vibe_en": "Trust your instincts when things look a bit blurry.",
+        "vibe_th": "เชื่อความรู้สึกข้างในเวลาที่อะไรๆ ไม่ชัดเจน"
+      },
+      {
+        "vibe_en": "Not everything is exactly as it seems right now.",
+        "vibe_th": "บางอย่างอาจไม่ใช่อย่างที่เห็น อย่าเพิ่งรีบนะ"
+      },
+      {
+        "vibe_en": "Follow your dreams but keep your feet on ground.",
+        "vibe_th": "ฝันได้นะ แต่อย่าลืมมองโลกความจริงด้วย"
+      }
+    ]
+  },
+  {
+    "card_id": "19-the-moon-reversed",
+    "vibes": [
+      {
+        "vibe_en": "The fog is lifting and things look clearer now.",
+        "vibe_th": "ความกังวลหายไป อะไรๆ ก็ดูชัดขึ้นเยอะ"
+      },
+      {
+        "vibe_en": "A small worry turns out to be nothing much.",
+        "vibe_th": "เรื่องที่กลัวอาจจะไม่มีอะไรเลยก็ได้นะ"
+      },
+      {
+        "vibe_en": "The truth comes to light in a gentle way.",
+        "vibe_th": "ความจริงกำลังจะปรากฏออกมาอย่างนุ่มนวล"
+      }
+    ]
+  },
+  {
+    "card_id": "20-the-sun-upright",
+    "vibes": [
+      {
+        "vibe_en": "Enjoy the bright energy and warmth of the day.",
+        "vibe_th": "มีความสุขกับพลังบวกและความสดใสวันนี้ให้เต็มที่"
+      },
+      {
+        "vibe_en": "Success is close and things are looking very good.",
+        "vibe_th": "ความสำเร็จอยู่ใกล้แค่เอื้อม ทุกอย่างดูดีมาก"
+      },
+      {
+        "vibe_en": "Smile today because you have a lot to share.",
+        "vibe_th": "ยิ้มเข้าไว้นะ วันนี้เธอมีเรื่องดีๆ ให้แชร์เยอะเลย"
+      }
+    ]
+  },
+  {
+    "card_id": "20-the-sun-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Look for the small joys even on cloudy days.",
+        "vibe_th": "มองหาความสุขเล็กๆ ในวันที่ท้องฟ้าไม่เป็นใจ"
+      },
+      {
+        "vibe_en": "You still have plenty of light inside you today.",
+        "vibe_th": "เธอยังมีความสดใสอยู่ในตัวเสมอ ไม่ต้องกลัวนะ"
+      },
+      {
+        "vibe_en": "Success might be delayed but it is still coming.",
+        "vibe_th": "ความสำเร็จอาจช้าหน่อย แต่มาแน่นอน ไม่ต้องห่วง"
+      }
+    ]
+  },
+  {
+    "card_id": "21-judgement-upright",
+    "vibes": [
+      {
+        "vibe_en": "Listen for a call to do something bigger today.",
+        "vibe_th": "ฟังเสียงหัวใจตัวเองดูนะ วันนี้มีเรื่องสำคัญ"
+      },
+      {
+        "vibe_en": "A clear choice helps you start a new chapter.",
+        "vibe_th": "ตัดสินใจให้ชัดเจน แล้วเริ่มบทใหม่ได้เลย"
+      },
+      {
+        "vibe_en": "You are ready to step into a better version.",
+        "vibe_th": "พร้อมหรือยังที่จะเป็นคนใหม่ที่ดีกว่าเดิม"
+      }
+    ]
+  },
+  {
+    "card_id": "21-judgement-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Forgive yourself for a past mistake and move on.",
+        "vibe_th": "ให้อภัยตัวเองในอดีต แล้วเดินหน้าต่อนะ"
+      },
+      {
+        "vibe_en": "Stop doubting the choices you made in the past.",
+        "vibe_th": "เลิกสงสัยในการตัดสินใจที่ผ่านมาได้แล้ว"
+      },
+      {
+        "vibe_en": "A second chance is waiting for you to notice.",
+        "vibe_th": "โอกาสครั้งที่สองกำลังรอให้เธอสังเกตเห็นนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "22-the-world-upright",
+    "vibes": [
+      {
+        "vibe_en": "You finally finished a big goal you set before.",
+        "vibe_th": "ในที่สุดเป้าหมายที่ตั้งไว้ก็สำเร็จสักทีนะ"
+      },
+      {
+        "vibe_en": "Everything fits together in a perfect way today.",
+        "vibe_th": "ทุกอย่างลงตัวพอดีเป๊ะเลยในวันนี้"
+      },
+      {
+        "vibe_en": "Take a moment to feel proud of your work.",
+        "vibe_th": "ภูมิใจในความพยายามของตัวเองได้เต็มที่เลย"
+      }
+    ]
+  },
+  {
+    "card_id": "22-the-world-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Tie up loose ends to finish your project well.",
+        "vibe_th": "เก็บรายละเอียดที่เหลืออีกนิด งานจะสมบูรณ์มาก"
+      },
+      {
+        "vibe_en": "A small delay is just a chance to polish.",
+        "vibe_th": "ที่ล่าช้าไปบ้าง ถือเป็นโอกาสให้เช็กความเรียบร้อย"
+      },
+      {
+        "vibe_en": "You are almost there so keep going a bit.",
+        "vibe_th": "อีกนิดเดียวก็จะถึงแล้ว พยายามต่ออีกหน่อยนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "23-ace-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "A fresh spark of energy brightens your mood today.",
+        "vibe_th": "วันนี้มีพลังงานดีๆ เข้ามาเติมไฟให้ใจฟู"
+      },
+      {
+        "vibe_en": "Notice the new idea starting to take shape now.",
+        "vibe_th": "ลองสังเกตไอเดียใหม่ๆ ที่เริ่มเป็นรูปเป็นร่างดูนะ"
+      },
+      {
+        "vibe_en": "Today is the right timing to start a small project.",
+        "vibe_th": "จังหวะนี้เหมาะมากที่จะเริ่มลงมือทำอะไรเล็กๆ"
+      }
+    ]
+  },
+  {
+    "card_id": "23-ace-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Pause today to let your energy recharge for a bit.",
+        "vibe_th": "พักสักนิดให้ร่างกายได้ชาร์จแบตก่อนไปต่อนะ"
+      },
+      {
+        "vibe_en": "The timing feels slow, so check your current plan again.",
+        "vibe_th": "จังหวะช่วงนี้อาจจะอืดๆ หน่อย ลองเช็กแผนเดิมอีกที"
+      },
+      {
+        "vibe_en": "Focus on internal goals while the outside world waits.",
+        "vibe_th": "หันกลับมาโฟกัสเป้าหมายในใจ ระหว่างรอจังหวะข้างนอก"
+      }
+    ]
+  },
+  {
+    "card_id": "24-two-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Look ahead and make a simple choice for your future.",
+        "vibe_th": "มองไปข้างหน้าแล้วเลือกทางที่ใช่ให้ตัวเองนะ"
+      },
+      {
+        "vibe_en": "Today you feel ready to step into a new area.",
+        "vibe_th": "วันนี้รู้สึกพร้อมที่จะก้าวเข้าสู่พื้นที่ใหม่ๆ แล้ว"
+      },
+      {
+        "vibe_en": "A clear plan helps you feel steady and sure today.",
+        "vibe_th": "การมีแผนที่ชัดเจนช่วยให้วันนี้คุณรู้สึกมั่นคงขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "24-two-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Stay put today and refine your current daily routine.",
+        "vibe_th": "อยู่กับที่ก่อน แล้วลองปรับตารางชีวิตประจำวันดู"
+      },
+      {
+        "vibe_en": "Check your notes before making any big move today.",
+        "vibe_th": "เช็กรายละเอียดในโน้ตให้ดีก่อนจะขยับตัวทำอะไรนะ"
+      },
+      {
+        "vibe_en": "Focus on local tasks while you wait for better timing.",
+        "vibe_th": "จัดการเรื่องใกล้ตัวไปก่อน ระหว่างรอจังหวะที่ดีกว่านี้"
+      }
+    ]
+  },
+  {
+    "card_id": "25-three-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Your hard work starts to show real results today.",
+        "vibe_th": "สิ่งที่ทุ่มเทไปเริ่มเห็นผลลัพธ์ที่ชัดเจนในวันนี้"
+      },
+      {
+        "vibe_en": "Keep a steady pace as your world expands a bit.",
+        "vibe_th": "รักษาจังหวะให้คงที่ ในวันที่โอกาสเริ่มขยายตัว"
+      },
+      {
+        "vibe_en": "Notice how far you have come with this small step.",
+        "vibe_th": "ลองมองกลับไปดูว่าก้าวเล็กๆ พาคุณมาไกลแค่ไหนแล้ว"
+      }
+    ]
+  },
+  {
+    "card_id": "25-three-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Delays happen, so use this time to rest your mind.",
+        "vibe_th": "ถ้าอะไรยังไม่มาตามนัด ก็ใช้เวลานี้พักสมองไปก่อน"
+      },
+      {
+        "vibe_en": "Revisit your old goals to see what still fits today.",
+        "vibe_th": "กลับไปดูเป้าหมายเก่าๆ ว่าอันไหนยังใช่สำหรับวันนี้"
+      },
+      {
+        "vibe_en": "Slow down and check the details one more time.",
+        "vibe_th": "ใจเย็นๆ แล้วลองเช็กรายละเอียดรอบตัวอีกสักรอบ"
+      }
+    ]
+  },
+  {
+    "card_id": "26-four-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Share a happy moment with people you trust today.",
+        "vibe_th": "แบ่งปันช่วงเวลาดีๆ กับคนที่คุณไว้ใจในวันนี้นะ"
+      },
+      {
+        "vibe_en": "Your home life feels warm and very grounded today.",
+        "vibe_th": "บรรยากาศที่บ้านวันนี้ให้ความรู้สึกอบอุ่นและมั่นคงดีจัง"
+      },
+      {
+        "vibe_en": "Celebrate a small win to keep your mood bright.",
+        "vibe_th": "ฉลองความสำเร็จเล็กๆ บ้าง เพื่อให้ใจยังฟูอยู่เสมอ"
+      }
+    ]
+  },
+  {
+    "card_id": "26-four-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Enjoy a quiet evening at home by yourself today.",
+        "vibe_th": "ลองใช้เวลาเงียบๆ อยู่บ้านคนเดียวในเย็นวันนี้ดูนะ"
+      },
+      {
+        "vibe_en": "Small tensions at home fade when you stay calm today.",
+        "vibe_th": "ความตึงเครียดในบ้านจะลดลงถ้าวันนี้คุณนิ่งพอ"
+      },
+      {
+        "vibe_en": "Focus on inner peace instead of looking for outside fun.",
+        "vibe_th": "โฟกัสความสงบข้างใน แทนที่จะมองหาความสนุกข้างนอก"
+      }
+    ]
+  },
+  {
+    "card_id": "27-five-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Today brings a burst of energy to solve small problems.",
+        "vibe_th": "วันนี้มีพลังเหลือล้นที่จะจัดการสารพัดปัญหาจุกจิก"
+      },
+      {
+        "vibe_en": "Try a different approach to clear the air today.",
+        "vibe_th": "ลองใช้วิธีใหม่ๆ ในการจัดการเรื่องวุ่นๆ วันนี้ดูนะ"
+      },
+      {
+        "vibe_en": "A little healthy competition keeps you sharp and alert.",
+        "vibe_th": "การแข่งขันเล็กๆ น้อยๆ ช่วยให้คุณตื่นตัวและเก่งขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "27-five-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Avoid the noise today and focus on your own pace.",
+        "vibe_th": "ถอยห่างจากความวุ่นวาย แล้วกลับมาโฟกัสงานของตัวเอง"
+      },
+      {
+        "vibe_en": "Peace returns when you let go of small arguments today.",
+        "vibe_th": "ความสงบจะกลับมา เมื่อคุณเลิกเก็บเรื่องเล็กน้อยมาคิด"
+      },
+      {
+        "vibe_en": "Choose your battles wisely to save your energy today.",
+        "vibe_th": "เลือกสู้ในเรื่องที่คุ้มค่า เพื่อเก็บพลังงานไว้ทำอย่างอื่น"
+      }
+    ]
+  },
+  {
+    "card_id": "28-six-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Others notice your good work and offer kind words.",
+        "vibe_th": "คนรอบข้างเริ่มเห็นความดี และเอ่ยปากชมคุณแล้วนะ"
+      },
+      {
+        "vibe_en": "Walk with confidence today as you reach a goal.",
+        "vibe_th": "เดินหน้าอย่างมั่นใจในวันที่คุณทำตามเป้าหมายได้สำเร็จ"
+      },
+      {
+        "vibe_en": "A small victory makes your daily effort feel worthy.",
+        "vibe_th": "ชัยชนะเล็กๆ ช่วยให้ความเหนื่อยที่ผ่านมาดูคุ้มค่าขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "28-six-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Be proud of yourself even without a big crowd.",
+        "vibe_th": "ภูมิใจในตัวเองเข้าไว้ แม้จะไม่มีใครมองเห็นก็ตาม"
+      },
+      {
+        "vibe_en": "Focus on doing your best instead of seeking praise.",
+        "vibe_th": "เน้นทำหน้าที่ให้ดีที่สุด แทนการมองหาคำชมจากคนอื่น"
+      },
+      {
+        "vibe_en": "Take a quiet step back after your recent success.",
+        "vibe_th": "ค่อยๆ ถอยกลับมาพักเงียบๆ หลังจากผ่านความสำเร็จมา"
+      }
+    ]
+  },
+  {
+    "card_id": "29-seven-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Stay firm in your choice despite the busy day.",
+        "vibe_th": "มั่นคงในทางที่เลือกเอาไว้ แม้วันนี้จะวุ่นวายแค่ไหน"
+      },
+      {
+        "vibe_en": "You have the energy to handle every task today.",
+        "vibe_th": "คุณมีพลังพอที่จะจัดการทุกอย่างที่ประดังเข้ามาในวันนี้"
+      },
+      {
+        "vibe_en": "Keep your focus sharp as you protect your space.",
+        "vibe_th": "โฟกัสให้แม่นยำในวันที่ต้องดูแลพื้นที่ของตัวเอง"
+      }
+    ]
+  },
+  {
+    "card_id": "29-seven-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Ask for help today to lighten your heavy load.",
+        "vibe_th": "ลองเอ่ยปากขอแรงคนอื่นดูบ้าง จะได้ไม่ต้องแบกคนเดียว"
+      },
+      {
+        "vibe_en": "Let go of the need to win every argument.",
+        "vibe_th": "ปล่อยวางความต้องการที่จะชนะในทุกเรื่องลงบ้างก็ได้"
+      },
+      {
+        "vibe_en": "Relax your stance and notice the support around you.",
+        "vibe_th": "ลองผ่อนท่าทีลง แล้วจะเห็นว่ามีคนพร้อมช่วยคุณอยู่"
+      }
+    ]
+  },
+  {
+    "card_id": "30-eight-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Fast news arrives today to keep your mood high.",
+        "vibe_th": "ข่าวดีมาไวเกินคาด ช่วยให้วันนี้อารมณ์ดีเป็นพิเศษ"
+      },
+      {
+        "vibe_en": "Everything moves quickly now so stay focused and ready.",
+        "vibe_th": "ทุกอย่างก้าวหน้าไปไวมาก เตรียมตัวรับมือให้พร้อมนะ"
+      },
+      {
+        "vibe_en": "A quick trip or chat brightens your afternoon today.",
+        "vibe_th": "ทริปสั้นๆ หรือการคุยที่รวดเร็ว ช่วยให้ช่วงบ่ายสดใสขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "30-eight-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Wait for the dust to settle before moving forward.",
+        "vibe_th": "รอให้ทุกอย่างนิ่งกว่านี้ก่อน แล้วค่อยก้าวต่อไปนะ"
+      },
+      {
+        "vibe_en": "Check your emails twice to avoid small mistakes today.",
+        "vibe_th": "เช็กอีเมลให้ดีอีกรอบ เพื่อเลี่ยงความผิดพลาดเล็กๆ"
+      },
+      {
+        "vibe_en": "Slow down your pace to notice what you missed.",
+        "vibe_th": "ช้าลงอีกนิด เพื่อดูว่าคุณเผลอมองข้ามอะไรไปหรือเปล่า"
+      }
+    ]
+  },
+  {
+    "card_id": "31-nine-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Keep going today because you are almost there now.",
+        "vibe_th": "ฮึบอีกนิดนะ อีกนิดเดียวก็จะถึงเส้นชัยแล้ว"
+      },
+      {
+        "vibe_en": "Your inner strength helps you finish the final step.",
+        "vibe_th": "ความเข้มแข็งในใจจะช่วยให้คุณผ่านก้าวสุดท้ายไปได้"
+      },
+      {
+        "vibe_en": "Stay alert today and guard your progress with care.",
+        "vibe_th": "ตื่นตัวเข้าไว้ และดูแลผลงานที่ทำมาให้ดีนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "31-nine-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Lower your guard and let a friend help today.",
+        "vibe_th": "ลดกำแพงลงบ้าง แล้วเปิดใจให้เพื่อนเข้ามาช่วยนะ"
+      },
+      {
+        "vibe_en": "It is okay to rest when you feel tired.",
+        "vibe_th": "ถ้าเหนื่อยนักก็พักก่อนได้ ไม่ต้องฝืนแบกตลอดเวลา"
+      },
+      {
+        "vibe_en": "Notice the tension in your body and breathe deeply.",
+        "vibe_th": "ลองเช็กความเครียดในร่างกาย แล้วค่อยๆ หายใจลึกๆ ดู"
+      }
+    ]
+  },
+  {
+    "card_id": "32-ten-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Focus on one task at a time to finish well.",
+        "vibe_th": "ทำทีละอย่างให้เสร็จเป็นเรื่องๆ ไป ผลลัพธ์จะออกมาดีเอง"
+      },
+      {
+        "vibe_en": "The end of a long task is finally near.",
+        "vibe_th": "งานที่แบกมานานใกล้จะถึงจุดหมายปลายทางแล้วนะ"
+      },
+      {
+        "vibe_en": "Keep a steady pace to handle your busy schedule.",
+        "vibe_th": "รักษาจังหวะให้สม่ำเสมอ เพื่อจัดการตารางที่แสนยุ่งเหยิง"
+      }
+    ]
+  },
+  {
+    "card_id": "32-ten-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Drop a task that no longer serves your goals.",
+        "vibe_th": "งานไหนที่ไม่จำเป็นแล้ว ก็ลองปล่อยมือวางลงบ้างนะ"
+      },
+      {
+        "vibe_en": "Sharing the load today makes your heart feel lighter.",
+        "vibe_th": "แบ่งงานให้คนอื่นช่วยบ้าง จะช่วยให้ใจเบาขึ้นเยอะเลย"
+      },
+      {
+        "vibe_en": "Pause to check if you are carrying too much.",
+        "vibe_th": "หยุดเช็กตัวเองดูหน่อย ว่าตอนนี้กำลังแบกอะไรเกินตัวไปไหม"
+      }
+    ]
+  },
+  {
+    "card_id": "33-page-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "A fun message sparks your interest early today.",
+        "vibe_th": "ข้อความสนุกๆ ตั้งแต่เช้า ช่วยปลุกความสนใจในตัวคุณ"
+      },
+      {
+        "vibe_en": "Try something new and see where it leads today.",
+        "vibe_th": "ลองเริ่มทำอะไรใหม่ๆ ดู แล้วจะรู้ว่ามันพาคุณไปได้ไกล"
+      },
+      {
+        "vibe_en": "Your energy is bright and very catchy for others.",
+        "vibe_th": "พลังงานคุณดูสดใส จนคนรอบข้างพลอยได้รับพลังไปด้วย"
+      }
+    ]
+  },
+  {
+    "card_id": "33-page-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Think twice before starting a new hobby today.",
+        "vibe_th": "คิดให้ดีอีกนิดก่อนจะเริ่มงานอดิเรกใหม่ในวันนี้"
+      },
+      {
+        "vibe_en": "Keep your big ideas private until you feel sure.",
+        "vibe_th": "เก็บไอเดียเจ๋งๆ ไว้กับตัวก่อน รอให้มั่นใจแล้วค่อยบอกใคร"
+      },
+      {
+        "vibe_en": "Focus on finishing old tasks before starting new ones.",
+        "vibe_th": "เคลียร์งานเก่าให้จบก่อน ค่อยเริ่มหาเรื่องใหม่ทำนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "34-knight-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Today is full of action and bright new energy.",
+        "vibe_th": "วันนี้มีแต่อะไรรื่นเริงและพลังงานใหม่ๆ ที่ดูสดใส"
+      },
+      {
+        "vibe_en": "Move with speed and follow what feels right today.",
+        "vibe_th": "ทำอะไรให้ไวเข้าไว้ แล้วลองทำตามสัญชาตญาณตัวเองดู"
+      },
+      {
+        "vibe_en": "A bold step today brings a sense of fun.",
+        "vibe_th": "การกล้าก้าวออกไปในวันนี้ จะนำพาความสนุกมาให้คุณ"
+      }
+    ]
+  },
+  {
+    "card_id": "34-knight-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Check your speed before you hit a small bump.",
+        "vibe_th": "เช็กความเร็วตัวเองหน่อย ระวังจะสะดุดเรื่องเล็กๆ น้อยๆ"
+      },
+      {
+        "vibe_en": "Plan your route carefully to save your energy today.",
+        "vibe_th": "วางแผนเส้นทางให้ดี จะได้ไม่เสียพลังงานไปโดยเปล่าประโยชน์"
+      },
+      {
+        "vibe_en": "Wait for a clearer sign before rushing out today.",
+        "vibe_th": "รอสัญญาณที่ชัดเจนกว่านี้อีกนิด ก่อนจะรีบร้อนออกไป"
+      }
+    ]
+  },
+  {
+    "card_id": "35-queen-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Your natural charm opens a few doors for you.",
+        "vibe_th": "เสน่ห์ที่เป็นธรรมชาติของคุณ จะช่วยเปิดทางให้เรื่องง่ายขึ้น"
+      },
+      {
+        "vibe_en": "People feel safe and happy in your bright energy.",
+        "vibe_th": "คนรอบข้างรู้สึกปลอดภัยและมีความสุขเมื่ออยู่ใกล้คุณ"
+      },
+      {
+        "vibe_en": "Focus on what you love to stay bright today.",
+        "vibe_th": "ทำในสิ่งที่คุณรัก แล้วความสดใสจะอยู่กับคุณทั้งวัน"
+      }
+    ]
+  },
+  {
+    "card_id": "35-queen-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Enjoy your own company and stay quiet today.",
+        "vibe_th": "ลองอยู่เงียบๆ กับตัวเองดูบ้าง แล้วคุณจะพบความสงบ"
+      },
+      {
+        "vibe_en": "Notice if you are being too hard on others.",
+        "vibe_th": "ลองสังเกตดูนะ ว่าวันนี้คุณเข้มงวดกับคนอื่นเกินไปหรือเปล่า"
+      },
+      {
+        "vibe_en": "Work on your inner mood to find your spark.",
+        "vibe_th": "จัดการอารมณ์ข้างในให้ดี แล้วไฟในตัวจะกลับมาติดอีกครั้ง"
+      }
+    ]
+  },
+  {
+    "card_id": "36-king-of-wands-upright",
+    "vibes": [
+      {
+        "vibe_en": "Lead with a warm heart and stay very focused.",
+        "vibe_th": "นำทีมด้วยความอบอุ่นและโฟกัสที่เป้าหมายให้ชัดเจนนะ"
+      },
+      {
+        "vibe_en": "Your vision helps everyone see the best path today.",
+        "vibe_th": "มุมมองที่เฉียบคมของคุณ ช่วยให้คนอื่นเห็นทางสว่างไปด้วย"
+      },
+      {
+        "vibe_en": "Take charge of your day with a steady hand.",
+        "vibe_th": "คุมเกมชีวิตในวันนี้ด้วยสติและความมั่นคงในใจ"
+      }
+    ]
+  },
+  {
+    "card_id": "36-king-of-wands-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Listen more than you speak to find the truth.",
+        "vibe_th": "ลองฟังให้มากกว่าพูด แล้วคุณจะพบความจริงที่ซ่อนอยู่"
+      },
+      {
+        "vibe_en": "Be gentle with your words when giving advice today.",
+        "vibe_th": "ใช้วาจาที่อ่อนโยนหน่อยนะ เวลาให้คำแนะนำคนอื่นในวันนี้"
+      },
+      {
+        "vibe_en": "Check your ego before you make a quick choice.",
+        "vibe_th": "เช็กความมั่นใจในตัวหน่อย ก่อนจะตัดสินใจอะไรเร็วเกินไป"
+      }
+    ]
+  },
+  {
+    "card_id": "37-ace-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "A new feeling of peace fills your heart today.",
+        "vibe_th": "ความรู้สึกสงบสบายใจเริ่มเอ่อล้นในใจคุณตั้งแต่วันนี้"
+      },
+      {
+        "vibe_en": "Open your heart to a kind gesture from someone.",
+        "vibe_th": "เปิดใจรับความหวังดีที่ใครบางคนหยิบยื่นมาให้ดูนะ"
+      },
+      {
+        "vibe_en": "Today is a fresh start for your emotional world.",
+        "vibe_th": "วันนี้คือจุดเริ่มต้นใหม่ของความรู้สึกดีๆ ในใจคุณ"
+      }
+    ]
+  },
+  {
+    "card_id": "37-ace-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Be kind to yourself while your heart heals slowly.",
+        "vibe_th": "อ่อนโยนกับตัวเองหน่อยนะ ในวันที่ใจกำลังค่อยๆ ฟื้นฟู"
+      },
+      {
+        "vibe_en": "Focus on inner self-love before looking for outside care.",
+        "vibe_th": "รักตัวเองให้มากเข้าไว้ ก่อนจะมองหาความรักจากคนอื่น"
+      },
+      {
+        "vibe_en": "A quiet day helps you process your hidden feelings.",
+        "vibe_th": "วันเงียบๆ จะช่วยให้คุณได้ทบทวนความรู้สึกที่ซ่อนอยู่"
+      }
+    ]
+  },
+  {
+    "card_id": "38-two-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "A sweet chat brings you closer to someone special.",
+        "vibe_th": "บทสนทนาที่น่ารัก ช่วยให้คุณกับคนพิเศษใกล้ชิดกันมากขึ้น"
+      },
+      {
+        "vibe_en": "Notice the balance and flow in your daily meetings.",
+        "vibe_th": "ลองสังเกตความลื่นไหลในความสัมพันธ์รอบตัวดูนะ"
+      },
+      {
+        "vibe_en": "Kindness shared today builds a very strong link now.",
+        "vibe_th": "ความใจดีที่มอบให้กันในวันนี้ จะช่วยสร้างสายสัมพันธ์ที่มั่นคง"
+      }
+    ]
+  },
+  {
+    "card_id": "38-two-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Spend time alone to understand your own needs first.",
+        "vibe_th": "ใช้เวลากับตัวเองบ้าง เพื่อทำความเข้าใจความต้องการที่แท้จริง"
+      },
+      {
+        "vibe_en": "Fix a small misunderstanding with a gentle talk today.",
+        "vibe_th": "ลองปรับความเข้าใจกันด้วยคำพูดที่อ่อนหวานดูนะ"
+      },
+      {
+        "vibe_en": "Check your boundaries to keep your heart safe today.",
+        "vibe_th": "เช็กขอบเขตของตัวเองหน่อย เพื่อรักษาความรู้สึกในใจให้ดี"
+      }
+    ]
+  },
+  {
+    "card_id": "39-three-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Laughter with friends makes your day feel light today.",
+        "vibe_th": "เสียงหัวเราะกับเพื่อนๆ ช่วยให้วันนี้ดูเบาสบายขึ้นเยอะเลย"
+      },
+      {
+        "vibe_en": "Gather with your favorite people for a small treat.",
+        "vibe_th": "รวมตัวกับคนโปรดเพื่อหาของอร่อยๆ ทานด้วยกันนะ"
+      },
+      {
+        "vibe_en": "Share your happy news and enjoy the shared joy.",
+        "vibe_th": "แบ่งปันเรื่องดีๆ แล้วสนุกไปกับความยินดีของทุกคนรอบตัว"
+      }
+    ]
+  },
+  {
+    "card_id": "39-three-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "A small gathering feels better than a loud party.",
+        "vibe_th": "นัดเจอคนน้อยๆ คุยกันลึกๆ จะรู้สึกดีกว่าไปงานปาร์ตี้ใหญ่ๆ"
+      },
+      {
+        "vibe_en": "Step back from gossip to keep your mind clear.",
+        "vibe_th": "ถอยห่างจากเรื่องเม้าท์มอยบ้าง เพื่อรักษาใจให้ผ่องใส"
+      },
+      {
+        "vibe_en": "Enjoy your own small treat in private today.",
+        "vibe_th": "แอบให้รางวัลเล็กๆ กับตัวเองแบบเงียบๆ ในมุมโปรดดูนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "40-four-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Take a quiet pause to look within yourself today.",
+        "vibe_th": "ลองหยุดพักเงียบๆ เพื่อหันกลับมามองสิ่งที่อยู่ในใจดูนะ"
+      },
+      {
+        "vibe_en": "Notice the small gifts you often miss every day.",
+        "vibe_th": "ลองสังเกตสิ่งดีๆ เล็กๆ ที่คุณอาจเผลอมองข้ามไปในทุกวัน"
+      },
+      {
+        "vibe_en": "A slow mood helps you see what truly matters.",
+        "vibe_th": "อารมณ์ที่เนิบช้าลง จะช่วยให้เห็นว่าอะไรคือสิ่งที่สำคัญจริงๆ"
+      }
+    ]
+  },
+  {
+    "card_id": "40-four-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Look up and see the new choice waiting there.",
+        "vibe_th": "เงยหน้าขึ้นมองสิ มีทางเลือกใหม่ๆ รอให้คุณเข้าไปหาอยู่นะ"
+      },
+      {
+        "vibe_en": "Energy returns as you start to notice new ideas.",
+        "vibe_th": "พลังงานจะกลับมา เมื่อคุณเริ่มเปิดรับไอเดียใหม่ๆ รอบตัว"
+      },
+      {
+        "vibe_en": "Say yes to a small offer that arrives today.",
+        "vibe_th": "ลองตอบตกลงกับโอกาสเล็กๆ ที่เข้ามาทักทายคุณในวันนี้ดู"
+      }
+    ]
+  },
+  {
+    "card_id": "41-five-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Let yourself feel sad but remember what remains today.",
+        "vibe_th": "ยอมให้ตัวเองเศร้าได้นะ แต่อย่าลืมมองสิ่งดีๆ ที่ยังเหลืออยู่"
+      },
+      {
+        "vibe_en": "Turn around to see the support still standing near.",
+        "vibe_th": "ลองหันกลับมามองดูสิ ยังมีคนพร้อมซัพพอร์ตคุณอยู่ข้างๆ นะ"
+      },
+      {
+        "vibe_en": "Accepting a loss is the first step to healing.",
+        "vibe_th": "การยอมรับความเสียใจ คือก้าวแรกของการเยียวยาหัวใจ"
+      }
+    ]
+  },
+  {
+    "card_id": "41-five-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Hope returns slowly as you move past an old hurt.",
+        "vibe_th": "ความหวังค่อยๆ กลับมา เมื่อคุณก้าวข้ามความเจ็บปวดเดิมๆ ได้"
+      },
+      {
+        "vibe_en": "Forgive yourself for old mistakes and start fresh today.",
+        "vibe_th": "ให้อภัยตัวเองในเรื่องที่ผ่านมา แล้วเริ่มวันใหม่ด้วยใจที่เบาลง"
+      },
+      {
+        "vibe_en": "Notice the bright light at the end of this path.",
+        "vibe_th": "ลองสังเกตแสงสว่างที่ปลายทางดูนะ คุณกำลังจะผ่านมันไปได้แล้ว"
+      }
+    ]
+  },
+  {
+    "card_id": "42-six-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "An old friend or memory brings a smile today.",
+        "vibe_th": "เพื่อนเก่าหรือความทรงจำดีๆ จะกลับมาทำให้คุณยิ้มได้อีกครั้ง"
+      },
+      {
+        "vibe_en": "Be kind like a child and enjoy simple things.",
+        "vibe_th": "ลองทำตัวให้ใจดีเหมือนเด็กๆ แล้วสนุกกับเรื่องง่ายๆ รอบตัวดู"
+      },
+      {
+        "vibe_en": "A small gift from the past warms your heart.",
+        "vibe_th": "ของขวัญชิ้นเล็กๆ จากอดีต จะกลับมาสร้างความอบอุ่นในใจคุณ"
+      }
+    ]
+  },
+  {
+    "card_id": "42-six-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Focus on the present instead of looking back today.",
+        "vibe_th": "โฟกัสกับปัจจุบันให้มาก แทนการมองย้อนกลับไปแต่อดีต"
+      },
+      {
+        "vibe_en": "Moving forward feels easier when you let go now.",
+        "vibe_th": "การก้าวต่อไปจะง่ายขึ้นเยอะเลย ถ้าคุณยอมปล่อยมือจากวันวาน"
+      },
+      {
+        "vibe_en": "Grow from your past but do not stay there.",
+        "vibe_th": "เรียนรู้จากอดีตได้ แต่อย่าปล่อยให้ตัวเองติดอยู่ในนั้นนานเกินไป"
+      }
+    ]
+  },
+  {
+    "card_id": "43-seven-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Pick one dream and try a small step today.",
+        "vibe_th": "เลือกฝันที่ใช่มาสักอย่าง แล้วลองเริ่มก้าวเล็กๆ ในวันนี้ดู"
+      },
+      {
+        "vibe_en": "Many paths open today so check which feels real.",
+        "vibe_th": "มีหลายทางเลือกเข้ามา ลองเช็กดูนะว่าอันไหนคือเรื่องจริง"
+      },
+      {
+        "vibe_en": "Enjoy your daydreams but stay grounded in your actions.",
+        "vibe_th": "สนุกกับความฝันได้นะ แต่ต้องไม่ลืมลงมือทำจริงๆ ด้วย"
+      }
+    ]
+  },
+  {
+    "card_id": "43-seven-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Clarity arrives when you focus on one real goal.",
+        "vibe_th": "ความชัดเจนจะมาถึง เมื่อคุณโฟกัสเป้าหมายที่ทำได้จริงแค่หนึ่งเดียว"
+      },
+      {
+        "vibe_en": "Choose facts over fancy ideas to finish your work.",
+        "vibe_th": "เลือกอยู่กับข้อเท็จจริงมากกว่าจินตนาการ เพื่อให้งานจบลงด้วยดี"
+      },
+      {
+        "vibe_en": "A reality check helps you make a better decision.",
+        "vibe_th": "การกลับมามองความจริง จะช่วยให้คุณตัดสินใจได้แม่นยำขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "44-eight-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Leaving a tired mood behind brings you inner peace.",
+        "vibe_th": "การทิ้งความหม่นหมองไว้ข้างหลัง จะนำความสงบมาสู่ใจคุณ"
+      },
+      {
+        "vibe_en": "Walk toward something deeper that feeds your heart today.",
+        "vibe_th": "ลองเดินไปหาอะไรที่ลึกซึ้งกว่าเดิม เพื่อเติมเต็มหัวใจตัวเอง"
+      },
+      {
+        "vibe_en": "A quiet goodbye to the old makes space today.",
+        "vibe_th": "การบอกลาเรื่องเดิมๆ อย่างเงียบเชียบ จะช่วยเพิ่มพื้นที่ในใจคุณ"
+      }
+    ]
+  },
+  {
+    "card_id": "44-eight-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Stay a bit longer to finish what you started.",
+        "vibe_th": "อยู่ต่ออีกนิดเพื่อเคลียร์สิ่งที่เริ่มไว้ให้จบลงด้วยดีนะ"
+      },
+      {
+        "vibe_en": "Try one more time before you walk away today.",
+        "vibe_th": "ลองพยายามดูอีกสักครั้ง ก่อนที่คุณจะตัดสินใจเดินจากมา"
+      },
+      {
+        "vibe_en": "Notice why you want to leave and check facts.",
+        "vibe_th": "ลองถามตัวเองดูว่าทำไมถึงอยากไป แล้วเช็กความจริงให้ดี"
+      }
+    ]
+  },
+  {
+    "card_id": "45-nine-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Feel the joy as a small wish comes true.",
+        "vibe_th": "สัมผัสความสุขเล็กๆ เมื่อสิ่งที่หวังไว้เริ่มกลายเป็นความจริง"
+      },
+      {
+        "vibe_en": "You have enough today so enjoy your current mood.",
+        "vibe_th": "วันนี้คุณมีทุกอย่างพอแล้ว สนุกไปกับอารมณ์ดีๆ นี้เถอะ"
+      },
+      {
+        "vibe_en": "Treat yourself to something nice for all your effort.",
+        "vibe_th": "หาอะไรดีๆ ให้ตัวเองบ้างนะ เพื่อเป็นรางวัลให้กับความพยายาม"
+      }
+    ]
+  },
+  {
+    "card_id": "45-nine-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "True happiness comes from simple things in your life.",
+        "vibe_th": "ความสุขที่แท้จริง มักมาจากเรื่องเรียบง่ายในชีวิตประจำวัน"
+      },
+      {
+        "vibe_en": "Avoid excess today and find joy in what remains.",
+        "vibe_th": "เลี่ยงความฟุ่มเฟือย แล้วหาความสุขจากสิ่งที่คุณมีอยู่ก็พอ"
+      },
+      {
+        "vibe_en": "Look for inner wealth instead of only buying stuff.",
+        "vibe_th": "มองหาความร่ำรวยทางใจ แทนการซื้อของเพื่อแก้เบื่อนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "46-ten-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Love and smiles fill your home life today.",
+        "vibe_th": "ความรักและรอยยิ้มจะเอ่อล้นไปทั่วทั้งบ้านในวันนี้เลย"
+      },
+      {
+        "vibe_en": "Everything feels in place and very calm right now.",
+        "vibe_th": "ทุกอย่างดูลงตัวและสงบเงียบได้อย่างน่าประหลาดใจ"
+      },
+      {
+        "vibe_en": "Notice the shared joy with your closest people today.",
+        "vibe_th": "ลองสังเกตความสุขร่วมกันกับคนใกล้ชิดดูนะ มันดีต่อใจมาก"
+      }
+    ]
+  },
+  {
+    "card_id": "46-ten-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Small quiet talks fix gaps in your family today.",
+        "vibe_th": "บทสนทนาที่เงียบเรียบและจริงใจ ช่วยสมานรอยร้าวในใจได้นะ"
+      },
+      {
+        "vibe_en": "Find your own joy even if others feel busy.",
+        "vibe_th": "หาความสุขในแบบของตัวเอง แม้คนรอบข้างจะดูยุ่งวุ่นวาย"
+      },
+      {
+        "vibe_en": "Keep your peace of mind while things feel messy.",
+        "vibe_th": "รักษาความสงบในใจเอาไว้ ในวันที่ทุกอย่างดูสับสนวุ่นวาย"
+      }
+    ]
+  },
+  {
+    "card_id": "47-page-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "A sweet surprise makes your heart skip a beat.",
+        "vibe_th": "เซอร์ไพรส์ที่น่ารัก จะทำให้หัวใจคุณเต้นแรงด้วยความดีใจ"
+      },
+      {
+        "vibe_en": "Try writing your feelings down to feel lighter today.",
+        "vibe_th": "ลองเขียนความรู้สึกออกมาดูนะ จะช่วยให้ใจเบาขึ้นเยอะเลย"
+      },
+      {
+        "vibe_en": "Notice the gentle message in a small daily event.",
+        "vibe_th": "ลองสังเกตข้อความดีๆ ที่ซ่อนอยู่ในเหตุการณ์ธรรมดาระหว่างวัน"
+      }
+    ]
+  },
+  {
+    "card_id": "47-page-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Keep your feelings steady and avoid small mood swings.",
+        "vibe_th": "รักษาอารมณ์ให้คงที่เข้าไว้ และระวังอารมณ์แปรปรวนเล็กๆ นะ"
+      },
+      {
+        "vibe_en": "Think about your feelings before you speak them out.",
+        "vibe_th": "ทบทวนความรู้สึกในใจให้ดี ก่อนจะเอ่ยปากบอกใครออกไป"
+      },
+      {
+        "vibe_en": "A quiet day helps you heal a small hurt.",
+        "vibe_th": "วันเงียบๆ จะช่วยเยียวยาแผลใจเล็กๆ ให้ดีขึ้นตามลำดับ"
+      }
+    ]
+  },
+  {
+    "card_id": "48-knight-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Follow a kind thought and see where it leads.",
+        "vibe_th": "ลองทำตามความรู้สึกดีๆ ในใจดู แล้วจะรู้ว่ามันพาคุณไปไหน"
+      },
+      {
+        "vibe_en": "A romantic mood brightens your afternoon and evening today.",
+        "vibe_th": "อารมณ์โรแมนติกจะช่วยให้ช่วงบ่ายและเย็นของคุณสดใสขึ้น"
+      },
+      {
+        "vibe_en": "Express your feelings with a small but sweet gesture.",
+        "vibe_th": "แสดงความรู้สึกผ่านการกระทำเล็กๆ ที่แสนหวานดูนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "48-knight-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Stay grounded while you enjoy your big dreams today.",
+        "vibe_th": "อยู่กับโลกความเป็นจริงบ้างนะ ในขณะที่ฝันถึงเรื่องใหญ่ๆ"
+      },
+      {
+        "vibe_en": "Check the facts before you follow a new mood.",
+        "vibe_th": "เช็กข้อเท็จจริงให้ดี ก่อนจะปล่อยใจไปตามอารมณ์ชั่ววูบ"
+      },
+      {
+        "vibe_en": "Wait for your heart to feel steady before acting.",
+        "vibe_th": "รอให้ใจนิ่งกว่านี้อีกนิด ก่อนจะตัดสินใจลงมือทำอะไรลงไป"
+      }
+    ]
+  },
+  {
+    "card_id": "49-queen-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Your intuition guides you toward a peaceful choice today.",
+        "vibe_th": "สัญชาตญาณจะนำทางคุณไปสู่การตัดสินใจที่สงบและดีต่อใจ"
+      },
+      {
+        "vibe_en": "Listen to a friend with a very kind heart.",
+        "vibe_th": "ลองเป็นผู้ฟังที่ดีให้กับเพื่อนด้วยหัวใจที่เปิดรับดูนะ"
+      },
+      {
+        "vibe_en": "Today is a good time for gentle self-care habits.",
+        "vibe_th": "วันนี้เหมาะมากที่จะเริ่มดูแลตัวเองด้วยวิธีที่อ่อนโยน"
+      }
+    ]
+  },
+  {
+    "card_id": "49-queen-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Set a limit to protect your own emotional space.",
+        "vibe_th": "ขีดเส้นขอบเขตบ้างนะ เพื่อปกป้องพื้นที่ทางอารมณ์ของตัวเอง"
+      },
+      {
+        "vibe_en": "Take a break from caring for everyone else today.",
+        "vibe_th": "พักจากการดูแลคนอื่นสักวัน แล้วหันมาดูแลตัวเองบ้างนะ"
+      },
+      {
+        "vibe_en": "Clear your mind to stop worrying about small things.",
+        "vibe_th": "เคลียร์สมองให้ว่าง จะได้เลิกกังวลกับเรื่องเล็กน้อยเสียที"
+      }
+    ]
+  },
+  {
+    "card_id": "50-king-of-cups-upright",
+    "vibes": [
+      {
+        "vibe_en": "Stay calm and keep a steady heart through everything.",
+        "vibe_th": "มีสติและรักษาใจให้มั่นคง ไม่ว่าวันนี้จะเจอเรื่องอะไรก็ตาม"
+      },
+      {
+        "vibe_en": "Your kind advice helps someone feel much better today.",
+        "vibe_th": "คำแนะนำที่แสนดีของคุณ จะช่วยให้ใครบางคนรู้สึกดีขึ้นมาก"
+      },
+      {
+        "vibe_en": "Balance your logic and heart for a great day.",
+        "vibe_th": "ใช้สมองคู่กับหัวใจให้สมดุล แล้ววันนี้จะเป็นวันที่ยอดเยี่ยม"
+      }
+    ]
+  },
+  {
+    "card_id": "50-king-of-cups-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Step back from drama to keep your mind quiet.",
+        "vibe_th": "ถอยห่างจากเรื่องวุ่นวายบ้าง เพื่อรักษาใจให้สงบนิ่ง"
+      },
+      {
+        "vibe_en": "Notice if your mood is affecting your daily tasks.",
+        "vibe_th": "ลองสังเกตดูนะ ว่าอารมณ์ของคุณกำลังกระทบงานที่ทำอยู่หรือเปล่า"
+      },
+      {
+        "vibe_en": "Find a healthy way to release your inner stress.",
+        "vibe_th": "มองหาวิธีระบายความเครียดในใจในทางที่สร้างสรรค์ดูนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "51-ace-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Today brings a sharp focus and clear thoughts.",
+        "vibe_th": "วันนี้หัวคิดแล่น ปิ๊งไอเดียใหม่ขึ้นมาทันทีเลย"
+      },
+      {
+        "vibe_en": "Honesty clears the air and settles old doubts.",
+        "vibe_th": "พูดกันตรงๆ ไปเลย ทุกอย่างจะได้เคลียร์ใจกัน"
+      },
+      {
+        "vibe_en": "A fresh idea cuts through the noise right now.",
+        "vibe_th": "มีไอเดียใหม่ที่ช่วยให้ตัดสินใจอะไรบางอย่างได้ง่ายขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "51-ace-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Confusion clouds the mood so take a step back.",
+        "vibe_th": "ช่วงนี้ตึ้บๆ ลองถอยออกมาพักหายใจก่อนนะ"
+      },
+      {
+        "vibe_en": "Words might sting today if you rush the truth.",
+        "vibe_th": "ระวังคำพูดจะไปทิ่มแทงคนอื่นโดยไม่ตั้งใจล่ะ"
+      },
+      {
+        "vibe_en": "Pause before speaking to avoid a messy misunderstanding.",
+        "vibe_th": "คิดก่อนพูดนิดนึง จะได้ไม่ต้องมานั่งแก้ความเข้าใจผิด"
+      }
+    ]
+  },
+  {
+    "card_id": "52-two-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "A quiet pause helps you weigh each choice fairly.",
+        "vibe_th": "หยุดคิดสักนิด ค่อยๆ ชั่งน้ำหนักข้อดีข้อเสียดูนะ"
+      },
+      {
+        "vibe_en": "Finding balance requires a bit of internal silence today.",
+        "vibe_th": "วันนี้ลองอยู่เงียบๆ จะได้เห็นทางออกที่ชัดเจนขึ้น"
+      },
+      {
+        "vibe_en": "Trust your gut when the facts feel too heavy.",
+        "vibe_th": "ถ้าเลือกไม่ถูก ลองใช้ใจฟังดูว่าลึกๆ อยากได้แบบไหน"
+      }
+    ]
+  },
+  {
+    "card_id": "52-two-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "The truth comes out even if it feels uncomfortable.",
+        "vibe_th": "ความจริงเริ่มปรากฏ ถึงจะอึดอัดแต่ก็ต้องเผชิญหน้า"
+      },
+      {
+        "vibe_en": "Indecision ends when you finally pick a side today.",
+        "vibe_th": "เลิกลังเลได้แล้ว ถึงเวลาต้องเลือกทางใดทางหนึ่งเสียที"
+      },
+      {
+        "vibe_en": "Avoidance only makes the choice feel much harder now.",
+        "vibe_th": "ยิ่งหนีปัญหายิ่งหนัก ลองลุกขึ้นมาจัดการให้จบๆ ไป"
+      }
+    ]
+  },
+  {
+    "card_id": "53-three-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Facing a hard truth helps the healing start today.",
+        "vibe_th": "ยอมรับความจริงที่เจ็บปวด แล้วใจจะเริ่มค่อยๆ ดีขึ้น"
+      },
+      {
+        "vibe_en": "Let the tears flow to clear out old energy.",
+        "vibe_th": "อยากร้องไห้ก็ร้องออกมาเถอะ จะได้ระบายความอึดอัดไป"
+      },
+      {
+        "vibe_en": "A small heartbreak makes room for a better mood.",
+        "vibe_th": "เรื่องแย่ๆ ที่เจอในวันนี้ กำลังจะผ่านพ้นไปในที่สุด"
+      }
+    ]
+  },
+  {
+    "card_id": "53-three-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Forgiveness feels heavy but it sets you free today.",
+        "vibe_th": "การให้อภัยอาจจะยาก แต่มันช่วยให้ใจเบาลงได้เยอะเลย"
+      },
+      {
+        "vibe_en": "The worst part is over so focus on recovery.",
+        "vibe_th": "จุดที่แย่ที่สุดผ่านไปแล้ว มาเริ่มดูแลใจตัวเองกันดีกว่า"
+      },
+      {
+        "vibe_en": "Old stings fade as you choose to move forward.",
+        "vibe_th": "ความเจ็บช้ำเดิมๆ เริ่มจางลง เพราะคุณเลือกที่จะเดินต่อ"
+      }
+    ]
+  },
+  {
+    "card_id": "54-four-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Today is for resting and recharging your tired mind.",
+        "vibe_th": "วันนี้พักสมองบ้างนะ ปล่อยวางเรื่องวุ่นๆ ไปก่อน"
+      },
+      {
+        "vibe_en": "A quiet nap solves more than overthinking ever could.",
+        "vibe_th": "ถ้าง่วงก็พักผ่อนบ้าง เผื่อตื่นมาจะคิดอะไรออก"
+      },
+      {
+        "vibe_en": "Give yourself space to breathe and just be still.",
+        "vibe_th": "หาเวลาอยู่กับตัวเองเงียบๆ ให้ร่างกายได้ชาร์จแบต"
+      }
+    ]
+  },
+  {
+    "card_id": "54-four-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Rest ends as you find your energy returning now.",
+        "vibe_th": "ได้เวลาลุกขึ้นมาลุยต่อแล้ว พลังกายพลังใจกลับมาเต็มเปี่ยม"
+      },
+      {
+        "vibe_en": "Isolation feels heavy but you are ready to talk.",
+        "vibe_th": "เก็บตัวมาพอแล้ว ออกไปเจอผู้คนบ้างก็ดีเหมือนกันนะ"
+      },
+      {
+        "vibe_en": "Avoid burnout by noticing when your body needs more.",
+        "vibe_th": "อย่าฝืนร่างกายจนเกินไป ถ้ารู้สึกไม่ไหวก็ต้องหยุดพัก"
+      }
+    ]
+  },
+  {
+    "card_id": "55-five-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Some wins cost too much so check your mood.",
+        "vibe_th": "ชนะไปก็ไม่ภูมิใจเท่าไหร่ ลองเช็กดูว่าคุ้มค่าจริงไหม"
+      },
+      {
+        "vibe_en": "Walking away is a choice that brings instant peace.",
+        "vibe_th": "ถอยออกมาดีกว่า สบายใจกว่าต้องไปเถียงกับใคร"
+      },
+      {
+        "vibe_en": "Tension rises when everyone wants to be right today.",
+        "vibe_th": "บรรยากาศตึงเครียดเพราะต่างคนต่างไม่ยอมกัน ลองลดทิฐิดูนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "55-five-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Conflict fades as people start to listen again today.",
+        "vibe_th": "ความขัดแย้งเริ่มคลี่คลาย เพราะหันมาคุยกันด้วยเหตุผล"
+      },
+      {
+        "vibe_en": "Regret teaches you how to handle the next step.",
+        "vibe_th": "ความผิดพลาดในอดีต คือบทเรียนชั้นดีสำหรับก้าวต่อไป"
+      },
+      {
+        "vibe_en": "Putting down the pride feels like a huge relief.",
+        "vibe_th": "ทิ้งทิฐิไปบ้าง แล้วคุณจะรู้สึกเบาสบายอย่างบอกไม่ถูก"
+      }
+    ]
+  },
+  {
+    "card_id": "56-six-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Moving to calmer waters brings a much better mood.",
+        "vibe_th": "บรรยากาศแย่ๆ กำลังจะผ่านไป เรื่องดีๆ กำลังจะเข้ามา"
+      },
+      {
+        "vibe_en": "Leaving the past behind is the best choice today.",
+        "vibe_th": "อะไรที่ผ่านไปแล้วก็ให้มันผ่านไป เริ่มต้นใหม่ดีกว่า"
+      },
+      {
+        "vibe_en": "A quiet transition helps you find your focus again.",
+        "vibe_th": "การเปลี่ยนแปลงครั้งนี้จะช่วยให้คุณเจอทางที่สงบขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "56-six-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Old baggage feels heavy during this tricky transition today.",
+        "vibe_th": "เรื่องเดิมๆ ยังคอยตามกวนใจ ลองสะสางให้จบทีละเรื่องนะ"
+      },
+      {
+        "vibe_en": "Progress stalls if you keep looking back at mistakes.",
+        "vibe_th": "มัวแต่ห่วงหน้าพะวงหลัง ระวังจะก้าวไปไหนไม่ได้สักที"
+      },
+      {
+        "vibe_en": "Rough waves test your patience but you stay steady.",
+        "vibe_th": "มีอุปสรรคเข้ามาทดสอบบ้าง แต่คุณจะผ่านมันไปได้แน่นอน"
+      }
+    ]
+  },
+  {
+    "card_id": "57-seven-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Privacy is your best tool for getting things done.",
+        "vibe_th": "ทำอะไรเงียบๆ คนเดียวไปก่อน จะได้งานที่มีคุณภาพมากกว่า"
+      },
+      {
+        "vibe_en": "Strategy beats brute force in every small task today.",
+        "vibe_th": "ใช้ออกแบบแผนสักนิด จะช่วยประหยัดแรงไปได้เยอะเลย"
+      },
+      {
+        "vibe_en": "Watch your back while you navigate a tricky mood.",
+        "vibe_th": "ระวังโดนคนอื่นเอาเปรียบ ลองสังเกตคนรอบข้างดูบ้าง"
+      }
+    ]
+  },
+  {
+    "card_id": "57-seven-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Coming clean feels heavy but clears your guilty mind.",
+        "vibe_th": "พูดความจริงออกมาเถอะ ถึงจะยากแต่มันทำให้คุณโล่งใจ"
+      },
+      {
+        "vibe_en": "A shortcut fails so try the honest path today.",
+        "vibe_th": "ทางลัดอาจจะไม่เวิร์ก ลองทำตามขั้นตอนปกติดูจะชัวร์กว่า"
+      },
+      {
+        "vibe_en": "Secrets come to light and force a fresh start.",
+        "vibe_th": "ความลับที่ซ่อนไว้อาจจะเปิดเผย เตรียมรับมือกับความจริงนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "58-eight-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Fear is the only thing keeping you stuck today.",
+        "vibe_th": "ความกังวลในใจนั่นแหละที่รั้งคุณไว้ ลองก้าวออกมาดูนะ"
+      },
+      {
+        "vibe_en": "Notice how the exit is actually wide open now.",
+        "vibe_th": "ทางออกมีอยู่ตรงหน้า แค่คุณต้องกล้าลืมตาขึ้นมามอง"
+      },
+      {
+        "vibe_en": "Feeling trapped is just a trick of your mind.",
+        "vibe_th": "ความรู้สึกที่ว่าทำอะไรไม่ได้เลย เป็นแค่ภาพลวงตาที่คุณสร้างเอง"
+      }
+    ]
+  },
+  {
+    "card_id": "58-eight-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "The blindfold falls and clear solutions appear at last.",
+        "vibe_th": "หูตาสว่างขึ้นมาทันที เห็นทางออกของปัญหาชัดเจนแล้ว"
+      },
+      {
+        "vibe_en": "Taking the first step breaks the cycle of worry.",
+        "vibe_th": "แค่เริ่มก้าวแรก ความกังวลที่มีก็จะค่อยๆ หายไปเอง"
+      },
+      {
+        "vibe_en": "Self-doubt fades as you reclaim your personal power today.",
+        "vibe_th": "เลิกโทษตัวเองได้แล้ว คุณเก่งกว่าที่ตัวเองคิดเยอะเลยนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "59-nine-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Worries grow in the dark but fade with light.",
+        "vibe_th": "ความกังวลมันดูน่ากลัวแค่ตอนกลางคืน พอเช้ามาก็หายไป"
+      },
+      {
+        "vibe_en": "Sleep is hard when your mind replays old fears.",
+        "vibe_th": "ถ้านอนไม่หลับเพราะคิดมาก ลองลุกมาจิบน้ำอุ่นๆ ดูนะ"
+      },
+      {
+        "vibe_en": "Be gentle with your mood during this heavy time.",
+        "vibe_th": "ใจดีกับตัวเองหน่อยนะ อย่าปล่อยให้ความเครียดรุมเร้าเกินไป"
+      }
+    ]
+  },
+  {
+    "card_id": "59-nine-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Relief arrives as a nightmare finally ends today.",
+        "vibe_th": "เรื่องที่ทำให้กังวลใจจบลงแล้ว ได้เวลานอนหลับให้เต็มอิ่ม"
+      },
+      {
+        "vibe_en": "Facing the truth shrinks the size of your worry.",
+        "vibe_th": "พอเผชิญหน้ากับความจริง ความกลัวที่มีก็ดูเล็กลงไปถนัดตา"
+      },
+      {
+        "vibe_en": "Hope returns as you stop dwelling on worst outcomes.",
+        "vibe_th": "เลิกคิดแต่เรื่องแย่ๆ แล้วคุณจะเริ่มเห็นแสงสว่างในใจ"
+      }
+    ]
+  },
+  {
+    "card_id": "60-ten-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "The worst is over and a new dawn starts.",
+        "vibe_th": "ผ่านจุดที่แย่ที่สุดมาแล้ว ก้าวต่อไปมีแต่เรื่องดีๆ แน่นอน"
+      },
+      {
+        "vibe_en": "Let the old version of you rest in peace.",
+        "vibe_th": "ทิ้งตัวตนเก่าที่บอบช้ำไป แล้วเริ่มสร้างตัวเองใหม่ในวันนี้"
+      },
+      {
+        "vibe_en": "Rock bottom is just a solid place to rebuild.",
+        "vibe_th": "ถ้าไม่มีอะไรจะเสียแล้ว ก็แสดงว่าถึงเวลาเริ่มต้นใหม่เสียที"
+      }
+    ]
+  },
+  {
+    "card_id": "60-ten-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Recovery takes time so do not rush your mood.",
+        "vibe_th": "แผลใจต้องใช้เวลาเยียวยา ค่อยๆ เป็นค่อยๆ ไปนะ"
+      },
+      {
+        "vibe_en": "Hope flickers back as you survive the recent storm.",
+        "vibe_th": "รอดตายมาได้แล้วนะ จากนี้ไปชีวิตจะค่อยๆ กลับมาสดใส"
+      },
+      {
+        "vibe_en": "Avoid old traps that led to this heavy feeling.",
+        "vibe_th": "จำบทเรียนที่ผ่านมาไว้ จะได้ไม่กลับไปทำผิดพลาดซ้ำเดิม"
+      }
+    ]
+  },
+  {
+    "card_id": "61-page-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Curiosity sparks a fresh way to see your day.",
+        "vibe_th": "ความสงสัยใคร่รู้จะนำพาโอกาสใหม่ๆ มาให้คุณในวันนี้"
+      },
+      {
+        "vibe_en": "News arrives that requires a quick and sharp response.",
+        "vibe_th": "มีข่าวคราวใหม่ๆ เข้ามา เตรียมตั้งรับและจัดการให้ดีล่ะ"
+      },
+      {
+        "vibe_en": "Stay alert because timing is everything right now.",
+        "vibe_th": "จังหวะชีวิตกำลังจะเปลี่ยนไป สังเกตสัญญาณรอบตัวให้ดีนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "61-page-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Gossip stings so stay away from petty small talk.",
+        "vibe_th": "ระวังเรื่องนินทาว่าร้าย หรือคำพูดที่อาจทำให้คนอื่นเข้าใจผิด"
+      },
+      {
+        "vibe_en": "A sharp tongue causes a mood you might regret.",
+        "vibe_th": "พูดอะไรระวังหน่อยนะ เดี๋ยวจะกลายเป็นสร้างศัตรูโดยไม่รู้ตัว"
+      },
+      {
+        "vibe_en": "Information is messy so double check the facts today.",
+        "vibe_th": "อย่าเพิ่งเชื่อทุกอย่างที่ได้ยินมา เช็กความถูกต้องให้ชัวร์ก่อนนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "62-knight-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Bold action gets you exactly where you need today.",
+        "vibe_th": "ลุยไปเลยไม่ต้องลังเล ความกล้าจะช่วยให้งานสำเร็จไวขึ้น"
+      },
+      {
+        "vibe_en": "Logic guides your choices through a very fast pace.",
+        "vibe_th": "ใช้เหตุผลนำทาง แล้วคุณจะจัดการทุกอย่างได้อย่างรวดเร็ว"
+      },
+      {
+        "vibe_en": "A sudden shift requires your total focus right now.",
+        "vibe_th": "มีการเปลี่ยนแปลงกะทันหัน ตั้งสติให้ดีแล้วรับมือให้ทันนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "62-knight-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Speed causes mistakes if you ignore the small details.",
+        "vibe_th": "รีบเกินไปงานจะเสียได้นะ ค่อยๆ เช็กรายละเอียดให้รอบคอบ"
+      },
+      {
+        "vibe_en": "Aggressive energy pushes people away during your busy day.",
+        "vibe_th": "ระวังท่าทีที่ดูรุนแรงเกินไป จะทำให้คนรอบข้างรู้สึกอึดอัด"
+      },
+      {
+        "vibe_en": "Slow down before you burn out from the rush.",
+        "vibe_th": "เบรกตัวเองบ้างก็ได้นะ อย่าฝืนทำทุกอย่างจนร่างกายรับไม่ไหว"
+      }
+    ]
+  },
+  {
+    "card_id": "63-queen-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Clear boundaries protect your peace and your focus today.",
+        "vibe_th": "ขีดเส้นแบ่งให้ชัดเจน แล้วคุณจะทำงานได้อย่างสบายใจขึ้น"
+      },
+      {
+        "vibe_en": "Honesty is your superpower when making tough choices now.",
+        "vibe_th": "ความตรงไปตรงมาจะช่วยให้คุณตัดสินใจเรื่องยากๆ ได้ง่ายขึ้น"
+      },
+      {
+        "vibe_en": "Cut through the fluff to find the core truth.",
+        "vibe_th": "เลิกอ้อมค้อมแล้วมองหาความจริง จะได้จัดการปัญหาได้ตรงจุด"
+      }
+    ]
+  },
+  {
+    "card_id": "63-queen-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Cold words hide a heart that needs more warmth.",
+        "vibe_th": "ที่พูดแรงไปอาจเพราะอารมณ์ไม่ดี ลองใจเย็นลงนิดนึงนะ"
+      },
+      {
+        "vibe_en": "Bitterness clouds your logic so try to forgive today.",
+        "vibe_th": "ความโกรธแค้นบังตา ลองวางทิฐิลงบ้างเพื่อความสงบสุขของใจ"
+      },
+      {
+        "vibe_en": "Isolation feels heavy when you shut everyone out now.",
+        "vibe_th": "การปิดกั้นตัวเองทำให้รู้สึกโดดเดี่ยว ลองเปิดใจคุยกับใครบ้าง"
+      }
+    ]
+  },
+  {
+    "card_id": "64-king-of-swords-upright",
+    "vibes": [
+      {
+        "vibe_en": "Integrity guides your leadership in a steady, calm way.",
+        "vibe_th": "ความซื่อสัตย์จะทำให้คนรอบข้างเชื่อถือและยอมรับในตัวคุณ"
+      },
+      {
+        "vibe_en": "Use logic to settle a messy argument today.",
+        "vibe_th": "ใช้เหตุผลตัดสินปัญหา แล้วทุกอย่างจะจบลงด้วยความยุติธรรม"
+      },
+      {
+        "vibe_en": "Discipline brings the structure your life needs right now.",
+        "vibe_th": "ระเบียบวินัยจะช่วยให้ชีวิตที่วุ่นวายกลับมาเข้าที่เข้าทาง"
+      }
+    ]
+  },
+  {
+    "card_id": "64-king-of-swords-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Power feels heavy if used without a kind heart.",
+        "vibe_th": "มีอำนาจแต่ขาดความเมตตา ก็ไม่มีใครอยากอยู่ใกล้หรอกนะ"
+      },
+      {
+        "vibe_en": "Rigid rules block the creative energy you need today.",
+        "vibe_th": "กฎระเบียบที่ตึงเกินไปจะทำให้เครียดเปล่าๆ ลองยืดหยุ่นดูบ้าง"
+      },
+      {
+        "vibe_en": "Manipulation backfires when the truth finally comes out now.",
+        "vibe_th": "อย่าคิดใช้เล่ห์เหลี่ยมกับใครเลย เพราะสุดท้ายจะเข้าตัวเปล่าๆ"
+      }
+    ]
+  },
+  {
+    "card_id": "65-ace-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "A new chance for stability arrives in your hands.",
+        "vibe_th": "โอกาสดีๆ เรื่องเงินหรืองานกำลังเข้ามาหาคุณแล้วนะ"
+      },
+      {
+        "vibe_en": "Today feels grounded and full of fresh energy.",
+        "vibe_th": "วันนี้รู้สึกมั่นคงและมีพลังที่จะเริ่มทำอะไรใหม่ๆ ที่เป็นชิ้นเป็นอัน"
+      },
+      {
+        "vibe_en": "Small seeds planted now bring a great future reward.",
+        "vibe_th": "เริ่มลงมือทำตั้งแต่วันนี้ ผลลัพธ์ในอนาคตจะคุ้มค่าแน่นอน"
+      }
+    ]
+  },
+  {
+    "card_id": "65-ace-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Delayed rewards require a bit more patience from you.",
+        "vibe_th": "สิ่งที่รอคอยอาจจะมาช้าหน่อย แต่อย่าเพิ่งถอดใจไปก่อนนะ"
+      },
+      {
+        "vibe_en": "Recheck your budget to avoid a small financial choice.",
+        "vibe_th": "เช็กบัญชีนิดนึงก่อนจะจ่ายอะไรไป จะได้ไม่เดือดร้อนทีหลัง"
+      },
+      {
+        "vibe_en": "A missed chance is just a lesson for next time.",
+        "vibe_th": "ถึงจะพลาดโอกาสนี้ไป ก็อย่าเสียใจไปเลย บทเรียนนี้มีค่ามาก"
+      }
+    ]
+  },
+  {
+    "card_id": "66-two-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Juggling tasks feels easier when you find your flow.",
+        "vibe_th": "งานเยอะแค่ไหนถ้าจัดลำดับดีๆ ก็จัดการได้สบายมาก"
+      },
+      {
+        "vibe_en": "Flexibility is the key to a smooth and balanced day.",
+        "vibe_th": "ปรับตัวตามสถานการณ์ให้เก่ง แล้ววันนี้จะผ่านไปได้อย่างราบรื่น"
+      },
+      {
+        "vibe_en": "Prioritize your focus to keep everything moving steadily today.",
+        "vibe_th": "เลือกทำสิ่งที่สำคัญที่สุดก่อน แล้วชีวิตจะสมดุลขึ้นเยอะ"
+      }
+    ]
+  },
+  {
+    "card_id": "66-two-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Overwhelmed moods happen when you take on too much.",
+        "vibe_th": "อย่ารับงานมาทำจนล้นมือ เดี๋ยวจะทำไม่เสร็จสักอย่างนะ"
+      },
+      {
+        "vibe_en": "Drop a ball to save your energy for later.",
+        "vibe_th": "บางอย่างที่หนักเกินไปก็วางลงบ้างเถอะ จะได้ไม่เหนื่อยเกินไป"
+      },
+      {
+        "vibe_en": "Chaos fades once you pick a single task now.",
+        "vibe_th": "ความวุ่นวายจะหายไป ถ้าคุณค่อยๆ จัดการทีละเรื่องให้จบ"
+      }
+    ]
+  },
+  {
+    "card_id": "67-three-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Collaboration brings a better result than working alone today.",
+        "vibe_th": "ทำงานเป็นทีมจะช่วยให้ได้ผลลัพธ์ที่ยอดเยี่ยมกว่าทำคนเดียว"
+      },
+      {
+        "vibe_en": "Your skills notice and earn you a bit of praise.",
+        "vibe_th": "ความตั้งใจทำงานของคุณมีคนเห็นนะ เตรียมรับคำชมได้เลย"
+      },
+      {
+        "vibe_en": "Planning with others makes the big goal feel easy.",
+        "vibe_th": "วางแผนร่วมกับคนอื่น จะช่วยให้งานใหญ่ดูเล็กลงและง่ายขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "67-three-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Miscommunication stalls the work so check your notes today.",
+        "vibe_th": "คุยกันให้เคลียร์ก่อนเริ่มงาน จะได้ไม่ต้องมานั่งแก้ภายหลัง"
+      },
+      {
+        "vibe_en": "Sloppy details slow down the progress of your goals.",
+        "vibe_th": "อย่าปล่อยให้งานลวกๆ มาทำให้เป้าหมายของคุณต้องสะดุดลง"
+      },
+      {
+        "vibe_en": "Competition at work creates a heavy and tired mood.",
+        "vibe_th": "บรรยากาศการแข่งขันที่รุนแรงอาจทำให้ล้า ลองหาทางประนีประนอมดู"
+      }
+    ]
+  },
+  {
+    "card_id": "68-four-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Saving for later brings a sense of inner security.",
+        "vibe_th": "ออมเงินไว้บ้างจะทำให้คุณรู้สึกอุ่นใจและมั่นคงในอนาคต"
+      },
+      {
+        "vibe_en": "Boundaries protect your energy during a busy social day.",
+        "vibe_th": "รู้จักปฏิเสธบ้างก็ได้นะ จะได้มีเวลาเหลือให้ตัวเองบ้าง"
+      },
+      {
+        "vibe_en": "Holding on tight provides comfort but notice the tension.",
+        "vibe_th": "การยึดติดกับอะไรเดิมๆ อาจทำให้ปลอดภัยแต่ก็อึดอัดได้นะ"
+      }
+    ]
+  },
+  {
+    "card_id": "68-four-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Letting go of control brings a huge relief today.",
+        "vibe_th": "เลิกบงการทุกอย่างแล้วปล่อยให้มันเป็นไปบ้าง ชีวิตจะเบาขึ้นเยอะ"
+      },
+      {
+        "vibe_en": "Sharing your resources opens up a fresh new energy.",
+        "vibe_th": "การรู้จักให้จะช่วยให้คุณเจอความสัมพันธ์และโอกาสใหม่ๆ"
+      },
+      {
+        "vibe_en": "Being open to change breaks the cycle of stagnation.",
+        "vibe_th": "ลองเปิดใจรับสิ่งใหม่ๆ ดูบ้าง ชีวิตที่หยุดนิ่งจะเริ่มเคลื่อนไหว"
+      }
+    ]
+  },
+  {
+    "card_id": "69-five-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Seeking help is a brave step toward feeling better.",
+        "vibe_th": "ถ้าไม่ไหวก็ลองเอ่ยปากขอความช่วยเหลือดูนะ ไม่ใช่เรื่องน่าอายหรอก"
+      },
+      {
+        "vibe_en": "Notice the warmth that is still around you today.",
+        "vibe_th": "ท่ามกลางความลำบาก ยังมีคนที่คอยห่วงใยคุณอยู่นะ มองดูดีๆ"
+      },
+      {
+        "vibe_en": "Hard times pass when you focus on small comforts.",
+        "vibe_th": "ความทุกข์จะค่อยๆ จางลง ถ้าคุณหันมาใส่ใจความสุขเล็กๆ รอบตัว"
+      }
+    ]
+  },
+  {
+    "card_id": "69-five-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Recovery starts as you find a new support system.",
+        "vibe_th": "เริ่มเห็นทางรอดแล้วนะ มีคนยื่นมือเข้ามาช่วยคุณในจังหวะที่พอดี"
+      },
+      {
+        "vibe_en": "Financial stress lightens as you find a clever path.",
+        "vibe_th": "ปัญหาเรื่องเงินเริ่มมีทางออก ลองมองหาลู่ทางใหม่ๆ ดูนะ"
+      },
+      {
+        "vibe_en": "Hope returns when you notice the open door nearby.",
+        "vibe_th": "อย่ามัวแต่มองความมืดมิด ทางออกอยู่ใกล้ๆ แค่คุณต้องหันไปมอง"
+      }
+    ]
+  },
+  {
+    "card_id": "70-six-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Generosity returns to you in a very kind way.",
+        "vibe_th": "ความใจดีที่คุณเคยให้คนอื่นไป วันนี้มันจะย้อนกลับมาหาคุณเอง"
+      },
+      {
+        "vibe_en": "Balance your giving to keep your own energy high.",
+        "vibe_th": "ช่วยเหลือคนอื่นได้แต่อย่าให้ตัวเองต้องลำบากนะ หาจุดสมดุลให้เจอ"
+      },
+      {
+        "vibe_en": "Receiving help is a gift for both people today.",
+        "vibe_th": "การรับความช่วยเหลือจากคนอื่น ก็เป็นการให้โอกาสเขาได้ทำดีนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "70-six-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Strings attached to a gift create a heavy mood.",
+        "vibe_th": "ถ้าเขาให้แบบหวังผลตอบแทน ก็ลองคิดดูให้ดีก่อนจะรับมานะ"
+      },
+      {
+        "vibe_en": "Self-care is the best investment you can make now.",
+        "vibe_th": "กลับมาดูแลตัวเองบ้างเถอะ คุณให้คนอื่นมามากพอแล้ว"
+      },
+      {
+        "vibe_en": "Debt feels heavy so make a plan to settle.",
+        "vibe_th": "หนี้สินเก่าๆ อาจทำให้กังวล ลองวางแผนจัดการให้เป็นระบบดูนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "71-seven-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Patience is rewarded as you watch your efforts grow.",
+        "vibe_th": "อดทนรออีกนิดนะ สิ่งที่ตั้งใจทำมากำลังจะออกดอกออกผลแล้ว"
+      },
+      {
+        "vibe_en": "Pause to check if you like the current direction.",
+        "vibe_th": "หยุดพักสักครู่เพื่อตรวจสอบดูว่า ทางที่เดินอยู่ใช่ทางที่ต้องการจริงไหม"
+      },
+      {
+        "vibe_en": "Steady work brings a quiet pride to your day.",
+        "vibe_th": "ค่อยๆ ทำไปทีละนิด ผลลัพธ์ที่ได้จะทำให้คุณภูมิใจในตัวเองมาก"
+      }
+    ]
+  },
+  {
+    "card_id": "71-seven-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Impatience ruins the mood so try to slow down.",
+        "vibe_th": "ความรีบร้อนจะทำให้ทุกอย่างเสีย ลองใจเย็นๆ แล้วรอจังหวะที่ใช่"
+      },
+      {
+        "vibe_en": "Low returns force a choice to try something new.",
+        "vibe_th": "ถ้าผลลัพธ์ไม่คุ้มเหนื่อย ก็อาจถึงเวลาที่ต้องเปลี่ยนวิธีทำใหม่"
+      },
+      {
+        "vibe_en": "Giving up too soon leaves the job half done.",
+        "vibe_th": "อย่าเพิ่งถอดใจตอนนี้เลย อีกแค่นิดเดียวก็จะถึงเป้าหมายแล้ว"
+      }
+    ]
+  },
+  {
+    "card_id": "72-eight-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Focus on the details to master your craft today.",
+        "vibe_th": "ใส่ใจรายละเอียดของงานให้มากขึ้น แล้วฝีมือคุณจะพัฒนาไปไกล"
+      },
+      {
+        "vibe_en": "Repetitive tasks build a solid path to your goal.",
+        "vibe_th": "งานที่ทำซ้ำๆ อาจน่าเบื่อ แต่ความชำนาญจะทำให้คุณเก่งขึ้นเอง"
+      },
+      {
+        "vibe_en": "Your dedication shines through every small step you take.",
+        "vibe_th": "ความมุ่งมั่นของคุณจะสะท้อนออกมาในผลงานที่ยอดเยี่ยม"
+      }
+    ]
+  },
+  {
+    "card_id": "72-eight-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Boredom hits if you ignore the creative side today.",
+        "vibe_th": "ถ้าทำงานเดิมๆ จนเริ่มเบื่อ ลองหาแรงบันดาลใจใหม่ๆ มาเติมดูบ้าง"
+      },
+      {
+        "vibe_en": "Perfectionism stalls your progress so just finish the task.",
+        "vibe_th": "อย่ามัวแต่แก้จนงานไม่เสร็จสักที เอาแค่พอดีแล้วส่งงานให้ทันเถอะ"
+      },
+      {
+        "vibe_en": "Hard work without a plan feels like wasted energy.",
+        "vibe_th": "ขยันอย่างเดียวไม่พอ ต้องวางแผนให้ดีด้วย จะได้ไม่เหนื่อยฟรี"
+      }
+    ]
+  },
+  {
+    "card_id": "73-nine-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Success feels sweet when you achieve it on your own.",
+        "vibe_th": "ความสำเร็จที่สร้างด้วยมือตัวเอง มันน่าภูมิใจที่สุดเลยใช่ไหมล่ะ"
+      },
+      {
+        "vibe_en": "Treat yourself to a small luxury today for balance.",
+        "vibe_th": "หาของขวัญให้ตัวเองบ้างนะ รางวัลสำหรับความเหนื่อยยากที่ผ่านมา"
+      },
+      {
+        "vibe_en": "Self-reliance brings a calm and steady confidence right now.",
+        "vibe_th": "การพึ่งพาตัวเองได้ ทำให้คุณดูมีเสน่ห์และมั่นใจขึ้นเยอะเลย"
+      }
+    ]
+  },
+  {
+    "card_id": "73-nine-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Overspending causes a heavy mood later this week.",
+        "vibe_th": "อย่าช้อปปิ้งเพลินจนลืมดูเงินในกระเป๋า เดี๋ยวจะเครียดเอาได้นะ"
+      },
+      {
+        "vibe_en": "Loneliness hides behind a shiny and busy life today.",
+        "vibe_th": "ถึงจะมีทุกอย่างพร้อม แต่ความเหงาก็อาจแวบเข้ามาทักทายได้เหมือนกัน"
+      },
+      {
+        "vibe_en": "Independence is hard if you ignore those who helped.",
+        "vibe_th": "อย่าลืมขอบคุณคนที่เคยช่วยคุณไว้ ความสำเร็จไม่ได้สร้างมาคนเดียวหรอก"
+      }
+    ]
+  },
+  {
+    "card_id": "74-ten-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Family warmth provides the security your heart needs today.",
+        "vibe_th": "ความรักความอบอุ่นในบ้าน จะเป็นพลังใจที่ดีที่สุดสำหรับคุณ"
+      },
+      {
+        "vibe_en": "Traditions bring a sense of belonging to your mood.",
+        "vibe_th": "การกลับไปทำอะไรเดิมๆ ที่เคยทำกับครอบครัว จะช่วยให้รู้สึกผ่อนคลาย"
+      },
+      {
+        "vibe_en": "Long term goals feel close as stability settles in.",
+        "vibe_th": "เป้าหมายที่วางไว้เริ่มมั่นคงขึ้นเรื่อยๆ จนคุณสัมผัสได้ถึงความสำเร็จ"
+      }
+    ]
+  },
+  {
+    "card_id": "74-ten-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Family tension feels heavy during your quiet time today.",
+        "vibe_th": "เรื่องวุ่นๆ ในครอบครัวอาจทำให้ปวดหัวบ้าง ลองปล่อยวางดูนะ"
+      },
+      {
+        "vibe_en": "Financial loss is a sign to rethink your habits.",
+        "vibe_th": "เสียเงินไปกับเรื่องไม่เป็นเรื่อง ต้องเริ่มประหยัดได้แล้วนะ"
+      },
+      {
+        "vibe_en": "Change is okay even if it breaks old traditions.",
+        "vibe_th": "การทำอะไรที่ต่างจากเดิมบ้าง ก็ไม่ได้หมายความว่าไม่เคารพผู้ใหญ่หรอกนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "75-page-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "A fresh opportunity to learn arrives at your door.",
+        "vibe_th": "มีเรื่องใหม่ๆ ให้ได้เรียนรู้ ลองเปิดใจรับโอกาสนี้ดูนะ"
+      },
+      {
+        "vibe_en": "Practical news brings a sense of excitement today.",
+        "vibe_th": "มีข่าวดีเรื่องงานหรือเงินเข้ามา ทำให้รู้สึกมีกำลังใจขึ้นเยอะ"
+      },
+      {
+        "vibe_en": "Focus on small steps to reach your big dream.",
+        "vibe_th": "เริ่มทำจากเรื่องเล็กๆ ก่อน แล้วความฝันใหญ่จะค่อยๆ เป็นจริงเอง"
+      }
+    ]
+  },
+  {
+    "card_id": "75-page-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Procrastination blocks the path to your future goals today.",
+        "vibe_th": "เลิกผลัดวันประกันพรุ่งได้แล้วนะ ก้าวแรกสำคัญที่สุดเสมอ"
+      },
+      {
+        "vibe_en": "Lack of focus makes a simple task feel heavy.",
+        "vibe_th": "ถ้าสมาธิสั้นงานจะเสร็จช้าลง ลองปิดโซเชียลแล้วตั้งใจทำงานดู"
+      },
+      {
+        "vibe_en": "Financial news requires a bit of caution right now.",
+        "vibe_th": "ระวังเรื่องการใช้จ่ายหรือข่าวลวงเรื่องการลงทุน เช็กให้ดีก่อนนะ"
+      }
+    ]
+  },
+  {
+    "card_id": "76-knight-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Routine provides the steady progress your project needs now.",
+        "vibe_th": "การทำสม่ำเสมอทุกวัน จะช่วยให้งานของคุณก้าวหน้าไปอย่างมั่นคง"
+      },
+      {
+        "vibe_en": "Reliability makes you a hero in a busy office.",
+        "vibe_th": "ความรับผิดชอบและพึ่งพาได้ของคุณ คือสิ่งที่ทุกคนชื่นชมที่สุดในวันนี้"
+      },
+      {
+        "vibe_en": "Slow and steady wins the race every single time.",
+        "vibe_th": "ช้าแต่ชัวร์คือคำที่เหมาะกับคุณในตอนนี้ ค่อยๆ ทำไปไม่ต้องรีบ"
+      }
+    ]
+  },
+  {
+    "card_id": "76-knight-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Boredom stalls your energy during a repetitive work day.",
+        "vibe_th": "ถ้าเริ่มเบื่อกับงานจำเจ ลองหาแรงบันดาลใจใหม่ๆ มาเติมดูนะ"
+      },
+      {
+        "vibe_en": "Perfectionism ruins the mood so accept a good result.",
+        "vibe_th": "อย่ามัวแต่จับผิดงานตัวเองจนเครียด เอาแค่ทำออกมาให้ดีที่สุดก็พอ"
+      },
+      {
+        "vibe_en": "Stagnation breaks when you try a slightly different path.",
+        "vibe_th": "ความซ้ำซากจำเจจะหายไป ถ้าคุณลองเปลี่ยนวิธีทำงานดูบ้าง"
+      }
+    ]
+  },
+  {
+    "card_id": "77-queen-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Practical care for yourself brings a grounded, calm mood.",
+        "vibe_th": "การดูแลร่างกายและจิตใจให้ดี จะช่วยให้คุณมีวันที่สดใส"
+      },
+      {
+        "vibe_en": "Generosity flows easily when you feel secure inside today.",
+        "vibe_th": "พอใจคุณเต็มเปี่ยม คุณก็พร้อมที่จะแบ่งปันสิ่งดีๆ ให้คนรอบข้าง"
+      },
+      {
+        "vibe_en": "A cozy home environment heals your tired energy now.",
+        "vibe_th": "ลองจัดบ้านให้ดูสบายตาขึ้น จะช่วยเยียวยาความเหนื่อยล้าได้ดีมาก"
+      }
+    ]
+  },
+  {
+    "card_id": "77-queen-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Smothering others causes a heavy vibe in your house.",
+        "vibe_th": "รักและหวังดีได้แต่อย่าไปกะเกณฑ์ชีวิตใครนักเลย เดี๋ยวเขาจะอึดอัด"
+      },
+      {
+        "vibe_en": "Neglecting yourself leads to a tired and weary mood.",
+        "vibe_th": "อย่ามัวแต่ดูแลคนอื่นจนลืมดูแลตัวเองนะ สุขภาพกายใจสำคัญที่สุด"
+      },
+      {
+        "vibe_en": "Financial worry feels heavy during a quiet evening tonight.",
+        "vibe_th": "ความกังวลเรื่องเงินอาจกวนใจคุณในช่วงค่ำ ลองหาอะไรทำเพลินๆ ดู"
+      }
+    ]
+  },
+  {
+    "card_id": "78-king-of-pentacles-upright",
+    "vibes": [
+      {
+        "vibe_en": "Practical wisdom guides your path to a stable day.",
+        "vibe_th": "ใช้ประสบการณ์ที่มีจัดการปัญหา แล้ววันนี้จะผ่านไปได้อย่างมั่นคง"
+      },
+      {
+        "vibe_en": "Success brings a sense of duty to help others.",
+        "vibe_th": "เมื่อคุณทำสำเร็จแล้ว อย่าลืมส่งต่อโอกาสและคำแนะนำให้คนอื่นด้วยนะ"
+      },
+      {
+        "vibe_en": "Stability allows you to enjoy the small life comforts.",
+        "vibe_th": "ชีวิตที่ลงตัวทำให้คุณมีเวลาหันไปชื่นชมความสุขเล็กๆ รอบตัวได้มากขึ้น"
+      }
+    ]
+  },
+  {
+    "card_id": "78-king-of-pentacles-reversed",
+    "vibes": [
+      {
+        "vibe_en": "Greed clouds your judgment during a business choice today.",
+        "vibe_th": "ระวังความอยากได้อยากมีจะทำให้คุณตัดสินใจพลาด ลองพิจารณาให้รอบคอบ"
+      },
+      {
+        "vibe_en": "Rigid views block a fresh path to bigger rewards.",
+        "vibe_th": "ความคิดที่ยึดติดเกินไปอาจทำให้พลาดโอกาสดีๆ ลองรับฟังคนรุ่นใหม่บ้าง"
+      },
+      {
+        "vibe_en": "Material focus leaves your heart feeling a bit empty.",
+        "vibe_th": "อย่ามัวแต่หาเงินจนลืมหาความสุขให้หัวใจนะ เดี๋ยวจะมารู้สึกเสียดายทีหลัง"
+      }
+    ]
+  }
+]

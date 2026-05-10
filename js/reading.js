@@ -13,6 +13,7 @@ import {
   getCardImageFallbackUrl,
   getCardBackUrl,
   getCardBackFallbackUrl,
+  getDailyVibe,
   applyImgFallback,
   DEFAULT_DECK_ID,
 } from './data.js';
@@ -1849,25 +1850,25 @@ function buildDailyTextPanel(text, options = {}) {
   return panel;
 }
 
-function buildDailyGuidancePanel(card, hook = '') {
+async function buildDailyGuidancePanel(card, hook = '') {
   if (!card) return null;
 
   const reflection = getText(card, 'reflection_question');
-  const action = getText(card, 'action_prompt');
-  const affirmation = getText(card, 'affirmation');
-  if (!hook && !reflection && !action && !affirmation) return null;
+  const vibe = await getDailyVibe(card.card_id, state.currentLang);
+  const lede = vibe || hook;
+  if (!lede && !reflection) return null;
 
   const panel = document.createElement('div');
   panel.className = 'panel';
 
-  if (hook) {
+  if (lede) {
     const p = document.createElement('p');
     p.className = 'lede';
     p.style.fontSize = '1.04em';
     p.style.fontWeight = '600';
     p.style.color = '#2f2940';
     p.style.textAlign = 'center';
-    p.textContent = hook;
+    p.textContent = lede;
     panel.appendChild(p);
   }
 
@@ -1878,29 +1879,14 @@ function buildDailyGuidancePanel(card, hook = '') {
     panel.appendChild(p);
   }
 
-  if (action) {
-    const p = document.createElement('p');
-    p.style.textAlign = 'left';
-    p.textContent = action;
-    panel.appendChild(p);
-  }
-
-  if (affirmation) {
-    const p = document.createElement('p');
-    p.style.textAlign = 'left';
-    p.innerHTML = `<em>"${String(affirmation).trim()}"</em>`;
-    panel.appendChild(p);
-  }
-
   return panel;
 }
 
 function buildDailyAdvicePanel(card) {
   if (!card) return null;
 
-  const ritual = getText(card, 'ritual_2min');
   const luckyPalette = normalizeColorArray(card.color_palette).filter(Boolean).slice(0, 6);
-  if (!ritual && !luckyPalette.length) return null;
+  if (!luckyPalette.length) return null;
 
   const panel = document.createElement('div');
   panel.className = 'panel';
@@ -1911,21 +1897,14 @@ function buildDailyAdvicePanel(card) {
   title.style.textAlign = 'center';
   panel.appendChild(title);
 
-  if (ritual) {
-    const ritualText = document.createElement('p');
-    ritualText.className = 'topic-copy';
-    ritualText.textContent = ritual;
-    panel.appendChild(ritualText);
-  }
-
-  if (luckyPalette.length) {
+  {
     const luckyLabel = document.createElement('p');
     luckyLabel.className = 'meta-badge';
     luckyLabel.style.display = 'inline-flex';
     luckyLabel.style.justifyContent = 'center';
     luckyLabel.style.width = '100%';
     luckyLabel.style.textAlign = 'center';
-    luckyLabel.style.marginTop = ritual ? '6px' : '0';
+    luckyLabel.style.marginTop = '0';
     luckyLabel.textContent = state.currentLang === 'th' ? 'สีมงคลวันนี้' : "Today's lucky colors";
     panel.appendChild(luckyLabel);
 
@@ -2114,10 +2093,10 @@ function createDailyCardSummaryPanel(card, heading = '') {
   return panel;
 }
 
-function createDailyDetails(card) {
+async function createDailyDetails(card) {
   const frag = document.createDocumentFragment();
   const hook = getText(card, 'hook') || getText(card, 'action_prompt') || getText(card, 'standalone_present');
-  const guidance = buildDailyGuidancePanel(card, hook);
+  const guidance = await buildDailyGuidancePanel(card, hook);
   if (guidance) frag.appendChild(guidance);
   const advice = buildDailyAdvicePanel(card);
   if (advice) frag.appendChild(advice);
@@ -2349,13 +2328,13 @@ function createDailyMultiCardDetails(cards, dict) {
   return wrap;
 }
 
-function renderDailyDetails(cards, dict, stage) {
+async function renderDailyDetails(cards, dict, stage) {
   const count = cards.length;
   if (count === 1) {
     stage.appendChild(createDailyCardSummaryPanel(cards[0]));
     const detailsWrap = document.createElement('section');
     detailsWrap.className = 'daily-reading-details';
-    detailsWrap.appendChild(createDailyDetails(cards[0]));
+    detailsWrap.appendChild(await createDailyDetails(cards[0]));
     stage.appendChild(detailsWrap);
     appendReadingInternalLinks(stage, cards);
     return;
@@ -2622,7 +2601,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
     cards,
     completionId: `daily|${completionStamp}|${state.selectedIds.join(',')}`,
   });
-  renderDailyDetails(cards, dict, stageRefs.stage);
+  await renderDailyDetails(cards, dict, stageRefs.stage);
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
 }

@@ -370,3 +370,23 @@ export function loadTarotData() {
       return meowTarotCards;
     });
 }
+
+export async function getDailyVibe(cardId, lang = 'en') {
+  try {
+    const url = new URL('../data/data-daily.json', import.meta.url).toString();
+    const res = await fetch(url);
+    const entries = await res.json();
+    const entry = entries.find(e => e.card_id === cardId);
+    if (!entry?.vibes?.length) return null;
+
+    // Date-seeded index so vibe stays consistent all day across surfaces
+    const dateKey = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const seed = [...dateKey].reduce((a, c) => a + Number(c), 0);
+    const index = seed % entry.vibes.length;
+    const vibe = entry.vibes[index];
+
+    return lang === 'th' ? vibe.vibe_th : vibe.vibe_en;
+  } catch {
+    return null;
+  }
+}

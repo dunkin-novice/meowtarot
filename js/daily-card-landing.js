@@ -4,6 +4,7 @@ import {
   getCardBackFallbackUrl,
   getCardBackUrl,
   getCardImageUrl,
+  getDailyVibe,
   loadTarotData,
   normalizeId,
 } from './data.js';
@@ -87,7 +88,7 @@ function formatDateForDisplay(dateKey, lang) {
   }).format(date);
 }
 
-function renderDailyCard(card, dateKey, lang) {
+async function renderDailyCard(card, dateKey, lang) {
   const dateEl = document.getElementById('daily-card-date');
   const imageEl = document.getElementById('daily-card-image');
   const nameEl = document.getElementById('daily-card-name');
@@ -105,7 +106,8 @@ function renderDailyCard(card, dateKey, lang) {
   dateEl.textContent = isThai ? `ประจำวันที่ ${formatDateForDisplay(dateKey, lang)}` : `For ${formatDateForDisplay(dateKey, lang)}`;
   nameEl.textContent = cardName;
   orientationEl.textContent = orientationLabel;
-  meaningEl.textContent = summarizeMeaning(card, lang);
+  const vibe = await getDailyVibe(card.card_id, lang);
+  meaningEl.textContent = vibe || summarizeMeaning(card, lang);
 
   const cardBackUrl = getCardBackUrl();
   const cardBackFallbackUrl = getCardBackFallbackUrl();
@@ -121,7 +123,7 @@ async function initDailyCard() {
 
   const lang = state.currentLang === 'th' ? 'th' : 'en';
   const { dateKey, card } = pickDailyCard(cards, lang);
-  renderDailyCard(card, dateKey, lang);
+  await renderDailyCard(card, dateKey, lang);
 }
 
 void initDailyCard();
