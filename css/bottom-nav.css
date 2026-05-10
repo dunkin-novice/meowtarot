@@ -113,3 +113,23 @@
     display: none !important;
   }
 }
+
+/* Share state */
+.bottom-nav__center-btn--share {
+  background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+}
+
+/* Continue state */
+.bottom-nav__center-btn--continue {
+  background: var(--gold);
+  opacity: 0.85;
+}
+
+/* Reset button chrome */
+.bottom-nav__item--share,
+.bottom-nav__item--continue {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}

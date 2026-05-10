@@ -3241,8 +3241,8 @@ function waitForImagesLoaded(root) {
       img.crossOrigin = 'anonymous';
     }
 
-    if (img.complete && img.naturalWidth > 0) {
-      if (typeof img.decode === 'function') {
+    if (img.complete) {
+      if (img.naturalWidth > 0 && typeof img.decode === 'function') {
         try {
           await img.decode();
         } catch (_) {
@@ -3258,7 +3258,7 @@ function waitForImagesLoaded(root) {
       img.addEventListener('error', done, { once: true });
     });
 
-    if (typeof img.decode === 'function') {
+    if (img.naturalWidth > 0 && typeof img.decode === 'function') {
       try {
         await img.decode();
       } catch (_) {
@@ -3716,6 +3716,21 @@ function configureActionButtons(dict = translations[state.currentLang]) {
     shareReadingLink();
   };
   shareBtn?.addEventListener('click', shareButtonHandler);
+
+  if (!window._meowShareListenerBound) {
+    window._meowShareListenerBound = true;
+    document.addEventListener('meow:request-share', () => {
+      try {
+        if (typeof openSharePage === 'function') {
+          openSharePage();
+        } else {
+          console.error('[meow] openSharePage not available');
+        }
+      } catch (err) {
+        console.error('[meow] request-share failed:', err);
+      }
+    });
+  }
 
   newReadingButtonHandler = () => {
     if (state.mode === 'daily') {

@@ -51,6 +51,7 @@ const state = {
 let overallFlowCleanup = null;
 let fullReadingFlowModulePromise = null;
 let questionTopicsModulePromise = null;
+let dailyContinueHandler = null;
 
 const staticCardBacks = document.querySelectorAll('.card-back');
 
@@ -433,13 +434,15 @@ function renderDaily() {
   const board = document.getElementById('daily-board');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  if (!dealShuffleBtn || !board || !continueBtn || !counter) return;
+  if (!dealShuffleBtn || !board || !counter) return;
 
   let selectedCards = [];
   const updateDailySelectionUi = (cards) => {
     selectedCards = cards;
     counter.textContent = `${cards.length}/${DAILY_SELECTION_MAX}`;
-    continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX;
+    if (continueBtn) {
+      continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX;
+    }
   };
 
   const dailyBoard = setupBoard(
@@ -452,23 +455,47 @@ function renderDaily() {
 
   setRitualCtaLabel(dealShuffleBtn, true);
   counter.textContent = `0/${DAILY_SELECTION_MAX}`;
-  continueBtn.disabled = true;
+  if (continueBtn) {
+    continueBtn.disabled = true;
+  }
 
   dealShuffleBtn.onclick = () => {
     dailyBoard.render();
     updateDailySelectionUi([]);
   };
 
-  continueBtn.onclick = () => {
+  if (continueBtn) {
+    continueBtn.onclick = () => {
+      const pickedCards = selectedCards.length ? selectedCards : dailyBoard.getSelectedCards();
+      if (pickedCards.length !== DAILY_SELECTION_MAX) return;
+      const selectedIds = pickedCards
+        .map((card) => card?.id || card?.card_id)
+        .filter(Boolean);
+      if (selectedIds.length !== DAILY_SELECTION_MAX) return;
+
+      saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: selectedIds });
+    };
+  }
+
+  if (dailyContinueHandler) {
+    document.removeEventListener('meow:request-continue', dailyContinueHandler);
+  }
+  dailyContinueHandler = () => {
+    if (!document.getElementById('daily-board')) return;
     const pickedCards = selectedCards.length ? selectedCards : dailyBoard.getSelectedCards();
     if (pickedCards.length !== DAILY_SELECTION_MAX) return;
     const selectedIds = pickedCards
       .map((card) => card?.id || card?.card_id)
       .filter(Boolean);
     if (selectedIds.length !== DAILY_SELECTION_MAX) return;
-
-    saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: selectedIds });
+    saveSelectionAndGo({
+      mode: 'daily',
+      spread: 'quick',
+      topic: 'generic',
+      cards: selectedIds,
+    });
   };
+  document.addEventListener('meow:request-continue', dailyContinueHandler);
 }
 
 async function renderOverall() {

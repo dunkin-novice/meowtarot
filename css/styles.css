@@ -8010,3 +8010,8 @@ body[data-page='home'] .reading-path-card:focus-visible {
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* Nav handles share — hide action-row on all result pages */
+body[data-page='reading'] .action-row {
+  display: none !important;
+}

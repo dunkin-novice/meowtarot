@@ -20,6 +20,8 @@ function getLocaleConfig(pathname) {
         draw: 'สุ่มไพ่',
         cards: 'ความหมายไพ่',
         profile: 'โปรไฟล์',
+        continueLabel: 'ดำเนินการต่อ',
+        shareLabel: 'แชร์',
       }
       : {
         home: 'Home',
@@ -27,6 +29,8 @@ function getLocaleConfig(pathname) {
         draw: 'Draw',
         cards: 'Cards',
         profile: 'Profile',
+        continueLabel: 'Continue',
+        shareLabel: 'Share',
       },
   };
 }
@@ -46,17 +50,79 @@ function getActiveTab(pathname) {
   return '';
 }
 
+function getContextualCenterState() {
+  const page = document.body.dataset.page;
+
+  if (page === 'reading') {
+    return 'share';
+  }
+
+  if (page === 'question' || page === 'full') {
+    const hasBtn = !!(
+      document.getElementById('question-continue') ||
+      document.getElementById('overall-continue')
+    );
+    if (hasBtn) return 'continue';
+  }
+
+  if (page === 'daily') {
+    const isSelectionPage = !!document.getElementById('daily-board');
+    if (isSelectionPage) return 'continue';
+  }
+
+  return 'draw';
+}
+
 function buildNavMarkup(pathname) {
   const { prefix, labels } = getLocaleConfig(pathname);
   const active = getActiveTab(pathname);
 
   const tabs = [
-    { key: 'home', href: `${prefix}/index.html`, icon: '🏠', label: labels.home },
-    { key: 'today', href: `${prefix}/today/`, icon: '📅', label: labels.today },
+    { key: 'home', href: `${prefix}/index.html`, icon: '🏡', label: labels.home },
+    { key: 'today', href: `${prefix}/today/`, icon: '🗓️', label: labels.today },
     { key: 'draw', href: `${prefix}/daily.html`, icon: '🐾', label: labels.draw, center: true },
-    { key: 'cards', href: `${prefix}/tarot-card-meanings/`, icon: '📚', label: labels.cards },
-    { key: 'profile', href: `${prefix}/profile.html`, icon: '👤', label: labels.profile },
+    { key: 'cards', href: `${prefix}/tarot-card-meanings/`, icon: '🎴', label: labels.cards },
+    { key: 'profile', href: `${prefix}/profile.html`, icon: '😸', label: labels.profile },
   ];
+
+  const centerState = getContextualCenterState();
+
+  const centerConfigs = {
+    draw: {
+      tag: 'a',
+      href: tabs[2].href,
+      icon: '🐾',
+      label: labels.draw,
+      extra: '',
+    },
+    continue: {
+      tag: 'button',
+      href: null,
+      icon: '▶',
+      label: labels.continueLabel || 'Continue',
+      extra: 'data-center-action="continue"',
+    },
+    share: {
+      tag: 'button',
+      href: null,
+      icon: '📷',
+      label: labels.shareLabel || 'Share',
+      extra: 'data-center-action="share"',
+    },
+  };
+
+  const c = centerConfigs[centerState];
+  const isActive = centerState === 'draw' && active === 'draw';
+
+  const centerEl = c.tag === 'a'
+    ? `<a class="bottom-nav__item bottom-nav__item--center ${isActive ? 'is-active' : ''}" href="${c.href}" aria-label="${c.label}" ${c.extra}>
+        <span class="bottom-nav__center-btn" aria-hidden="true">${c.icon}</span>
+        <span class="bottom-nav__label">${c.label}</span>
+      </a>`
+    : `<button type="button" class="bottom-nav__item bottom-nav__item--center bottom-nav__item--${centerState}" aria-label="${c.label}" ${c.extra}>
+        <span class="bottom-nav__center-btn bottom-nav__center-btn--${centerState}" aria-hidden="true">${c.icon}</span>
+        <span class="bottom-nav__label">${c.label}</span>
+      </button>`;
 
   return `
     <nav class="bottom-nav" aria-label="Mobile app navigation">
@@ -68,10 +134,7 @@ function buildNavMarkup(pathname) {
         <span class="bottom-nav__icon" aria-hidden="true">${tabs[1].icon}</span>
         <span class="bottom-nav__label">${tabs[1].label}</span>
       </a>
-      <a class="bottom-nav__item bottom-nav__item--center ${active === 'draw' ? 'is-active' : ''}" href="${tabs[2].href}" aria-label="${tabs[2].label}">
-        <span class="bottom-nav__center-btn" aria-hidden="true">${tabs[2].icon}</span>
-        <span class="bottom-nav__label">${tabs[2].label}</span>
-      </a>
+      ${centerEl}
       <a class="bottom-nav__item ${active === 'cards' ? 'is-active' : ''}" href="${tabs[3].href}">
         <span class="bottom-nav__icon" aria-hidden="true">${tabs[3].icon}</span>
         <span class="bottom-nav__label">${tabs[3].label}</span>
@@ -92,6 +155,19 @@ function bindListeners() {
   listenersBound = true;
 }
 
+if (typeof window !== 'undefined' && !window._meowContinueListenerBound) {
+  window._meowContinueListenerBound = true;
+  document.addEventListener('meow:request-continue', () => {
+    const continueBtn =
+      document.getElementById('daily-continue') ||
+      document.getElementById('question-continue') ||
+      document.getElementById('overall-continue');
+    if (continueBtn && !continueBtn.disabled) {
+      continueBtn.click();
+    }
+  });
+}
+
 export function renderBottomNav() {
   if (typeof window === 'undefined') return;
 
@@ -108,12 +184,41 @@ export function renderBottomNav() {
     return;
   }
 
-  let host = document.getElementById('bottom-nav-shell');
-  if (!host) {
-    host = document.createElement('div');
-    host.id = 'bottom-nav-shell';
-    document.body.appendChild(host);
+  let shell = document.getElementById('bottom-nav-shell');
+  if (!shell) {
+    shell = document.createElement('div');
+    shell.id = 'bottom-nav-shell';
+    document.body.appendChild(shell);
   }
-  host.innerHTML = buildNavMarkup(pathname);
+  shell.innerHTML = buildNavMarkup(pathname);
   document.body.classList.add('has-bottom-nav');
+
+  if (!window._meowNavObserver) {
+    window._meowNavObserver = new MutationObserver(() => {
+      renderBottomNav();
+    });
+    window._meowNavObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: [
+        'data-daily-phase',
+        'data-reading-mode',
+        'data-page',
+      ],
+    });
+  }
+
+  if (!shell.dataset.navListenerBound) {
+    shell.dataset.navListenerBound = 'true';
+    shell.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-center-action]');
+      if (!btn) return;
+      const action = btn.dataset.centerAction;
+      if (action === 'share') {
+        document.dispatchEvent(new CustomEvent('meow:request-share'));
+      }
+      if (action === 'continue') {
+        document.dispatchEvent(new CustomEvent('meow:request-continue'));
+      }
+    }, { capture: true });
+  }
 }
