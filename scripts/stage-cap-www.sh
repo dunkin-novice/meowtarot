@@ -76,6 +76,61 @@ for d in "${ROUTE_DIRS[@]}"; do
   fi
 done
 
+# ----------------------------------------------------------------------------
+# Trailing-slash → /index.html rewrite (iOS bundle only).
+#
+# Why: Capacitor 8 WKURLSchemeHandler does NOT auto-resolve directory URLs
+#   like /today/ to /today/index.html. It returns root index.html as a
+#   404-ish SPA fallback at the wrong base URL, which breaks all relative
+#   paths — symptom: tapping a tab serves homepage HTML with broken CSS.
+#
+# What: rewrite same-origin trailing-slash hrefs to explicit /<dir>/index.html
+#   in staged HTML and JS. Source files are unchanged; web/Netlify behavior
+#   is preserved (Netlify pretty URLs map either form to the same file).
+#
+# Scope of patterns:
+#   A. HTML href="/<path>/"                                  → /index.html
+#   B. JS template literals `${prefix}/<path>/`              → /index.html
+#   C. JS nav-call wrappers — localize/localizeLink/localizeHref/
+#      location.replace — with string-literal trailing-slash arg
+#   D. JS template literals `/cards/${slug}/` and TH mirror  → /index.html
+#
+# Carefully NOT touched:
+#   - SEO metadata: <link rel="canonical">, hreflang, JSON-LD @id, og:url —
+#     all use https://www.meowtarot.com/... URLs, which never start with `/`
+#     after `href="`/`href="/` so they don't match pattern A. Patterns B–D
+#     are anchored to ${prefix} or /cards/, so they don't catch baseUrl.
+#   - canonical-card-routes.js:182 — its output is consumed for BOTH nav AND
+#     SEO canonical URL building. Rewriting would damage live SEO.
+#   - meanings.js:117 basePath — only hit on rare unknown-slug fallback path.
+#   - pages/<slug>-card.js:96 hardcoded /cards/<slug>/ fallback strings —
+#     only hit when getCanonicalCardPath returns null (rare).
+#
+# These deferred surfaces remain a TODO. They affect deeper card-detail
+# next/prev pagination edge cases when getCanonicalCardPath misses, not the
+# bottom-nav happy path.
+# ----------------------------------------------------------------------------
+
+while IFS= read -r -d '' file; do
+  sed -E -i '' 's|href="(/[^":]+)/"|href="\1/index.html"|g' "$file"
+done < <(find "$WWW" -type f -name '*.html' -print0)
+
+while IFS= read -r -d '' file; do
+  sed -E -i '' \
+    -e 's|`(\$\{prefix\}/[^`:]+)/`|`\1/index.html`|g' \
+    -e "s|localize\('(/[^':]+)/'|localize('\1/index.html'|g" \
+    -e 's|localize\("(/[^":]+)/"|localize("\1/index.html"|g' \
+    -e "s|localizeLink\('(/[^':]+)/'|localizeLink('\1/index.html'|g" \
+    -e 's|localizeLink\("(/[^":]+)/"|localizeLink("\1/index.html"|g' \
+    -e "s|localizeHref\('(/[^':]+)/'|localizeHref('\1/index.html'|g" \
+    -e 's|localizeHref\("(/[^":]+)/"|localizeHref("\1/index.html"|g' \
+    -e "s|location\.replace\('(/[^':]+)/'\)|location.replace('\1/index.html')|g" \
+    -e 's|location\.replace\("(/[^":]+)/"\)|location.replace("\1/index.html")|g' \
+    -e 's|`(/cards/\$\{[^}]+\})/`|`\1/index.html`|g' \
+    -e 's|`(/th/cards/\$\{[^}]+\})/`|`\1/index.html`|g' \
+    "$file"
+done < <(find "$WWW" -type f -name '*.js' -print0)
+
 echo "Staged $WWW"
 echo "Top-level entries:"
 ls -1 "$WWW"
