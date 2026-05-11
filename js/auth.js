@@ -25,7 +25,7 @@ export function isAuthConfigured() {
 
 async function createClient() {
   if (!isAuthConfigured()) return null;
-  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  const { createClient } = await import('./vendor/supabase.js');
   const { url, anonKey } = readSupabaseConfig();
   const client = createClient(url, anonKey, {
     auth: {

@@ -54,18 +54,11 @@ function getLocalDateStr() {
  * }
  */
 export async function initLadderB() {
-  console.log('[ladder-b] initLadderB called');
   const client = await getSupabaseClient();
-  if (!client) {
-    console.log('[ladder-b] exit: no client');
-    return null;
-  }
+  if (!client) return null;
 
   const user = await getCurrentUser();
-  if (!user) {
-    console.log('[ladder-b] exit: no user, auth returned:', user);
-    return null;
-  }
+  if (!user) return null;
 
   const today = getLocalDateStr();
 
@@ -82,7 +75,6 @@ export async function initLadderB() {
 
   // Already advanced today — no popup
   if (row && row.last_open_date === today) {
-    console.log('[ladder-b] exit: already advanced today, last_open_date:', row.last_open_date);
     return {
       state: {
         lifetime_count: row.lifetime_count,
