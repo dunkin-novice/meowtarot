@@ -2,6 +2,7 @@ import { initShell } from './common.js';
 import { getUserProgress } from './progress.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from './data.js';
 import { getCurrentUser } from './auth.js';
+import { initLadderB, showLadderBPopup } from './ladder-b.js';
 import { fetchCanonicalDailyReading } from './reading-history.js';
 
 const state = { currentLang: 'en' };
@@ -138,6 +139,9 @@ async function renderToday() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initShell(state, null, 'daily');
+  initLadderB()
+    .then(result => { if (result?.advanced) showLadderBPopup(result); })
+    .catch(err => console.warn('[ladder-b] init error', err));
   renderToday().catch(() => {
     els.empty.hidden = false;
     els.filled.hidden = true;
