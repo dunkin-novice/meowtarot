@@ -1,0 +1,112 @@
+[
+  {
+    "deck_id": "moonmallow",
+    "name_en": "Moonmallow",
+    "name_th": "เหมียวฝันหวาน",
+    "role": "default",
+    "milestone": null,
+    "unlock_day": null,
+    "tags": ["AI-generated", "pastel", "cute", "cozy"],
+    "description_en": "Dreamy pastel-colored cartoon cats playing among soft clouds, moons, and stars in a magical sky."
+  },
+  {
+    "deck_id": "veila-tarot",
+    "name_en": "Veila Tarot",
+    "name_th": "แมวม่านพราย",
+    "role": "default",
+    "milestone": null,
+    "unlock_day": null,
+    "tags": ["AI-generated", "illustrated", "elegant", "mystical"],
+    "description_en": "Elegant Art Nouveau-style illustrations of playful cats in a warm, vintage-inspired garden with ornate borders."
+  },
+  {
+    "deck_id": "boba-oracle",
+    "name_en": "Boba Oracle",
+    "name_th": "แมวชานม",
+    "role": "streak-unlock",
+    "milestone": "D1",
+    "unlock_day": 1,
+    "tags": ["AI-generated", "illustrated", "cute", "food"],
+    "description_en": "Playful illustrated cats hidden inside delicious boba tea cups with sweet, colorful vibes."
+  },
+  {
+    "deck_id": "meow-nakorn",
+    "name_en": "Meow Nakorn",
+    "name_th": "นครหมียว",
+    "role": "streak-unlock",
+    "milestone": "D3",
+    "unlock_day": 3,
+    "tags": ["AI-generated", "traditional", "elegant", "culture"],
+    "description_en": "Elegant traditional Thai mural style cats set against a golden historical city backdrop."
+  },
+  {
+    "deck_id": "moonveil",
+    "name_en": "Moonveil",
+    "name_th": "จันทราขนฟู",
+    "role": "streak-unlock",
+    "milestone": "D7",
+    "unlock_day": 7,
+    "tags": ["AI-generated", "mystical", "elegant", "fantasy"],
+    "description_en": "Dreamy, mystical white Persian cats illustrated with soft watercolor washes and moonlight glows."
+  },
+  {
+    "deck_id": "overtime-oracle",
+    "name_en": "OvertimeOracle",
+    "name_th": "แมวโอที",
+    "role": "streak-unlock",
+    "milestone": "D14",
+    "unlock_day": 14,
+    "tags": ["AI-generated", "illustrated", "cozy", "office"],
+    "description_en": "Cinematic illustrated cats enduring the cozy but exhausted life of late-night office overtime."
+  },
+  {
+    "deck_id": "pawbit",
+    "name_en": "Pawbit",
+    "name_th": "พิกเซลเหมียว",
+    "role": "streak-unlock",
+    "milestone": "D30",
+    "unlock_day": 30,
+    "tags": ["AI-generated", "pixel", "funny", "urban"],
+    "description_en": "Vibrant pixel art cats navigating a retro-style urban landscape with playful gaming vibes."
+  },
+  {
+    "deck_id": "paws-of-luck",
+    "name_en": "Paws of Luck",
+    "name_th": "เจ้าเหมียวหัดเดิน",
+    "role": "streak-unlock",
+    "milestone": "D60",
+    "unlock_day": 60,
+    "tags": ["AI-generated", "pastel", "cute", "nature"],
+    "description_en": "Cheerful pastel illustrations of clumsy, lucky kittens exploring soft and sunny outdoor gardens."
+  },
+  {
+    "deck_id": "sugar-paws",
+    "name_en": "Sugar Paws",
+    "name_th": "เหมียวละมุน",
+    "role": "streak-unlock",
+    "milestone": "D100",
+    "unlock_day": 100,
+    "tags": ["AI-generated", "pastel", "cozy", "food"],
+    "description_en": "Soft, sugary pastel cats illustrated with sweet dessert themes and a warm cozy finish."
+  },
+  {
+    "deck_id": "sushicat",
+    "name_en": "Sushicat",
+    "name_th": "เหมียวซูชิ",
+    "role": "streak-unlock",
+    "milestone": "D180",
+    "unlock_day": 180,
+    "tags": ["AI-generated", "illustrated", "cute", "food"],
+    "description_en": "Charming watercolor illustrations of tiny cats integrated into delicious, handmade sushi and bento."
+  },
+  {
+    "deck_id": "inkmess",
+    "name_en": "InkMess",
+    "name_th": "เหมียวยุ่ง",
+    "role": "streak-unlock",
+    "milestone": "D365",
+    "unlock_day": 365,
+    "tags": ["AI-generated", "traditional", "chaotic", "fantasy"],
+    "description_en": "Dynamic traditional ink-wash cats rendered with chaotic brushstrokes and poetic fantasy atmosphere."
+  }
+]
