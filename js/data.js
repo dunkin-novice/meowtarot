@@ -96,9 +96,8 @@ export function setActiveDeck(id) {
   activeDeckId = id;
 }
 
-export function getCardBackUrl(options = {}) {
-  const preferredPack = options.preferredPack || DEFAULT_DECK_ID;
-  return buildAssetUrl(resolveCardBackPath({ preferredPack }), { versioned: true });
+export function getCardBackUrl() {
+  return buildAssetUrl(`assets/${getActiveDeck().id}/00-back.webp`, { versioned: true });
 }
 
 export function getFallbackDeck(id = activeDeckId) {
