@@ -10,60 +10,96 @@ export const DECKS = {
   'meow-v2': {
     id: 'meow-v2',
     name: 'MeowTarot v2',
+    role: 'default',
+    unlock_day: null,
     assetsBase: resolveDeckAssetBase('assets/meow-v2'),
     backImage: buildAssetUrl('assets/meow-v2/00-back.webp'),
+  },
+  'moonmallow': {
+    id: 'moonmallow',
+    name: 'Moonmallow',
+    role: 'default',
+    unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/moonmallow'),
+    backImage: buildAssetUrl('assets/moonmallow/00-back.webp'),
+  },
+  'veila-tarot': {
+    id: 'veila-tarot',
+    name: 'Veila Tarot',
+    role: 'default',
+    unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/veila-tarot'),
+    backImage: buildAssetUrl('assets/veila-tarot/00-back.webp'),
   },
   'boba-oracle': {
     id: 'boba-oracle',
     name: 'Boba Oracle',
+    role: 'streak-unlock',
+    unlock_day: 1,
     assetsBase: resolveDeckAssetBase('assets/boba-oracle'),
     backImage: buildAssetUrl('assets/boba-oracle/00-back.webp'),
   },
   'meow-nakorn': {
     id: 'meow-nakorn',
     name: 'Meow Nakorn',
+    role: 'streak-unlock',
+    unlock_day: 3,
     assetsBase: resolveDeckAssetBase('assets/meow-nakorn'),
     backImage: buildAssetUrl('assets/meow-nakorn/00-back.webp'),
   },
   'moonveil': {
     id: 'moonveil',
     name: 'Moonveil',
+    role: 'streak-unlock',
+    unlock_day: 7,
     assetsBase: resolveDeckAssetBase('assets/moonveil'),
     backImage: buildAssetUrl('assets/moonveil/00-back.webp'),
   },
   'overtime-oracle': {
     id: 'overtime-oracle',
     name: 'Overtime Oracle',
+    role: 'streak-unlock',
+    unlock_day: 14,
     assetsBase: resolveDeckAssetBase('assets/overtime-oracle'),
     backImage: buildAssetUrl('assets/overtime-oracle/00-back.webp'),
   },
   'pawbit': {
     id: 'pawbit',
     name: 'Pawbit',
+    role: 'streak-unlock',
+    unlock_day: 30,
     assetsBase: resolveDeckAssetBase('assets/pawbit'),
     backImage: buildAssetUrl('assets/pawbit/00-back.webp'),
   },
   'paws-of-luck': {
     id: 'paws-of-luck',
     name: 'Paws of Luck',
+    role: 'streak-unlock',
+    unlock_day: 60,
     assetsBase: resolveDeckAssetBase('assets/paws-of-luck'),
     backImage: buildAssetUrl('assets/paws-of-luck/00-back.webp'),
   },
   'sugar-paws': {
     id: 'sugar-paws',
     name: 'Sugar Paws',
+    role: 'streak-unlock',
+    unlock_day: 100,
     assetsBase: resolveDeckAssetBase('assets/sugar-paws'),
     backImage: buildAssetUrl('assets/sugar-paws/00-back.webp'),
   },
   'sushicat': {
     id: 'sushicat',
     name: 'Sushicat',
+    role: 'streak-unlock',
+    unlock_day: 180,
     assetsBase: resolveDeckAssetBase('assets/sushicat'),
     backImage: buildAssetUrl('assets/sushicat/00-back.webp'),
   },
   'inkmess': {
     id: 'inkmess',
     name: 'Inkmess',
+    role: 'streak-unlock',
+    unlock_day: 365,
     assetsBase: resolveDeckAssetBase('assets/inkmess'),
     backImage: buildAssetUrl('assets/inkmess/00-back.webp'),
   },
@@ -85,9 +121,28 @@ export function getActiveDeck() {
   return DECKS[activeDeckId];
 }
 
+export function canUnlockDeck(id) {
+  const deck = DECKS[id];
+  if (!deck) return false;
+  if (deck.role === 'default') return true;
+  if (!deck.unlock_day) return true;
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    const progress = JSON.parse(localStorage.getItem('meowtarot_user_progress') || '{}');
+    const streak = progress.streak_current ?? 0;
+    return streak >= deck.unlock_day;
+  } catch {
+    return false;
+  }
+}
+
 export function setActiveDeck(id) {
   if (!DECKS[id]) {
     console.warn('[deck] unknown deck id:', id);
+    return;
+  }
+  if (!canUnlockDeck(id)) {
+    console.warn('[deck] deck not unlocked:', id);
     return;
   }
   if (typeof localStorage !== 'undefined') {
