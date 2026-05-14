@@ -70,7 +70,7 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
       'border-radius: 8px',
       'box-shadow: 0 4px 12px rgba(80, 50, 130, 0.18)',
       'margin-bottom: 10px',
-      `opacity: ${unlocked ? '1' : '0.35'}`,
+      `opacity: ${(unlocked || active) ? '1' : '0.35'}`,
     ].join(';');
     cell.appendChild(img);
 
@@ -91,7 +91,7 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
       cell.appendChild(badge);
     }
 
-    if (!unlocked) {
+    if (!unlocked && !active) {
       const lockBadge = document.createElement('span');
       lockBadge.textContent = `🔒 Day ${deck.unlock_day}`;
       lockBadge.style.cssText = 'position: absolute; top: 8px; right: 8px; background: rgba(61,44,88,0.85); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 6px; font-weight: 500;';

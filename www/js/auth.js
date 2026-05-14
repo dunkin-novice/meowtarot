@@ -100,6 +100,20 @@ export async function logout() {
   const client = await getSupabaseClient();
   if (!client) return;
   await client.auth.signOut();
+  const USER_STATE_KEYS = [
+    'meowtarot_user_progress',
+    'meowtarot_active_deck',
+    'meowtarot_deck_rewards_seen',
+    'meowtarot_login_reward_seen',
+    'meowtarot.daily.cardOfTheDay',
+    'meowtarot_share_payload',
+    'meowtarot_persisted_reading_session_keys',
+    'meowtarot_profile_revisit',
+    'meowtarot_session_id',
+    '_mt_profile_last_visit',
+    'meowtarot_selection',
+  ];
+  USER_STATE_KEYS.forEach((k) => localStorage.removeItem(k));
 }
 
 export function subscribeAuthState(listener) {
