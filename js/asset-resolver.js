@@ -1,7 +1,6 @@
 import { ASSET_BASE_URL, buildAssetUrl } from './asset-config.js';
+import { getActiveDeckId } from './data.js';
 
-const DEFAULT_FACE_PACK = 'meow-v2';
-const DEFAULT_BACK_PACK = 'meow-v2';
 const FALLBACK_BACK_PACK = 'meow-v2';
 const CARD_EXISTS_CACHE = new Map();
 const FALLBACK_LOG_CACHE = new Set();
@@ -11,7 +10,7 @@ function cleanId(value = '') {
   return String(value || '').replace(/^\/+/, '').replace(/\.webp$/i, '');
 }
 
-export function resolveCardFacePath({ id, pack = DEFAULT_FACE_PACK } = {}) {
+export function resolveCardFacePath({ id, pack = getActiveDeckId() } = {}) {
   const clean = cleanId(id);
   if (!clean) return null;
   return `assets/${pack}/${clean}.webp`;
@@ -114,9 +113,10 @@ export async function exists(url) {
 
 export function buildCardImageUrls(card = {}, orientation = 'upright') {
   const { nn, slug } = parseCardIdentity(card, orientation);
-  const uprightPath = nn && slug ? `assets/meow-v2/${nn}-${slug}-upright.webp` : null;
-  const reversedPath = nn && slug ? `assets/meow-v2/${nn}-${slug}-reversed.webp` : null;
-  const backPath = 'assets/meow-v2/00-back.webp';
+  const pack = getActiveDeckId();
+  const uprightPath = nn && slug ? `assets/${pack}/${nn}-${slug}-upright.webp` : null;
+  const reversedPath = nn && slug ? `assets/${pack}/${nn}-${slug}-reversed.webp` : null;
+  const backPath = `assets/${pack}/00-back.webp`;
   return {
     uprightUrl: uprightPath ? buildAssetUrl(uprightPath, { versioned: true }) : null,
     reversedUrl: reversedPath ? buildAssetUrl(reversedPath, { versioned: true }) : null,
@@ -141,8 +141,8 @@ export async function resolveCardImageUrl(card = {}, orientation = 'upright') {
   return backUrl;
 }
 
-export function resolveCardBackPath({ preferredPack = DEFAULT_BACK_PACK } = {}) {
-  return `assets/${preferredPack || DEFAULT_BACK_PACK}/00-back.webp`;
+export function resolveCardBackPath({ preferredPack = getActiveDeckId() } = {}) {
+  return `assets/${preferredPack || getActiveDeckId()}/00-back.webp`;
 }
 
 export function resolveCardBackFallbackPath() {

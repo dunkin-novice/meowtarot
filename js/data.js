@@ -13,15 +13,87 @@ export const DECKS = {
     assetsBase: resolveDeckAssetBase('assets/meow-v2'),
     backImage: buildAssetUrl('assets/meow-v2/00-back.webp'),
   },
+  'boba-oracle': {
+    id: 'boba-oracle',
+    name: 'Boba Oracle',
+    assetsBase: resolveDeckAssetBase('assets/boba-oracle'),
+    backImage: buildAssetUrl('assets/boba-oracle/00-back.webp'),
+  },
+  'meow-nakorn': {
+    id: 'meow-nakorn',
+    name: 'Meow Nakorn',
+    assetsBase: resolveDeckAssetBase('assets/meow-nakorn'),
+    backImage: buildAssetUrl('assets/meow-nakorn/00-back.webp'),
+  },
+  'moonveil': {
+    id: 'moonveil',
+    name: 'Moonveil',
+    assetsBase: resolveDeckAssetBase('assets/moonveil'),
+    backImage: buildAssetUrl('assets/moonveil/00-back.webp'),
+  },
+  'overtime-oracle': {
+    id: 'overtime-oracle',
+    name: 'Overtime Oracle',
+    assetsBase: resolveDeckAssetBase('assets/overtime-oracle'),
+    backImage: buildAssetUrl('assets/overtime-oracle/00-back.webp'),
+  },
+  'pawbit': {
+    id: 'pawbit',
+    name: 'Pawbit',
+    assetsBase: resolveDeckAssetBase('assets/pawbit'),
+    backImage: buildAssetUrl('assets/pawbit/00-back.webp'),
+  },
+  'paws-of-luck': {
+    id: 'paws-of-luck',
+    name: 'Paws of Luck',
+    assetsBase: resolveDeckAssetBase('assets/paws-of-luck'),
+    backImage: buildAssetUrl('assets/paws-of-luck/00-back.webp'),
+  },
+  'sugar-paws': {
+    id: 'sugar-paws',
+    name: 'Sugar Paws',
+    assetsBase: resolveDeckAssetBase('assets/sugar-paws'),
+    backImage: buildAssetUrl('assets/sugar-paws/00-back.webp'),
+  },
+  'sushicat': {
+    id: 'sushicat',
+    name: 'Sushicat',
+    assetsBase: resolveDeckAssetBase('assets/sushicat'),
+    backImage: buildAssetUrl('assets/sushicat/00-back.webp'),
+  },
+  'inkmess': {
+    id: 'inkmess',
+    name: 'Inkmess',
+    assetsBase: resolveDeckAssetBase('assets/inkmess'),
+    backImage: buildAssetUrl('assets/inkmess/00-back.webp'),
+  },
 };
 
 export const DEFAULT_DECK_ID = 'meow-v2';
 export const FALLBACK_DECK_ID = 'meow-v2';
 
-export let activeDeckId = DEFAULT_DECK_ID;
+const ACTIVE_DECK_STORAGE_KEY = 'meowtarot_active_deck';
+
+export function getActiveDeckId() {
+  if (typeof localStorage === 'undefined') return DEFAULT_DECK_ID;
+  return localStorage.getItem(ACTIVE_DECK_STORAGE_KEY) || DEFAULT_DECK_ID;
+}
+
+export let activeDeckId = getActiveDeckId();
 
 export function getActiveDeck() {
   return DECKS[activeDeckId];
+}
+
+export function setActiveDeck(id) {
+  if (!DECKS[id]) {
+    console.warn('[deck] unknown deck id:', id);
+    return;
+  }
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(ACTIVE_DECK_STORAGE_KEY, id);
+  }
+  activeDeckId = id;
 }
 
 export function getCardBackUrl(options = {}) {
