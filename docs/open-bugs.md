@@ -591,6 +591,8 @@ Two reasonable directions: (a) delete the dead JS code path (smallest diff, but 
 
 Every multi-commit session hits a rebase conflict in `LOG_DRAFT.jsonl` on `git pull --rebase origin main`. Observed twice consecutively on 2026-05-13 during deck-switching work — once after the wiring commits, again after the `getCardBackUrl` fix. Hand-resolution each time: drop the entries that were already processed into `docs/log.jsonl`, keep only the new one, `git rebase --continue`.
 
+Also observed: back-to-back pushes within ~10s race with auto-log workflow, causing rejected push on the second commit. Recovery: git pull --rebase + git push. Same root cause as the LOG_DRAFT conflict.
+
 ### Suspected root cause
 
 The auto-log GitHub Action clears `LOG_DRAFT.jsonl` on every push (per CLAUDE.md L126: "appends to docs/log.jsonl, and clears the draft"). The commit recipe currently sequences the steps as:
