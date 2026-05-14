@@ -28,7 +28,6 @@ const FULL_PICK_REDEAL_ONLY_DURATION = FULL_PICK_REDEAL_DURATION - FULL_PICK_CLE
 const FULL_PICK_REDUCED_CLEAR_DURATION = 50;
 const FULL_PICK_REDUCED_REDEAL_DURATION = 100;
 const FULL_PICK_REDUCED_CONFIRM_DURATION = 70;
-const CARD_BACK_URL = getCardBackUrl();
 const CARD_BACK_FALLBACK_URL = getCardBackFallbackUrl();
 const CELTIC_CROSS_POSITIONS = [
   { key: 'present', labelKey: 'positionPresent' },
@@ -57,12 +56,12 @@ const staticCardBacks = document.querySelectorAll('.card-back');
 function applyCardBackBackground(el) {
   if (!el) return;
   if (el.tagName === 'IMG') {
-    applyImageFallback(el, CARD_BACK_URL, [CARD_BACK_FALLBACK_URL]);
+    applyImageFallback(el, getCardBackUrl(), [CARD_BACK_FALLBACK_URL]);
     el.loading = el.loading || 'eager';
     el.alt = '';
     return;
   }
-  el.style.backgroundImage = `url('${CARD_BACK_URL}')`;
+  el.style.backgroundImage = `url('${getCardBackUrl()}')`;
 }
 
 staticCardBacks.forEach(applyCardBackBackground);
@@ -152,7 +151,7 @@ function createCardArt(card, className = '', { useBack = false, alt = '' } = {})
     applyCardBackBackground(img);
     return img;
   }
-  applyImageFallback(img, getCardImageUrl(card), [CARD_BACK_URL, CARD_BACK_FALLBACK_URL]);
+  applyImageFallback(img, getCardImageUrl(card), [getCardBackUrl(), CARD_BACK_FALLBACK_URL]);
   return img;
 }
 
