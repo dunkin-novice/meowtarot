@@ -1,3 +1,5 @@
+import { maybeShowLoginReward } from './login-reward.js';
+
 const AUTH_SESSION_KEY = 'meowtarot_auth_session';
 const AUTH_CONFIG_ERROR = 'Supabase auth is not configured';
 
@@ -48,6 +50,7 @@ async function createClient() {
         // ignore listener error
       }
     });
+    maybeShowLoginReward(session?.user, window.location.pathname.startsWith('/th/') ? 'th' : 'en');
   });
 
   const { data } = await client.auth.getUser();
