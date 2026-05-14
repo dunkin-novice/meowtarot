@@ -1,0 +1,724 @@
+import { renderNavbar } from './components/navbar.js';
+import { renderFooter } from './components/footer.js';
+import { trackLocaleSwitched } from './analytics.js';
+import { renderBottomNav } from './bottom-nav.js';
+
+// Shared translations across all pages.
+export const translations = {
+  en: {
+    navHome: 'Home',
+    navDaily: 'Daily Fortune',
+    navOverall: 'Full Reading',
+    navQuestion: 'Ask a Question',
+    navMeanings: 'Card Meanings',
+    navProfile: 'Profile',
+    heroTagline: 'Daily guidance and full spreads, led by curious cats.',
+    fortuneTeller: 'Fortune Teller',
+    languageLabel: 'Language',
+    landingIntro:
+      'Pick a mode: Daily Reading gives a single card of the day. Full Reading explores a 10-card Celtic Cross spread. Ask a Question uses a focused 3-card Past / Present / Future answer in your chosen topic.',
+    startReadingCta: 'Start your reading',
+    homeDailyCta: 'Daily Reading',
+    homeOverallCta: 'Full Reading',
+    homeQuestionCta: 'Ask a Question',
+    ctaDaily: 'Daily Reading',
+    ctaOverall: 'Full Reading',
+    ctaQuestion: 'Ask a Question',
+    dailyTitle: 'Daily Reading',
+    dailyDesc: 'Tap once a day to reveal today’s cat-guided message.',
+    dailyDraw: 'Draw your card for today',
+    dailyRedraw: 'Draw for today',
+    todayReminder: 'One card per device per day. Your card will stay pinned here.',
+    overallTitle: 'Celtic Cross',
+    overallShortDesc: 'Draw 10 cards for a complete Celtic Cross reading.',
+    overallDesc: 'Reveal a 10-card Celtic Cross spread for the bigger picture around your question or life path.',
+    overallStartCta: 'Start Celtic Cross reading',
+    questionTitle: 'Ask a Question',
+    questionDesc: '3-card reading · Past · Present · Future',
+    questionLead: 'Bring one question close to your heart. Choose a topic first, then draw 3 cards for Past · Present · Future guidance.',
+    questionPromptTitle: 'Set your intention first',
+    questionPromptBody: 'Ask about one situation only. The clearer your question, the more resonant your reading will feel.',
+    questionStepTopic: '1. Choose the part of life you want insight on.',
+    questionStepDraw: '2. Draw 3 cards to reveal the emotional arc of your situation.',
+    questionStepRead: '3. Read your Past · Present · Future message and takeaway.',
+    questionTopicSelectionTitle: 'Choose a topic for your reading',
+    questionTopicSelectionBody: 'Start with the part of life you want insight on. This topic list is ready to grow as more reading paths are added.',
+    questionSelectedTopicLabel: 'Chosen topic',
+    questionTopicLabel: 'Topic',
+    questionResultKicker: 'Ask a Question · {topic}',
+    questionResultContext: 'Your cards trace the emotional movement around this question from what shaped it to what comes next.',
+    questionTopicPanelTitle: '{topic} perspective',
+    questionTakeawayTitle: 'Your takeaway',
+    questionTakeawayLead: 'Taken together, your cards suggest {summary}',
+    questionShareTitle: 'Ask a Question · {topic}',
+    questionShareSubtitle: 'Past · Present · Future insight',
+    sharePromptTitle: 'Your shareable poster is ready',
+    sharePromptBody: 'Save it for yourself or post it while the message still feels fresh.',
+    meaningTitle: 'Tarot Cards Meaning',
+    meaningDesc: 'Preview a few cards from the MeowTarot deck. Full guide coming soon.',
+    start: 'Start',
+    startQuestion: 'Start Question Reading',
+    instruction: 'Focus on your question and pick 3 cards.',
+    contextDaily: '',
+    dailyStartHint: 'Tap Start to spread the cards.',
+    contextQuestion: 'Hold your question in your mind before selecting.',
+    shuffle: 'Shuffle',
+    shuffleCards: 'Shuffle cards',
+    continue: 'Continue',
+    selectThreeHint: 'Select 3 cards to continue.',
+    past: 'Past',
+    present: 'Present',
+    future: 'Future',
+    summaryTitle: 'Overall message',
+    summaryPast: 'Your past shows {card} shaping your foundation.',
+    summaryPresent: 'Right now you are facing {card} energy.',
+    summaryFuture: 'In the future, you may encounter {card}—stay open to the lesson.',
+    summaryAdvice: 'Advice: trust your intuition and take one grounded step forward.',
+    newReading: 'New Reading',
+    share: 'Share',
+    save: 'Save as Image',
+    yourReading: 'Your MeowTarot Reading',
+    readingSubtitle: '10-card spread · Celtic Cross',
+    shareFallback: 'Link copied!',
+    spreadQuick: 'Quick Answer (1 card)',
+    spreadStory: 'Story Mode (3 cards)',
+    topicGeneric: 'Any question',
+    topicLove: 'Love',
+    topicCareer: 'Career',
+    topicFinance: 'Finance',
+    topicOther: 'Other',
+    topicSelf: 'Self',
+    topicFamily: 'Family',
+    topicTravel: 'Travel',
+    topicHealth: 'Health',
+    topicLoveDesc: 'Relationships, feelings, connection, and emotional clarity.',
+    topicCareerDesc: 'Work direction, decisions, ambition, and next steps.',
+    topicFinanceDesc: 'Money choices, stability, opportunities, and resources.',
+    topicOtherDesc: 'A flexible space for any other question on your mind.',
+    topicHealthDesc: 'Body, energy, rest, and healing',
+    topicFamilyDesc: 'Home, bonds, support, and tension',
+    topicTravelDesc: 'Trips, movement, direction, and discovery',
+    topicSelfDesc: 'Identity, growth, mindset, and inner truth',
+    drawAnswer: 'Tap to draw your answer',
+    drawStory: 'Draw 3 cards',
+    metaYesNo: "Today's answer tendency",
+    metaDecision: 'Advice',
+    metaTiming: 'Timing',
+    loveSingles: 'For singles',
+    loveCouples: 'For couples',
+    careerToday: 'Career today',
+    financeToday: 'Money today',
+    actionToday: 'Suggestion',
+    reflectionToday: 'Reflection',
+    affirmation: 'Archetype',
+    ritual: 'Ritual',
+    breathPattern: 'Breath pattern',
+    journalPrompt: 'Journal prompt',
+    colorsTitle: 'Colors of the day',
+    powerColor: 'Power color',
+    drainingColor: 'Draining color',
+    overallReadingLabel: 'Full reading',
+    questionSpreadNote: 'Past · Present · Future',
+    missingSelection: 'No cards were found. Please draw your cards first to see the reading.',
+    loveMetaYesNo: 'Love answer tendency',
+    loveMetaDecision: 'Love advice',
+    loveMetaTiming: 'Timing for love',
+    loveActionHeading: 'What to do about this love situation',
+    careerActionHeading: 'Career guidance',
+    financeActionHeading: 'Financial guidance',
+    readingSummaryTitle: 'Your fortune today',
+    yourFortuneTitle: 'Your Fortune',
+    energyTitle: 'Energy Balance',
+    retentionPanelTitle: 'Your journey',
+    retentionStreakValue: 'Day {count} streak',
+    retentionCollectionValue: '{count} / {total} cards collected',
+    retentionJourneyStarted: 'Your journey began {count} days ago',
+    retentionNextMilestone: '{remaining} more days to reach your next rhythm',
+    retentionRareReversed: 'You encountered a rare reflection',
+    retentionRareMajor: 'A Major Arcana has entered your journey',
+    retentionAchievementUnlocked: 'You unlocked: {name}',
+    retentionSavePrompt: 'Your journey lives only on this device. Save it before it disappears.',
+    retentionSaveCta: 'Save your journey',
+    retentionSaved: 'Your journey is now محفوظ / saved',
+    retentionLoginGoogle: 'Continue with Google',
+    retentionLoginApple: 'Continue with Apple',
+    retentionSyncFailed: 'Could not sync now. Your local journey is still safe.',
+    retentionReturnTomorrow: 'Come back tomorrow for your next card',
+    retentionSoftRhythm: 'A new rhythm is forming.',
+    retentionSoftMomentum: 'You’re building momentum.',
+    retentionSoftCollection: 'Your journey is starting to take shape.',
+    retentionSoftDeepening: 'Your practice is becoming steady and clear.',
+    retentionSoftMilestone: 'A gentle milestone has opened for you.',
+    phase_current_title: 'Your current phase',
+    phase_current_format: 'Your current phase: {label}',
+    phase_forming_label: 'Still Forming',
+    phase_forming_desc: 'Your phase is still forming. Draw a few more daily cards to reveal your pattern.',
+    phase_rebuilding_label: 'Rebuilding',
+    phase_rebuilding_desc: 'You are rebuilding your footing slowly and steadily, one clear step at a time.',
+    phase_clarity_label: 'Clarity Emerging',
+    phase_clarity_desc: 'Pieces are starting to connect, and your direction is becoming easier to trust.',
+    phase_emotional_label: 'Emotional Processing',
+    phase_emotional_desc: 'You are moving through feelings with honesty, giving yourself space to understand them.',
+    phase_action_label: 'Action & Movement',
+    phase_action_desc: 'Energy is gathering around action, momentum, and practical next steps.',
+    phase_transition_label: 'Transition',
+    phase_transition_desc: 'A larger shift is in motion, and you are between one chapter and the next.',
+    achievement_first_daily: 'First Daily Reading',
+    achievement_streak_3: '3-Day Streak',
+    achievement_streak_7: '7-Day Streak',
+    achievement_first_reversed: 'First Reversed Card',
+    achievement_first_major_arcana: 'First Major Arcana',
+    achievement_collect_10: '10 Cards Collected',
+    achievement_collect_30: '30 Cards Collected',
+    achievement_full_deck_78: 'Full Deck Collected',
+    energyFire: 'Fire',
+    energyWater: 'Water',
+    energyAir: 'Air',
+    energyEarth: 'Earth',
+    metaZodiac: 'Zodiac',
+    suggestionTitle: 'Suggestion',
+    guidanceHeading: 'Guidance',
+    ritualNudgeTitle: 'Take a breath first',
+    ritualNudgeBody: 'Hold your question in mind before drawing',
+    celticCrossEyebrow: 'Full Reading',
+    celticCrossTitle: 'Celtic Cross',
+    fullReadingStageDealEyebrow: 'Full Reading',
+    fullReadingStageDealTitle: 'The cards gather around your question',
+    fullReadingStageDealBody: 'Prepare your space. You will draw ten face-down cards and set their final positions before the reading begins.',
+    fullReadingStageDrawEyebrow: '',
+    fullReadingStageDrawTitle: 'Draw your next card',
+    fullReadingStageDrawBody: '',
+    fullReadingStageArrangeEyebrow: 'Review the spread',
+    fullReadingStageArrangeTitle: 'Arrange your fate',
+    fullReadingStageArrangeBody: 'Tap 2 cards to swap places.',
+    fullReadingDeckReady: 'Draw',
+    fullReadingDeckHint: '',
+    fullReadingDrawnLabel: 'Cards drawn',
+    fullReadingDrawnCount: '{current} / {total}',
+    fullReadingDrawCardLabel: 'Face-down card {index}',
+    fullReadingLatestCard: 'Latest draw',
+    fullReadingArrangeHint: 'Tap 2 cards to swap positions.',
+    fullReadingFaceDownCard: 'Face-down card',
+    fullReadingSwapCardLabel: 'Spread card {index}',
+    fullReadingMoveUp: 'Move up',
+    fullReadingMoveDown: 'Move down',
+    fullReadingDragHandle: 'Drag to reorder',
+    fullReadingPositionPrefix: 'Position {index}',
+    celticCrossNextStep: 'Your next step',
+    celticCrossHoldEnergy: 'Hold this energy',
+    celticCrossAskYourself: 'Ask yourself',
+    positionPresent: 'The Present',
+    positionChallenge: 'The Challenge',
+    positionPast: 'The Past',
+    positionFuture: 'The Future',
+    positionAbove: 'Above',
+    positionBelow: 'Below',
+    positionAdvice: 'Advice',
+    positionExternal: 'External Influences',
+    positionHopes: 'Hopes & Fears',
+    positionOutcome: 'Outcome',
+    profileTitle: 'Profile',
+    profileIdentityTitle: 'Account',
+    profileGuestLabel: 'Not signed in',
+    profileSignInCta: 'Sign in with Google',
+    profileLogout: 'Log out',
+    profileStreakTitle: 'Journey summary',
+    profileStreakCurrent: 'Current streak: {count} days',
+    profileReadingsTotal: 'Total daily readings: {count}',
+    profilePhaseLine: 'Current phase: {label}',
+    profileHistoryTitle: 'Recent reading history',
+    profileHistoryEmpty: 'No history yet.',
+    profileHistoryEmptyBody: 'Draw your first reading, then come back here to revisit and explore similar cards.',
+    profileHistoryStartCta: 'Start a daily reading',
+    profileHistoryLoginHint: 'Sign in to view reading history.',
+    profileHistoryLoginBody: 'When signed in, you can revisit past readings and track your dominant energy.',
+    profileReadAgain: 'Read Again',
+    profileSeeSimilar: 'See Similar Cards',
+    profileMonthlyStreak: 'Monthly streak: {count} days',
+    profileMostCommonEnergy: 'Most common energy: {label}',
+    profileEnergyFire: 'Fire (Wands)',
+    profileEnergyWater: 'Water (Cups)',
+    profileEnergyAir: 'Air (Swords)',
+    profileEnergyEarth: 'Earth (Pentacles)',
+    profileEnergyMajor: 'Major Arcana',
+    profileLoginTitle: 'Save your journey',
+    profileLoginBody: 'Sign in to keep your recent reading history.',
+    profileDeckInventoryTitle: 'My Decks',
+    profileDeckUnlocked: 'Unlocked',
+    profileDeckLocked: 'Locked — Day {day}',
+    profileDeckActive: 'Active',
+    profileDeckActivateCta: 'Use this deck',
+    profileDeckLockedHint: 'Keep your streak going to unlock on Day {day}',
+    deckRewardEyebrow: 'New deck unlocked',
+    deckRewardTitle: '{deck} is yours',
+    deckRewardBody: 'You reached Day {day}. Tap to make {deck} your active deck.',
+    deckRewardClaimCta: 'Use this deck now',
+    deckRewardLaterCta: 'Maybe later',
+    deckRewardActivatedToast: 'Deck switched to {deck}',
+    profileAchievementsTitle: 'Your Journey',
+    profileAchievementUnlockedDate: 'Achieved {date}',
+    profileAchievementLocked: 'Locked',
+    profileAchievementNext: 'Next',
+    loginRewardEyebrow: 'Welcome gift',
+    loginRewardTitle: 'Welcome to MeowTarot',
+    loginRewardBody: 'Your progress is saved. Start with the Moonmallow deck — yours forever.',
+    loginRewardClaimCta: 'Start my journey',
+    loginRewardDismissCta: 'Maybe later',
+    achievement_deck_boba_oracle: 'Boba Oracle unlocked',
+    achievement_deck_meow_nakorn: 'Meow Nakorn unlocked',
+    achievement_deck_moonveil: 'Moonveil unlocked',
+    achievement_deck_overtime_oracle: 'OvertimeOracle unlocked',
+    achievement_deck_pawbit: 'Pawbit unlocked',
+    achievement_deck_paws_of_luck: 'Paws of Luck unlocked',
+    achievement_deck_sugar_paws: 'Sugar Paws unlocked',
+    achievement_deck_sushicat: 'Sushicat unlocked',
+    achievement_deck_inkmess: 'InkMess unlocked',
+  },
+  th: {
+    navHome: 'หน้าหลัก',
+    navDaily: 'ดูดวงรายวัน',
+    navOverall: 'ดูดวงชีวิต',
+    navQuestion: 'ถามคำถาม',
+    navMeanings: 'ความหมายไพ่',
+    navProfile: 'โปรไฟล์',
+    heroTagline: 'รับคำแนะนำรายวันและสเปรดเต็ม ๆ โดยน้องแมว',
+    fortuneTeller: 'หมอดูประจำวัน',
+    languageLabel: 'ภาษา',
+    landingIntro:
+      'เลือกโหมดที่ต้องการ: ดูดวงรายวันคือไพ่ใบเดียวประจำวัน ดูดวงชีวิตใช้ไพ่ 10 ใบแบบเซลติกครอส ถามคำถามจะใช้ไพ่ 3 ใบ อดีต / ปัจจุบัน / อนาคต ตามหัวข้อที่เลือก',
+    startReadingCta: 'เริ่มดูดวง',
+    homeDailyCta: 'ดูดวงรายวัน',
+    homeOverallCta: 'ดูดวงชีวิต',
+    homeQuestionCta: 'ถามคำถาม',
+    ctaDaily: 'ดูดวงรายวัน',
+    ctaOverall: 'ดูดวงชีวิต',
+    ctaQuestion: 'ถามคำถาม',
+    dailyTitle: 'ดูดวงรายวัน',
+    dailyDesc: 'แตะวันละครั้งเพื่อเปิดข้อความนำทางประจำวัน',
+    dailyDraw: 'สุ่มไพ่ประจำวันของคุณ',
+    dailyRedraw: 'ดึงไพ่สำหรับวันนี้',
+    todayReminder: 'หนึ่งใบต่อวันต่ออุปกรณ์ ไพ่ของคุณจะถูกบันทึกไว้ตรงนี้',
+    overallTitle: 'เซลติกครอส',
+    overallShortDesc: 'ดึงไพ่ 10 ใบเพื่ออ่านแบบเซลติกครอสอย่างเต็มรูปแบบ',
+    overallDesc: 'เปิดไพ่เซลติกครอส 10 ใบเพื่อดูภาพรวมที่ลึกขึ้นของคำถามหรือเส้นทางชีวิตของคุณ',
+    overallStartCta: 'เริ่มดูเซลติกครอส',
+    questionTitle: 'ถามคำถาม',
+    questionDesc: 'ไพ่ 3 ใบ · อดีต · ปัจจุบัน · อนาคต',
+    questionLead: 'โอบคำถามไว้ในใจ เลือกหัวข้อก่อน แล้วสุ่มไพ่ 3 ใบเพื่อดูคำแนะนำแบบ อดีต · ปัจจุบัน · อนาคต',
+    questionPromptTitle: 'ตั้งเจตนาก่อนหยิบไพ่',
+    questionPromptBody: 'ถามเพียงหนึ่งสถานการณ์ให้ชัดเจน ยิ่งคำถามเฉพาะเจาะจง คำทำนายก็ยิ่งสะท้อนใจมากขึ้น',
+    questionStepTopic: '1. เลือกเรื่องในชีวิตที่อยากขอคำแนะนำ',
+    questionStepDraw: '2. หยิบไพ่ 3 ใบเพื่อเปิดเส้นเรื่องของสถานการณ์นี้',
+    questionStepRead: '3. อ่านข้อความ อดีต · ปัจจุบัน · อนาคต พร้อมข้อสรุปสำคัญ',
+    questionTopicSelectionTitle: 'เลือกหัวข้อสำหรับการดูดวงครั้งนี้',
+    questionTopicSelectionBody: 'เริ่มจากเรื่องในชีวิตที่อยากได้คำแนะนำก่อน โครงสร้างนี้ออกแบบให้เพิ่มหัวข้อใหม่ได้ง่ายในอนาคต',
+    questionSelectedTopicLabel: 'หัวข้อที่เลือก',
+    questionTopicLabel: 'หัวข้อ',
+    questionResultKicker: 'ถามคำถาม · {topic}',
+    questionResultContext: 'ไพ่ทั้งสามใบกำลังเล่าเส้นทางอารมณ์ของคำถามนี้ ตั้งแต่สิ่งที่ก่อร่าง ไปจนถึงสิ่งที่กำลังเคลื่อนไปข้างหน้า',
+    questionTopicPanelTitle: 'มุมมองเรื่อง{topic}',
+    questionTakeawayTitle: 'ข้อสรุปสำคัญ',
+    questionTakeawayLead: 'เมื่อมองรวมกัน ไพ่ของคุณกำลังบอกว่า {summary}',
+    questionShareTitle: 'ถามคำถาม · {topic}',
+    questionShareSubtitle: 'อินไซต์แบบ อดีต · ปัจจุบัน · อนาคต',
+    sharePromptTitle: 'โปสเตอร์พร้อมแชร์แล้ว',
+    sharePromptBody: 'บันทึกเก็บไว้หรือโพสต์ตอนที่ข้อความนี้ยังรู้สึกชัดกับใจคุณอยู่',
+    meaningTitle: 'ความหมายไพ่ทาโรต์',
+    meaningDesc: 'ลองดูความหมายของไพ่บางใบจากสำรับ MeowTarot เร็ว ๆ นี้จะมีคู่มือแบบเต็ม',
+    start: 'เริ่มดูดวง',
+    startQuestion: 'เริ่มดูดวงถามคำถาม',
+    instruction: 'โฟกัสที่คำถามในใจ แล้วเลือกไพ่ 3 ใบ',
+    contextDaily: '',
+    dailyStartHint: 'แตะปุ่มเริ่มเพื่อกระจายไพ่',
+    contextQuestion: 'ตั้งใจที่คำถามก่อนเลือกไพ่',
+    shuffle: 'สับไพ่ใหม่',
+    shuffleCards: 'สับไพ่ใหม่',
+    continue: 'ดูคำทำนาย',
+    selectThreeHint: 'เลือกไพ่ให้ครบ 3 ใบก่อนดำเนินการต่อ',
+    past: 'อดีต',
+    present: 'ปัจจุบัน',
+    future: 'อนาคต',
+    summaryTitle: 'สาระสำคัญ',
+    summaryPast: 'ในอดีตของคุณมีพลังของ {card} หล่อหลอมพื้นฐาน',
+    summaryPresent: 'ตอนนี้คุณกำลังพบเจอพลังงานของ {card}',
+    summaryFuture: 'ในอนาคต คุณอาจได้เจอ {card} จงเปิดใจเรียนรู้',
+    summaryAdvice: 'คำแนะนำ: เชื่อสัญชาตญาณและค่อย ๆ ก้าวไปอย่างมั่นคง',
+    newReading: 'ดูดวงใหม่อีกครั้ง',
+    share: 'แชร์คำทำนายนี้',
+    save: 'บันทึกเป็นรูปภาพ',
+    yourReading: 'ผลการดูดวง MeowTarot',
+    readingSubtitle: 'ไพ่ 10 ใบ · เซลติกครอส',
+    shareFallback: 'คัดลอกลิงก์',
+    spreadQuick: 'คำตอบด่วน (1 ใบ)',
+    spreadStory: 'โหมดเรื่องราว (3 ใบ)',
+    topicGeneric: 'คำถามทั่วไป',
+    topicLove: 'ความรัก',
+    topicCareer: 'การงาน',
+    topicFinance: 'การเงิน',
+    topicOther: 'เรื่องอื่น ๆ',
+    topicSelf: 'ตัวตน',
+    topicFamily: 'ครอบครัว',
+    topicTravel: 'การเดินทาง',
+    topicHealth: 'สุขภาพ',
+    topicLoveDesc: 'ความสัมพันธ์ ความรู้สึก การเชื่อมโยง และความชัดเจนทางใจ',
+    topicCareerDesc: 'ทิศทางการงาน การตัดสินใจ ความทะเยอทะยาน และก้าวถัดไป',
+    topicFinanceDesc: 'การเงิน ความมั่นคง โอกาส และทรัพยากรที่มีอยู่',
+    topicOtherDesc: 'พื้นที่ยืดหยุ่นสำหรับคำถามอื่น ๆ ที่อยู่ในใจคุณ',
+    topicHealthDesc: 'ร่างกาย พลังงาน การพักผ่อน และการฟื้นฟู',
+    topicFamilyDesc: 'บ้าน ความผูกพัน การดูแล และความตึงเครียด',
+    topicTravelDesc: 'ทริป การเคลื่อนไหว เส้นทาง และการค้นพบ',
+    topicSelfDesc: 'ตัวตน การเติบโต มุมมอง และความจริงข้างใน',
+    drawAnswer: 'แตะเพื่อดึงคำตอบ',
+    drawStory: 'ดึงไพ่ 3 ใบ',
+    metaYesNo: 'แนวโน้มคำตอบวันนี้',
+    metaDecision: 'คำแนะนำ',
+    metaTiming: 'จังหวะเวลา',
+    loveSingles: 'สำหรับคนโสด',
+    loveCouples: 'สำหรับคนมีคู่',
+    careerToday: 'การงานวันนี้',
+    financeToday: 'การเงินวันนี้',
+    actionToday: 'คำแนะนำ',
+    reflectionToday: 'คำถามชวนคิด',
+    affirmation: 'ต้นแบบพลังงาน',
+    ritual: 'พิธีกรรม',
+    breathPattern: 'จังหวะหายใจ',
+    journalPrompt: 'ไกด์เขียนบันทึก',
+    colorsTitle: 'สีประจำวัน',
+    powerColor: 'สีเสริมพลัง',
+    drainingColor: 'สีที่ควรเลี่ยง',
+    overallReadingLabel: 'คำทำนายชีวิต',
+    questionSpreadNote: 'อดีต · ปัจจุบัน · อนาคต',
+    missingSelection: 'ยังไม่มีไพ่ที่เลือก โปรดกลับไปหยิบไพ่ก่อนดูคำทำนาย',
+    loveMetaYesNo: 'แนวโน้มคำตอบความรัก',
+    loveMetaDecision: 'คำแนะนำเรื่องความรัก',
+    loveMetaTiming: 'จังหวะเวลาของความรัก',
+    loveActionHeading: 'แนวทางดูแลเรื่องความรักนี้',
+    careerActionHeading: 'คำแนะนำด้านการงาน',
+    financeActionHeading: 'คำแนะนำด้านการเงิน',
+    readingSummaryTitle: 'ดวงของคุณวันนี้',
+    yourFortuneTitle: 'ดวงของคุณ',
+    energyTitle: 'สมดุลพลังงาน',
+    retentionPanelTitle: 'การเดินทางของคุณ',
+    retentionStreakValue: 'สตรีค {count} วัน',
+    retentionCollectionValue: 'สะสมไพ่ {count} / {total}',
+    retentionJourneyStarted: 'การเดินทางของคุณเริ่มต้นมาแล้ว {count} วัน',
+    retentionNextMilestone: 'อีก {remaining} วัน เพื่อไปถึงจังหวะถัดไปของคุณ',
+    retentionRareReversed: 'คุณได้พบเงาสะท้อนที่หายาก',
+    retentionRareMajor: 'ไพ่เมเจอร์อาร์คานาได้เข้ามาในการเดินทางของคุณแล้ว',
+    retentionAchievementUnlocked: 'คุณปลดล็อก: {name}',
+    retentionSavePrompt: 'การเดินทางนี้อยู่บนอุปกรณ์นี้เท่านั้น บันทึกไว้ก่อนที่จะหายไป',
+    retentionSaveCta: 'บันทึกการเดินทางของคุณ',
+    retentionSaved: 'เส้นทางของคุณถูกเก็บแล้ว محفوظ / saved',
+    retentionLoginGoogle: 'เข้าสู่ระบบด้วย Google',
+    retentionLoginApple: 'เข้าสู่ระบบด้วย Apple',
+    retentionSyncFailed: 'ซิงก์ไม่สำเร็จตอนนี้ แต่ข้อมูลในเครื่องยังปลอดภัย',
+    retentionReturnTomorrow: 'พรุ่งนี้กลับมาเพื่อไพ่ใบถัดไปของคุณ',
+    retentionSoftRhythm: 'จังหวะใหม่กำลังก่อตัวขึ้นอย่างนุ่มนวล',
+    retentionSoftMomentum: 'คุณกำลังสร้างแรงส่งที่ดีขึ้นเรื่อย ๆ',
+    retentionSoftCollection: 'การเดินทางของคุณเริ่มเห็นรูปทรงที่ชัดขึ้น',
+    retentionSoftDeepening: 'การฝึกฝนของคุณกำลังนิ่งและลึกขึ้น',
+    retentionSoftMilestone: 'มีอีกหนึ่งหมุดหมายเปิดขึ้นอย่างนุ่มนวล',
+    phase_current_title: 'ช่วงพลังปัจจุบันของคุณ',
+    phase_current_format: 'ช่วงพลังปัจจุบันของคุณ: {label}',
+    phase_forming_label: 'ยังก่อตัวอยู่',
+    phase_forming_desc: 'ช่วงพลังของคุณยังก่อตัวอยู่ ลองเปิดไพ่รายวันเพิ่มอีกเล็กน้อยเพื่อเห็นรูปแบบชัดขึ้น',
+    phase_rebuilding_label: 'กำลังฟื้นตัว',
+    phase_rebuilding_desc: 'คุณกำลังค่อย ๆ สร้างฐานใหม่ให้มั่นคงทีละก้าว',
+    phase_clarity_label: 'ความชัดเจนกำลังเกิดขึ้น',
+    phase_clarity_desc: 'ภาพรวมเริ่มเชื่อมกันมากขึ้น และทิศทางของคุณเริ่มชัดขึ้น',
+    phase_emotional_label: 'กำลังประมวลอารมณ์',
+    phase_emotional_desc: 'คุณกำลังรับรู้อารมณ์อย่างซื่อตรงและให้พื้นที่ตัวเองได้ทำความเข้าใจ',
+    phase_action_label: 'ลงมือและเคลื่อนไหว',
+    phase_action_desc: 'พลังงานกำลังหนุนให้ลงมือทำและเดินหน้าสู่ก้าวถัดไป',
+    phase_transition_label: 'ช่วงเปลี่ยนผ่าน',
+    phase_transition_desc: 'มีการเปลี่ยนผ่านสำคัญกำลังเกิดขึ้น และคุณกำลังอยู่ระหว่างสองบทของชีวิต',
+    achievement_first_daily: 'เปิดไพ่รายวันครั้งแรก',
+    achievement_streak_3: 'สตรีค 3 วัน',
+    achievement_streak_7: 'สตรีค 7 วัน',
+    achievement_first_reversed: 'ได้ไพ่กลับหัวใบแรก',
+    achievement_first_major_arcana: 'ได้ไพ่เมเจอร์อาร์คานาใบแรก',
+    achievement_collect_10: 'สะสมไพ่ครบ 10 ใบ',
+    achievement_collect_30: 'สะสมไพ่ครบ 30 ใบ',
+    achievement_full_deck_78: 'สะสมครบทั้งสำรับ 78 ใบ',
+    energyFire: 'ไฟ',
+    energyWater: 'น้ำ',
+    energyAir: 'ลม',
+    energyEarth: 'ดิน',
+    metaZodiac: 'ราศี',
+    suggestionTitle: 'คำแนะนำ',
+    guidanceHeading: 'คำแนะนำ',
+    ritualNudgeTitle: 'หายใจลึกๆ ก่อนนะ',
+    ritualNudgeBody: 'ตั้งใจคิดถึงคำถามก่อนหยิบไพ่',
+    celticCrossEyebrow: 'อ่านไพ่เต็มรูปแบบ',
+    celticCrossTitle: 'เซลติกครอส',
+    fullReadingStageDealEyebrow: 'อ่านไพ่เต็มรูปแบบ',
+    fullReadingStageDealTitle: 'ไพ่ทั้งสิบกำลังมารวมตัวรอบคำถามของคุณ',
+    fullReadingStageDealBody: 'ตั้งสมาธิกับคำถามของคุณ แล้วค่อยหยิบไพ่คว่ำหน้า 10 ใบก่อนเข้าสู่คำทำนาย.',
+    fullReadingStageDrawEyebrow: 'หยิบไพ่เซตนี้',
+    fullReadingStageDrawTitle: 'หยิบไพ่ใบถัดไปของคุณ',
+    fullReadingStageDrawBody: 'แตะเลือกไพ่คว่ำหน้า 1 ใบ เพื่อล็อกไพ่ใบที่ {current} จาก {total} สำหรับตำแหน่ง {position}',
+    fullReadingStageArrangeEyebrow: 'ทบทวนสเปรด',
+    fullReadingStageArrangeTitle: 'จัดลำดับเซลติกครอสของคุณ',
+    fullReadingStageArrangeBody: 'แตะไพ่คว่ำหน้า 2 ใบเพื่อสลับตำแหน่ง โดยตำแหน่งที่ 1 จะเป็น {firstPosition} และตำแหน่งที่ 10 จะเป็น {lastPosition}.',
+    fullReadingDeckReady: 'หยิบไพ่',
+    fullReadingDeckHint: 'ไพ่จะยังคว่ำหน้าจนกว่าจะเริ่มอ่านผล',
+    fullReadingDrawnLabel: 'ไพ่ที่หยิบแล้ว',
+    fullReadingDrawnCount: '{current} / {total}',
+    fullReadingDrawCardLabel: 'ไพ่คว่ำหน้าใบที่ {index}',
+    fullReadingLatestCard: 'ไพ่ใบล่าสุด',
+    fullReadingArrangeHint: 'แตะไพ่ 2 ใบเพื่อสลับตำแหน่ง',
+    fullReadingFaceDownCard: 'ไพ่คว่ำหน้า',
+    fullReadingSwapCardLabel: 'ไพ่ตำแหน่งที่ {index}',
+    fullReadingMoveUp: 'เลื่อนขึ้น',
+    fullReadingMoveDown: 'เลื่อนลง',
+    fullReadingDragHandle: 'ลากเพื่อจัดลำดับ',
+    fullReadingPositionPrefix: 'ตำแหน่ง {index}',
+    celticCrossNextStep: 'ก้าวต่อไปของคุณ',
+    celticCrossHoldEnergy: 'โอบพลังนี้ไว้',
+    celticCrossAskYourself: 'ลองถามตัวเอง',
+    positionPresent: 'สถานการณ์ปัจจุบัน',
+    positionChallenge: 'ความท้าทาย',
+    positionPast: 'อดีต',
+    positionFuture: 'อนาคต',
+    positionAbove: 'เป้าหมาย',
+    positionBelow: 'รากฐาน',
+    positionAdvice: 'คำแนะนำ',
+    positionExternal: 'อิทธิพลภายนอก',
+    positionHopes: 'ความหวังและความกลัว',
+    positionOutcome: 'ผลลัพธ์',
+    profileTitle: 'โปรไฟล์',
+    profileIdentityTitle: 'บัญชี',
+    profileGuestLabel: 'ยังไม่ได้เข้าสู่ระบบ',
+    profileSignInCta: 'เข้าสู่ระบบด้วย Google',
+    profileLogout: 'ออกจากระบบ',
+    profileStreakTitle: 'สรุปการเดินทาง',
+    profileStreakCurrent: 'สตรีคปัจจุบัน: {count} วัน',
+    profileReadingsTotal: 'อ่านรายวันทั้งหมด: {count}',
+    profilePhaseLine: 'ช่วงพลัง: {label}',
+    profileHistoryTitle: 'ประวัติการเปิดไพ่ล่าสุด',
+    profileHistoryEmpty: 'ยังไม่มีประวัติการเปิดไพ่',
+    profileHistoryEmptyBody: 'เริ่มเปิดไพ่ครั้งแรก แล้วกลับมาที่นี่เพื่ออ่านซ้ำและค้นหาไพ่ใกล้เคียง',
+    profileHistoryStartCta: 'เริ่มเปิดไพ่รายวัน',
+    profileHistoryLoginHint: 'เข้าสู่ระบบเพื่อดูประวัติการเปิดไพ่',
+    profileHistoryLoginBody: 'เมื่อเข้าสู่ระบบ คุณจะย้อนดูผลเดิมและติดตามพลังที่เด่นได้ง่ายขึ้น',
+    profileReadAgain: 'อ่านอีกครั้ง',
+    profileSeeSimilar: 'ดูไพ่ใกล้เคียง',
+    profileMonthlyStreak: 'สตรีคเดือนนี้: {count} วัน',
+    profileMostCommonEnergy: 'พลังที่พบบ่อยที่สุด: {label}',
+    profileEnergyFire: 'ไฟ (Wands)',
+    profileEnergyWater: 'น้ำ (Cups)',
+    profileEnergyAir: 'ลม (Swords)',
+    profileEnergyEarth: 'ดิน (Pentacles)',
+    profileEnergyMajor: 'เมเจอร์อาร์คานา',
+    profileLoginTitle: 'บันทึกการเดินทางของคุณ',
+    profileLoginBody: 'เข้าสู่ระบบเพื่อเก็บประวัติการเปิดไพ่ล่าสุดของคุณ',
+    profileDeckInventoryTitle: 'กล่องไพ่ของฉัน',
+    profileDeckUnlocked: 'ปลดล็อคแล้ว',
+    profileDeckLocked: 'ล็อค — วันที่ {day}',
+    profileDeckActive: 'ใช้งานอยู่',
+    profileDeckActivateCta: 'ใช้สำรับนี้',
+    profileDeckLockedHint: 'รักษาสตรีคถึงวันที่ {day} เพื่อปลดล็อค',
+    deckRewardEyebrow: 'ปลดล็อคสำรับใหม่แล้ว',
+    deckRewardTitle: '{deck} เป็นของคุณแล้ว',
+    deckRewardBody: 'คุณมาถึงวันที่ {day} แล้ว แตะเพื่อตั้งสำรับ {deck} เป็นสำรับหลัก',
+    deckRewardClaimCta: 'ใช้สำรับนี้เลย',
+    deckRewardLaterCta: 'ไว้ทีหลัง',
+    deckRewardActivatedToast: 'เปลี่ยนเป็นสำรับ {deck} แล้ว',
+    profileAchievementsTitle: 'เส้นทางของคุณ',
+    profileAchievementUnlockedDate: 'สำเร็จเมื่อ {date}',
+    profileAchievementLocked: 'ยังล็อคอยู่',
+    profileAchievementNext: 'ถัดไป',
+    loginRewardEyebrow: 'ของขวัญต้อนรับ',
+    loginRewardTitle: 'ยินดีต้อนรับสู่ MeowTarot',
+    loginRewardBody: 'ความคืบหน้าของคุณถูกบันทึกแล้ว เริ่มต้นด้วยสำรับเหมียวฝันหวาน — เป็นของคุณตลอดไป',
+    loginRewardClaimCta: 'เริ่มต้นการเดินทาง',
+    loginRewardDismissCta: 'ไว้ทีหลัง',
+    achievement_deck_boba_oracle: 'ปลดล็อคแมวชานมแล้ว',
+    achievement_deck_meow_nakorn: 'ปลดล็อคนครหมียวแล้ว',
+    achievement_deck_moonveil: 'ปลดล็อคจันทราขนฟูแล้ว',
+    achievement_deck_overtime_oracle: 'ปลดล็อคแมวโอทีแล้ว',
+    achievement_deck_pawbit: 'ปลดล็อคพิกเซลเหมียวแล้ว',
+    achievement_deck_paws_of_luck: 'ปลดล็อคเจ้าเหมียวหัดเดินแล้ว',
+    achievement_deck_sugar_paws: 'ปลดล็อคเหมียวละมุนแล้ว',
+    achievement_deck_sushicat: 'ปลดล็อคเหมียวซูชิแล้ว',
+    achievement_deck_inkmess: 'ปลดล็อคเหมียวยุ่งแล้ว',
+  },
+};
+
+const LANG_STORAGE_KEY = 'meowtarot_lang';
+let navbarCleanup = null;
+let viewportBindingAttached = false;
+
+function normalizeLang(value) {
+  return value === 'th' ? 'th' : value === 'en' ? 'en' : null;
+}
+
+function getUrlLanguage(locationLike = window.location) {
+  const urlLang = normalizeLang(new URLSearchParams(locationLike?.search || '').get('lang'));
+  if (urlLang) return urlLang;
+  return pathHasThaiPrefix(locationLike?.pathname || '/') ? 'th' : 'en';
+}
+
+export function computeLanguageHref(targetLang, locationLike = window.location) {
+  const pathname = normalizePathname(locationLike?.pathname || '/');
+  const params = new URLSearchParams(locationLike?.search || '');
+  if (params.has('lang')) params.set('lang', targetLang);
+  const search = params.toString() ? `?${params.toString()}` : '';
+  const hash = locationLike?.hash || '';
+  const targetPath = localizePath(pathname, targetLang) || (targetLang === 'th' ? '/th/' : '/');
+  return `${targetPath}${search}${hash}`;
+}
+
+export function switchLang(targetLang) {
+  window.location.href = computeLanguageHref(targetLang);
+}
+
+function normalizePathname(pathname = '/') {
+  if (!pathname || pathname === '/') return '/';
+  if (pathname === '/index.html') return '/';
+  if (pathname === '/th' || pathname === '/th/') return '/th/';
+  if (pathname === '/th/index.html') return '/th/';
+  return pathname;
+}
+
+export function pathHasThaiPrefix(pathname = '') {
+  const normalized = normalizePathname(pathname);
+  return normalized === '/th/' || normalized.startsWith('/th/');
+}
+
+export function stripThaiPrefix(pathname = '') {
+  const normalized = normalizePathname(pathname);
+  if (normalized === '/th/') return '/';
+  if (normalized.startsWith('/th/')) return normalized.replace(/^\/th/, '') || '/';
+  return normalized || '/';
+}
+
+export function localizePath(pathname = '/', lang = 'en') {
+  const normalized = stripThaiPrefix(pathname.startsWith('/') ? pathname : `/${pathname}`);
+  if (lang === 'th') {
+    if (normalized === '/') return '/th/';
+    return `/th${normalized}`;
+  }
+  return normalized || '/';
+}
+
+function updateLink(rel, href, hreflang) {
+  if (!href) return;
+  let selector = `link[rel="${rel}"]`;
+  if (hreflang) selector += `[hreflang="${hreflang}"]`;
+  let link = document.head.querySelector(selector);
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = rel;
+    if (hreflang) link.hreflang = hreflang;
+    document.head.appendChild(link);
+  }
+  link.href = href;
+}
+
+export function applyLocaleMeta(currentLang = 'en') {
+  const base = 'https://www.meowtarot.com';
+  const pathname = normalizePathname(window.location?.pathname || '/');
+  const cleanPath = stripThaiPrefix(pathname);
+
+  const enHref = new URL(cleanPath || '/', base).toString();
+  const thHref = new URL(localizePath(cleanPath || '/', 'th'), base).toString();
+
+  const canonical = currentLang === 'th' ? thHref : enHref;
+  updateLink('canonical', canonical);
+  updateLink('alternate', enHref, 'en');
+  updateLink('alternate', thHref, 'th-TH');
+  updateLink('alternate', enHref, 'x-default');
+}
+
+function getSavedLang(defaultLang = 'en') {
+  const stored = normalizeLang(localStorage.getItem(LANG_STORAGE_KEY));
+  return stored || defaultLang;
+}
+
+export function applyTranslations(currentLang = 'en', afterApply) {
+  const dict = translations[currentLang] || translations.en;
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach((node) => {
+    const key = node.dataset.i18n;
+    if (dict[key]) node.textContent = dict[key];
+  });
+  document.querySelectorAll('.lang-btn').forEach((btn) => {
+    const isActive = btn.dataset.lang === currentLang;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive);
+    btn.setAttribute('aria-selected', isActive);
+  });
+  afterApply?.(dict);
+}
+
+export function initShell(state, afterApply, activePage, options = {}) {
+  const urlLang = getUrlLanguage(window.location);
+  const savedLang = getSavedLang('en');
+  state.currentLang = normalizeLang(urlLang) || savedLang || 'en';
+  localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
+
+  navbarCleanup?.();
+  navbarCleanup = renderNavbar(document.getElementById('site-header'), (lang) => {
+    if (lang === state.currentLang) return;
+    trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: lang });
+    localStorage.setItem(LANG_STORAGE_KEY, lang);
+    if (typeof options?.onLangToggle === 'function') {
+      options.onLangToggle(lang);
+      return;
+    }
+    switchLang(lang);
+  });
+  renderFooter(document.getElementById('site-footer'));
+  highlightActiveNav(activePage);
+  attachLogoHome();
+  bindViewportHeightVariable();
+  applyTranslations(state.currentLang, afterApply);
+  applyLocaleMeta(state.currentLang);
+  renderBottomNav();
+}
+
+function bindViewportHeightVariable() {
+  if (typeof window === 'undefined' || viewportBindingAttached) return;
+
+  const root = document.documentElement;
+  const applyViewportHeight = () => {
+    const visualHeight = window.visualViewport?.height;
+    const fallbackHeight = window.innerHeight;
+    const height = Number.isFinite(visualHeight) && visualHeight > 0 ? visualHeight : fallbackHeight;
+    if (!height) return;
+    root.style.setProperty('--app-vh', `${height}px`);
+  };
+
+  applyViewportHeight();
+  window.addEventListener('resize', applyViewportHeight, { passive: true });
+  window.addEventListener('orientationchange', applyViewportHeight, { passive: true });
+  window.visualViewport?.addEventListener('resize', applyViewportHeight, { passive: true });
+  viewportBindingAttached = true;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    navbarCleanup?.();
+    navbarCleanup = null;
+  });
+}
+
+function highlightActiveNav(activePage) {
+  if (!activePage) return;
+  document.querySelectorAll('.nav-link').forEach((link) => {
+    link.classList.toggle('active', link.dataset.page === activePage);
+  });
+}
+
+function attachLogoHome() {
+  document.querySelectorAll('[data-logo]').forEach((logo) => {
+    logo.addEventListener('click', (e) => {
+      const isThai = location.pathname.startsWith('/th');
+      const homePath = isThai ? '/th/' : '/';
+      if (location.pathname === homePath || location.pathname.endsWith('/index.html')) return;
+      e.preventDefault();
+      window.location.href = homePath;
+    });
+  });
+}
