@@ -108,5 +108,25 @@
     "unlock_day": 365,
     "tags": ["AI-generated", "traditional", "chaotic", "fantasy"],
     "description_en": "Dynamic traditional ink-wash cats rendered with chaotic brushstrokes and poetic fantasy atmosphere."
+  },
+  {
+    "deck_id": "siam-paws",
+    "name_en": "Siam Paws",
+    "name_th": "เหมียวสยาม",
+    "role": "cold-storage",
+    "milestone": null,
+    "unlock_day": null,
+    "tags": ["AI-generated", "traditional", "culture"],
+    "description_en": "Traditional Thai-inspired cat illustrations with warm cultural motifs."
+  },
+  {
+    "deck_id": "halloween",
+    "name_en": "Halloween",
+    "name_th": "ฮาโลวีนเหมียว",
+    "role": "cold-storage",
+    "milestone": null,
+    "unlock_day": null,
+    "tags": ["AI-generated", "spooky", "dark", "fantasy"],
+    "description_en": "Spooky dark-themed cat illustrations with Halloween seasonal motifs."
   }
 ]
