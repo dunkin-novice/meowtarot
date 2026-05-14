@@ -1,7 +1,7 @@
 import { normalizeId } from './data.js';
 
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
-const PROGRESS_VERSION = 1;
+const PROGRESS_VERSION = 2;
 const TOTAL_BASE_CARDS = 78;
 const STREAK_MILESTONES = Object.freeze([3, 7, 14]);
 
@@ -64,7 +64,19 @@ function createDefaultProgress() {
       collect_30: false,
       full_deck_78: false,
     },
+    achievement_dates: {},
   };
+}
+
+function sanitizeAchievementDates(input, knownKeys) {
+  if (!input || typeof input !== 'object') return {};
+  return knownKeys.reduce((acc, key) => {
+    const val = input[key];
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+      acc[key] = val;
+    }
+    return acc;
+  }, {});
 }
 
 function sanitizeProgress(raw) {
@@ -104,6 +116,7 @@ function sanitizeProgress(raw) {
     collected_base_cards: baseCards,
     collected_oriented_cards: orientedCards,
     achievements: normalizeBooleanMap(raw.achievements, fallback.achievements),
+    achievement_dates: sanitizeAchievementDates(raw.achievement_dates, Object.keys(fallback.achievements)),
   };
 
   if (next.streak_best < next.streak_current) next.streak_best = next.streak_current;
@@ -182,9 +195,15 @@ function getCardIdentity(card = null) {
 
 function evaluateAchievements(progress) {
   const unlockedNow = [];
+  if (!progress.achievement_dates || typeof progress.achievement_dates !== 'object') {
+    progress.achievement_dates = {};
+  }
   const maybeUnlock = (key, condition) => {
     if (!condition || progress.achievements[key]) return;
     progress.achievements[key] = true;
+    if (!progress.achievement_dates[key]) {
+      progress.achievement_dates[key] = todayLocalIsoDate();
+    }
     unlockedNow.push(key);
   };
 
@@ -215,12 +234,14 @@ function getAchievementLabelKey(key = '') {
 export function trackCompletedDailyReading(card = null) {
   const progress = getUserProgress();
   const today = todayLocalIsoDate();
+  const previousStreak = Number(progress.streak_current) || 0;
 
   if (progress.last_daily_read_date === today) {
     return {
       progress,
       didCount: false,
       newlyUnlocked: [],
+      previousStreak,
       softMessageKey: getSoftMessageKey({
         streakCurrent: progress.streak_current,
         collectionCount: progress.collected_base_cards.length,
@@ -274,6 +295,7 @@ export function trackCompletedDailyReading(card = null) {
     progress,
     didCount: true,
     newlyUnlocked,
+    previousStreak,
     firstReversed,
     firstMajorArcana,
     softMessageKey: getSoftMessageKey({

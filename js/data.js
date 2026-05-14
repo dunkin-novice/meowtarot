@@ -10,6 +10,7 @@ export const DECKS = {
   'meow-v2': {
     id: 'meow-v2',
     name: 'MeowTarot v2',
+    name_th: 'เหมียวฝันหวาน',
     role: 'default',
     unlock_day: null,
     assetsBase: resolveDeckAssetBase('assets/meow-v2'),
@@ -18,6 +19,7 @@ export const DECKS = {
   'moonmallow': {
     id: 'moonmallow',
     name: 'Moonmallow',
+    name_th: 'เหมียวฝันหวาน',
     role: 'default',
     unlock_day: null,
     assetsBase: resolveDeckAssetBase('assets/moonmallow'),
@@ -26,6 +28,7 @@ export const DECKS = {
   'veila-tarot': {
     id: 'veila-tarot',
     name: 'Veila Tarot',
+    name_th: 'แมวม่านพราย',
     role: 'default',
     unlock_day: null,
     assetsBase: resolveDeckAssetBase('assets/veila-tarot'),
@@ -34,6 +37,7 @@ export const DECKS = {
   'boba-oracle': {
     id: 'boba-oracle',
     name: 'Boba Oracle',
+    name_th: 'แมวชานม',
     role: 'streak-unlock',
     unlock_day: 1,
     assetsBase: resolveDeckAssetBase('assets/boba-oracle'),
@@ -42,6 +46,7 @@ export const DECKS = {
   'meow-nakorn': {
     id: 'meow-nakorn',
     name: 'Meow Nakorn',
+    name_th: 'นครหมียว',
     role: 'streak-unlock',
     unlock_day: 3,
     assetsBase: resolveDeckAssetBase('assets/meow-nakorn'),
@@ -50,6 +55,7 @@ export const DECKS = {
   'moonveil': {
     id: 'moonveil',
     name: 'Moonveil',
+    name_th: 'จันทราขนฟู',
     role: 'streak-unlock',
     unlock_day: 7,
     assetsBase: resolveDeckAssetBase('assets/moonveil'),
@@ -58,6 +64,7 @@ export const DECKS = {
   'overtime-oracle': {
     id: 'overtime-oracle',
     name: 'Overtime Oracle',
+    name_th: 'แมวโอที',
     role: 'streak-unlock',
     unlock_day: 14,
     assetsBase: resolveDeckAssetBase('assets/overtime-oracle'),
@@ -66,6 +73,7 @@ export const DECKS = {
   'pawbit': {
     id: 'pawbit',
     name: 'Pawbit',
+    name_th: 'พิกเซลเหมียว',
     role: 'streak-unlock',
     unlock_day: 30,
     assetsBase: resolveDeckAssetBase('assets/pawbit'),
@@ -74,6 +82,7 @@ export const DECKS = {
   'paws-of-luck': {
     id: 'paws-of-luck',
     name: 'Paws of Luck',
+    name_th: 'เจ้าเหมียวหัดเดิน',
     role: 'streak-unlock',
     unlock_day: 60,
     assetsBase: resolveDeckAssetBase('assets/paws-of-luck'),
@@ -82,6 +91,7 @@ export const DECKS = {
   'sugar-paws': {
     id: 'sugar-paws',
     name: 'Sugar Paws',
+    name_th: 'เหมียวละมุน',
     role: 'streak-unlock',
     unlock_day: 100,
     assetsBase: resolveDeckAssetBase('assets/sugar-paws'),
@@ -90,6 +100,7 @@ export const DECKS = {
   'sushicat': {
     id: 'sushicat',
     name: 'Sushicat',
+    name_th: 'เหมียวซูชิ',
     role: 'streak-unlock',
     unlock_day: 180,
     assetsBase: resolveDeckAssetBase('assets/sushicat'),
@@ -98,6 +109,7 @@ export const DECKS = {
   'inkmess': {
     id: 'inkmess',
     name: 'Inkmess',
+    name_th: 'เหมียวยุ่ง',
     role: 'streak-unlock',
     unlock_day: 365,
     assetsBase: resolveDeckAssetBase('assets/inkmess'),
@@ -149,6 +161,52 @@ export function setActiveDeck(id) {
     localStorage.setItem(ACTIVE_DECK_STORAGE_KEY, id);
   }
   activeDeckId = id;
+}
+
+export function getAllDecks() {
+  return Object.values(DECKS);
+}
+
+export function getNewlyUnlockedDecks(prevStreak, newStreak) {
+  const prev = Math.max(0, Number(prevStreak) || 0);
+  const next = Math.max(0, Number(newStreak) || 0);
+  return Object.values(DECKS)
+    .filter((deck) => deck.role === 'streak-unlock' && typeof deck.unlock_day === 'number')
+    .filter((deck) => deck.unlock_day > prev && deck.unlock_day <= next)
+    .sort((a, b) => a.unlock_day - b.unlock_day);
+}
+
+const DECK_REWARDS_SEEN_STORAGE_KEY = 'meowtarot_deck_rewards_seen';
+
+function readDeckRewardsSeen() {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(DECK_REWARDS_SEEN_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function hasSeenDeckReward(deckId) {
+  if (typeof localStorage === 'undefined') return false;
+  return readDeckRewardsSeen().includes(String(deckId));
+}
+
+export function markDeckRewardSeen(deckId) {
+  if (typeof localStorage === 'undefined') return;
+  const id = String(deckId);
+  if (!id) return;
+  const seen = readDeckRewardsSeen();
+  if (seen.includes(id)) return;
+  seen.push(id);
+  try {
+    localStorage.setItem(DECK_REWARDS_SEEN_STORAGE_KEY, JSON.stringify(seen));
+  } catch {
+    // ignore
+  }
 }
 
 export function getCardBackUrl() {
