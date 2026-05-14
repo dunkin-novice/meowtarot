@@ -12,6 +12,8 @@ import { getUserProgress } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { trackProfileRevisit } from './analytics.js';
+import { renderDeckInventory } from './deck-inventory.js';
+import { renderAchievementsPanel } from './achievements-panel.js';
 
 const state = {
   currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
@@ -407,6 +409,11 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   await refreshHistory();
   renderIdentity(dict);
   renderStreak(dict);
+  const progress = getUserProgress();
+  const deckInvEl = document.getElementById('profile-deck-inventory');
+  if (deckInvEl) renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
+  const achieveEl = document.getElementById('profile-achievements');
+  if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);
   renderHistory(dict);
   renderLoginCta(dict);
 }
