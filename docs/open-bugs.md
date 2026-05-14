@@ -642,3 +642,53 @@ Either update CLAUDE.md to document the correct order, or update the founder's p
 4. Validate on the next ship-able change: run the re-ordered recipe end-to-end without conflict.
 
 ---
+
+## BUG-015 — Capacitor mirror trees partially tracked — `git add .` footgun
+
+**Status:** Reported, verified by direct observation.
+**Priority:** Low (no production impact; footgun risk for future commits).
+**Reported:** 2026-05-14
+
+### Symptom
+
+`ios/App/App/public/` and `www/` each contain ~80+ untracked sibling files (full `*.html`, most of `js/*.js`, `assets/`, `cards/`, `data/`, `th/`, etc.) alongside the 4 files tracked in commit `3965b5c` on 2026-05-14 (`data.js` + `asset-resolver.js` for both trees). A casual `git add .` or `git add ios/` from any contributor — founder, future Claude session, CI — would dump hundreds of mirror-tree files into a single commit, possibly with stale content. The mirrors are `sync:cap` output of the root tree, but Capacitor itself is not installed in the repo so sync is manual; there's no guarantee the untracked siblings are current with their root-tree originals.
+
+### Suspected root cause
+
+The asymmetry was introduced by the manual `sync:cap` workflow on 2026-05-14. Prior to commit `3965b5c`, both `ios/` and `www/` were 100% untracked (visible in earlier `git status` output during the session). The 2026-05-14 sync tracked only the 2 files that had just changed in `js/` (per memory `[[project_meowtarot_capacitor]]`'s dual-tree gotcha) rather than the full mirror. That selective tracking is fine in isolation but creates a partially-tracked-directory state going forward.
+
+### Reported fix
+
+Three options to weigh, no decision yet:
+
+**(a)** `.gitignore` the untracked siblings. Keeps repo lean. Breaks the "track manually as needed" pattern just established — would need `!` whitelist rules for the 4 already-tracked files. Risks future `sync:cap` updates silently dropping files from version control.
+
+**(b)** Track everything intentionally. Large one-time commit (~160 new files). Eliminates the asymmetry; future syncs become a normal `git add -A ios/ www/`. Bloats the repo.
+
+**(c)** Leave as-is with explicit warning in `CLAUDE.md`. Cheapest. Relies on every future contributor reading the warning before running `git add`.
+
+### Why this isn't a drive-by fix
+
+Decision required between (a)/(b)/(c) before any change — each has different implications for how future `sync:cap` operations behave. (a) and (b) are reversible but noisy in git history; (c) is free but only effective if read. Also worth confirming the founder's actual intent on the iOS/PWA shipping plan — if Capacitor will be properly installed and `sync:cap` automated soon, the right answer may be "wait, then choose (a) with the right whitelist."
+
+### Files involved
+
+- `ios/App/App/public/` — partially tracked tree
+- `www/` — partially tracked tree
+- `.gitignore` — may need new entries depending on chosen option
+- `CLAUDE.md` — may need new guidance depending on chosen option
+- Memory: `[[project_meowtarot_capacitor]]` — already documents the dual-tree gotcha; could be updated with the new tracking-asymmetry note
+
+### Files explicitly off-limits
+
+- None beyond standard hard-rules list (asset-resolver, common.js shell, normalize-payload, /share/).
+
+### Suggested first session
+
+1. Confirm the asymmetry: `git ls-files ios/ www/ | wc -l` vs `git status --porcelain ios/ www/ | wc -l`.
+2. Decide the iOS/PWA plan — is Capacitor going to be properly installed soon, or stay manual indefinitely? Answer shapes the choice.
+3. Pick (a), (b), or (c). If (a), draft the `.gitignore` patch with explicit `!` whitelist for currently-tracked mirror files (run `git ls-files ios/ www/` to enumerate).
+4. If (b), do one focused commit per tree to keep history readable: one for `www/`, one for `ios/App/App/public/`.
+5. Update memory `[[project_meowtarot_capacitor]]` either way to note the resolution.
+
+---
