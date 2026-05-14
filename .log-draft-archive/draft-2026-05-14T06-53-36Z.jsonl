@@ -1,0 +1,1 @@
+{"date":"2026-05-14","type":"fix","commit":"3fdd5e6","summary":"Replace module-init CARD_BACK_URL snapshot with getCardBackUrl() per-call at main.js L60/65/155. Residual: staticCardBacks painted once at L67 still needs re-run after deck switch.","files":["js/main.js"],"verified":["node --check passed"],"guardrails_preserved":["surgeon-rule-respected","off-limits-untouched"]}
