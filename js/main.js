@@ -332,6 +332,7 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       const slot = slots[idx];
       if (!slot) return;
       slot.classList.add('is-selected');
+      slot.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       const badge = document.createElement('span');
       badge.className = 'selection-badge';
       badge.textContent = `${order + 1}`;
