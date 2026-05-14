@@ -1,4 +1,4 @@
-import { normalizeId } from './data.js';
+import { getNewlyUnlockedDecks, normalizeId } from './data.js';
 
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
 const PROGRESS_VERSION = 2;
@@ -289,6 +289,15 @@ export function trackCompletedDailyReading(card = null) {
   }
 
   const newlyUnlocked = evaluateAchievements(progress);
+
+  const newlyUnlockedDecks = getNewlyUnlockedDecks(previousStreak, progress.streak_current);
+  newlyUnlockedDecks.forEach((deck) => {
+    const key = `deck_${String(deck.id).split('-').join('_')}`;
+    if (!progress.achievement_dates[key]) {
+      progress.achievement_dates[key] = today;
+    }
+  });
+
   persistProgress(progress);
 
   return {
