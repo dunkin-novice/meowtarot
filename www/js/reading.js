@@ -2613,11 +2613,6 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
       streakDayCount: dailyUiState.retention?.progress?.streak_current || 0,
       incrementId: `daily-streak|${toLocalDateIso(new Date())}|${getUserIdForAnalytics()}`,
     });
-    const newDecks = getNewlyUnlockedDecks(
-      dailyUiState.retention.previousStreak,
-      dailyUiState.retention.progress.streak_current,
-    );
-    newDecks.forEach((deck) => showDeckRewardPopup(deck, state.currentLang ?? 'th'));
   }
   void syncLocalProgressIfLoggedIn();
   const completionStamp = new Date().toISOString();
@@ -2632,6 +2627,19 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   renderDailyDetails(cards, dict, stageRefs.stage);
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
+
+  if (dailyUiState.retention?.didCount) {
+    const currentUser = await getCurrentUser();
+    if (currentUser) {
+      setTimeout(() => {
+        const newDecks = getNewlyUnlockedDecks(
+          dailyUiState.retention.previousStreak,
+          dailyUiState.retention.progress.streak_current,
+        );
+        newDecks.forEach((deck) => showDeckRewardPopup(deck, state.currentLang ?? 'th'));
+      }, 300);
+    }
+  }
 }
 
 function getFullPositionTranslationKey(position = '') {
