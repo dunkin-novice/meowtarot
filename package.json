@@ -16,6 +16,9 @@
     "@playwright/test": "^1.44.1"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@supabase/supabase-js": "^2.105.4"
   }
 }

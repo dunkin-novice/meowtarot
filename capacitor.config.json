@@ -1,0 +1,10 @@
+{
+  "appId": "com.meowtarot.app",
+  "appName": "MeowTarot",
+  "webDir": "www",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
