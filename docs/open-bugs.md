@@ -580,3 +580,65 @@ Two reasonable directions: (a) delete the dead JS code path (smallest diff, but 
 3. Sweep for other null-target `getElementById` calls in `js/reading.js` while scoped to this area.
 
 ---
+
+## BUG-014 — LOG_DRAFT.jsonl conflict on every multi-commit session
+
+**Status:** Reported, verified (recurring, observed twice consecutively).
+**Priority:** Low (workflow friction, no production impact).
+**Reported:** 2026-05-14
+
+### Symptom
+
+Every multi-commit session hits a rebase conflict in `LOG_DRAFT.jsonl` on `git pull --rebase origin main`. Observed twice consecutively on 2026-05-13 during deck-switching work — once after the wiring commits, again after the `getCardBackUrl` fix. Hand-resolution each time: drop the entries that were already processed into `docs/log.jsonl`, keep only the new one, `git rebase --continue`.
+
+### Suspected root cause
+
+The auto-log GitHub Action clears `LOG_DRAFT.jsonl` on every push (per CLAUDE.md L126: "appends to docs/log.jsonl, and clears the draft"). The commit recipe currently sequences the steps as:
+
+1. Stage + commit code.
+2. Append LOG_DRAFT entry locally (against pre-clear state — file still has old entries).
+3. Commit docs(log).
+4. `git pull --rebase origin main`.
+5. Push.
+
+Because step 2 runs before step 4, the local `LOG_DRAFT.jsonl` is built on top of the not-yet-pulled (not-yet-cleared) file. When step 4 pulls, remote has been cleared by the auto-log's own push that landed after the previous user push — rebase sees HEAD=empty vs local=stale+new, producing a conflict every iteration.
+
+### Reported fix
+
+Re-order the recipe so `git pull --rebase origin main` runs BEFORE writing the LOG_DRAFT entry — write against the freshly-cleared state:
+
+1. Stage code files.
+2. Commit code change. Capture SHA.
+3. `git pull --rebase origin main` (sync with cleared LOG_DRAFT).
+4. Append new LOG_DRAFT entry against the now-empty file. Replace TBD with SHA from step 2.
+5. Stage + commit LOG_DRAFT.
+6. Push.
+
+Alternative considered: change the auto-log workflow to merge instead of overwrite. Rejected — risks breaking the auto-log itself (per BUG-012 closing note: don't touch the workflow). Recipe re-order is the smaller, safer change.
+
+### Why this isn't a drive-by fix
+
+This is a process/workflow change, not a code change. The fix lives in:
+
+- The session prompts the founder gives Claude (the "commit recipe" templates).
+- Possibly CLAUDE.md's "Session logging" section (L109–131), which describes the LOG_DRAFT workflow but doesn't prescribe step ordering.
+
+Either update CLAUDE.md to document the correct order, or update the founder's prompt templates, or both. No code edit required.
+
+### Files involved
+
+- `CLAUDE.md` (Session logging section, L109–131) — candidate for documenting the ordering.
+- `LOG_DRAFT.jsonl` — affected file.
+
+### Files explicitly off-limits
+
+- `.github/workflows/*.yml` — auto-log workflow (per BUG-012: "Don't touch the auto-log workflow logic itself — it's working").
+
+### Suggested first session
+
+1. Inspect `git reflog` for the last 3–4 rebase-continue events to confirm the pattern is deterministic.
+2. Decide where the fix lives: CLAUDE.md update, prompt-template change, or both.
+3. If CLAUDE.md update: add one line to the Session logging section prescribing "`git pull --rebase origin main` before writing the LOG_DRAFT entry, not after".
+4. Validate on the next ship-able change: run the re-ordered recipe end-to-end without conflict.
+
+---
