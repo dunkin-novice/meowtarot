@@ -694,3 +694,72 @@ Decision required between (a)/(b)/(c) before any change — each has different i
 5. Update memory `[[project_meowtarot_capacitor]]` either way to note the resolution.
 
 ---
+
+## BUG-016 — Deck unlock popup fires for unauthenticated users with wrong deck on poster
+
+**Status:** Reported, not yet verified or triaged.
+**Priority:** High — hits every first-time visitor before login.
+**Reported:** 2026-05-14
+
+### Symptom
+
+A first-time user (never logged in) completed a daily reading and received the "Boba Oracle is yours" deck unlock popup (D1 milestone). Three compounding issues:
+
+1. **No auth gate:** The deck unlock popup fired for a user who was not signed in. Streak-based deck unlocks should be gated behind authentication — an anonymous reading should not trigger milestone rewards.
+2. **Popup timing:** The popup fired during the reading flow, not after the user exited the reading page. Expected behaviour: deck unlock notification should appear on the next page load, on return visit, or on sign-in — not mid-draw.
+3. **Deck identity mismatch on poster:** After the popup fired, the result page showed meow-v2 card backs, but the share poster rendered Boba Oracle card backs. Root cause likely: "Use this deck now" in the popup called setActiveDeck('boba-oracle') mid-session; the result page DOM was already painted with meow-v2 and was not repainted; the poster generation called getCardBackUrl() fresh and picked up the newly-set active deck.
+
+### Suspected root cause (unverified)
+
+- Issue 1: trackCompletedDailyReading and showDeckRewardPopup in reading.js:2606 have no auth check. They fire based on localStorage streak state regardless of whether a Supabase session exists.
+- Issue 2: showDeckRewardPopup is called inline in the if (didCount) block immediately after the draw completes. No deferral to page transition or next session.
+- Issue 3: setActiveDeck is called synchronously when user taps "Use this deck now" inside deck-reward.js. Already-painted DOM nodes on the result page are not repainted. Poster generation reads getCardBackUrl() at render time and gets the new deck.
+
+### Files likely involved
+
+- js/reading.js (trigger at ~L2606)
+- js/deck-reward.js (showDeckRewardPopup, setActiveDeck call on CTA)
+- js/progress.js (trackCompletedDailyReading — missing auth gate)
+- js/auth.js (to read current auth state)
+- poster.js (deck identity used for poster render)
+
+### Why this isn't a drive-by fix
+
+Three separate fix points: (1) auth gate in the daily reading completion path, (2) popup deferral strategy decision (next page load vs next sign-in vs end of reading animation), (3) result-page repaint or "Use this deck now" deferral to prevent mid-session deck switch from splitting result vs poster identity.
+
+### Suggested first session
+
+1. Verify: complete a reading while logged out, confirm popup fires and poster deck mismatch.
+2. Add auth check before showDeckRewardPopup call in reading.js — if no active Supabase session, skip popup entirely.
+3. Decide popup timing strategy (defer to next page load is simplest).
+4. In deck-reward.js "Use this deck now" handler: either defer setActiveDeck to next page load, or trigger a result-page card back repaint after switching.
+
+---
+
+## BUG-017 — 3rd card missing purple glow on selection in Ask a Question mode
+
+**Status:** Reported, not yet verified or triaged.
+**Priority:** Medium — visual feedback gap, not blocking functionality.
+**Reported:** 2026-05-14
+
+### Symptom
+
+In Ask a Question reading mode: after shuffle, when selecting 3 cards in sequence, the 3rd selected card does not display the purple glow (selection highlight). The glow appears correctly on cards 1 and 2. The 3rd card's glow renders correctly after the user scrolls — suggesting the painted state is correct but the visual update is deferred until a scroll-triggered repaint.
+
+### Suspected root cause (unverified)
+
+Likely a browser paint/compositing issue. The 3rd card may be partially outside the visible viewport when selected, causing the CSS glow state to be applied to the DOM but not composited to screen until a scroll event forces a repaint. Possible causes: CSS will-change or transform layer not promoting the element; overflow:hidden on a parent clipping the box-shadow or outline used for the glow; or an animation that only fires on elements within the intersection observer's viewport threshold.
+
+### Files likely involved
+
+- css/styles.css (purple glow / selection state styles)
+- js/reading.js (card selection logic — where the selected class or attribute is set on the 3rd card)
+
+### Suggested first session
+
+1. Reproduce: Ask a Question mode → shuffle → select 3 cards in sequence → observe 3rd card glow.
+2. Inspect the 3rd card's DOM after selection — confirm the selected class/attribute is present.
+3. Check if the glow uses box-shadow, outline, or border. Test if adding transform: translateZ(0) to the card forces GPU compositing and resolves the deferred paint.
+4. Check if the 3rd card is below the fold when selected — if so, the fix may be scrollIntoView() after selection, or ensuring the glow style triggers a compositing layer.
+
+---
