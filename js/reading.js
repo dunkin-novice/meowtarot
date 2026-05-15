@@ -801,6 +801,7 @@ function findCard(id) {
 function getExpectedCardCount(mode = 'daily') {
   if (mode === 'daily') return state.spread === 'story' ? 3 : 1;
   if (mode === 'full') return FULL_CELTIC_POSITION_KEYS.length;
+  if (mode === 'question') return state.spread === 'quick' ? 1 : 3;
   return 3;
 }
 
@@ -1405,6 +1406,7 @@ function getQuestionResultKicker(dict = activeDict) {
 }
 
 function buildQuestionTakeawayPanel(cards = [], dict = activeDict) {
+  if (state.spread === 'quick') return null;
   const orderedCards = orderQuestionCards(cards).slice(0, 3);
   if (!orderedCards.length) return null;
 
@@ -2672,6 +2674,13 @@ function getFullPositionMeta(cards = []) {
 
 function getFullInterpretationText(card, topicConfig = null) {
   if (!card) return '';
+  if (state.mode === 'question' && state.spread === 'quick' && topicConfig?.spreadKeys?.[1]) {
+    return getText(card, topicConfig.spreadKeys[1])
+      || getText(card, 'general_meaning')
+      || getText(card, 'tarot_imply')
+      || getText(card, 'card_desc')
+      || '';
+  }
   if (topicConfig?.singleKey) {
     return getText(card, topicConfig.singleKey)
       || getText(card, 'general_meaning')
@@ -3118,10 +3127,12 @@ function renderQuestion(cards, dict) {
   spreadGrid.className = 'reading-spread-grid';
 
   orderedCards.forEach((card, idx) => {
+    const positionStr = card.position || positions[idx];
+
     const cardWrap = document.createElement('button');
     cardWrap.className = 'reading-spread-card';
     cardWrap.type = 'button';
-    cardWrap.setAttribute('aria-label', `${dict[positions[idx]] || positions[idx]}`);
+    cardWrap.setAttribute('aria-label', `${dict[positionStr] || positionStr}`);
 
     cardWrap.appendChild(buildCardArt(card, 'thumb'));
 
@@ -3130,7 +3141,7 @@ function renderQuestion(cards, dict) {
 
     const label = document.createElement('div');
     label.className = 'spread-label';
-    label.textContent = dict[positions[idx]] || positions[idx];
+    label.textContent = dict[positionStr] || positionStr;
     caption.appendChild(label);
 
     const orientation = document.createElement('div');
@@ -3147,10 +3158,15 @@ function renderQuestion(cards, dict) {
   readingContent.appendChild(spreadPanel);
 
   if (topicConfig && !isGeneric) {
-    const texts = orderedCards.map((card, idx) => ({
-      label: dict[positions[idx]] || positions[idx],
-      text: getText(card, topicConfig.spreadKeys[idx]),
-    })).filter((item) => item.text);
+    const texts = orderedCards.map((card, idx) => {
+      const positionStr = card.position || positions[idx];
+      const positionIdx = QUESTION_CARD_POSITIONS.indexOf(positionStr);
+      const keyIdx = positionIdx >= 0 ? positionIdx : idx;
+      return {
+        label: dict[positionStr] || positionStr,
+        text: getText(card, topicConfig.spreadKeys[keyIdx]),
+      };
+    }).filter((item) => item.text);
 
     const topicPanel = document.createElement('section');
     topicPanel.className = 'panel panel--question-story';
@@ -3330,7 +3346,9 @@ function buildSharePayload() {
         : dict.dailyTitle;
   const modeSubtitle =
     state.mode === 'question'
-      ? (dict.questionShareSubtitle || dict.questionSpreadNote)
+      ? (state.spread === 'quick'
+          ? (dict.spreadQuick || 'Quick Answer (1 card)')
+          : (dict.questionShareSubtitle || dict.questionSpreadNote))
       : state.mode === 'full'
         ? dict.readingSubtitle
         : (state.spread === 'story' ? dict.spreadStory : dict.spreadQuick);

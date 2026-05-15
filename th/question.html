@@ -36,6 +36,9 @@
   </noscript>
   <link rel="preload" href="../css/styles.css" as="style" />
   <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="../css/theme-tokens.css" />
+  <link rel="stylesheet" href="../css/phase-2-header.css" />
+  <link rel="stylesheet" href="../css/phase-2-1-logo.css" />
 </head>
 <body data-page="question">
   <!-- Google Tag Manager (noscript) -->
@@ -50,6 +53,17 @@
         <p class="eyebrow">MeowTarot</p>
         <h1 data-i18n="questionTitle"></h1>
         <p class="lede" data-i18n="questionLead"></p>
+      </div>
+
+      <div class="question-spread-chooser" role="group" aria-label="เลือกรูปแบบการอ่าน">
+        <button class="question-spread-btn question-spread-btn--active" data-spread="story" aria-pressed="true">
+          <span class="question-spread-btn__label">สตอรี่โหมด</span>
+          <span class="question-spread-btn__sub">อดีต · ปัจจุบัน · อนาคต</span>
+        </button>
+        <button class="question-spread-btn" data-spread="quick" aria-pressed="false">
+          <span class="question-spread-btn__label">คำตอบด่วน</span>
+          <span class="question-spread-btn__sub">1 ใบ</span>
+        </button>
       </div>
 
       <section class="topic-selection-panel" aria-labelledby="topic-selection-title">

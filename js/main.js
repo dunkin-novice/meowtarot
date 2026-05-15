@@ -13,7 +13,8 @@ import { trackTopicSelected } from './analytics.js';
 const BOARD_CARD_COUNT = 12;
 const DAILY_BOARD_COUNT = 6;
 const CELTIC_CROSS_COUNT = 10;
-const QUESTION_SELECTION_COUNT = 3;
+const QUESTION_SELECTION_COUNTS = { story: 3, quick: 1 };
+let questionSpread = 'story';
 const FULL_POOL_SIZE = 50;
 const ORIENTATION_REVERSED_PROBABILITY = 0.5;
 const STORAGE_KEY = 'meowtarot_selection';
@@ -1056,7 +1057,7 @@ async function renderQuestion(dict = translations[state.currentLang] || translat
       state.questionTopic = topic.key;
       trackTopicSelected({ locale: state.currentLang, mode: 'question', topic: topic.key });
       const destination = localizePath('/question-draw.html', state.currentLang);
-      const params = new URLSearchParams({ topic: topic.key });
+      const params = new URLSearchParams({ topic: topic.key, spread: questionSpread });
       window.location.href = `${destination}?${params.toString()}`;
     });
 
@@ -1065,6 +1066,18 @@ async function renderQuestion(dict = translations[state.currentLang] || translat
 
   topicGrid.innerHTML = '';
   topics.forEach((topic) => topicGrid.appendChild(buildTopicCard(topic)));
+
+  const spreadBtns = document.querySelectorAll('.question-spread-btn');
+  spreadBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      questionSpread = btn.dataset.spread || 'story';
+      spreadBtns.forEach((b) => {
+        const active = b === btn;
+        b.classList.toggle('question-spread-btn--active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+    });
+  });
 }
 
 async function renderQuestionDraw(dict = translations[state.currentLang] || translations.en) {
@@ -1078,9 +1091,14 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
   let latestSelection = [];
   const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
-  const queryTopic = new URLSearchParams(window.location.search).get('topic') || '';
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryTopic = urlParams.get('topic') || '';
   const isKnownTopic = topics.some((item) => item.key === queryTopic);
   state.questionTopic = isKnownTopic ? queryTopic : state.questionTopic;
+
+  const querySpread = urlParams.get('spread') || 'story';
+  const spread = QUESTION_SELECTION_COUNTS[querySpread] ? querySpread : 'story';
+  const selectionCount = QUESTION_SELECTION_COUNTS[spread];
 
   const selectedTopic = topics.find((item) => item.key === state.questionTopic);
   selectedTopicTitle.textContent = selectedTopic
@@ -1089,17 +1107,17 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
 
   const updateContinue = (cards) => {
     latestSelection = cards;
-    continueBtn.disabled = cards.length !== QUESTION_SELECTION_COUNT;
-    counter.textContent = `${cards.length}/${QUESTION_SELECTION_COUNT}`;
+    continueBtn.disabled = cards.length !== selectionCount;
+    counter.textContent = `${cards.length}/${selectionCount}`;
   };
 
-  const boardApi = setupBoard(board, BOARD_CARD_COUNT, QUESTION_SELECTION_COUNT, updateContinue);
+  const boardApi = setupBoard(board, BOARD_CARD_COUNT, selectionCount, updateContinue);
   shuffleBtn.onclick = () => boardApi.render();
   continueBtn.onclick = () => {
-    if (latestSelection.length !== QUESTION_SELECTION_COUNT) return;
+    if (latestSelection.length !== selectionCount) return;
     saveSelectionAndGo({
       mode: 'question',
-      spread: 'story',
+      spread,
       topic: state.questionTopic,
       cards: latestSelection.map((c) => c.id),
     });
