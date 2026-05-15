@@ -1,1 +1,0 @@
-{"date":"2026-05-15","session":"CDN-fix","type":"fix","commit":null,"description":"Fix stale meow-v1 img src in tarot-card-meanings/index.html → veila-tarot","files":["tarot-card-meanings/index.html"],"notes":"meow-v1 is decommissioned. www/ and ios/ mirrors update on next cap sync."}
