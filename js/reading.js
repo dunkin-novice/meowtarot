@@ -215,7 +215,7 @@ const DAILY_TIMINGS = Object.freeze({
   shuffleMs: 200,
   dealMs: 210,
   staggerMs: 95,
-  revealMs: 180,
+  revealMs: 500,
 });
 const FULL_CELTIC_POSITION_KEYS = FULL_READING_POSITION_KEYS;
 const LEGACY_FULL_POSITION_KEYS = ['past', 'present', 'future'];
