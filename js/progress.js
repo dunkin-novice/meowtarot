@@ -3,7 +3,7 @@ import { getNewlyUnlockedDecks, normalizeId } from './data.js';
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
 const PROGRESS_VERSION = 2;
 const TOTAL_BASE_CARDS = 78;
-const STREAK_MILESTONES = Object.freeze([3, 7, 14]);
+const STREAK_MILESTONES = Object.freeze([1, 3, 7, 14, 30, 60, 100, 180, 365]);
 
 function generateLocalUserId() {
   try {

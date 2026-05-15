@@ -1704,6 +1704,28 @@ body[data-page='full'] #overall-actions[hidden] {
   text-decoration: none;
 }
 
+.streak-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0 4px;
+}
+
+.streak-progress-bar__fill {
+  height: 100%;
+  background: var(--color-accent, #b48be4);
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.22, 0.65, 0.18, 1);
+}
+
+.streak-progress-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #888);
+  margin: 0 0 12px;
+}
+
 .card-heading h2 {
   margin: 0 0 6px;
 }

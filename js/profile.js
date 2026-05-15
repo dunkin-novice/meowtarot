@@ -6,9 +6,9 @@ import {
   pathHasThaiPrefix,
   translations,
 } from './common.js';
-import { loadTarotManifest, normalizeId } from './data.js';
+import { getAllDecks, loadTarotManifest, normalizeId } from './data.js';
 import { computePhase } from './phase.js';
-import { getUserProgress } from './progress.js';
+import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { trackProfileRevisit } from './analytics.js';
@@ -123,6 +123,37 @@ function renderStreak(dict) {
   streak.textContent = (dict.profileStreakCurrent || (state.currentLang === 'th' ? 'สตรีคปัจจุบัน: {count} วัน' : 'Current streak: {count} days'))
     .replace('{count}', String(progress.streak_current || 0));
   card.appendChild(streak);
+
+  const nextMilestone = getNextStreakMilestone(progress);
+  if (nextMilestone) {
+    const { target, current, remaining } = nextMilestone;
+    const fillPct = Math.max(0, Math.min(100, Math.round((current / target) * 100)));
+    const targetDeck = getAllDecks().find((d) => d.unlock_day === target);
+    const deckName = state.currentLang === 'th'
+      ? (targetDeck?.name_th || targetDeck?.name || '')
+      : (targetDeck?.name || '');
+    const daysLabel = state.currentLang === 'th' ? 'วัน' : 'days';
+
+    const bar = document.createElement('div');
+    bar.className = 'streak-progress-bar';
+    const fill = document.createElement('div');
+    fill.className = 'streak-progress-bar__fill';
+    fill.style.width = `${fillPct}%`;
+    bar.appendChild(fill);
+    card.appendChild(bar);
+
+    const progressLabel = document.createElement('p');
+    progressLabel.className = 'streak-progress-label';
+    progressLabel.textContent = `${remaining} ${daysLabel} → ${deckName}`;
+    card.appendChild(progressLabel);
+  } else {
+    const progressLabel = document.createElement('p');
+    progressLabel.className = 'streak-progress-label';
+    progressLabel.textContent = state.currentLang === 'th'
+      ? 'ปลดล็อคไพ่ครบทุกชุดแล้ว 🎉'
+      : 'All streak decks unlocked 🎉';
+    card.appendChild(progressLabel);
+  }
 
   const total = document.createElement('p');
   total.textContent = (dict.profileReadingsTotal || (state.currentLang === 'th' ? 'อ่านรายวันทั้งหมด: {count}' : 'Total daily readings: {count}'))

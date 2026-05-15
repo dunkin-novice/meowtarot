@@ -93,7 +93,10 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
 
     if (!unlocked && !active) {
       const lockBadge = document.createElement('span');
-      lockBadge.textContent = `🔒 Day ${deck.unlock_day}`;
+      const isThai = window.location.pathname.startsWith('/th/');
+      lockBadge.textContent = isThai
+        ? `🔒 วันที่ ${deck.unlock_day}`
+        : `🔒 Day ${deck.unlock_day}`;
       lockBadge.style.cssText = 'position: absolute; top: 8px; right: 8px; background: rgba(61,44,88,0.85); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 6px; font-weight: 500;';
       cell.appendChild(lockBadge);
     }

@@ -140,7 +140,19 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
     if (isNext) {
       const badge = document.createElement('span');
       badge.textContent = dict.profileAchievementNext || 'Next';
-      badge.style.cssText = 'background: #9270d0; color: #fff; font-size: 10px; padding: 3px 7px; border-radius: 6px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; flex-shrink: 0;';
+      const badgeStyles = [
+        'background: #9270d0',
+        'color: #fff',
+        'font-size: 10px',
+        'padding: 3px 7px',
+        'border-radius: 6px',
+        'font-weight: 600',
+        'flex-shrink: 0',
+      ];
+      if (lang !== 'th') {
+        badgeStyles.push('letter-spacing: 0.05em', 'text-transform: uppercase');
+      }
+      badge.style.cssText = badgeStyles.join(';');
       row.appendChild(badge);
     }
 
