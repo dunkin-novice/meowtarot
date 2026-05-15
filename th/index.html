@@ -65,6 +65,19 @@
   </noscript>
   <link rel="preload" href="../css/styles.css" as="style" />
   <link rel="stylesheet" href="../css/styles.css" />
+
+  <!-- Phase 0: safe global token additions -->
+  <link rel="stylesheet" href="../css/theme-tokens.css" />
+
+  <!-- Phase 2: globalized light header (header-only — token flips deferred) -->
+  <link rel="stylesheet" href="../css/phase-2-header.css" />
+
+  <!-- Phase 2.1: logo visual treatment + homepage bottom-nav pastel theme -->
+  <link rel="stylesheet" href="../css/phase-2-1-logo.css" />
+
+  <!-- Phase 1: homepage light theme — scoped to body[data-page='home'] -->
+  <link rel="stylesheet" href="../css/phase-1-home.css" />
+
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -120,95 +133,35 @@
 
   <main class="page-shell home-page">
     <section class="home-hero-card home-hero-card--chooser" aria-labelledby="home-hero-title">
-      <div class="home-hero-copy home-hero-copy--centered">
-        <p class="eyebrow">เหมียวทาโร่ต์</p>
-        <h1 class="home-hero-title" id="home-hero-title">เลือกแบบการอ่านของคุณ</h1>
-      </div>
+      <a href="/th/daily.html" class="home-hero-cta" aria-labelledby="home-hero-title">
+        <h1 id="home-hero-title">ไพ่ของคุณรอคุณอยู่วันนี้</h1>
+        <p>หยุดพักสักครู่เพื่อตัวเอง</p>
+        <span class="home-hero-cta__btn" aria-hidden="true">จั่วไพ่ของฉัน</span>
+      </a>
 
-      <div class="home-path-grid" role="list" aria-label="เส้นทางการอ่านไพ่">
-        <a class="reading-path-card reading-path-card--chooser" href="daily.html" role="listitem" aria-label="เลือกการอ่านรายวัน">
-          <span class="reading-path-card__media">
-            <img
-              class="reading-path-card__image reading-path-card__image--default"
-              src="https://cdn.meowtarot.com/assets/images/features/daily-default.webp"
-              alt="ภาพตัวอย่างเมนูดูดวงรายวัน"
-              width="360"
-              height="600"
-              loading="eager"
-              fetchpriority="high"
-            />
-            <img
-              class="reading-path-card__image reading-path-card__image--active"
-              src="https://cdn.meowtarot.com/assets/images/features/daily-active.webp"
-              alt=""
-              aria-hidden="true"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-          </span>
-          <h2 class="reading-path-card__label">วันนี้ดวงเป็นอย่างไร?</h2>
-          <p class="reading-path-card__meta">ดูดวงรายวัน</p>
+      <div class="home-readings-label">การอ่านไพ่</div>
+
+      <div class="home-reading-grid">
+        <a href="/th/question.html" class="home-reading-tile" aria-label="การอ่านแบบถามคำถาม">
+          <div class="home-reading-tile__icon" aria-hidden="true">?</div>
+          <div class="home-reading-tile__label">ถามคำถาม</div>
+          <div class="home-reading-tile__sub">อดีต · ปัจจุบัน · อนาคต</div>
         </a>
-
-        <a class="reading-path-card reading-path-card--chooser" href="full.html" role="listitem" aria-label="เลือกการอ่านภาพรวมชีวิตช่วงนี้">
-          <span class="reading-path-card__media">
-            <img
-              class="reading-path-card__image reading-path-card__image--default"
-              src="https://cdn.meowtarot.com/assets/images/features/celtic-default.webp"
-              alt="ภาพตัวอย่างเมนูเซลติกครอส"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-            <img
-              class="reading-path-card__image reading-path-card__image--active"
-              src="https://cdn.meowtarot.com/assets/images/features/celtic-active.webp"
-              alt=""
-              aria-hidden="true"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-          </span>
-          <h2 class="reading-path-card__label">ช่วงนี้ชีวิตเป็นอย่างไร?</h2>
-          <p class="reading-path-card__meta">อ่านภาพรวมชีวิตในช่วง 6–12 เดือนข้างหน้า</p>
+        <a href="/th/full.html" class="home-reading-tile" aria-label="การอ่านแบบเซลติกครอส">
+          <div class="home-reading-tile__icon" aria-hidden="true">✦</div>
+          <div class="home-reading-tile__label">เซลติกครอส</div>
+          <div class="home-reading-tile__sub">อ่านไพ่ 10 ใบเชิงลึก</div>
         </a>
-
-        <a class="reading-path-card reading-path-card--chooser" href="question.html" role="listitem" aria-label="เลือกการอ่านแบบถามคำถาม">
-          <span class="reading-path-card__media">
-            <img
-              class="reading-path-card__image reading-path-card__image--default"
-              src="https://cdn.meowtarot.com/assets/images/features/question-default.webp"
-              alt="ภาพตัวอย่างเมนูถามคำถาม"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-            <img
-              class="reading-path-card__image reading-path-card__image--active"
-              src="https://cdn.meowtarot.com/assets/images/features/question-active.webp"
-              alt=""
-              aria-hidden="true"
-              width="360"
-              height="600"
-              loading="lazy"
-              fetchpriority="low"
-            />
-          </span>
-          <h2 class="reading-path-card__label">ถามคำถาม</h2>
-          <p class="reading-path-card__meta">เหมาะกับการสำรวจทีละเรื่องแบบโฟกัสในช่วง 3–6 เดือนข้างหน้า</p>
+        <a href="/th/tarot-card-meanings/" class="home-reading-tile" aria-label="เปิดคลังไพ่">
+          <div class="home-reading-tile__icon" aria-hidden="true">≡</div>
+          <div class="home-reading-tile__label">คลังไพ่</div>
+          <div class="home-reading-tile__sub">ไพ่ทาโรต์ 78 ใบและความหมาย</div>
         </a>
-      </div>
-
-      <div class="home-hero-actions home-hero-actions--subtle">
-        <a href="question.html?topic=other" class="btn btn-secondary home-secondary-cta" aria-label="จั่วไพ่ด่วนด้วยการอ่านแบบถามคำถาม">จั่วไพ่ด่วน</a>
-        <a href="/th/daily-card/" class="btn btn-secondary home-secondary-cta" aria-label="เปิดหน้าไพ่ยิปซีรายวัน">ไพ่ยิปซีรายวัน</a>
-        <a href="/th/quiz/tarot-card-personality/" class="btn btn-secondary home-secondary-cta" aria-label="เปิดแบบทดสอบคุณคือไพ่ทาโรต์ใบไหน">คุณคือไพ่ใบไหน?</a>
+        <a href="/th/profile.html" class="home-reading-tile" aria-label="ดูประวัติการอ่านไพ่">
+          <div class="home-reading-tile__icon" aria-hidden="true">↗</div>
+          <div class="home-reading-tile__label">เส้นทางของฉัน</div>
+          <div class="home-reading-tile__sub">ประวัติการอ่านไพ่ของคุณ</div>
+        </a>
       </div>
     </section>
   </main>
