@@ -8,6 +8,7 @@
 
 import { setActiveDeck, markDeckRewardSeen, hasSeenDeckReward } from './data.js';
 import { translations } from './common.js';
+import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
 const STYLE_FLAG = '__mt_deck_reward_styles_injected';
 const POPUP_ID = 'mt-deck-reward-popup';
@@ -228,6 +229,13 @@ export function showDeckRewardPopup(deck, lang = 'en') {
 
   const titleText = fmt(dict.deckRewardTitle, { deck: primaryName });
   const bodyText = fmt(dict.deckRewardBody, { day: dayValue, deck: primaryName });
+  const isAuthed = !!getCurrentUserSync();
+  const primaryCtaText = isAuthed
+    ? dict.deckRewardClaimCta
+    : (dict.deckRewardSignInCta || 'Sign in to claim');
+  const signInNote = isAuthed
+    ? ''
+    : `<p class="mt-dr-subtitle">${escapeHtml(dict.deckRewardSignInBody || 'Sign in to save your deck unlock across devices.')}</p>`;
 
   overlay.innerHTML = `
     <div class="mt-dr-sheet" role="document">
@@ -242,7 +250,8 @@ export function showDeckRewardPopup(deck, lang = 'en') {
       <h2 id="mt-dr-title" class="mt-dr-title">${escapeHtml(titleText)}</h2>
       ${secondaryName ? `<p class="mt-dr-subtitle">${escapeHtml(secondaryName)}</p>` : ''}
       <p class="mt-dr-body">${escapeHtml(bodyText)}</p>
-      <button type="button" class="mt-dr-cta-primary">${escapeHtml(dict.deckRewardClaimCta)}</button>
+      ${signInNote}
+      <button type="button" class="mt-dr-cta-primary">${escapeHtml(primaryCtaText)}</button>
       <button type="button" class="mt-dr-cta-secondary">${escapeHtml(dict.deckRewardLaterCta)}</button>
     </div>
   `;
@@ -265,11 +274,22 @@ export function showDeckRewardPopup(deck, lang = 'en') {
   const secondaryBtn = overlay.querySelector('.mt-dr-cta-secondary');
 
   if (primaryBtn) {
-    primaryBtn.addEventListener('click', () => {
-      try { setActiveDeck(deck.id); } catch (_) { /* swallow */ }
-      markDeckRewardSeen(deck.id);
-      dismiss();
-    }, { once: true });
+    if (isAuthed) {
+      primaryBtn.addEventListener('click', () => {
+        try { setActiveDeck(deck.id); } catch (_) { /* swallow */ }
+        markDeckRewardSeen(deck.id);
+        dismiss();
+      }, { once: true });
+    } else {
+      primaryBtn.addEventListener('click', async () => {
+        try {
+          localStorage.setItem('meowtarot_pending_deck_claim', deck.id);
+          await loginWithProvider('google');
+        } catch (error) {
+          console.warn('Sign-in for deck claim failed', error);
+        }
+      }, { once: true });
+    }
   }
 
   if (secondaryBtn) {

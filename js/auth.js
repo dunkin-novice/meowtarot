@@ -1,4 +1,5 @@
 import { maybeShowLoginReward } from './login-reward.js';
+import { setActiveDeck, markDeckRewardSeen } from './data.js';
 
 const AUTH_SESSION_KEY = 'meowtarot_auth_session';
 const AUTH_CONFIG_ERROR = 'Supabase auth is not configured';
@@ -51,6 +52,16 @@ async function createClient() {
       }
     });
     maybeShowLoginReward(session?.user, window.location.pathname.startsWith('/th/') ? 'th' : 'en');
+    try {
+      const pendingClaim = localStorage.getItem('meowtarot_pending_deck_claim');
+      if (pendingClaim && session?.user) {
+        setActiveDeck(pendingClaim);
+        markDeckRewardSeen(pendingClaim);
+        localStorage.removeItem('meowtarot_pending_deck_claim');
+      }
+    } catch (_) {
+      // ignore claim resume errors
+    }
   });
 
   const { data } = await client.auth.getUser();
@@ -82,6 +93,10 @@ export async function getCurrentUser() {
     ready: true,
   };
   return authState.user;
+}
+
+export function getCurrentUserSync() {
+  return authState.user ?? null;
 }
 
 export async function loginWithProvider(provider = 'google') {
