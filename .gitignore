@@ -1,2 +1,6 @@
 node_modules/
 assets/meow-v1/*.svg
+
+# Cowork maintenance scratch tooling (auto-generated each cycle, not for commit)
+scripts/.cowork-*
+cowork-scratch/
