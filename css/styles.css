@@ -5192,6 +5192,7 @@ body[data-page='reading'][data-reading-mode='daily'] .daily-motion-board {
   place-items: center;
   padding: clamp(10px, 2vw, 18px);
   overflow: hidden;
+  perspective: 800px;
 }
 
 body[data-page='reading'][data-reading-mode='daily'] .daily-motion-board--single {
