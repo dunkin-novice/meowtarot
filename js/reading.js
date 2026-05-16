@@ -3853,6 +3853,8 @@ function init() {
     onLangToggle: switchLanguageInPlace,
   });
 
+  import('./notifications.js').then(({ initDeepLink }) => initDeepLink());
+
   if (document.body) {
     document.body.setAttribute('data-reading-mode', state.mode || 'daily');
   }

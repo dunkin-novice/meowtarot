@@ -673,6 +673,9 @@ export function initShell(state, afterApply, activePage, options = {}) {
     if (lang === state.currentLang) return;
     trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: lang });
     localStorage.setItem(LANG_STORAGE_KEY, lang);
+    import('./notifications.js').then(({ isEnabled, scheduleDailyReminder }) => {
+      if (isEnabled()) scheduleDailyReminder(translations[lang]);
+    });
     if (typeof options?.onLangToggle === 'function') {
       options.onLangToggle(lang);
       return;

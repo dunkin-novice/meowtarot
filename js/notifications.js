@@ -4,6 +4,8 @@
  * All scheduling is local (on-device). No server required.
  */
 
+import { getUserProgress } from './progress.js';
+
 const NOTIF_ID = 1;
 const NOTIF_HOUR = 20;
 const NOTIF_PREF_KEY = 'meowtarot_notif_enabled';
@@ -45,6 +47,10 @@ export async function requestAndSchedule(dict) {
 export async function scheduleDailyReminder(dict) {
   const plugin = await getPlugin();
   if (!plugin || !isEnabled()) return;
+
+  const progress = getUserProgress();
+  const today = new Date().toISOString().slice(0, 10);
+  if (progress?.last_daily_read_date === today) return;
 
   const title = dict?.notifDailyTitle || 'Your card is waiting 🐱';
   const body = dict?.notifDailyBody || 'Take a quiet moment for yourself today.';
