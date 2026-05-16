@@ -2643,6 +2643,11 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
         newDecks.forEach((deck) => showDeckRewardPopup(deck, state.currentLang ?? 'th'));
       }, 300);
     }
+
+    setTimeout(async () => {
+      const { hasBeenAsked, requestAndSchedule } = await import('./notifications.js');
+      if (!hasBeenAsked()) requestAndSchedule(activeDict);
+    }, 3000);
   }
 }
 

@@ -275,6 +275,9 @@ export const translations = {
     achievement_deck_sugar_paws: 'Sugar Paws unlocked',
     achievement_deck_sushicat: 'Sushicat unlocked',
     achievement_deck_inkmess: 'InkMess unlocked',
+    notifDailyTitle: 'Your card is waiting 🐱',
+    notifDailyBody: 'Take a quiet moment for yourself today.',
+    notifPermissionNudge: 'Want a daily reminder to draw your card?',
   },
   th: {
     navHome: 'หน้าหลัก',
@@ -546,6 +549,9 @@ export const translations = {
     achievement_deck_sugar_paws: 'ปลดล็อคเหมียวละมุนแล้ว',
     achievement_deck_sushicat: 'ปลดล็อคเหมียวซูชิแล้ว',
     achievement_deck_inkmess: 'ปลดล็อคเหมียวยุ่งแล้ว',
+    notifDailyTitle: 'ไพ่ของคุณรอคุณอยู่ 🐱',
+    notifDailyBody: 'หยุดพักสักครู่เพื่อตัวเองวันนี้',
+    notifPermissionNudge: 'อยากรับการแจ้งเตือนเพื่อจั่วไพ่ทุกวันไหม?',
   },
 };
 
