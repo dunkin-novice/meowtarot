@@ -361,6 +361,10 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       slot.type = 'button';
       slot.className = 'card-slot';
       const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
+      if (i === 0) {
+        cardBack.fetchPriority = 'high';
+        cardBack.loading = 'eager';
+      }
       applyCardBackBackground(cardBack);
       slot.appendChild(cardBack);
       slot.onclick = () => {

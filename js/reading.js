@@ -2173,6 +2173,8 @@ function createDailyMotionStage(cards, dict) {
       className: 'card-back',
       alt: '',
     });
+    back.fetchPriority = 'high';
+    back.loading = 'eager';
     applyImgFallback(back, cardBackUrl, [getCardBackFallbackUrl()].filter(Boolean));
     backFace.appendChild(back);
 
@@ -3872,11 +3874,13 @@ function init() {
     }
   });
 
+  const MIGRATION_DONE_KEY = 'meowtarot_migration_done';
+
   if (isAuthConfigured()) {
     getCurrentUser()
       .then(async (user) => {
         authUiState.user = user || null;
-        if (user) {
+        if (user && !sessionStorage.getItem(MIGRATION_DONE_KEY)) {
           const migrationResult = await migrateLocalToAccount(user);
           if (!migrationResult?.ok) {
             const hydrateResult = await hydrateLocalFromCloud();
@@ -3884,6 +3888,7 @@ function init() {
               showTemporaryToast(buildRetentionText(activeDict, 'retentionSyncFailed', state.currentLang === 'th' ? 'ซิงก์ไม่สำเร็จตอนนี้ แต่ข้อมูลในเครื่องยังปลอดภัย' : 'Could not sync now. Your local journey is still safe.'));
             }
           }
+          sessionStorage.setItem(MIGRATION_DONE_KEY, '1');
         }
       })
       .catch((error) => {
