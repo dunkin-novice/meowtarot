@@ -763,3 +763,15 @@ Likely a browser paint/compositing issue. The 3rd card may be partially outside 
 4. Check if the 3rd card is below the fold when selected — if so, the fix may be scrollIntoView() after selection, or ensuring the glow style triggers a compositing layer.
 
 ---
+
+**BUG-018**
+File: js/asset-resolver.js
+Line: (grep for FALLBACK_BACK_PACK)
+Issue: FALLBACK_BACK_PACK is hardcoded to 'meow-v2', which has been retired as a deck ID. Should be 'moonmallow'.
+Impact: If asset resolution fails to find a card back for any deck, it falls back to the meow-v2 CDN folder instead of moonmallow. CDN folder still exists so no visible breakage today, but creates implicit dependency on a retired ID.
+Fix: Change FALLBACK_BACK_PACK = 'meow-v2' to FALLBACK_BACK_PACK = 'moonmallow' in js/asset-resolver.js.
+Note: js/asset-resolver.js is off-limits — re-authorize explicitly before fixing.
+Status: Open
+Date filed: 2026-05-19
+
+---
