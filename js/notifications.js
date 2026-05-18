@@ -7,7 +7,7 @@
 import { getUserProgress } from './progress.js';
 
 const NOTIF_ID = 1;
-const NOTIF_HOUR = 20;
+const NOTIF_HOUR = 7;
 const NOTIF_PREF_KEY = 'meowtarot_notif_enabled';
 const NOTIF_ASKED_KEY = 'meowtarot_notif_asked';
 
@@ -52,8 +52,8 @@ export async function scheduleDailyReminder(dict) {
   const today = new Date().toISOString().slice(0, 10);
   if (progress?.last_daily_read_date === today) return;
 
-  const title = dict?.notifDailyTitle || 'Your card is waiting 🐱';
-  const body = dict?.notifDailyBody || 'Take a quiet moment for yourself today.';
+  const title = dict?.notifDailyTitle || 'Your lucky color today 🐱';
+  const body = dict?.notifDailyBody || 'Check your lucky color today!';
 
   await plugin.cancel({ notifications: [{ id: NOTIF_ID }] }).catch(() => {});
 
