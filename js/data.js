@@ -4,18 +4,10 @@ import {
   resolveCardBackPath,
   buildCardImageUrls,
 } from './asset-resolver.js';
+import { getCurrentUserSync } from './auth.js';
 
 // Deck configuration (for future multi-deck support)
 export const DECKS = {
-  'meow-v2': {
-    id: 'meow-v2',
-    name: 'MeowTarot v2',
-    name_th: 'เหมียวฝันหวาน',
-    role: 'default',
-    unlock_day: null,
-    assetsBase: resolveDeckAssetBase('assets/meow-v2'),
-    backImage: buildAssetUrl('assets/meow-v2/00-back.webp'),
-  },
   'moonmallow': {
     id: 'moonmallow',
     name: 'Moonmallow',
@@ -117,14 +109,15 @@ export const DECKS = {
   },
 };
 
-export const DEFAULT_DECK_ID = 'meow-v2';
-export const FALLBACK_DECK_ID = 'meow-v2';
+export const DEFAULT_DECK_ID = 'moonmallow';
+export const FALLBACK_DECK_ID = 'moonmallow';
 
 const ACTIVE_DECK_STORAGE_KEY = 'meowtarot_active_deck';
 
 export function getActiveDeckId() {
   if (typeof localStorage === 'undefined') return DEFAULT_DECK_ID;
-  return localStorage.getItem(ACTIVE_DECK_STORAGE_KEY) || DEFAULT_DECK_ID;
+  const stored = localStorage.getItem(ACTIVE_DECK_STORAGE_KEY);
+  return (stored && DECKS[stored]) ? stored : DEFAULT_DECK_ID;
 }
 
 export let activeDeckId = getActiveDeckId();
@@ -136,6 +129,8 @@ export function getActiveDeck() {
 export function canUnlockDeck(id) {
   const deck = DECKS[id];
   if (!deck) return false;
+  if (id === 'moonmallow') return true;
+  if (!getCurrentUserSync()) return false;
   if (deck.role === 'default') return true;
   if (!deck.unlock_day) return true;
   if (typeof localStorage === 'undefined') return false;
