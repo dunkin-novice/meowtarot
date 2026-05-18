@@ -1,1 +1,0 @@
-{"date":"2026-05-19","session":"deck-inv-canUnlock","type":"fix","commit":null,"description":"deck-inventory: replace inline isUnlocked with canUnlockDeck, add sign-in lock badge for role=default decks, TH+EN","files":["js/deck-inventory.js"]}
