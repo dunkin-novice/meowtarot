@@ -6,13 +6,7 @@
  * show a Day-N badge and surface a brief unlock hint on tap.
  */
 
-import { getAllDecks, getActiveDeckId, setActiveDeck } from './data.js';
-
-function isUnlocked(deck, streak) {
-  if (deck.role === 'default') return true;
-  if (typeof deck.unlock_day !== 'number') return true;
-  return streak >= deck.unlock_day;
-}
+import { getAllDecks, getActiveDeckId, setActiveDeck, canUnlockDeck } from './data.js';
 
 function fmt(template, vars) {
   let result = String(template || '');
@@ -42,7 +36,7 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
 
   decks.forEach((deck) => {
     const active = deck.id === activeId;
-    const unlocked = isUnlocked(deck, streak);
+    const unlocked = canUnlockDeck(deck.id);
 
     const cell = document.createElement('div');
     cell.style.cssText = [
@@ -94,9 +88,10 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
     if (!unlocked && !active) {
       const lockBadge = document.createElement('span');
       const isThai = window.location.pathname.startsWith('/th/');
-      lockBadge.textContent = isThai
-        ? `🔒 วันที่ ${deck.unlock_day}`
-        : `🔒 Day ${deck.unlock_day}`;
+      const isSignInLock = deck.role === 'default';
+      lockBadge.textContent = isSignInLock
+        ? (isThai ? '🔒 เข้าสู่ระบบเพื่อปลดล็อก' : '🔒 Sign in to unlock')
+        : (isThai ? `🔒 วันที่ ${deck.unlock_day}` : `🔒 Day ${deck.unlock_day}`);
       lockBadge.style.cssText = 'position: absolute; top: 8px; right: 8px; background: rgba(61,44,88,0.85); color: #fff; font-size: 11px; padding: 3px 7px; border-radius: 6px; font-weight: 500;';
       cell.appendChild(lockBadge);
     }
@@ -106,7 +101,11 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
         if (cell.querySelector('.mt-deck-hint')) return;
         const hint = document.createElement('div');
         hint.className = 'mt-deck-hint';
-        hint.textContent = fmt(dict.profileDeckLockedHint, { day: deck.unlock_day });
+        const isSignInLock = deck.role === 'default';
+        const isThai = window.location.pathname.startsWith('/th/');
+        hint.textContent = isSignInLock
+          ? (isThai ? 'เข้าสู่ระบบเพื่อปลดล็อกสำรับนี้' : 'Sign in to unlock this deck')
+          : fmt(dict.profileDeckLockedHint, { day: deck.unlock_day });
         hint.style.cssText = 'margin-top: 10px; font-size: 11px; color: #9270d0; text-align: center; padding: 4px 6px; line-height: 1.3;';
         cell.appendChild(hint);
         setTimeout(() => {
