@@ -1,1 +1,0 @@
-{"date":"2026-05-18","session":"retire-meow-v2","type":"fix","commit":null,"description":"retire meow-v2: remove from DECKS, default to moonmallow, login-gate all non-moonmallow decks, add localStorage migration guard","files":["js/data.js"]}
