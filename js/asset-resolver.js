@@ -1,7 +1,7 @@
 import { ASSET_BASE_URL, buildAssetUrl } from './asset-config.js';
 import { getActiveDeckId } from './data.js';
 
-const FALLBACK_BACK_PACK = 'meow-v2';
+const FALLBACK_BACK_PACK = 'moonmallow';
 const CARD_EXISTS_CACHE = new Map();
 const FALLBACK_LOG_CACHE = new Set();
 let didLogAssetBase = false;
