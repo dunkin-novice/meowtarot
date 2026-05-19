@@ -3778,6 +3778,17 @@ function configureActionButtons(dict = translations[state.currentLang]) {
   };
   shareBtn?.addEventListener('click', shareButtonHandler);
 
+  if (typeof window !== 'undefined' && !window._meowShareListenerBound) {
+    window._meowShareListenerBound = true;
+    document.addEventListener('meow:request-share', () => {
+      try {
+        openSharePage();
+      } catch (err) {
+        console.error('[meow] request-share failed:', err);
+      }
+    });
+  }
+
   newReadingButtonHandler = () => {
     if (state.mode === 'daily') {
       const nextCards = getDailyReadingCards([]);

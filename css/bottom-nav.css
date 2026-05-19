@@ -108,6 +108,40 @@
   }
 }
 
+@media (max-width: 768px) {
+  .bottom-nav__item--share,
+  .bottom-nav__item--continue {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .bottom-nav__center-btn--share {
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    color: #fff;
+  }
+
+  .bottom-nav__center-btn--share svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bottom-nav__center-btn--continue {
+    background: var(--gold);
+  }
+
+  .bottom-nav__item--continue[disabled] {
+    cursor: not-allowed;
+  }
+
+  .bottom-nav__item--continue[disabled] .bottom-nav__center-btn--continue {
+    opacity: 0.85;
+    filter: saturate(0.6);
+  }
+}
+
 @media (min-width: 769px) {
   #bottom-nav-shell {
     display: none !important;

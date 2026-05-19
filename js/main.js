@@ -438,13 +438,15 @@ function renderDaily() {
   const board = document.getElementById('daily-board');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  if (!dealShuffleBtn || !board || !continueBtn || !counter) return;
+  if (!dealShuffleBtn || !board || !counter) return;
 
   let selectedCards = [];
   const updateDailySelectionUi = (cards) => {
     selectedCards = cards;
     counter.textContent = `${cards.length}/${DAILY_SELECTION_MAX}`;
-    continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX;
+    if (continueBtn) {
+      continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX;
+    }
   };
 
   const dailyBoard = setupBoard(
@@ -457,14 +459,16 @@ function renderDaily() {
 
   setRitualCtaLabel(dealShuffleBtn, true);
   counter.textContent = `0/${DAILY_SELECTION_MAX}`;
-  continueBtn.disabled = true;
+  if (continueBtn) {
+    continueBtn.disabled = true;
+  }
 
   dealShuffleBtn.onclick = () => {
     dailyBoard.render();
     updateDailySelectionUi([]);
   };
 
-  continueBtn.onclick = () => {
+  const commitDailySelection = () => {
     const pickedCards = selectedCards.length ? selectedCards : dailyBoard.getSelectedCards();
     if (pickedCards.length !== DAILY_SELECTION_MAX) return;
     const selectedIds = pickedCards
@@ -474,6 +478,21 @@ function renderDaily() {
 
     saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: selectedIds });
   };
+
+  if (continueBtn) {
+    continueBtn.onclick = commitDailySelection;
+  }
+}
+
+if (typeof window !== 'undefined' && !window._meowContinueListenerBound) {
+  window._meowContinueListenerBound = true;
+  document.addEventListener('meow:request-continue', () => {
+    const btn =
+      document.getElementById('daily-continue') ||
+      document.getElementById('question-continue') ||
+      document.getElementById('overall-continue');
+    if (btn && !btn.disabled) btn.click();
+  });
 }
 
 async function renderOverall() {
