@@ -1,5 +1,5 @@
 import { maybeShowLoginReward } from './login-reward.js';
-import { setActiveDeck, markDeckRewardSeen } from './data.js';
+import { setActiveDeck, markDeckRewardSeen, resetActiveDeck } from './data.js';
 
 const AUTH_SESSION_KEY = 'meowtarot_auth_session';
 const AUTH_CONFIG_ERROR = 'Supabase auth is not configured';
@@ -51,6 +51,9 @@ async function createClient() {
         // ignore listener error
       }
     });
+    if (_event === 'SIGNED_OUT') {
+      resetActiveDeck();
+    }
     maybeShowLoginReward(session?.user, window.location.pathname.startsWith('/th/') ? 'th' : 'en');
     try {
       const pendingClaim = localStorage.getItem('meowtarot_pending_deck_claim');

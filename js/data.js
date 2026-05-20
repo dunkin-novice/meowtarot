@@ -158,6 +158,10 @@ export function setActiveDeck(id) {
   activeDeckId = id;
 }
 
+export function resetActiveDeck() {
+  activeDeckId = DEFAULT_DECK_ID;
+}
+
 export function getAllDecks() {
   return Object.values(DECKS);
 }
