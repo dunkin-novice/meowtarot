@@ -778,7 +778,7 @@ Date filed: 2026-05-19
 
 ## BUG-019 — Streak-locked deck persists for anonymous users via localStorage
 
-**Status:** Reported, not yet verified or triaged.
+**Status:** Resolved 2026-05-20 (see Resolution section below).
 **Priority:** Medium — T-12 violation at the selection layer; cosmetic but undermines unlock logic.
 **Reported:** 2026-05-20
 
@@ -810,3 +810,20 @@ On logout, call `localStorage.removeItem('activeDeckId')` (or equivalent reset t
 2. Read `js/auth.js` logout handler — confirm whether `activeDeckId` is cleared on logout.
 3. Apply the reported fix: clear (or reset to `moonmallow`) the active-deck localStorage key in the logout path before auth state teardown.
 4. Verify `canUnlockDeck()` remains the single source of truth — this fix is additive, not a replacement for the gate. Add a regression check that anonymous `getActiveDeckId()` cannot return a streak-locked deck regardless of stale localStorage.
+
+### Resolution (2026-05-20)
+
+**Reported root cause was wrong.** Diagnosis on triage showed the localStorage clear was already in place — `js/auth.js:118–131` clears `meowtarot_active_deck` (along with 10 other user-state keys) inside the `logout()` function. That cleanup was added 2026-05-14 in commit `f7817aa1`, six days before the bug was filed. So localStorage state was NOT the actual culprit.
+
+**Actual root cause:** stale module-level cache in `js/data.js`. The line `export let activeDeckId = getActiveDeckId();` runs once at module load. After `logout()` clears localStorage, `getActiveDeckId()` (which re-reads localStorage) correctly returns `moonmallow`, but the cached `activeDeckId` variable still holds the pre-logout deck id until the page hard-reloads. Consumers of `getActiveDeck()` (line 125–127) read the cached variable, not localStorage, so they see the stale value.
+
+**Reproduction model:** SPA-style logout (no hard reload) → deck-inventory re-renders → reads stale module cache → shows streak-locked deck as active. Hard reload re-inits the module → bug self-heals.
+
+**Fix shipped (commit `97b9c4f`):**
+- Added `resetActiveDeck()` to `js/data.js` — sets the module cache back to `DEFAULT_DECK_ID`.
+- Extended `js/auth.js` `onAuthStateChange` listener to call `resetActiveDeck()` when `_event === 'SIGNED_OUT'`. Placed after the `authListeners.forEach` fanout, before `maybeShowLoginReward` and pendingClaim gates.
+- Import line on `js/auth.js:2` extended to include `resetActiveDeck`.
+
+**Why this works regardless of timing:** the SIGNED_OUT event is the canonical Supabase signal for a just-completed logout, fires synchronously inside the auth listener, and resets the module cache before any UI re-render that calls `getActiveDeck()` reads from the cache. Belt-and-suspenders defense (re-reading from localStorage inside `getActiveDeck()`) was considered but deferred — `resetActiveDeck()` covers all current paths.
+
+**Not changed:** `canUnlockDeck()` (line 129–144) remains the single source of truth for the unlock gate. This fix is additive — it ensures the cache is consistent with localStorage at the SIGNED_OUT boundary, not a replacement for any gate.
