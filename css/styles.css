@@ -1,4 +1,152 @@
-@import url('./bottom-nav.css');
+:root {
+  --bottom-nav-height: 64px;
+}
+
+#bottom-nav-shell {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  #bottom-nav-shell {
+    display: block;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 110;
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: end;
+    background: color-mix(in srgb, var(--color-bg) 84%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--color-border-soft);
+  }
+
+  .bottom-nav__item {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--color-text-muted-soft);
+    font-size: 12px;
+    line-height: 1.1;
+  }
+
+  .bottom-nav__item.is-active {
+    color: var(--lavender);
+  }
+
+  .bottom-nav__icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .bottom-nav__item--center {
+    transform: translateY(-12px);
+    gap: 6px;
+  }
+
+  .bottom-nav__center-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--midnight);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  .bottom-nav__item--center.is-active .bottom-nav__center-btn {
+    box-shadow: 0 0 0 4px rgba(201, 183, 255, 0.3), 0 6px 16px rgba(0, 0, 0, 0.18);
+  }
+
+  body.has-bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+
+  body.has-bottom-nav #site-footer {
+    margin-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.has-bottom-nav .site-header {
+    background: rgba(5, 9, 26, 0.88);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 8px 12px;
+  }
+
+  body.has-bottom-nav .mobile-menu-toggle,
+  body.has-bottom-nav .nav-panel,
+  body.has-bottom-nav .nav-logo,
+  body.has-bottom-nav .header-title {
+    display: none !important;
+  }
+
+  body.has-bottom-nav .nav-card-top {
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  body.has-bottom-nav .nav-actions {
+    margin-left: auto;
+  }
+
+  body.has-bottom-nav .language-toggle--mobile {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .bottom-nav__item--share,
+  .bottom-nav__item--continue {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .bottom-nav__center-btn--share {
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    color: #fff;
+  }
+
+  .bottom-nav__center-btn--share svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bottom-nav__center-btn--continue {
+    background: var(--gold);
+  }
+
+  .bottom-nav__item--continue[disabled] {
+    cursor: not-allowed;
+  }
+
+  .bottom-nav__item--continue[disabled] .bottom-nav__center-btn--continue {
+    opacity: 0.85;
+    filter: saturate(0.6);
+  }
+}
+
+@media (min-width: 769px) {
+  #bottom-nav-shell {
+    display: none !important;
+  }
+}
 
 :root {
   /* Canonical token layer (Phase 1) */
@@ -8158,3 +8306,184 @@ body[data-page='home'] .reading-path-card:focus-visible {
   font-family: 'Sarabun', sans-serif;
 }
 /* ─────────────────────────────────────────────────────────────────────── */
+
+
+:root {
+
+  /* ── NEW TOKENS (additive — zero collision risk) ───────────────────── */
+
+  /* Pastel palette */
+  --color-pastel-bg:        #fdf8ff;
+  --color-pastel-surface:   rgba(255, 255, 255, 0.88);
+  --color-plum:             #3d2c58;
+  --color-plum-mid:         #7a5f99;
+  --color-plum-soft:        #a48ec0;
+  --color-lavender-soft:    #c4a8f0;
+  --color-blush-soft:       #e8a8cc;
+  --color-sky-soft:         #90c8f0;
+  --color-gold-warm:        #b8895c;
+
+  /* Glow tokens */
+  --glow-lavender:          0 0 36px rgba(181, 154, 232, 0.28),
+                            0 0 80px rgba(181, 154, 232, 0.10);
+  --glow-blush:             0 0 32px rgba(232, 168, 204, 0.25);
+  --glow-gold:              0 0 28px rgba(184, 137, 92, 0.20);
+
+  /* Border tokens */
+  --color-border-lavender:  rgba(172, 130, 210, 0.18);
+  --color-border-gold:      rgba(184, 137, 92, 0.22);
+
+  /* Pastel shadow tokens */
+  --shadow-pastel-sm:       0 4px 16px rgba(120, 80, 180, 0.09);
+  --shadow-pastel-md:       0 8px 32px rgba(120, 80, 180, 0.12);
+  --shadow-pastel-lg:       0 16px 48px rgba(120, 80, 180, 0.15);
+
+  /*
+   * Phase 2+ overrides intentionally commented out.
+   * Do not uncomment as part of this task.
+   */
+}
+
+
+
+/* 1. SITE HEADER — global */
+.site-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(172, 130, 210, 0.15);
+  box-shadow: 0 2px 20px rgba(120, 80, 180, 0.07);
+}
+
+.logo-text { color: #3d2c58; }
+.nav-link  { color: #7a5f99; }
+
+.nav-link.active,
+.nav-link:hover {
+  background: rgba(181, 154, 232, 0.12);
+  color: #6b4faa;
+}
+
+.lang-btn         { color: #3d2c58; }
+.lang-btn.active  { color: #6b4faa; }
+
+.language-toggle {
+  border-left-color: rgba(172, 130, 210, 0.20);
+}
+
+.mobile-menu-toggle {
+  background: rgba(181, 154, 232, 0.12);
+  border-color: rgba(181, 154, 232, 0.25);
+}
+
+.mobile-menu-toggle .bar {
+  background: #3d2c58;
+}
+
+@media (max-width: 900px) {
+  .nav-panel {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(172, 130, 210, 0.20);
+    box-shadow: 0 14px 40px rgba(120, 80, 180, 0.14);
+  }
+  .nav-link {
+    border-color: rgba(172, 130, 210, 0.15);
+    background: rgba(181, 154, 232, 0.06);
+    color: #3d2c58;
+  }
+  .nav-meta {
+    border-top-color: rgba(172, 130, 210, 0.20);
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Phase 2.0.1 — bottom-nav specificity fix
+ *
+ * The bottom-nav rules earlier in this file declare:
+ *   body.has-bottom-nav .site-header { background: rgba(5, 9, 26, 0.88); }
+ *
+ * That selector has specificity (0,2,1) and beat Phase 2's plain
+ * .site-header at (0,1,0), causing the mobile header to revert to
+ * dark navy on every page where the bottom-nav is active (all mobile
+ * widths ≤768px).
+ *
+ * Match specificity here so source order wins: this block follows the
+ * bottom-nav rules within the consolidated stylesheet, so a tied
+ * (0,2,1) selector wins by being later.
+ *
+ * Only background and border-bottom-color overridden — padding kept
+ * intentionally to preserve bottom-nav's compact 8px 12px on mobile.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  body.has-bottom-nav .site-header {
+    background: rgba(255, 255, 255, 0.82);
+    border-bottom-color: rgba(172, 130, 210, 0.15);
+  }
+}
+
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §1 — Logo wordmark visual treatment (all EN pages)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/* Wordmark "MeowTarot" — when shown via .nav-card-top at < 1024px */
+.nav-brand,
+.header-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 1.45rem;
+  color: #3d2c58;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.nav-brand:hover,
+.header-title:hover {
+  color: #6b4faa;
+}
+
+/* Star ✦ logo — when shown via .nav-logo at >= 1024px */
+.nav-logo,
+.logo-text {
+  font-size: 1.5rem;
+  color: #b59ae8;
+  text-decoration: none;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.nav-logo:hover,
+.logo-text:hover {
+  color: #6b4faa;
+  transform: scale(1.08) rotate(-4deg);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §2 — Homepage bottom-nav pastel theme (mobile only, homepage only)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  body[data-page='home'] .bottom-nav {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(172, 130, 210, 0.18);
+    box-shadow: 0 -4px 24px rgba(120, 80, 180, 0.08);
+  }
+
+  body[data-page='home'] .bottom-nav__item {
+    color: #7a5f99;
+  }
+
+  body[data-page='home'] .bottom-nav__item.is-active {
+    color: #6b4faa;
+  }
+
+  /* Center 'Draw' CTA intentionally NOT overridden — keeps gold accent. */
+}

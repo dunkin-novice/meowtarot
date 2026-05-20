@@ -14,7 +14,7 @@
  *   - Any Thai page (/th/)
  *   - Share/poster flows
  *
- * REQUIRES: css/theme-tokens.css loaded first
+ * REQUIRES: design tokens from styles.css (loads first in HTML)
  * ─────────────────────────────────────────────────────────────────────────
  */
 
