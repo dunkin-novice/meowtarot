@@ -85,6 +85,9 @@ function getCardSummary(card) {
 }
 
 function formatCategoryCount(count) {
+  if (state.currentLang === 'th') {
+    return `${count} ใบ`;
+  }
   return `${count} card${count === 1 ? '' : 's'}`;
 }
 
