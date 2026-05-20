@@ -21,7 +21,6 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
   container.innerHTML = '';
 
   const activeId = getActiveDeckId();
-  const streak = Number(progress?.streak_current) || 0;
   const decks = getAllDecks();
 
   const panel = document.createElement('section');
