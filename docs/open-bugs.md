@@ -775,3 +775,38 @@ Status: Open
 Date filed: 2026-05-19
 
 ---
+
+## BUG-019 — Streak-locked deck persists for anonymous users via localStorage
+
+**Status:** Reported, not yet verified or triaged.
+**Priority:** Medium — T-12 violation at the selection layer; cosmetic but undermines unlock logic.
+**Reported:** 2026-05-20
+
+### Symptom
+
+Anonymous user (not signed in) sees a streak-locked deck (e.g. `boba-oracle`) as their active deck. The deck-inventory page shows it selected even though the user has no session.
+
+### Suspected root cause (unverified)
+
+`activeDeckId` is persisted in localStorage from a previous logged-in session. On logout, auth state is cleared but `activeDeckId` is not reset to `moonmallow`. On next anonymous visit, `getActiveDeckId()` reads the stale localStorage value and returns `boba-oracle`, bypassing `canUnlockDeck()` at the selection layer (though `canUnlockDeck()` itself is correct — the gate is the deck selection, not the unlock check).
+
+### Reported fix
+
+On logout, call `localStorage.removeItem('activeDeckId')` (or equivalent reset to `moonmallow`) before clearing auth state.
+
+### Files involved
+
+- `js/data.js` — `getActiveDeckId()`, logout flow, `canUnlockDeck()`
+- `js/auth.js` — logout handler (where the localStorage clear should happen)
+
+### Files explicitly off-limits
+
+- `js/asset-resolver.js` — CLAUDE.md hard rule #4, never modify
+- `share/normalize-payload.js` — CLAUDE.md "ask before modifying" list
+
+### Suggested first session
+
+1. Reproduce on live site: log in, switch to `boba-oracle`, log out. Confirm `boba-oracle` still shows as active deck for the anonymous session.
+2. Read `js/auth.js` logout handler — confirm whether `activeDeckId` is cleared on logout.
+3. Apply the reported fix: clear (or reset to `moonmallow`) the active-deck localStorage key in the logout path before auth state teardown.
+4. Verify `canUnlockDeck()` remains the single source of truth — this fix is additive, not a replacement for the gate. Add a regression check that anonymous `getActiveDeckId()` cannot return a streak-locked deck regardless of stale localStorage.
