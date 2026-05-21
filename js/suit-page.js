@@ -252,6 +252,252 @@ const SUIT_COPY = {
   },
 };
 
+const SUIT_COPY_TH = {
+  major: {
+    name: 'เมเจอร์ อาร์คานา',
+    slug: 'major',
+    path: '/th/tarot-card-meanings/major',
+    title: 'ความหมายไพ่เมเจอร์ อาร์คานา',
+    intro:
+      'เมเจอร์ อาร์คานา คือการเดินทางของชีวิตผ่านไพ่ 22 ใบ แต่ละใบบอกเล่าจุดเปลี่ยนสำคัญ — การตื่นรู้ บทท้าทาย และการเติบโต — ที่ส่งผลกระทบต่อทุกมิติของชีวิต',
+    element: 'ทุกธาตุ',
+    themes: ['ต้นแบบชีวิต', 'บทเรียนจิตวิญญาณ', 'จุดเปลี่ยนโชคชะตา'],
+    highlights: ['หมายเลข 0–21 · จากคนโง่ถึงโลก', 'ใช้เมื่อต้องการเห็นภาพรวมของการอ่าน'],
+    guide: {
+      lead: 'ตั้งคำถามใหญ่และลึก ไพ่ชุดนี้บ่งชี้จุดเปลี่ยนสำคัญและเชื่อมโยงอดีต ปัจจุบัน อนาคต',
+      steps: [
+        {
+          title: 'อ่านบทของชีวิต',
+          text: 'สังเกตว่าไพ่บ่งบอกการเริ่มต้น (คนโง่ นักมายากล) จุดกึ่งกลาง (ความแข็งแกร่ง ความตาย) หรือบทสรุป (การพิพากษา โลก)',
+        },
+        {
+          title: 'จับบทเรียนให้ได้',
+          text: 'เชื่อมไพ่กับคำถามของคุณ: ความเชื่อ ทางเลือก หรือสิ่งที่ต้องปล่อยวางในตอนนี้คืออะไร?',
+        },
+        {
+          title: 'นำไปใช้จริง',
+          text: 'สรุปแสงและเงาของไพ่ในหนึ่งประโยคที่ลงมือทำได้วันนี้',
+        },
+      ],
+    },
+    faqLead: 'คำถามที่พบบ่อยเกี่ยวกับการอ่านไพ่ 22 ต้นแบบ',
+    faqs: [
+      {
+        q: 'เมเจอร์ อาร์คานา ต่างจากไพ่ชุดอื่นอย่างไร?',
+        a: 'ไพ่ชุดนี้บอกเล่าการเดินทางหลักของชีวิต — อัตลักษณ์ คุณค่า การเติบโตทางจิตวิญญาณ — ต่างจากไมเนอร์ที่ว่าด้วยเรื่องรายวัน เช่น งาน ความรัก การเงิน',
+      },
+      {
+        q: 'จำเป็นต้องมีไพ่เมเจอร์ในทุกไพ่สเปรดไหม?',
+        a: 'ไม่จำเป็น ถ้าเมเจอร์โผล่มาเองให้ถือว่าเป็นสัญญาณสำคัญ ถ้าไม่มีเลย แปลว่าสถานการณ์อาจเกี่ยวกับการตัดสินใจในชีวิตประจำวัน',
+      },
+      {
+        q: 'ต้องอ่านไพ่ตั้งตรงและกลับหัวแยกกันไหม?',
+        a: 'ไม่ต้อง กดเข้าไพ่แต่ละใบจะเห็นความหมายทั้งสองด้านในหน้าเดียว',
+      },
+      {
+        q: 'ถ้าออกมาหลายใบเมเจอร์พร้อมกันอ่านอย่างไร?',
+        a: 'เรียงตามหมายเลขเพื่อดูเส้นเรื่อง ตัวเลขต้นๆ บ่งถึงพลังเริ่มต้น ตัวเลขสูงบ่งถึงบทสรุปและการผสานรวม',
+      },
+      {
+        q: 'หาไพ่ที่ต้องการเร็วที่สุดได้อย่างไร?',
+        a: 'ใช้มุมมองรายการเพื่อสแกนลำดับไพ่ แล้วกดชื่อเพื่อเข้าหน้าความหมายเต็ม',
+      },
+    ],
+  },
+  wands: {
+    name: 'ไม้เท้า',
+    slug: 'wands',
+    path: '/th/tarot-card-meanings/wands',
+    title: 'ความหมายไพ่ไม้เท้า',
+    intro:
+      'ไม้เท้า คือชุดธาตุไฟแห่งแรงบันดาลใจ ความกล้าลงมือ และพลังสร้างสรรค์ บอกเล่าวิธีที่คุณจุดไฟ ลุยหน้า และสร้างสรรค์สิ่งใหม่',
+    element: 'ไฟ',
+    themes: ['แรงบันดาลใจ', 'การลงมือทำ', 'พลังสร้างสรรค์'],
+    highlights: ['เอซถึงคิง · 14 ใบ', 'เหมาะสำหรับคำถามด้านอาชีพ โปรเจกต์ และพลังงานส่วนตัว'],
+    guide: {
+      lead: 'ใช้ไพ่ไม้เท้าเมื่อต้องการความชัดเจนด้านทิศทาง แรงผลักดัน และการตัดสินใจลงมือทำ',
+      steps: [
+        {
+          title: 'จับไฟที่กำลังลุก',
+          text: 'เอซถึงสามบ่งถึงแนวคิดใหม่และการขยาย สี่ถึงเจ็ดทดสอบความมุ่งมั่นและการแข่งขัน สิบและไพ่ราชสำนักสอนการบริหารพลังงานระยะยาว',
+        },
+        {
+          title: 'ถามว่าพลังงานนั้นเป็นของคุณจริงไหม',
+          text: 'ไพ่ไม้เท้าชี้ว่าคุณกำลังไล่ตามเป้าหมายของตัวเองหรือเป้าหมายของคนอื่น ระบุแหล่งที่มาของแรงจูงใจให้ชัดเจน',
+        },
+        {
+          title: 'หาก้าวถัดไปหนึ่งก้าว',
+          text: 'แปลพลังงานในไพ่เป็นการกระทำที่เล็กที่สุดและเป็นรูปธรรมที่สุดที่ทำได้ในวันนี้',
+        },
+      ],
+    },
+    faqLead: 'คำถามที่พบบ่อยเกี่ยวกับไพ่ไม้เท้าและพลังงานสร้างสรรค์',
+    faqs: [
+      {
+        q: 'ไพ่ไม้เท้าเกี่ยวกับงานอย่างเดียวไหม?',
+        a: 'ไม่ใช่ ครอบคลุมทุกสิ่งที่ต้องการพลังงานและแรงผลักดัน ทั้งโปรเจกต์ส่วนตัว ความสัมพันธ์ที่ต้องการความกล้า และการเติบโตทางจิตวิญญาณ',
+      },
+      {
+        q: 'ถ้าไพ่ไม้เท้าที่ออกมารู้สึกหนักใจควรทำอย่างไร?',
+        a: 'อาจบ่งถึงพลังงานที่ถูกกดไว้หรือการไล่ตามสิ่งผิดทิศ ลองหยุดพักแล้วถามตัวเองว่าอะไรที่ยังจุดประกายความตื่นเต้นอยู่จริงๆ',
+      },
+      {
+        q: 'ไพ่ใบไหนเริ่มต้นเรื่องของชุดไม้เท้า?',
+        a: 'เอซไม้เท้าคือประกายแรกของแรงบันดาลใจ มุมมองรายการช่วยให้เห็นว่าพลังนั้นพัฒนาและถูกทดสอบอย่างไรตลอดทั้งชุด',
+      },
+      {
+        q: 'ทำไมต้องใช้ลิงก์เดียว?',
+        a: 'ไพ่ทุกใบในชุดไม้เท้าเปิดหน้าเดียวที่มีความหมายทั้งตั้งตรงและกลับหัว ไม่กระจาย URL',
+      },
+    ],
+  },
+  cups: {
+    name: 'ถ้วย',
+    slug: 'cups',
+    path: '/th/tarot-card-meanings/cups',
+    title: 'ความหมายไพ่ถ้วย',
+    intro:
+      'ถ้วย คือชุดธาตุน้ำแห่งความรู้สึก สัญชาตญาณ และความสัมพันธ์ บอกเล่าวิธีที่คุณให้ รับ และเติมเต็มพลังงานทางอารมณ์',
+    element: 'น้ำ',
+    themes: ['ความรู้สึก', 'สัญชาตญาณ', 'ความสัมพันธ์'],
+    highlights: ['เอซถึงคิง · 14 ใบ', 'เหมาะสำหรับไพ่สเปรดด้านความรักและการเช็กอารมณ์'],
+    guide: {
+      lead: 'ใช้ไพ่ถ้วยเมื่อต้องการความชัดเจนด้านการเชื่อมต่อ ความเห็นอกเห็นใจ และขอบเขตทางอารมณ์',
+      steps: [
+        {
+          title: 'ตามกระแสน้ำ',
+          text: 'เอซถึงสามบ่งถึงการเปิดใหม่และชุมชน สี่ถึงเจ็ดทดสอบความพึงพอใจและวิสัยทัศน์ สิบและไพ่ราชสำนักสอนการไหลของอารมณ์ที่เติบโตแล้ว',
+        },
+        {
+          title: 'ตั้งชื่อความรู้สึก',
+          text: 'กำหนดคำอธิบายความรู้สึกหนึ่งคำให้กับแต่ละไพ่ — อยากรู้ สงบ กระสับกระส่าย ระวัง — เพื่อให้การอ่านจับต้องได้',
+        },
+        {
+          title: 'เช็กความสมดุล',
+          text: 'ถามว่าพลังงานนั้นเป็นสองทางหรือฝ่ายเดียว ไพ่ถ้วยชี้ให้เห็นจุดที่ควรหันกลับมาเติมให้ตัวเอง',
+        },
+      ],
+    },
+    faqLead: 'คำถามที่พบบ่อยเกี่ยวกับไพ่ถ้วยและการอ่านด้านอารมณ์',
+    faqs: [
+      {
+        q: 'ไพ่ถ้วยเกี่ยวกับความรักอย่างเดียวไหม?',
+        a: 'ไม่ใช่ ครอบคลุมการแลกเปลี่ยนทางอารมณ์ทุกรูปแบบ ทั้งครอบครัว มิตรภาพ ความสำเร็จด้านความคิดสร้างสรรค์ และความไว้วางใจทางจิตวิญญาณ',
+      },
+      {
+        q: 'ถ้าไพ่ถ้วยที่ออกมารู้สึกหนักใจควรทำอย่างไร?',
+        a: 'ไพ่กลับหัวหรือไพ่ที่ท้าทายบ่งถึงอารมณ์ที่ค้างอยู่ จดบันทึกความรู้สึกนั้น แล้วเลือกลงมือทำสิ่งสนับสนุนตัวเองหนึ่งอย่าง',
+      },
+      {
+        q: 'ไพ่ใบไหนเริ่มต้นเรื่องของชุดถ้วย?',
+        a: 'เอซถ้วยเปิดพลังงานอารมณ์ใหม่ มุมมองรายการช่วยให้เห็นว่าพลังนั้นพัฒนาไปอย่างไรตลอดทั้งชุด',
+      },
+      {
+        q: 'ทำไมต้องใช้ลิงก์เดียว?',
+        a: 'ไพ่ทุกใบในชุดถ้วยเปิดหน้าเดียวที่มีความหมายทั้งตั้งตรงและกลับหัว ไม่กระจาย URL',
+      },
+    ],
+  },
+  swords: {
+    name: 'ดาบ',
+    slug: 'swords',
+    path: '/th/tarot-card-meanings/swords',
+    title: 'ความหมายไพ่ดาบ',
+    intro:
+      'ดาบ คือชุดธาตุลมแห่งความคิด เหตุผล และการตัดสินใจ บอกเล่าวิธีที่คุณวิเคราะห์ สื่อสาร และรับมือกับความขัดแย้ง',
+    element: 'ลม',
+    themes: ['ความคิด', 'เหตุผล', 'การตัดสินใจ'],
+    highlights: ['เอซถึงคิง · 14 ใบ', 'เหมาะสำหรับคำถามด้านความขัดแย้ง การสื่อสาร และความชัดเจนในใจ'],
+    guide: {
+      lead: 'ใช้ไพ่ดาบเมื่อต้องการตัดสินใจ เคลียร์ความคิด หรือเข้าใจสถานการณ์ที่ซับซ้อน',
+      steps: [
+        {
+          title: 'อ่านความคมของใบมีด',
+          text: 'เอซถึงสามบ่งถึงความชัดเจนและการสื่อสาร สี่ถึงเจ็ดทดสอบความขัดแย้งและการฟื้นตัว สิบและไพ่ราชสำนักสอนวิธีใช้ความคิดอย่างเชี่ยวชาญ',
+        },
+        {
+          title: 'แยกความจริงออกจากเรื่องเล่า',
+          text: 'ไพ่ดาบมักสะท้อนความคิดที่ตัวเองสร้างขึ้น ถามว่าสิ่งที่คิดอยู่นั้นเป็นข้อเท็จจริงหรือแค่การตีความ',
+        },
+        {
+          title: 'ตัดสินใจให้ชัด',
+          text: 'แปลความคมของไพ่เป็นการตัดสินใจหรือการสื่อสารที่ชัดเจนหนึ่งอย่างที่ค้างอยู่',
+        },
+      ],
+    },
+    faqLead: 'คำถามที่พบบ่อยเกี่ยวกับไพ่ดาบและการอ่านด้านความคิด',
+    faqs: [
+      {
+        q: 'ไพ่ดาบหมายความว่าจะมีเรื่องไม่ดีเกิดขึ้นไหม?',
+        a: 'ไม่จำเป็น ดาบบ่งถึงความชัดเจนและการตัดสินใจ ไพ่ที่ดูรุนแรงมักชี้ให้เห็นความจริงที่ต้องเผชิญ ไม่ใช่ผลลัพธ์ที่หลีกเลี่ยงไม่ได้',
+      },
+      {
+        q: 'ทำไมไพ่ดาบถึงรู้สึกหนักใจบ่อยกว่าชุดอื่น?',
+        a: 'เพราะดาบสะท้อนความคิดและความขัดแย้งที่เราหลีกเลี่ยงอยู่ ความไม่สบายใจคือสัญญาณที่ควรใส่ใจ ไม่ใช่สิ่งที่ต้องกลัว',
+      },
+      {
+        q: 'ไพ่ใบไหนเริ่มต้นเรื่องของชุดดาบ?',
+        a: 'เอซดาบคือแสงแห่งความชัดเจนครั้งแรก มุมมองรายการช่วยให้เห็นว่าความคิดนั้นพัฒนาและถูกทดสอบอย่างไรตลอดทั้งชุด',
+      },
+      {
+        q: 'ทำไมต้องใช้ลิงก์เดียว?',
+        a: 'ไพ่ทุกใบในชุดดาบเปิดหน้าเดียวที่มีความหมายทั้งตั้งตรงและกลับหัว ไม่กระจาย URL',
+      },
+    ],
+  },
+  pentacles: {
+    name: 'เหรียญ',
+    slug: 'pentacles',
+    path: '/th/tarot-card-meanings/pentacles',
+    title: 'ความหมายไพ่เหรียญ',
+    intro:
+      'เหรียญ คือชุดธาตุดินแห่งเรื่องเงิน ร่างกาย และความมั่นคง บอกเล่าวิธีที่คุณสร้าง รักษา และเพิ่มพูนสิ่งที่จับต้องได้ในชีวิต',
+    element: 'ดิน',
+    themes: ['การเงิน', 'ร่างกาย', 'ความมั่นคง'],
+    highlights: ['เอซถึงคิง · 14 ใบ', 'เหมาะสำหรับคำถามด้านการเงิน สุขภาพ และการสร้างรากฐาน'],
+    guide: {
+      lead: 'ใช้ไพ่เหรียญเมื่อต้องการความชัดเจนด้านทรัพยากร ร่างกาย และแผนระยะยาว',
+      steps: [
+        {
+          title: 'ดูว่าดินแน่นแค่ไหน',
+          text: 'เอซถึงสามบ่งถึงโอกาสใหม่และการวางรากฐาน สี่ถึงเจ็ดทดสอบการรักษาและการเติบโต สิบและไพ่ราชสำนักสอนการบริหารความมั่งคั่งระยะยาว',
+        },
+        {
+          title: 'ตรวจรากฐาน',
+          text: 'ไพ่เหรียญถามว่าความมั่นคงที่คุณสร้างอยู่นั้นตั้งอยู่บนสิ่งที่ยั่งยืนจริงไหม ระบุหนึ่งจุดที่แข็งแกร่งและหนึ่งจุดที่ต้องเสริม',
+        },
+        {
+          title: 'ลงมือจริง',
+          text: 'แปลข้อความในไพ่เป็นการกระทำที่จับต้องได้และวัดผลได้หนึ่งอย่างที่ทำได้ในสัปดาห์นี้',
+        },
+      ],
+    },
+    faqLead: 'คำถามที่พบบ่อยเกี่ยวกับไพ่เหรียญและการอ่านด้านการเงิน',
+    faqs: [
+      {
+        q: 'ไพ่เหรียญเกี่ยวกับเงินอย่างเดียวไหม?',
+        a: 'ไม่ใช่ ครอบคลุมทุกสิ่งที่จับต้องได้ ทั้งสุขภาพ บ้าน งาน และการลงทุนในตัวเอง',
+      },
+      {
+        q: 'ถ้าไพ่เหรียญที่ออกมาบ่งถึงความขาดแคลนควรทำอย่างไร?',
+        a: 'มองหาทรัพยากรที่มีอยู่แล้วแต่ยังไม่ได้ใช้ประโยชน์เต็มที่ ไพ่เหรียญมักชี้ทางออกที่เป็นรูปธรรมเสมอ',
+      },
+      {
+        q: 'ไพ่ใบไหนเริ่มต้นเรื่องของชุดเหรียญ?',
+        a: 'เอซเหรียญคือของขวัญจากจักรวาล — โอกาสใหม่ที่จับต้องได้ มุมมองรายการช่วยให้เห็นว่าโอกาสนั้นพัฒนาและสร้างผลอย่างไรตลอดทั้งชุด',
+      },
+      {
+        q: 'ทำไมต้องใช้ลิงก์เดียว?',
+        a: 'ไพ่ทุกใบในชุดเหรียญเปิดหน้าเดียวที่มีความหมายทั้งตั้งตรงและกลับหัว ไม่กระจาย URL',
+      },
+    ],
+  },
+};
+
+const isThaiPage =
+  document.documentElement?.lang === 'th' ||
+  window.location.pathname.startsWith('/th/');
+
 const state = {
   suitKey: 'major',
   cards: [],
@@ -289,10 +535,15 @@ function getSuitCards(cards, suitKey) {
 
 function buildCardHref(card) {
   const slug = card.seo_slug_en || normalizeId(card.card_name_en || card.name_en || card.name || card.id);
-  return getCanonicalCardPath(slug, 'en') || `/cards/${normalizeId(slug)}/`;
+  const lang = isThaiPage ? 'th' : 'en';
+  const fallback = isThaiPage ? `/th/cards/${normalizeId(slug)}/` : `/cards/${normalizeId(slug)}/`;
+  return getCanonicalCardPath(slug, lang) || fallback;
 }
 
 function getCardSummary(card) {
+  if (isThaiPage) {
+    return card.reading_summary_preview_th || card.tarot_imply_th || card.meaning_th || '';
+  }
   return card.reading_summary_preview_en || card.tarot_imply_en || card.meaning_en || '';
 }
 
@@ -347,9 +598,14 @@ function renderChips(config, cardCount) {
   chipRow.innerHTML = '';
   const chips = [];
 
-  if (config.element) chips.push({ label: 'Element', value: config.element });
-  if (config.themes?.length) chips.push({ label: 'Core themes', value: config.themes.join(' · ') });
-  chips.push({ label: 'Card count', value: `${cardCount} cards` });
+  const elementLabel = isThaiPage ? 'ธาตุ' : 'Element';
+  const themesLabel = isThaiPage ? 'ธีมหลัก' : 'Core themes';
+  const countLabel = isThaiPage ? 'จำนวนไพ่' : 'Card count';
+  const countValue = isThaiPage ? `${cardCount} ใบ` : `${cardCount} cards`;
+
+  if (config.element) chips.push({ label: elementLabel, value: config.element });
+  if (config.themes?.length) chips.push({ label: themesLabel, value: config.themes.join(' · ') });
+  chips.push({ label: countLabel, value: countValue });
 
   chips.forEach((chip) => {
     const span = document.createElement('span');
@@ -395,7 +651,7 @@ function renderFaq(config) {
   const faqLead = document.getElementById('faqLead');
   const faqList = document.getElementById('faqList');
 
-  if (faqTitle) faqTitle.textContent = `${config.name} FAQs`;
+  if (faqTitle) faqTitle.textContent = isThaiPage ? `คำถามที่พบบ่อยเกี่ยวกับไพ่${config.name}` : `${config.name} FAQs`;
   if (faqLead) faqLead.textContent = config.faqLead || '';
   if (!faqList) return;
 
@@ -418,10 +674,10 @@ function setHero(config, cardCount) {
   const eyebrow = document.querySelector('[data-suit-eyebrow]');
   const crumb = document.querySelector('[data-suit-crumb]');
 
-  if (title) title.textContent = `${config.name} Tarot Card Meanings`;
+  if (title) title.textContent = config.title;
   if (intro) intro.textContent = config.intro;
   if (cardCountEl) cardCountEl.textContent = cardCount;
-  if (eyebrow) eyebrow.textContent = `${config.name} suit guide`;
+  if (eyebrow) eyebrow.textContent = isThaiPage ? `คู่มือไพ่${config.name}` : `${config.name} suit guide`;
   if (crumb) crumb.textContent = config.name;
 
   renderChips(config, cardCount);
@@ -450,7 +706,9 @@ function bindViewToggle() {
 
 function setSeo(config) {
   const canonicalUrl = `https://www.meowtarot.com${config.path}`;
-  const description = `${config.name} tarot card meanings with canonical upright + reversed guidance, keywords, and a fast card finder.`;
+  const description = isThaiPage
+    ? `ความหมายไพ่${config.name}แบบครบ พร้อมความหมายตั้งตรง กลับหัว และค้นหาไพ่อย่างรวดเร็ว`
+    : `${config.name} tarot card meanings with canonical upright + reversed guidance, keywords, and a fast card finder.`;
   const title = `${config.title} | MeowTarot`;
 
   const setContent = (selector, value, attr = 'content') => {
@@ -466,9 +724,11 @@ function setSeo(config) {
   setContent('meta[name="twitter:title"][data-suit-meta="twitter-title"]', title);
   setContent('meta[name="twitter:description"][data-suit-meta="twitter-description"]', description);
   setContent('link[rel="canonical"][data-suit-meta="canonical"]', canonicalUrl, 'href');
-  setContent('link[rel="alternate"][data-suit-meta="hreflang-en"]', canonicalUrl, 'href');
-  setContent('link[rel="alternate"][data-suit-meta="hreflang-th"]', `https://www.meowtarot.com/th/tarot-card-meanings/?category=${config.slug}`, 'href');
-  setContent('link[rel="alternate"][data-suit-meta="hreflang-x"]', canonicalUrl, 'href');
+  const enUrl = `https://www.meowtarot.com/tarot-card-meanings/${config.slug}`;
+  const thUrl = `https://www.meowtarot.com/th/tarot-card-meanings/${config.slug}`;
+  setContent('link[rel="alternate"][data-suit-meta="hreflang-en"]', enUrl, 'href');
+  setContent('link[rel="alternate"][data-suit-meta="hreflang-th"]', thUrl, 'href');
+  setContent('link[rel="alternate"][data-suit-meta="hreflang-x"]', enUrl, 'href');
 
   const faqEntities = (config.faqs || []).map((item) => ({
     '@type': 'Question',
@@ -482,12 +742,19 @@ function setSeo(config) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.meowtarot.com/' },
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: isThaiPage ? 'หน้าหลัก' : 'Home',
+            item: isThaiPage ? 'https://www.meowtarot.com/th/' : 'https://www.meowtarot.com/',
+          },
           {
             '@type': 'ListItem',
             position: 2,
-            name: 'Tarot Card Meanings',
-            item: 'https://www.meowtarot.com/meanings.html',
+            name: isThaiPage ? 'ความหมายไพ่ทาโรต์' : 'Tarot Card Meanings',
+            item: isThaiPage
+              ? 'https://www.meowtarot.com/th/tarot-card-meanings/'
+              : 'https://www.meowtarot.com/meanings.html',
           },
           { '@type': 'ListItem', position: 3, name: config.name, item: canonicalUrl },
         ],
@@ -499,10 +766,18 @@ function setSeo(config) {
         name: config.title,
         description,
         about: [
-          { '@type': 'Thing', name: `${config.name.toLowerCase()} tarot meanings` },
-          { '@type': 'Thing', name: `${config.name} suit` },
+          {
+            '@type': 'Thing',
+            name: isThaiPage
+              ? `ความหมายไพ่${config.name}`
+              : `${config.name.toLowerCase()} tarot meanings`,
+          },
+          {
+            '@type': 'Thing',
+            name: isThaiPage ? `ชุดไพ่${config.name}` : `${config.name} suit`,
+          },
         ],
-        inLanguage: 'en',
+        inLanguage: isThaiPage ? 'th' : 'en',
         isPartOf: { '@id': 'https://www.meowtarot.com/#website' },
       },
       {
@@ -519,7 +794,8 @@ function setSeo(config) {
 
 function init() {
   state.suitKey = detectSuit();
-  const config = SUIT_COPY[state.suitKey] || SUIT_COPY.major;
+  const copyTable = isThaiPage ? SUIT_COPY_TH : SUIT_COPY;
+  const config = copyTable[state.suitKey] || copyTable.major;
 
   bindViewToggle();
   setViewToggle();
