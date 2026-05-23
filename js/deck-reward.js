@@ -7,7 +7,7 @@
  */
 
 import { setActiveDeck, markDeckRewardSeen, hasSeenDeckReward } from './data.js';
-import { translations } from './common.js?v=20260523';
+import { translations } from './common.js';
 import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
 const STYLE_FLAG = '__mt_deck_reward_styles_injected';

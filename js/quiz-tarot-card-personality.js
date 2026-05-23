@@ -1,4 +1,4 @@
-import { initShell, localizePath, pathHasThaiPrefix } from './common.js?v=20260523';
+import { initShell, localizePath, pathHasThaiPrefix } from './common.js';
 import {
   applyImageFallback,
   getCardBackFallbackUrl,

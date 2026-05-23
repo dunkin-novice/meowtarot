@@ -1,4 +1,4 @@
-import { initShell, localizePath, translations } from './common.js?v=20260523';
+import { initShell, localizePath, translations } from './common.js';
 import {
   loadTarotManifest,
   getCardBackUrl,

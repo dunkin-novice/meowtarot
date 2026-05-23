@@ -1,4 +1,4 @@
-import { initShell } from './common.js?v=20260523';
+import { initShell } from './common.js';
 import { loadTarotData, meowTarotCards, normalizeId } from './data.js';
 import { CANONICAL_CARD_ORDER, getCanonicalCardPath, normalizeCanonicalSlug } from './canonical-card-routes.js';
 

@@ -5,7 +5,7 @@ import {
   localizePath,
   pathHasThaiPrefix,
   translations,
-} from './common.js?v=20260523';
+} from './common.js';
 import {
   loadTarotData,
   meowTarotCards,
