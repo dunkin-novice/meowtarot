@@ -1,4 +1,4 @@
-import { initShell, pathHasThaiPrefix } from './common.js';
+import { initShell, pathHasThaiPrefix } from './common.js?v=20260523';
 import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
 import {
   renderCardHero,

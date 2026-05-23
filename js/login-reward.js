@@ -7,7 +7,7 @@
  */
 
 import { DECKS } from './data.js';
-import { translations } from './common.js';
+import { translations } from './common.js?v=20260523';
 
 const STYLE_FLAG = '__mt_login_reward_styles_injected';
 const POPUP_ID = 'mt-login-reward-popup';

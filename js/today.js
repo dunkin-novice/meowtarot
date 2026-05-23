@@ -1,4 +1,4 @@
-import { initShell } from './common.js';
+import { initShell } from './common.js?v=20260523';
 import { getUserProgress } from './progress.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards } from './data.js';
 import { getCurrentUser } from './auth.js';

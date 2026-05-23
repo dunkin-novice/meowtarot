@@ -1,4 +1,4 @@
-import { initShell } from './common.js';
+import { initShell } from './common.js?v=20260523';
 
 const state = {
   currentLang: 'en',

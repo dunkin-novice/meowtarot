@@ -5,7 +5,7 @@ import {
   localizePath,
   pathHasThaiPrefix,
   translations,
-} from './common.js';
+} from './common.js?v=20260523';
 import { getAllDecks, loadTarotManifest, normalizeId } from './data.js';
 import { computePhase } from './phase.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
