@@ -564,7 +564,8 @@ function normalizeLang(value) {
 }
 
 function getUrlLanguage(locationLike = window.location) {
-  const urlLang = normalizeLang(new URLSearchParams(locationLike?.search || '').get('lang'));
+  const params = new URLSearchParams(locationLike?.search || '');
+  const urlLang = normalizeLang(params.get('lang') || params.get('l'));
   if (urlLang) return urlLang;
   return pathHasThaiPrefix(locationLike?.pathname || '/') ? 'th' : 'en';
 }
