@@ -1,0 +1,92 @@
+/*
+ * MeowTarot — Phase 2.1: Logo Visual Treatment + Homepage Bottom-Nav Theme
+ * css/phase-2-1-logo.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low
+ * SCOPE: All EN pages (logo treatment) + body[data-page='home'] (bottom-nav)
+ *
+ * WHAT THIS FILE DOES:
+ *
+ *   §1 — Visual treatment of the existing wordmark / star markup so it
+ *        reads as a logo. NO layout restructure (option i, not ii).
+ *        The 3-column grid in .nav-card-top stays intact: hamburger
+ *        remains top-left on mobile per UX convention.
+ *
+ *   §2 — Pastel theming of the mobile bottom-nav bar, scoped to the
+ *        homepage only for this round. Center 'Draw' CTA intentionally
+ *        kept gold (warm accent vs pastel chrome).
+ *
+ * WHAT THIS FILE DOES NOT DO:
+ *   - Does not touch js/components/navbar.js (markup unchanged)
+ *   - Does not touch .site-header layout (Phase 2 owns that)
+ *   - Does not theme the bottom-nav globally yet (homepage-only test run)
+ *   - Does not add a real graphic logo (would need SVG asset)
+ *
+ * REQUIRES: css/theme-tokens.css and css/phase-2-header.css
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §1 — Logo wordmark visual treatment (all EN pages)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/* Wordmark "MeowTarot" — when shown via .nav-card-top at < 1024px */
+.nav-brand,
+.header-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 1.45rem;
+  color: #3d2c58;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.nav-brand:hover,
+.header-title:hover {
+  color: #6b4faa;
+}
+
+/* Star ✦ logo — when shown via .nav-logo at >= 1024px */
+.nav-logo,
+.logo-text {
+  font-size: 1.5rem;
+  color: #b59ae8;
+  text-decoration: none;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.nav-logo:hover,
+.logo-text:hover {
+  color: #6b4faa;
+  transform: scale(1.08) rotate(-4deg);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §2 — Homepage bottom-nav pastel theme (mobile only, homepage only)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  body[data-page='home'] .bottom-nav {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(172, 130, 210, 0.18);
+    box-shadow: 0 -4px 24px rgba(120, 80, 180, 0.08);
+  }
+
+  body[data-page='home'] .bottom-nav__item {
+    color: #7a5f99;
+  }
+
+  body[data-page='home'] .bottom-nav__item.is-active {
+    color: #6b4faa;
+  }
+
+  /* Center 'Draw' CTA intentionally NOT overridden — keeps gold accent. */
+}
