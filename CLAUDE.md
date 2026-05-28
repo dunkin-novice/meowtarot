@@ -40,6 +40,10 @@ If a change does not serve that thesis, defer it.
    the generic site logo. Visual proof is the TH virality mechanic.
 9. **Payment plumbing never blocks product launch.** Sandbox in parallel,
    production keys flagged off until free-tool data justifies flipping.
+10. **Edit canonical, not mirrors.** Always edit root js/ and HTML files
+    first. www/ and ios/ are outputs, not inputs. cp canonical → www/ →
+    cap sync ios is the only direction. Direct www/ edits cause mirror
+    drift and risk reversing live canonical features.
 
 ## Architecture map
 
