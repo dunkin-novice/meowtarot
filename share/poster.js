@@ -1160,11 +1160,11 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.42)';
     ctx.shadowBlur = 16;
-    ctx.fillStyle = '#f8d77a';
+    ctx.fillStyle = '#c9933a';
     ctx.font = `700 ${header.brandSize}px "Poppins", "Space Grotesk", sans-serif`;
     ctx.fillText('MeowTarot', width / 2, header.top);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(236, 205, 132, 0.95)';
+    ctx.fillStyle = 'rgba(201, 147, 58, 0.95)';
     ctx.font = `600 ${header.eyebrowSize}px "Space Grotesk", sans-serif`;
     drawTrackingText(ctx, content.strings.eyebrow, width / 2, header.top + 44, 1.2);
 
@@ -1231,7 +1231,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.restore();
     const pillX = layoutBox.x - pillWidth / 2;
 
-    fillRoundedRect(ctx, pillX, labelY, pillWidth, pillHeight, pillHeight / 2, 'rgba(17,18,26,0.78)');
+    fillRoundedRect(ctx, pillX, labelY, pillWidth, pillHeight, pillHeight / 2, 'rgba(61, 26, 92, 0.78)');
     strokeRoundedRect(ctx, pillX, labelY, pillWidth, pillHeight, pillHeight / 2, 'rgba(255,255,255,0.14)', 1);
     ctx.save();
     ctx.textAlign = 'center';
@@ -1283,7 +1283,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     const shadowBlur = item.position === 'outcome' ? 32 : (isHeroPosition ? 24 : 18);
 
     ctx.save();
-    ctx.shadowColor = item.position === 'outcome' ? 'rgba(236,205,132,0.18)' : 'rgba(0,0,0,0.32)';
+    ctx.shadowColor = item.position === 'outcome' ? 'rgba(201, 147, 58, 0.18)' : 'rgba(0,0,0,0.32)';
     ctx.shadowBlur = shadowBlur;
     ctx.shadowOffsetY = 10;
     drawRoundedRect(ctx, cardX, cardY, spread.cardW, spread.cardH, frameRadius);
@@ -1292,7 +1292,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.restore();
 
     if (isHeroPosition) {
-      strokeRoundedRect(ctx, cardX - 1, cardY - 1, spread.cardW + 2, spread.cardH + 2, frameRadius + 1, 'rgba(236,205,132,0.22)', 1.5);
+      strokeRoundedRect(ctx, cardX - 1, cardY - 1, spread.cardW + 2, spread.cardH + 2, frameRadius + 1, 'rgba(201, 147, 58, 0.22)', 1.5);
     }
 
     ctx.save();
@@ -1309,7 +1309,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     } else {
       const fallbackFill = ctx.createLinearGradient(-spread.cardW / 2, -spread.cardH / 2, spread.cardW / 2, spread.cardH / 2);
       fallbackFill.addColorStop(0, 'rgba(255,255,255,0.12)');
-      fallbackFill.addColorStop(1, 'rgba(236,205,132,0.08)');
+      fallbackFill.addColorStop(1, 'rgba(201, 147, 58, 0.08)');
       ctx.fillStyle = fallbackFill;
       ctx.fillRect(-spread.cardW / 2, -spread.cardH / 2, spread.cardW, spread.cardH);
     }
@@ -1322,7 +1322,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
   const drawInsightPanel = ({ x, y, w, h, insight, variant }) => {
     const gradient = ctx.createLinearGradient(x, y, x, y + h);
     if (variant === 'outcome') {
-      gradient.addColorStop(0, 'rgba(236,205,132,0.16)');
+      gradient.addColorStop(0, 'rgba(201, 147, 58, 0.16)');
       gradient.addColorStop(1, 'rgba(255,255,255,0.08)');
     } else {
       gradient.addColorStop(0, 'rgba(255,255,255,0.10)');
@@ -1330,11 +1330,11 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     }
     fillRoundedRect(ctx, x, y, w, h, variant === 'outcome' ? 26 : 22, gradient);
     strokeRoundedRect(ctx, x, y, w, h, variant === 'outcome' ? 26 : 22, variant === 'outcome' ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.14)', 1.25);
-    fillRoundedRect(ctx, x, y, 4, h, 3, variant === 'outcome' ? 'rgba(236,205,132,0.9)' : 'rgba(236,205,132,0.34)');
+    fillRoundedRect(ctx, x, y, 4, h, 3, variant === 'outcome' ? 'rgba(201, 147, 58, 0.9)' : 'rgba(201, 147, 58, 0.34)');
 
     ctx.save();
     ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(236,205,132,0.98)';
+    ctx.fillStyle = 'rgba(201, 147, 58, 0.98)';
     ctx.font = `600 ${preset === 'square' ? 11 : 12}px "Space Grotesk", sans-serif`;
     ctx.fillText(insight.label, x + 20, y + 28);
 
@@ -1849,7 +1849,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     };
 
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#f8d77a';
+    ctx.fillStyle = '#c9933a';
     ctx.font = '700 62px "Poppins", "Space Grotesk", sans-serif';
     ctx.shadowColor = 'rgba(0,0,0,0.65)';
     ctx.shadowBlur = 14;
@@ -1945,7 +1945,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     ctx.textAlign = 'center';
     ctx.save();
-    ctx.fillStyle = 'rgba(19, 22, 44, 0.42)';
+    ctx.fillStyle = 'rgba(61, 26, 92, 0.42)';
     drawRoundedRect(ctx, textPanelX, textPanelY, textPanelW, textPanelH, 44);
     ctx.fill();
     ctx.restore();
@@ -2012,7 +2012,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const labelPillX = x + (cardW - labelPillW) / 2;
       const labelPillY = y + cardH + 14;
       ctx.save();
-      ctx.fillStyle = 'rgba(20, 23, 44, 0.62)';
+      ctx.fillStyle = 'rgba(61, 26, 92, 0.62)';
       drawRoundedRect(ctx, labelPillX, labelPillY, labelPillW, labelPillH, 22);
       ctx.fill();
       ctx.restore();
@@ -2027,7 +2027,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         const summaryY = labelPillY + labelPillH + 16;
         const summaryH = 160;
         ctx.save();
-        ctx.fillStyle = 'rgba(22, 24, 48, 0.52)';
+        ctx.fillStyle = 'rgba(61, 26, 92, 0.52)';
         drawRoundedRect(ctx, x + 4, summaryY, cardW - 8, summaryH, 24);
         ctx.fill();
         ctx.restore();
@@ -2170,7 +2170,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const isUprightTone = resolvedOrientation === 'upright';
     const textPalette = isUprightTone
       ? {
-        primary: '#2A3556',
+        primary: '#3d1a5c',
         secondary: '#364063',
         muted: 'rgba(60,70,90,0.72)',
       }
@@ -2533,7 +2533,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const subtitle = toSafeText(payload?.poster?.subtitle ?? payload?.subtitle, '');
   const keywords = Array.isArray(payload?.keywords) ? payload.keywords.filter(Boolean).slice(0, 3) : [];
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#f8d77a';
+  ctx.fillStyle = '#c9933a';
   ctx.font = '600 72px "Poppins", "Space Grotesk", sans-serif';
   ctx.fillText(title, width / 2, 150);
 
