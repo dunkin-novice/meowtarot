@@ -1,0 +1,94 @@
+/*
+ * MeowTarot — Phase 3: Visual Redesign (Global Chrome + Card-Back)
+ * css/phase-3-redesign.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Medium
+ * SCOPE: Global chrome (header, bottom-nav, footer) + card-back visual
+ *        scoped to body[data-page='daily'] and body[data-page='question-draw'].
+ *
+ * REFERENCES the --mt-* token namespace added in css/theme-tokens.css.
+ *
+ * WHAT THIS FILE DOES:
+ *   §1 — Global chrome: site-header, bottom-nav, site-footer re-skinned
+ *        with --mt-* tokens. Tones match the Phase-3 redesign palette
+ *        (deeper plum, opaque pastel surfaces).
+ *
+ *   §2 — Card-back visual override scoped to the two card-selection
+ *        pages only. Deep plum-to-rose gradient with an inset gold
+ *        inner border. Does NOT change card geometry, flip mechanic,
+ *        or .card .front (card-art face).
+ *
+ * WHAT THIS FILE DOES NOT TOUCH:
+ *   - Page backgrounds (per-page; later phases)
+ *   - .card .front (the art face)
+ *   - Result pages, profile, share poster
+ *   - css/styles.css flip block (lives in styles.css, edited separately)
+ *
+ * LINK ORDER: load AFTER css/phase-2-1-logo.css. Override-by-source-order
+ * is intentional — phase-3-redesign wins where it overlaps phase-2.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Site header (overrides phase-2-header.css surface tokens) */
+.site-header {
+  background: var(--mt-nav-bg);
+  border-bottom: 1px solid var(--mt-nav-border);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+@media (max-width: 768px) {
+  body.has-bottom-nav .site-header {
+    background: var(--mt-nav-bg);
+    border-bottom-color: var(--mt-nav-border);
+  }
+}
+
+
+/* §1 — Bottom nav (global; was phase-2-1 homepage-only) */
+.bottom-nav {
+  background: var(--mt-nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--mt-nav-border);
+  box-shadow: 0 -4px 24px rgba(61, 26, 92, 0.08);
+}
+
+.bottom-nav__item {
+  color: var(--mt-nav-icon-inactive);
+}
+
+.bottom-nav__item.is-active {
+  color: var(--mt-nav-icon-active);
+}
+
+/*
+ * Center 'Draw' CTA intentionally NOT overridden — keeps gold accent
+ * from styles.css / phase-2-1.
+ */
+
+
+/* §1 — Site footer */
+.site-footer {
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--mt-plum-muted);
+  border-top: 1px solid var(--mt-nav-border);
+}
+
+
+/* §2 — Card-back visual (daily + question-draw selection screens only)
+ *
+ * Scoped intentionally narrow: data-page='daily' covers daily.html and
+ * th/daily.html. data-page='question-draw' covers the Ask-a-Question
+ * selection board. Other selection screens (full reading Celtic Cross)
+ * are out of scope this round.
+ */
+body[data-page='daily']         .card .back,
+body[data-page='question-draw'] .card .back {
+  background: var(--mt-card-back-bg);
+  border: 1px solid rgba(201, 147, 58, 0.38);
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 147, 58, 0.22),
+    var(--mt-shadow-card);
+}
