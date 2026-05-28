@@ -77,18 +77,27 @@
 }
 
 
-/* §2 — Card-back visual (daily + question-draw selection screens only)
+/* §2 — Card-slot fallback gradient (daily + question-draw selection only)
+ *
+ * The card-back visual on these pages is actually an <img class="card-back">
+ * loaded from a per-deck PNG asset (see js/main.js applyCardBackBackground).
+ * The real visual identity lives in those assets, not in CSS.
+ *
+ * This rule paints the parent .card-slot with the new plum-to-rose
+ * gradient as a graceful FALLBACK — visible only if the PNG fails to
+ * load (e.g. CDN miss, offline). When the asset loads, the opaque <img>
+ * covers this layer entirely.
+ *
+ * The headline card-back redesign is an asset task tracked separately
+ * (generate new plum-to-rose card-back PNGs for all decks, upload to R2).
  *
  * Scoped intentionally narrow: data-page='daily' covers daily.html and
  * th/daily.html. data-page='question-draw' covers the Ask-a-Question
  * selection board. Other selection screens (full reading Celtic Cross)
  * are out of scope this round.
  */
-body[data-page='daily']         .card .back,
-body[data-page='question-draw'] .card .back {
+body[data-page='daily']         .card-slot,
+body[data-page='question-draw'] .card-slot {
   background: var(--mt-card-back-bg);
-  border: 1px solid rgba(201, 147, 58, 0.38);
-  box-shadow:
-    inset 0 0 0 1px rgba(201, 147, 58, 0.22),
-    var(--mt-shadow-card);
+  border-radius: var(--mt-radius-card);
 }
