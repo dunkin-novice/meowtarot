@@ -1,0 +1,167 @@
+/*
+ * MeowTarot — Phase 4: Profile Page Theme
+ * css/profile-theme.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low–Medium
+ * SCOPE: body[data-page='profile'] only — Profile streak, deck inventory,
+ *        achievements, reading history.
+ *
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
+ * LOAD ORDER: must load AFTER css/phase-3-redesign.css.
+ *
+ * WHAT THIS FILE DOES:
+ *   §1 — Page background
+ *   §2 — Panel surfaces (.panel used by every profile section)
+ *   §3 — Reading intro + eyebrow
+ *   §4 — Streak progress bar (--mt-streak-bar gradient is the headline)
+ *   §5 — Deck inventory hint
+ *   §6 — Profile history items
+ *   §7 — Empty state
+ *
+ * SELECTORS TARGETED (all confirmed in profile.html + js/profile.js +
+ * js/achievements-panel.js + js/deck-inventory.js):
+ *   profile.html static:    .reading-card, .reading-intro, .reading-content,
+ *                           .eyebrow
+ *   js/profile.js:          .panel, .streak-progress-bar,
+ *                           .streak-progress-bar__fill,
+ *                           .streak-progress-label,
+ *                           .profile-empty-state,
+ *                           .profile-empty-state__title,
+ *                           .profile-empty-state__body,
+ *                           .profile-empty-state__cta,
+ *                           .history-list, .profile-history-item,
+ *                           .profile-history-item__title,
+ *                           .profile-history-item__cards,
+ *                           .profile-history-item__actions,
+ *                           .profile-history-item__action
+ *   js/achievements-panel.js: .panel
+ *   js/deck-inventory.js:   .panel, .mt-deck-hint
+ *
+ * NOT TARGETED (deliberate):
+ *   - .mt-dr-overlay (deck-reward popup) — global modal, fires on any
+ *     page, scoping it to data-page='profile' would only catch some
+ *     fires. Belongs in a separate phase that themes the popup globally.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background */
+body[data-page='profile'] {
+  background:
+    radial-gradient(ellipse at 16%  4%, var(--mt-rose-soft) 0%, transparent 42%),
+    radial-gradient(ellipse at 86%  8%, var(--mt-gold-soft) 0%, transparent 38%),
+    var(--mt-bg-gradient);
+  color: var(--mt-plum);
+}
+
+
+/* §2 — Panel surfaces */
+body[data-page='profile'] .panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+
+/* §3 — Reading intro + eyebrow */
+body[data-page='profile'] .reading-card {
+  border-radius: var(--mt-radius-panel);
+}
+
+body[data-page='profile'] .reading-intro {
+  color: var(--mt-plum);
+}
+
+body[data-page='profile'] .eyebrow {
+  color: var(--mt-gold);
+}
+
+
+/* §4 — Streak progress bar — the headline visual */
+body[data-page='profile'] .streak-progress-bar {
+  background: var(--mt-nav-border);
+  border-radius: var(--mt-radius-pill);
+  overflow: hidden;
+}
+
+body[data-page='profile'] .streak-progress-bar__fill {
+  background: var(--mt-streak-bar);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-glow-gold);
+}
+
+body[data-page='profile'] .streak-progress-label {
+  color: var(--mt-plum);
+}
+
+
+/* §5 — Deck inventory hint */
+body[data-page='profile'] .mt-deck-hint {
+  color: var(--mt-plum-muted);
+}
+
+
+/* §6 — Profile history items */
+body[data-page='profile'] .history-list {
+  border-color: var(--mt-nav-border);
+}
+
+body[data-page='profile'] .profile-history-item {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-card);
+  box-shadow: var(--mt-shadow-panel);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+body[data-page='profile'] .profile-history-item:hover {
+  border-color: var(--mt-gold);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+  transform: translateY(-1px);
+}
+
+body[data-page='profile'] .profile-history-item__title {
+  color: var(--mt-plum);
+}
+
+body[data-page='profile'] .profile-history-item__cards {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='profile'] .profile-history-item__action {
+  color: var(--mt-plum);
+  border-color: var(--mt-nav-border);
+}
+
+body[data-page='profile'] .profile-history-item__action:hover {
+  border-color: var(--mt-gold);
+}
+
+
+/* §7 — Empty state */
+body[data-page='profile'] .profile-empty-state {
+  background: var(--mt-surface-card);
+  border: 1px dashed var(--mt-gold-soft);
+  border-radius: var(--mt-radius-panel);
+  color: var(--mt-plum);
+}
+
+body[data-page='profile'] .profile-empty-state__title {
+  color: var(--mt-plum);
+}
+
+body[data-page='profile'] .profile-empty-state__body {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='profile'] .profile-empty-state__cta {
+  color: var(--mt-plum);
+  border-color: var(--mt-nav-border);
+}
+
+body[data-page='profile'] .profile-empty-state__cta:hover {
+  border-color: var(--mt-gold);
+  box-shadow: var(--mt-shadow-glow);
+}

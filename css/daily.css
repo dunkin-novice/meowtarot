@@ -1,0 +1,190 @@
+/*
+ * MeowTarot — Phase 4: Daily Page Theme
+ * css/daily.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low–Medium
+ * SCOPE: body[data-page='daily'] only — zero bleed to other pages.
+ *
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
+ * LOAD ORDER: must load AFTER css/phase-3-redesign.css.
+ *
+ * WHAT THIS FILE DOES:
+ *   §1 — Page background (pastel gradient with rose-leaning low light)
+ *   §2 — Panel surfaces (.panel, .daily-board-panel)
+ *   §3 — Card art frame (.card-art, .card-art-img)
+ *   §4 — Selection-board card-slot states (from js/main.js)
+ *   §5 — Meta badges + lucky-color swatch
+ *   §6 — Typography (.lede, .topic-copy, .topic-copy-lead, .keywords)
+ *   §7 — Retention + phase panels
+ *
+ * EVERY rule below is scoped to body[data-page='daily'] for cascade
+ * isolation. Token references are --mt-* only (no hardcoded hex).
+ *
+ * SELECTORS TARGETED (all confirmed in js/main.js or js/reading.js):
+ *   js/main.js              .card-board.card-board--daily, .card-slot,
+ *                           .card-back, .card-slot.is-selected,
+ *                           .selection-badge, .ritual-cta
+ *   js/reading.js           .panel, .daily-board-panel, .card-art,
+ *                           .card-art-img, .meta-badge, .meta-row,
+ *                           .meta-group, .swatch, .keywords,
+ *                           .topic-copy, .topic-copy-lead, .lede,
+ *                           .daily-motion-slot-label, .phase-panel,
+ *                           .phase-panel__label, .phase-panel__desc,
+ *                           .retention-panel, .retention-panel__stat,
+ *                           .retention-panel__soft,
+ *                           .retention-panel__cta,
+ *                           .retention-panel__cta-copy
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background */
+body[data-page='daily'] {
+  background:
+    radial-gradient(ellipse at 20%  4%, var(--mt-rose-soft) 0%, transparent 40%),
+    radial-gradient(ellipse at 86%  8%, var(--mt-gold-soft) 0%, transparent 38%),
+    var(--mt-bg-gradient);
+  color: var(--mt-plum);
+}
+
+
+/* §2 — Panel surfaces */
+body[data-page='daily'] .panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='daily'] .daily-board-panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+
+/* §3 — Card art frame */
+body[data-page='daily'] .card-art {
+  border-radius: var(--mt-radius-card);
+  box-shadow: var(--mt-shadow-card);
+  overflow: hidden;
+  background: var(--mt-card-back-bg);
+}
+
+body[data-page='daily'] .card-art-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--mt-radius-card);
+}
+
+
+/* §4 — Selection board card-slot states */
+body[data-page='daily'] .card-slot {
+  border-radius: var(--mt-radius-card);
+  border: 1px solid var(--mt-nav-border);
+}
+
+body[data-page='daily'] .card-slot.is-selected {
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-card);
+  border-color: var(--mt-gold);
+}
+
+body[data-page='daily'] .selection-badge {
+  background: var(--mt-gold);
+  color: var(--mt-plum);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-glow-gold);
+}
+
+
+/* §5 — Meta badges + lucky-color swatch */
+body[data-page='daily'] .meta-row {
+  gap: 8px;
+}
+
+body[data-page='daily'] .meta-badge {
+  background: var(--mt-surface-card);
+  color: var(--mt-plum);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='daily'] .meta-group--identity .meta-badge {
+  background: var(--mt-plum);
+  color: var(--mt-nav-bg);
+  border-color: var(--mt-plum);
+}
+
+body[data-page='daily'] .swatch {
+  border: 1px solid var(--mt-gold-soft);
+  box-shadow: var(--mt-shadow-glow-gold);
+}
+
+
+/* §6 — Typography */
+body[data-page='daily'] .lede {
+  color: var(--mt-plum);
+}
+
+body[data-page='daily'] .topic-copy {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='daily'] .topic-copy-lead {
+  color: var(--mt-plum);
+}
+
+body[data-page='daily'] .keywords {
+  color: var(--mt-plum-soft);
+}
+
+body[data-page='daily'] .daily-motion-slot-label {
+  color: var(--mt-gold);
+}
+
+
+/* §7 — Retention + phase panels */
+body[data-page='daily'] .retention-panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='daily'] .retention-panel__stat {
+  color: var(--mt-plum);
+}
+
+body[data-page='daily'] .retention-panel__soft {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='daily'] .retention-panel__cta {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-gold-soft);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-glow-gold);
+}
+
+body[data-page='daily'] .retention-panel__cta-copy {
+  color: var(--mt-plum);
+}
+
+body[data-page='daily'] .phase-panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='daily'] .phase-panel__label {
+  color: var(--mt-gold);
+}
+
+body[data-page='daily'] .phase-panel__desc {
+  color: var(--mt-plum-muted);
+}

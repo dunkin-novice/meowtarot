@@ -1,0 +1,109 @@
+/*
+ * MeowTarot — Phase 4: Question Page Theme
+ * css/question.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low–Medium
+ * SCOPE: body[data-page='question'] (topic chooser entry)
+ *        body[data-page='question-draw'] (card selection board)
+ *
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
+ * LOAD ORDER: must load AFTER css/phase-3-redesign.css.
+ *
+ * WHAT THIS FILE DOES:
+ *   §1 — Page background (rose-leaning pastel — "ask" / heart vertical)
+ *   §2 — Topic chip-card grid (question.html only)
+ *   §3 — Spread selector pills (Quick / Story toggle)
+ *   §4 — Selection-board card-slot states (question-draw.html;
+ *        mirrors css/daily.css §4 under question-draw scope)
+ *
+ * NOTES:
+ *   - The question RESULT (post-draw reading panels) renders on the
+ *     reading page with data-page='reading' and is styled by
+ *     css/reading.css, not here. The .panel--question-takeaway and
+ *     .question-takeaway__lead/__advice from js/reading.js line 1414+
+ *     are out of scope for this file.
+ *   - The .card-slot fallback gradient (plum-to-rose) was added by
+ *     css/phase-3-redesign.css §2 with both data-page='daily' and
+ *     data-page='question-draw' already included; the rules in §4
+ *     below only add selected-state and selection-badge treatment.
+ *
+ * SELECTORS TARGETED (all confirmed in js/main.js):
+ *   .topic-card, .topic-card__icon, .topic-card__title
+ *   .question-spread-btn, .question-spread-btn--active
+ *   .card-slot, .card-slot.is-selected, .selection-badge
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background (both question + question-draw share the bg) */
+body[data-page='question'],
+body[data-page='question-draw'] {
+  background:
+    radial-gradient(ellipse at 16%  6%, var(--mt-rose-soft) 0%, transparent 42%),
+    radial-gradient(ellipse at 88% 10%, var(--mt-gold-soft) 0%, transparent 38%),
+    var(--mt-bg-gradient);
+  color: var(--mt-plum);
+}
+
+
+/* §2 — Topic chip-cards (question.html only) */
+body[data-page='question'] .topic-card {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+  color: var(--mt-plum);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+body[data-page='question'] .topic-card:hover {
+  border-color: var(--mt-gold);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+  transform: translateY(-2px);
+}
+
+body[data-page='question'] .topic-card__icon {
+  color: var(--mt-gold);
+}
+
+body[data-page='question'] .topic-card__title {
+  color: var(--mt-plum);
+}
+
+
+/* §3 — Spread selector pills (Quick / Story) */
+body[data-page='question'] .question-spread-btn {
+  background: var(--mt-surface-card);
+  color: var(--mt-plum-muted);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-panel);
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+body[data-page='question'] .question-spread-btn--active {
+  background: var(--mt-plum);
+  color: var(--mt-nav-bg);
+  border-color: var(--mt-plum);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+}
+
+
+/* §4 — Selection board (question-draw only) — mirrors daily.css §4 */
+body[data-page='question-draw'] .card-slot {
+  border-radius: var(--mt-radius-card);
+  border: 1px solid var(--mt-nav-border);
+}
+
+body[data-page='question-draw'] .card-slot.is-selected {
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-card);
+  border-color: var(--mt-gold);
+}
+
+body[data-page='question-draw'] .selection-badge {
+  background: var(--mt-gold);
+  color: var(--mt-plum);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-glow-gold);
+}

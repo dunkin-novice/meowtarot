@@ -1,0 +1,173 @@
+/*
+ * MeowTarot — Phase 4: Full Reading (Celtic Cross) Page Theme
+ * css/full.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low
+ * SCOPE: body[data-page='full'] only — the celtic-cross 10-card SELECTION
+ *        and ARRANGE step (rendered by js/main.js). Result of full reading
+ *        renders on data-page='reading' and is styled by css/reading.css.
+ *
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
+ * LOAD ORDER: must load AFTER css/phase-3-redesign.css.
+ *
+ * STRICT CONSTRAINT (per Phase 4 spec):
+ *   ONLY color, background, border-color, box-shadow, text-color rules.
+ *   NEVER touch layout / position / z-index / width / height / padding /
+ *   margin / display / grid-* / flex-* / transform / border-width /
+ *   font-size / line-height.
+ *
+ *   Reason: the celtic-cross selection + arrange UI has complex
+ *   positioning (orbital deal, sortable arrange list, 10-slot preview)
+ *   that lives in css/styles.css. Layout edits here would risk breaking
+ *   the interaction.
+ *
+ * WHAT THIS FILE DOES:
+ *   §1 — Page background
+ *   §2 — Board header + counter typography
+ *   §3 — Full draw board + slot color states
+ *   §4 — Celtic preview + slot color states (is-filled / is-latest / is-next)
+ *   §5 — Arrange list item color states (is-dragging)
+ *   §6 — Stage copy text colors
+ *
+ * SELECTORS TARGETED (all confirmed in full.html + js/main.js):
+ *   .board-shell, .full-board-shell, .board-header, .eyebrow,
+ *   .selection-counter, .full-stage-copy, .full-stage-panel,
+ *   .full-draw-board, .full-draw-board__slot, .is-picked-confirm,
+ *   .is-awaiting-card, .full-celtic-preview, .full-celtic-preview__slot,
+ *   .is-filled, .is-latest, .is-next, .full-celtic-preview__order,
+ *   .full-arrange-list, .full-arrange-item, .is-dragging,
+ *   .full-arrange-item__order, .full-arrange-item__meta,
+ *   .full-arrange-item__position, .full-draw-summary, .full-draw-deck,
+ *   .full-deck-area
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background */
+body[data-page='full'] {
+  background:
+    radial-gradient(ellipse at 18%  6%, var(--mt-rose-soft) 0%, transparent 42%),
+    radial-gradient(ellipse at 84% 10%, var(--mt-gold-soft) 0%, transparent 38%),
+    var(--mt-bg-gradient);
+  color: var(--mt-plum);
+}
+
+
+/* §2 — Board header + counter typography */
+body[data-page='full'] .board-header {
+  color: var(--mt-plum);
+}
+
+body[data-page='full'] .eyebrow {
+  color: var(--mt-gold);
+}
+
+body[data-page='full'] .selection-counter {
+  color: var(--mt-plum-muted);
+}
+
+
+/* §3 — Full draw board + slot color states */
+body[data-page='full'] .full-draw-board {
+  background: var(--mt-surface-card);
+  border-color: var(--mt-nav-border);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='full'] .full-draw-board__slot {
+  border-color: var(--mt-nav-border);
+  box-shadow: var(--mt-shadow-card);
+}
+
+body[data-page='full'] .full-draw-board__slot.is-picked-confirm {
+  border-color: var(--mt-gold);
+  box-shadow: var(--mt-shadow-glow-gold), var(--mt-shadow-card);
+}
+
+body[data-page='full'] .full-draw-board__slot.is-awaiting-card {
+  border-color: var(--mt-rose);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-card);
+}
+
+
+/* §4 — Celtic preview + slot color states */
+body[data-page='full'] .full-celtic-preview {
+  background: var(--mt-surface-card);
+  border-color: var(--mt-nav-border);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='full'] .full-celtic-preview__slot {
+  border-color: var(--mt-nav-border);
+  background: var(--mt-surface-card);
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='full'] .full-celtic-preview__slot.is-filled {
+  border-color: var(--mt-gold);
+  background: var(--mt-surface-card);
+  color: var(--mt-plum);
+  box-shadow: var(--mt-shadow-glow-gold);
+}
+
+body[data-page='full'] .full-celtic-preview__slot.is-latest {
+  border-color: var(--mt-rose);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-glow-gold);
+}
+
+body[data-page='full'] .full-celtic-preview__slot.is-next {
+  border-color: var(--mt-plum-soft);
+  color: var(--mt-plum);
+  box-shadow: var(--mt-shadow-glow);
+}
+
+body[data-page='full'] .full-celtic-preview__order {
+  color: var(--mt-gold);
+}
+
+
+/* §5 — Arrange list item color states */
+body[data-page='full'] .full-arrange-list {
+  background: var(--mt-surface-card);
+  border-color: var(--mt-nav-border);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='full'] .full-arrange-item {
+  background: var(--mt-surface-card);
+  border-color: var(--mt-nav-border);
+  color: var(--mt-plum);
+  box-shadow: var(--mt-shadow-card);
+}
+
+body[data-page='full'] .full-arrange-item.is-dragging {
+  border-color: var(--mt-gold);
+  background: var(--mt-surface-card);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-glow-gold), var(--mt-shadow-card);
+}
+
+body[data-page='full'] .full-arrange-item__order {
+  color: var(--mt-gold);
+}
+
+body[data-page='full'] .full-arrange-item__meta {
+  color: var(--mt-plum);
+}
+
+body[data-page='full'] .full-arrange-item__position {
+  color: var(--mt-plum-muted);
+}
+
+
+/* §6 — Stage copy + draw summary text colors */
+body[data-page='full'] .full-stage-copy {
+  color: var(--mt-plum);
+}
+
+body[data-page='full'] .full-draw-summary {
+  background: var(--mt-surface-card);
+  border-color: var(--mt-gold-soft);
+  color: var(--mt-plum);
+  box-shadow: var(--mt-shadow-panel);
+}

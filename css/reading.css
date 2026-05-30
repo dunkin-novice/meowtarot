@@ -1,0 +1,264 @@
+/*
+ * MeowTarot — Phase 4: Reading Result Page Theme
+ * css/reading.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low–Medium
+ * SCOPE: body[data-page='reading'] only — the unified result page used
+ *        by all three modes (daily / question / full / celtic-cross),
+ *        rendered by js/reading.js render* functions.
+ *
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
+ * LOAD ORDER: must load AFTER css/phase-3-redesign.css.
+ *
+ * WHAT THIS FILE DOES:
+ *   §1 — Page background
+ *   §2 — Result panel surfaces (.panel + variants)
+ *   §3 — Reading intro (eyebrow, intro context, reading-card wrap)
+ *   §4 — Spread layout COLOR + TYPOGRAPHY only (caption, label,
+ *        orientation, reading-spread-card surface). Layout rules
+ *        (grid, position, z-index) live in css/styles.css and are
+ *        NOT touched here — same restraint as css/full.css since
+ *        celtic-cross layout renders on this page in mode=full.
+ *   §5 — Question takeaway panel
+ *   §6 — Energy balance section
+ *   §7 — Meta badges, swatches, typography
+ *   §8 — Retention + phase panels
+ *   §9 — Action row buttons + footer nav pills
+ *
+ * SELECTORS TARGETED (all confirmed in reading.html + js/reading.js):
+ *   reading.html static:  .reading-intro, .reading-intro__context,
+ *                         .reading-card, .reading-content, .eyebrow,
+ *                         .action-row, .reading-cta-buttons,
+ *                         .footer-nav-pill, .card-meaning-footer-nav
+ *   js/reading.js:        .panel, .panel--spread, .panel--celtic-cross,
+ *                         .panel--question-takeaway, .panel--internal-links,
+ *                         .question-takeaway__lead, .question-takeaway__advice,
+ *                         .energy-balance, .energy-balance__title,
+ *                         .energy-balance__chart-card,
+ *                         .energy-balance__chart-wrap, .energy-interpretation,
+ *                         .reading-spread-grid, .reading-spread-card,
+ *                         .spread-caption, .spread-label, .spread-orientation,
+ *                         .meta-row, .meta-group, .meta-badge, .swatch,
+ *                         .lede, .topic-copy, .topic-copy-lead, .keywords,
+ *                         .phase-panel, .phase-panel__label,
+ *                         .phase-panel__desc, .retention-panel,
+ *                         .retention-panel__stat, .retention-panel__soft,
+ *                         .retention-panel__cta, .retention-panel__cta-copy
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background */
+body[data-page='reading'] {
+  background:
+    radial-gradient(ellipse at 14%  4%, var(--mt-rose-soft) 0%, transparent 42%),
+    radial-gradient(ellipse at 90%  6%, var(--mt-gold-soft) 0%, transparent 38%),
+    var(--mt-bg-gradient);
+  color: var(--mt-plum);
+}
+
+
+/* §2 — Result panel surfaces */
+body[data-page='reading'] .panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='reading'] .panel--internal-links {
+  background: var(--mt-surface-card);
+  border-color: var(--mt-gold-soft);
+}
+
+body[data-page='reading'] .panel--spread {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  box-shadow: var(--mt-shadow-card);
+}
+
+
+/* §3 — Reading intro */
+body[data-page='reading'] .reading-intro {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .reading-intro__context {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='reading'] .reading-card {
+  border-radius: var(--mt-radius-panel);
+}
+
+body[data-page='reading'] .eyebrow {
+  color: var(--mt-gold);
+}
+
+
+/* §4 — Spread layout: COLOR + TYPOGRAPHY only (no layout/position/z-index) */
+body[data-page='reading'] .reading-spread-card {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-card);
+  box-shadow: var(--mt-shadow-card);
+}
+
+body[data-page='reading'] .spread-caption {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .spread-label {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .spread-orientation {
+  color: var(--mt-plum-muted);
+}
+
+
+/* §5 — Question takeaway panel */
+body[data-page='reading'] .panel--question-takeaway {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-gold-soft);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-glow-gold), var(--mt-shadow-panel);
+}
+
+body[data-page='reading'] .question-takeaway__lead {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .question-takeaway__advice {
+  color: var(--mt-plum-muted);
+}
+
+
+/* §6 — Energy balance */
+body[data-page='reading'] .energy-balance {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='reading'] .energy-balance__title {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .energy-balance__chart-card {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-card);
+}
+
+body[data-page='reading'] .energy-interpretation {
+  color: var(--mt-plum-muted);
+}
+
+
+/* §7 — Meta badges, swatches, typography */
+body[data-page='reading'] .meta-row {
+  gap: 8px;
+}
+
+body[data-page='reading'] .meta-badge {
+  background: var(--mt-surface-card);
+  color: var(--mt-plum);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='reading'] .meta-group--identity .meta-badge {
+  background: var(--mt-plum);
+  color: var(--mt-nav-bg);
+  border-color: var(--mt-plum);
+}
+
+body[data-page='reading'] .swatch {
+  border: 1px solid var(--mt-gold-soft);
+  box-shadow: var(--mt-shadow-glow-gold);
+}
+
+body[data-page='reading'] .lede {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .topic-copy {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='reading'] .topic-copy-lead {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .keywords {
+  color: var(--mt-plum-soft);
+}
+
+
+/* §8 — Retention + phase panels */
+body[data-page='reading'] .retention-panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='reading'] .retention-panel__stat {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .retention-panel__soft {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='reading'] .retention-panel__cta {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-gold-soft);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-glow-gold);
+}
+
+body[data-page='reading'] .retention-panel__cta-copy {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .phase-panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+}
+
+body[data-page='reading'] .phase-panel__label {
+  color: var(--mt-gold);
+}
+
+body[data-page='reading'] .phase-panel__desc {
+  color: var(--mt-plum-muted);
+}
+
+
+/* §9 — Action row + footer nav pills */
+body[data-page='reading'] .action-row {
+  margin-top: 16px;
+}
+
+body[data-page='reading'] .footer-nav-pill {
+  background: var(--mt-surface-card);
+  color: var(--mt-plum);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-panel);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  text-decoration: none;
+}
+
+body[data-page='reading'] .footer-nav-pill:hover {
+  border-color: var(--mt-gold);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+  transform: translateY(-1px);
+}
