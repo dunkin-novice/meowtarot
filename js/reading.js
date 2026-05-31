@@ -3109,6 +3109,50 @@ function renderFull(cards, dict) {
   appendReadingInternalLinks(readingContent, cards);
 }
 
+// Phase 5: Roman numeral for Major Arcana only.
+// card_id pattern is "NN-name-orientation" (e.g. "01-the-fool-upright").
+// Minor Arcana have "-of-" in the id (e.g. "ace-of-cups-upright"); we skip those.
+const ROMAN_BY_NUMEROLOGY = {
+  0: '0', 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII',
+  8: 'VIII', 9: 'IX', 10: 'X', 11: 'XI', 12: 'XII', 13: 'XIII', 14: 'XIV',
+  15: 'XV', 16: 'XVI', 17: 'XVII', 18: 'XVIII', 19: 'XIX', 20: 'XX', 21: 'XXI',
+};
+
+function getMajorArcanaRoman(card) {
+  const id = String(card?.card_id || '').toLowerCase();
+  if (id.includes('-of-')) return '';
+  const num = Number(card?.numerology_value);
+  if (!Number.isInteger(num) || num < 0 || num > 21) return '';
+  return ROMAN_BY_NUMEROLOGY[num] || '';
+}
+
+// Phase 5: lucky color chip shown on Quick (1-card) question result.
+// CSS hides this on Story (3-card) layout via [data-spread-count='3'].
+function buildLuckyColorChip(card) {
+  const colors = normalizeColorArray(card?.color_palette).filter(Boolean);
+  if (!colors.length) return null;
+  const primary = colors[0];
+  const cssColor = resolveCssColor(primary);
+  const label = isHexColor(primary)
+    ? hexToName(primary, state.currentLang === 'th' ? 'th' : 'en')
+    : primary;
+
+  const chip = document.createElement('div');
+  chip.className = 'spread-lucky-chip';
+
+  const swatch = document.createElement('span');
+  swatch.className = 'spread-lucky-chip__swatch';
+  if (cssColor) swatch.style.background = cssColor;
+  chip.appendChild(swatch);
+
+  const text = document.createElement('span');
+  text.className = 'spread-lucky-chip__text';
+  text.textContent = `${state.currentLang === 'th' ? 'สีมงคล' : 'Lucky color'} · ${label}`;
+  chip.appendChild(text);
+
+  return chip;
+}
+
 function renderQuestion(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
@@ -3127,34 +3171,121 @@ function renderQuestion(cards, dict) {
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
 
+  // Phase 5: data-spread-count on the result wrapper drives CSS layout swap
+  // between Quick (1 card big centered) and Story (3 cards stacked rows).
+  readingContent.dataset.spreadCount = String(orderedCards.length);
+
+  // Phase 5: dashed question-recap panel at top, showing topic title for now.
+  // Future: when #question-text-input value is wired, show the typed question.
+  const recapPanel = document.createElement('section');
+  recapPanel.className = 'panel panel--question-recap';
+  const recapEyebrow = document.createElement('div');
+  recapEyebrow.className = 'question-recap__eyebrow';
+  recapEyebrow.textContent = state.currentLang === 'th' ? 'คำถามของคุณ' : 'Your question';
+  recapPanel.appendChild(recapEyebrow);
+  const recapText = document.createElement('div');
+  recapText.className = 'question-recap__text';
+  const recapLabel = topicConfig
+    ? getTopicTitle(dict, topicConfig.titleKey)
+    : (dict.topicGeneric || (state.currentLang === 'th' ? 'คำถามทั่วไป' : 'Any question'));
+  recapText.textContent = recapLabel;
+  recapPanel.appendChild(recapText);
+  readingContent.appendChild(recapPanel);
+
   const spreadPanel = document.createElement('section');
   spreadPanel.className = 'panel panel--spread';
+  spreadPanel.dataset.spreadCount = String(orderedCards.length);
 
   const spreadGrid = document.createElement('div');
   spreadGrid.className = 'reading-spread-grid';
 
   orderedCards.forEach((card, idx) => {
     const positionStr = card.position || positions[idx];
+    const positionLabelEn = (translations.en && translations.en[positionStr]) || positionStr;
+    const positionLabelTh = (translations.th && translations.th[positionStr]) || positionStr;
 
     const cardWrap = document.createElement('button');
     cardWrap.className = 'reading-spread-card';
     cardWrap.type = 'button';
     cardWrap.setAttribute('aria-label', `${dict[positionStr] || positionStr}`);
 
+    // Phase 5: floating bilingual position pill above each card (Story layout
+    // only — CSS hides it for data-spread-count='1').
+    const positionPill = document.createElement('div');
+    positionPill.className = 'spread-position-pill';
+    const pillEn = document.createElement('span');
+    pillEn.className = 'spread-position-pill__en';
+    pillEn.textContent = positionLabelEn;
+    positionPill.appendChild(pillEn);
+    const pillTh = document.createElement('span');
+    pillTh.className = 'spread-position-pill__th thai';
+    pillTh.textContent = ` · ${positionLabelTh}`;
+    positionPill.appendChild(pillTh);
+    cardWrap.appendChild(positionPill);
+
     cardWrap.appendChild(buildCardArt(card, 'thumb'));
 
     const caption = document.createElement('div');
     caption.className = 'spread-caption';
 
+    // Orientation eyebrow with optional Roman numeral (Major Arcana only).
+    const orientation = document.createElement('div');
+    orientation.className = 'spread-orientation';
+    const orientationText = getOrientationLabel(toOrientation(card), state.currentLang);
+    const roman = getMajorArcanaRoman(card);
+    orientation.textContent = roman ? `${orientationText} · ${roman}` : orientationText;
+    caption.appendChild(orientation);
+
+    // Preserve existing .spread-label (position name) — CSS now hides it
+    // on both Quick and Story layouts because the position is conveyed by
+    // the floating pill (Story) or by the recap context (Quick).
     const label = document.createElement('div');
     label.className = 'spread-label';
     label.textContent = dict[positionStr] || positionStr;
     caption.appendChild(label);
 
-    const orientation = document.createElement('div');
-    orientation.className = 'spread-orientation';
-    orientation.textContent = getOrientationLabel(toOrientation(card), state.currentLang);
-    caption.appendChild(orientation);
+    // Phase 5: bilingual card name (EN serif + Thai alias).
+    const cardName = document.createElement('div');
+    cardName.className = 'spread-card-name';
+    cardName.textContent = card.card_name_en || '';
+    caption.appendChild(cardName);
+
+    if (card.alias_th) {
+      const cardNameTh = document.createElement('div');
+      cardNameTh.className = 'spread-card-name-th thai-serif';
+      cardNameTh.textContent = card.alias_th;
+      caption.appendChild(cardNameTh);
+    }
+
+    // Phase 5: lucky color chip — Quick only.
+    if (orderedCards.length === 1) {
+      const luckyChip = buildLuckyColorChip(card);
+      if (luckyChip) caption.appendChild(luckyChip);
+    }
+
+    // Phase 5: inline 2-sentence interpretation (EN + TH stacked).
+    // Quick uses tarot_imply_*; Story uses standalone_{position}_*.
+    let inlineEn = '';
+    let inlineTh = '';
+    if (orderedCards.length === 1) {
+      inlineEn = card.tarot_imply_en || card.reading_summary_preview_en || '';
+      inlineTh = card.tarot_imply_th || card.reading_summary_preview_th || '';
+    } else {
+      inlineEn = card[`standalone_${positionStr}_en`] || '';
+      inlineTh = card[`standalone_${positionStr}_th`] || '';
+    }
+    if (inlineEn) {
+      const p = document.createElement('p');
+      p.className = 'spread-inline-text spread-inline-text--en';
+      p.textContent = inlineEn;
+      caption.appendChild(p);
+    }
+    if (inlineTh) {
+      const p = document.createElement('p');
+      p.className = 'spread-inline-text spread-inline-text--th thai';
+      p.textContent = inlineTh;
+      caption.appendChild(p);
+    }
 
     cardWrap.appendChild(caption);
     cardWrap.addEventListener('click', () => openCardSheet(card));
