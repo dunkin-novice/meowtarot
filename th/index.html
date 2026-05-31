@@ -63,6 +63,28 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap"
     />
   </noscript>
+
+  <!-- Phase 5 design-doc fonts: Cormorant Garamond (EN display serif),
+       DM Sans (EN body), Noto Serif Thai (TH display serif),
+       IBM Plex Sans Thai (TH body) -->
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&display=swap"
+    />
+  </noscript>
+
   <link rel="preload" href="../css/styles.css" as="style" />
   <link rel="stylesheet" href="../css/styles.css" />
 
@@ -136,38 +158,80 @@
   <header id="site-header"></header>
 
   <main class="page-shell home-page">
-    <section class="home-hero-card home-hero-card--chooser" aria-labelledby="home-hero-title">
-      <a href="/th/daily.html" class="home-hero-cta" aria-labelledby="home-hero-title">
-        <h1 id="home-hero-title">เช็คดวงของคุณวันนี้</h1>
-        <p>ฟีเจอร์ดูดวงรายวันด้วยไพ่ทาโร่ต์</p>
-        <span class="home-hero-cta__btn" aria-hidden="true">จั่วไพ่ของฉัน</span>
+    <div class="home-crescent" aria-hidden="true"></div>
+
+    <section class="home-hero" aria-labelledby="home-wordmark">
+      <h1 class="home-wordmark" id="home-wordmark">MeowTarot</h1>
+      <div class="home-wordmark-th thai-serif">มิวทาโรต์</div>
+      <div class="home-divider" aria-hidden="true"></div>
+      <p class="home-tagline">A card a day — a quiet ritual<br />for the questions you carry.</p>
+      <p class="home-tagline-th thai">หนึ่งใบในแต่ละวัน · พิธีกรรมเล็กๆ ของคุณ</p>
+      <a href="/th/daily.html" class="home-cta-button">Draw today's card · เปิดไพ่</a>
+    </section>
+
+    <nav class="home-paths" aria-label="Reading modes">
+      <a href="/th/daily.html" class="home-path-card home-path-card--daily">
+        <div class="home-path-card__thumb" aria-hidden="true"></div>
+        <div class="home-path-card__text">
+          <div class="home-path-card__en">Daily Card</div>
+          <div class="home-path-card__th thai">ไพ่ประจำวัน</div>
+          <div class="home-path-card__note">หนึ่งใบ · 30 วินาที</div>
+        </div>
+        <div class="home-path-card__arrow" aria-hidden="true">›</div>
       </a>
+      <a href="/th/question.html" class="home-path-card home-path-card--ask">
+        <div class="home-path-card__thumb" aria-hidden="true"></div>
+        <div class="home-path-card__text">
+          <div class="home-path-card__en">Ask a Question</div>
+          <div class="home-path-card__th thai">ถามคำถาม</div>
+          <div class="home-path-card__note">1 หรือ 3 ใบ · เรื่องที่ค้างคาใจ</div>
+        </div>
+        <div class="home-path-card__arrow" aria-hidden="true">›</div>
+      </a>
+      <a href="/th/full.html" class="home-path-card home-path-card--full">
+        <div class="home-path-card__thumb" aria-hidden="true"></div>
+        <div class="home-path-card__text">
+          <div class="home-path-card__en">Full Reading</div>
+          <div class="home-path-card__th thai">ดูดวงเต็มสำรับ</div>
+          <div class="home-path-card__note">เซลติกครอส · 10 ใบ</div>
+        </div>
+        <div class="home-path-card__arrow" aria-hidden="true">›</div>
+      </a>
+    </nav>
 
-      <div class="home-readings-label">การอ่านไพ่</div>
-
-      <div class="home-reading-grid">
-        <a href="/th/question.html" class="home-reading-tile" aria-label="การอ่านแบบถามคำถาม">
-          <div class="home-reading-tile__icon" aria-hidden="true">?</div>
-          <div class="home-reading-tile__label">ถามคำถาม</div>
-          <div class="home-reading-tile__sub">อดีต · ปัจจุบัน · อนาคต</div>
-        </a>
-        <a href="/th/full.html" class="home-reading-tile" aria-label="การอ่านแบบเซลติกครอส">
-          <div class="home-reading-tile__icon" aria-hidden="true">✦</div>
-          <div class="home-reading-tile__label">เซลติกครอส</div>
-          <div class="home-reading-tile__sub">อ่านไพ่ 10 ใบเชิงลึก</div>
-        </a>
-        <a href="/th/tarot-card-meanings/" class="home-reading-tile" aria-label="เปิดคลังไพ่">
-          <div class="home-reading-tile__icon" aria-hidden="true">≡</div>
-          <div class="home-reading-tile__label">คลังไพ่</div>
-          <div class="home-reading-tile__sub">ไพ่ทาโรต์ 78 ใบและความหมาย</div>
-        </a>
-        <a href="/th/profile.html" class="home-reading-tile" aria-label="ดูประวัติการอ่านไพ่">
-          <div class="home-reading-tile__icon" aria-hidden="true">↗</div>
-          <div class="home-reading-tile__label">เส้นทางของฉัน</div>
-          <div class="home-reading-tile__sub">ประวัติการอ่านไพ่ของคุณ</div>
-        </a>
+    <section class="home-deck-strip" aria-labelledby="home-deck-strip-title">
+      <div class="home-deck-strip__header">
+        <h2 class="home-deck-strip__title" id="home-deck-strip-title">
+          Your decks <span class="home-deck-strip__title-th thai">· สำรับของคุณ</span>
+        </h2>
+        <a href="/th/profile.html" class="home-deck-strip__see-all">ดูทั้งหมด</a>
+      </div>
+      <div class="home-deck-strip__row">
+        <div class="home-deck-thumb home-deck-thumb--velvet">
+          <div class="home-deck-thumb__card" aria-hidden="true"><span class="home-deck-thumb__monogram">M</span></div>
+          <div class="home-deck-thumb__name">Velvet Familiar</div>
+          <div class="home-deck-thumb__name-th thai">เวลเวต</div>
+        </div>
+        <div class="home-deck-thumb home-deck-thumb--honey">
+          <div class="home-deck-thumb__card" aria-hidden="true"><span class="home-deck-thumb__monogram">M</span></div>
+          <div class="home-deck-thumb__name">Honey Hour</div>
+          <div class="home-deck-thumb__name-th thai">ฮันนีอาวเวอร์</div>
+        </div>
+        <div class="home-deck-thumb home-deck-thumb--moonveil is-locked">
+          <div class="home-deck-thumb__card" aria-hidden="true"><span class="home-deck-thumb__monogram">M</span></div>
+          <div class="home-deck-thumb__name">Moonveil</div>
+          <div class="home-deck-thumb__name-th thai">มูนเวล · locked</div>
+        </div>
       </div>
     </section>
+
+    <a href="#" class="home-app-banner" aria-label="ดาวน์โหลดแอป MeowTarot">
+      <div class="home-app-banner__text">
+        <div class="home-app-banner__title">Carry it with you</div>
+        <div class="home-app-banner__title-th thai">ดาวน์โหลดแอป — ไม่พลาดวันไหน</div>
+      </div>
+      <span class="home-app-banner__btn">Get app</span>
+    </a>
   </main>
 
   <footer id="site-footer"></footer>

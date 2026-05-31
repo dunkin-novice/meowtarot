@@ -1,128 +1,421 @@
 /*
- * MeowTarot — Phase 4: Homepage Theme
+ * MeowTarot — Phase 5: Homepage Structural Rebuild
  * css/home.css
  * ─────────────────────────────────────────────────────────────────────────
  *
- * RISK LEVEL: Low–Medium
- * SCOPE: body[data-page='home'] only — index.html + th/index.html.
+ * Translates the design document's ScreenHome() React component into real
+ * CSS scoped to body[data-page='home']. The HTML markup was rebuilt in
+ * the same commit; the OLD .home-hero-card / .home-hero-cta / .home-
+ * reading-tile selectors from phase-1-home.css §10 are deliberately no
+ * longer matched on the homepage (those classes are not in the new
+ * markup). They remain styled in phase-1-home.css for any page that
+ * still uses them (none today on the homepage).
  *
- * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
- * LOAD ORDER: must load AFTER css/phase-3-redesign.css AND
- * css/phase-1-home.css so source order wins specificity ties.
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace, including
+ * Phase 5 design-doc palette additions).
+ * LOAD ORDER: LAST. After phase-3-redesign.css and phase-1-home.css.
  *
- * WHAT THIS FILE DOES:
- *   §1 — Page background (pastel gradient with --mt-* tokens)
- *   §2 — Hero card surface
- *   §3 — Hero CTA (the "Draw my card" gold-leaning gradient panel + btn)
- *   §4 — Readings label
- *   §5 — Reading tile grid (4-tile chooser: Ask, Celtic Cross,
- *        Card Library, My Journey)
+ * SECTIONS:
+ *   §1 — Page background + main shell
+ *   §2 — Crescent ornament
+ *   §3 — Hero (wordmark, Thai name, divider, taglines)
+ *   §4 — Gold CTA button (Draw today's card)
+ *   §5 — Path cards (Daily / Ask / Full)
+ *   §6 — Deck strip (Your decks · See all + 3 thumbs with M monogram)
+ *   §7 — App download banner
  *
- * SELECTORS TARGETED (all confirmed in index.html static markup):
- *   .home-page, .home-hero-card, .home-hero-card--chooser,
- *   .home-hero-cta, .home-hero-cta__btn,
- *   .home-readings-label,
- *   .home-reading-grid,
- *   .home-reading-tile, .home-reading-tile__icon,
- *   .home-reading-tile__label, .home-reading-tile__sub
- *
- * NOT TARGETED (deliberate — markup does not exist on current homepage):
- *   - .reading-path-card  : old 3-card chooser, replaced by the 4-tile
- *                           grid in Phase 4 hero redesign; still used by
- *                           /features.html so the rules live in
- *                           phase-1-home.css §4-5 (CLAUDE.md backlog
- *                           "Dead-weight CSS" item).
- *   - .deck-strip         : the design doc Screen 01 shows a 3-deck
- *                           strip ("Your decks · 3 mini card backs")
- *                           but no markup or JS renders it on the
- *                           homepage today. Filed as future markup work.
- *
- * Chrome (header, bottom-nav, footer) is owned by css/phase-3-redesign.css
- * and intentionally NOT re-styled here.
+ * All rules scope-prefixed body[data-page='home'] for cascade isolation.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 
-/* §1 — Page background */
+/* §1 — Page background + main shell */
 body[data-page='home'] {
-  background:
-    radial-gradient(ellipse at 12%  4%, var(--mt-rose-soft) 0%, transparent 42%),
-    radial-gradient(ellipse at 88%  6%, var(--mt-gold-soft) 0%, transparent 38%),
-    var(--mt-bg-gradient);
+  background: var(--mt-bg-gradient-home);
   color: var(--mt-plum);
+  font-family: var(--mt-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-
-/* §2 — Hero card surface */
-body[data-page='home'] .home-hero-card,
-body[data-page='home'] .home-hero-card--chooser {
+body[data-page='home'] .home-page {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 8px 24px 110px;
+  min-height: calc(100dvh - 60px);
+  display: block;
   background: transparent;
   border: none;
   box-shadow: none;
 }
 
+body[data-page='home'] .thai,
+body[data-page='home'] .thai-serif {
+  font-family: var(--mt-font-thai);
+}
 
-/* §3 — Hero CTA panel + button */
-body[data-page='home'] .home-hero-cta {
-  background:
-    radial-gradient(ellipse at 80% 20%, var(--mt-gold-soft) 0%, transparent 55%),
-    linear-gradient(140deg, var(--mt-rose-soft) 0%, var(--mt-surface-card) 100%);
-  border: 1px solid var(--mt-gold-soft);
-  border-radius: var(--mt-radius-panel);
-  box-shadow: var(--mt-shadow-glow-gold), var(--mt-shadow-card);
+body[data-page='home'] .thai-serif {
+  font-family: var(--mt-font-display-th);
+}
+
+
+/* §2 — Crescent ornament */
+body[data-page='home'] .home-crescent {
+  width: 36px;
+  height: 36px;
+  margin: 14px auto 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 65% 50%,
+    transparent 45%,
+    var(--mt-gold-deep) 46%,
+    var(--mt-gold-deep) 52%,
+    transparent 53%
+  );
+  opacity: 0.7;
+}
+
+
+/* §3 — Hero */
+body[data-page='home'] .home-hero {
+  text-align: center;
+  margin-top: 8px;
+}
+
+body[data-page='home'] .home-wordmark {
+  font-family: var(--mt-font-display);
+  font-size: 54px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1;
   color: var(--mt-plum);
+  letter-spacing: -0.01em;
+  margin: 0;
 }
 
-body[data-page='home'] .home-hero-cta h1 {
-  color: var(--mt-plum);
+body[data-page='home'] .home-wordmark-th {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--mt-plum-mid);
+  margin-top: 4px;
+  line-height: 1.1;
 }
 
-body[data-page='home'] .home-hero-cta p {
-  color: var(--mt-plum-muted);
+body[data-page='home'] .home-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--mt-gold-deep);
+  margin: 16px auto;
+  opacity: 0.6;
+  border: 0;
 }
 
-body[data-page='home'] .home-hero-cta__btn {
-  background: var(--mt-plum);
-  color: var(--mt-nav-bg);
+body[data-page='home'] .home-tagline {
+  font-size: 14px;
+  color: var(--mt-ink-soft);
+  line-height: 1.55;
+  padding: 0 18px;
+  margin: 0;
+}
+
+body[data-page='home'] .home-tagline-th {
+  font-size: 13px;
+  color: var(--mt-ink-soft);
+  margin: 6px 0 0;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+
+/* §4 — Gold CTA button */
+body[data-page='home'] .home-cta-button {
+  display: inline-block;
+  margin-top: 22px;
+  padding: 16px 26px;
   border-radius: var(--mt-radius-pill);
-  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+  border: none;
+  background: var(--mt-cta-grad);
+  color: var(--mt-cream);
+  font-family: var(--mt-font-body);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--mt-cta-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-
-/* §4 — Readings label */
-body[data-page='home'] .home-readings-label {
-  color: var(--mt-plum-soft);
-}
-
-
-/* §5 — Reading tile grid + tiles */
-body[data-page='home'] .home-reading-grid {
-  /* Grid layout owned by phase-1-home.css §10 — color/surface only here. */
-}
-
-body[data-page='home'] .home-reading-tile {
-  background: var(--mt-surface-card);
-  border: 1px solid var(--mt-nav-border);
-  border-radius: var(--mt-radius-card);
-  box-shadow: var(--mt-shadow-panel);
-  color: var(--mt-plum);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-}
-
-body[data-page='home'] .home-reading-tile:hover {
-  border-color: var(--mt-gold);
-  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+body[data-page='home'] .home-cta-button:hover,
+body[data-page='home'] .home-cta-button:focus-visible {
   transform: translateY(-2px);
+  box-shadow:
+    0 20px 36px -8px rgba(209, 40, 120, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  outline: none;
 }
 
-body[data-page='home'] .home-reading-tile__icon {
-  color: var(--mt-gold);
+
+/* §5 — Path cards */
+body[data-page='home'] .home-paths {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-body[data-page='home'] .home-reading-tile__label {
+body[data-page='home'] .home-path-card {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.90);
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--mt-soft-shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+body[data-page='home'] .home-path-card:hover,
+body[data-page='home'] .home-path-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--mt-gold-pale);
+  box-shadow:
+    var(--mt-shadow-glow-gold),
+    var(--mt-soft-shadow);
+  outline: none;
+}
+
+body[data-page='home'] .home-path-card__thumb {
+  width: 44px;
+  height: 60px;
+  border-radius: 6px;
+  border: 0.5px solid var(--mt-gold-pale);
+  box-shadow: 0 6px 12px -4px rgba(61, 26, 92, 0.30);
+  flex-shrink: 0;
+}
+
+body[data-page='home'] .home-path-card--daily .home-path-card__thumb {
+  background: var(--mt-card-back-deep);
+}
+
+body[data-page='home'] .home-path-card--ask .home-path-card__thumb {
+  background: linear-gradient(160deg, var(--mt-plum-mid) 0%, var(--mt-plum-pale) 100%);
+}
+
+body[data-page='home'] .home-path-card--full .home-path-card__thumb {
+  background: linear-gradient(160deg, var(--mt-gold) 0%, var(--mt-gold-pale) 100%);
+}
+
+body[data-page='home'] .home-path-card__text {
+  flex: 1;
+  min-width: 0;
+}
+
+body[data-page='home'] .home-path-card__en {
+  font-family: var(--mt-font-display);
+  font-size: 19px;
+  font-weight: 600;
   color: var(--mt-plum);
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
-body[data-page='home'] .home-reading-tile__sub {
-  color: var(--mt-plum-muted);
+body[data-page='home'] .home-path-card__th {
+  font-size: 12px;
+  color: var(--mt-plum-mid);
+  margin-top: 2px;
+}
+
+body[data-page='home'] .home-path-card__note {
+  font-size: 11.5px;
+  color: var(--mt-ink-soft);
+  margin-top: 4px;
+}
+
+body[data-page='home'] .home-path-card__arrow {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+body[data-page='home'] .home-path-card--daily .home-path-card__arrow { color: var(--mt-rose); }
+body[data-page='home'] .home-path-card--ask   .home-path-card__arrow { color: var(--mt-plum-mid); }
+body[data-page='home'] .home-path-card--full  .home-path-card__arrow { color: var(--mt-gold-deep); }
+
+
+/* §6 — Deck strip */
+body[data-page='home'] .home-deck-strip {
+  margin-top: 22px;
+}
+
+body[data-page='home'] .home-deck-strip__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+body[data-page='home'] .home-deck-strip__title {
+  font-family: var(--mt-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+body[data-page='home'] .home-deck-strip__title-th {
+  font-size: 12px;
+  color: var(--mt-plum-mid);
+  font-weight: 500;
+}
+
+body[data-page='home'] .home-deck-strip__see-all {
+  font-size: 11px;
+  color: var(--mt-gold-deep);
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+
+body[data-page='home'] .home-deck-strip__see-all:hover {
+  text-decoration: underline;
+}
+
+body[data-page='home'] .home-deck-strip__row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+body[data-page='home'] .home-deck-strip__row::-webkit-scrollbar {
+  display: none;
+}
+
+body[data-page='home'] .home-deck-thumb {
+  flex-shrink: 0;
+  width: 96px;
+  text-align: left;
+}
+
+body[data-page='home'] .home-deck-thumb__card {
+  width: 96px;
+  height: 134px;
+  border-radius: 10px;
+  border: 0.5px solid var(--mt-gold-pale);
+  box-shadow: 0 10px 22px -8px rgba(61, 26, 92, 0.40);
+  position: relative;
+  overflow: hidden;
+}
+
+body[data-page='home'] .home-deck-thumb__card::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 0.5px solid var(--mt-gold-pale);
+  border-radius: 6px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+body[data-page='home'] .home-deck-thumb--velvet   .home-deck-thumb__card { background: var(--mt-card-back-deep); }
+body[data-page='home'] .home-deck-thumb--honey    .home-deck-thumb__card { background: var(--mt-honey-grad); }
+body[data-page='home'] .home-deck-thumb--moonveil .home-deck-thumb__card { background: var(--mt-moonveil-grad); }
+
+body[data-page='home'] .home-deck-thumb.is-locked .home-deck-thumb__card {
+  filter: saturate(0.4) opacity(0.7);
+}
+
+body[data-page='home'] .home-deck-thumb__monogram {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44%;
+  transform: translateY(-50%);
+  text-align: center;
+  color: var(--mt-gold-pale);
+  font-family: var(--mt-font-display);
+  font-style: italic;
+  font-size: 36px;
+  line-height: 1;
+}
+
+body[data-page='home'] .home-deck-thumb__name {
+  font-family: var(--mt-font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  margin-top: 6px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='home'] .home-deck-thumb__name-th {
+  font-size: 10px;
+  color: var(--mt-plum-mid);
+  margin-top: 1px;
+}
+
+
+/* §7 — App download banner */
+body[data-page='home'] .home-app-banner {
+  margin-top: 22px;
+  background: var(--mt-app-banner-grad);
+  border-radius: 20px;
+  padding: 16px 18px;
+  color: var(--mt-cream);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--mt-app-banner-shadow);
+  text-decoration: none;
+}
+
+body[data-page='home'] .home-app-banner__text {
+  flex: 1;
+}
+
+body[data-page='home'] .home-app-banner__title {
+  font-family: var(--mt-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--mt-cream);
+  letter-spacing: -0.01em;
+}
+
+body[data-page='home'] .home-app-banner__title-th {
+  font-size: 12px;
+  margin-top: 4px;
+  opacity: 0.85;
+  color: var(--mt-cream);
+}
+
+body[data-page='home'] .home-app-banner__btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--mt-gold-deep);
+  color: var(--mt-plum);
+  text-decoration: none;
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+body[data-page='home'] .home-app-banner__btn:hover {
+  background: var(--mt-gold);
 }
