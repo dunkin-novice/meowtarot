@@ -1059,42 +1059,75 @@ async function renderOverall() {
 
 async function renderQuestion(dict = translations[state.currentLang] || translations.en) {
   const topicGrid = document.getElementById('question-topic-grid');
+  const continueBtn = document.getElementById('question-continue');
   if (!topicGrid) return;
   const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
 
-  const buildTopicCard = (topic) => {
+  // Phase 5 ask flow: explicit Continue tap. Topic-chip click selects only;
+  // navigation happens on Continue. Bilingual chip rendering (EN + Thai title
+  // visible on every chip) matches the design doc's chip pattern.
+  let selectedTopic = state.questionTopic || '';
+
+  const updateContinueState = () => {
+    if (continueBtn) continueBtn.disabled = !selectedTopic;
+  };
+
+  const setActiveChip = (topicKey) => {
+    selectedTopic = topicKey;
+    state.questionTopic = topicKey;
+    topicGrid.querySelectorAll('.question-topic-chip').forEach((chip) => {
+      const isActive = chip.dataset.topic === topicKey;
+      chip.classList.toggle('is-active', isActive);
+      chip.setAttribute('aria-pressed', String(isActive));
+    });
+    updateContinueState();
+  };
+
+  const buildTopicChip = (topic) => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'topic-card';
+    button.className = 'question-topic-chip';
     button.dataset.topic = topic.key;
+    button.setAttribute('aria-pressed', 'false');
 
-    const icon = document.createElement('span');
-    icon.className = 'topic-card__icon';
+    const enTitle = (translations.en && translations.en[topic.titleKey]) || topic.key;
+    const thTitle = (translations.th && translations.th[topic.titleKey]) || null;
 
-    icon.textContent = topic.emoji || '🔮';
-    icon.setAttribute('aria-hidden', 'true');
+    const enSpan = document.createElement('span');
+    enSpan.className = 'question-topic-chip__en';
+    enSpan.textContent = enTitle;
+    button.appendChild(enSpan);
 
-    button.appendChild(icon);
-
-    const title = document.createElement('span');
-    title.className = 'topic-card__title';
-    title.textContent = dict[topic.titleKey] || topic.key;
-    button.appendChild(title);
+    if (thTitle && thTitle !== enTitle) {
+      const thSpan = document.createElement('span');
+      thSpan.className = 'question-topic-chip__th thai';
+      thSpan.textContent = `· ${thTitle}`;
+      button.appendChild(thSpan);
+    }
 
     button.addEventListener('click', () => {
-      state.questionTopic = topic.key;
       trackTopicSelected({ locale: state.currentLang, mode: 'question', topic: topic.key });
-      const destination = localizePath('/question-draw.html', state.currentLang);
-      const params = new URLSearchParams({ topic: topic.key, spread: questionSpread });
-      window.location.href = `${destination}?${params.toString()}`;
+      setActiveChip(topic.key);
     });
 
     return button;
   };
 
   topicGrid.innerHTML = '';
-  topics.forEach((topic) => topicGrid.appendChild(buildTopicCard(topic)));
+  topics.forEach((topic) => topicGrid.appendChild(buildTopicChip(topic)));
+
+  if (selectedTopic) setActiveChip(selectedTopic);
+  updateContinueState();
+
+  if (continueBtn) {
+    continueBtn.onclick = () => {
+      if (!selectedTopic) return;
+      const destination = localizePath('/question-draw.html', state.currentLang);
+      const params = new URLSearchParams({ topic: selectedTopic, spread: questionSpread });
+      window.location.href = `${destination}?${params.toString()}`;
+    };
+  }
 
   const spreadBtns = document.querySelectorAll('.question-spread-btn');
   spreadBtns.forEach((btn) => {
@@ -1128,6 +1161,10 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
   const querySpread = urlParams.get('spread') || 'story';
   const spread = QUESTION_SELECTION_COUNTS[querySpread] ? querySpread : 'story';
   const selectionCount = QUESTION_SELECTION_COUNTS[spread];
+
+  // Phase 5 ask flow: CSS swaps title / legend / button-label off this attr.
+  const drawShell = board.closest('.question-draw-shell');
+  if (drawShell) drawShell.setAttribute('data-question-spread', spread);
 
   const selectedTopic = topics.find((item) => item.key === state.questionTopic);
   selectedTopicTitle.textContent = selectedTopic
