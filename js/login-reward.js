@@ -2,11 +2,12 @@
  * login-reward.js — First-sign-in welcome popup
  *
  * Triggered once per user (per device) when they first sign in.
- * Centered modal showing the Moonmallow starter deck. Single CTA.
+ * Centered modal showing the Veila Tarot starter deck. Single CTA
+ * grants the deck by setting it as the active deck.
  * Gated by localStorage flag 'meowtarot_login_reward_seen'.
  */
 
-import { DECKS } from './data.js';
+import { DECKS, setActiveDeck } from './data.js';
 import { translations } from './common.js';
 
 const STYLE_FLAG = '__mt_login_reward_styles_injected';
@@ -219,7 +220,7 @@ export function maybeShowLoginReward(user, lang) {
     injectStylesOnce();
 
     const dict = getDict(lang);
-    const deckBackUrl = DECKS && DECKS.moonmallow ? DECKS.moonmallow.backImage : '';
+    const deckBackUrl = DECKS && DECKS['veila-tarot'] ? DECKS['veila-tarot'].backImage : '';
 
     const overlay = buildPopup(deckBackUrl, dict);
     document.body.appendChild(overlay);
@@ -239,6 +240,7 @@ export function maybeShowLoginReward(user, lang) {
     const cta = overlay.querySelector('.mt-lr-cta');
     if (cta) {
       cta.addEventListener('click', () => {
+        setActiveDeck('veila-tarot');
         markSeen();
         dismiss();
       }, { once: true });
