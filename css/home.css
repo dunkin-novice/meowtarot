@@ -1,0 +1,128 @@
+/*
+ * MeowTarot — Phase 4: Homepage Theme
+ * css/home.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * RISK LEVEL: Low–Medium
+ * SCOPE: body[data-page='home'] only — index.html + th/index.html.
+ *
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
+ * LOAD ORDER: must load AFTER css/phase-3-redesign.css AND
+ * css/phase-1-home.css so source order wins specificity ties.
+ *
+ * WHAT THIS FILE DOES:
+ *   §1 — Page background (pastel gradient with --mt-* tokens)
+ *   §2 — Hero card surface
+ *   §3 — Hero CTA (the "Draw my card" gold-leaning gradient panel + btn)
+ *   §4 — Readings label
+ *   §5 — Reading tile grid (4-tile chooser: Ask, Celtic Cross,
+ *        Card Library, My Journey)
+ *
+ * SELECTORS TARGETED (all confirmed in index.html static markup):
+ *   .home-page, .home-hero-card, .home-hero-card--chooser,
+ *   .home-hero-cta, .home-hero-cta__btn,
+ *   .home-readings-label,
+ *   .home-reading-grid,
+ *   .home-reading-tile, .home-reading-tile__icon,
+ *   .home-reading-tile__label, .home-reading-tile__sub
+ *
+ * NOT TARGETED (deliberate — markup does not exist on current homepage):
+ *   - .reading-path-card  : old 3-card chooser, replaced by the 4-tile
+ *                           grid in Phase 4 hero redesign; still used by
+ *                           /features.html so the rules live in
+ *                           phase-1-home.css §4-5 (CLAUDE.md backlog
+ *                           "Dead-weight CSS" item).
+ *   - .deck-strip         : the design doc Screen 01 shows a 3-deck
+ *                           strip ("Your decks · 3 mini card backs")
+ *                           but no markup or JS renders it on the
+ *                           homepage today. Filed as future markup work.
+ *
+ * Chrome (header, bottom-nav, footer) is owned by css/phase-3-redesign.css
+ * and intentionally NOT re-styled here.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background */
+body[data-page='home'] {
+  background:
+    radial-gradient(ellipse at 12%  4%, var(--mt-rose-soft) 0%, transparent 42%),
+    radial-gradient(ellipse at 88%  6%, var(--mt-gold-soft) 0%, transparent 38%),
+    var(--mt-bg-gradient);
+  color: var(--mt-plum);
+}
+
+
+/* §2 — Hero card surface */
+body[data-page='home'] .home-hero-card,
+body[data-page='home'] .home-hero-card--chooser {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+
+/* §3 — Hero CTA panel + button */
+body[data-page='home'] .home-hero-cta {
+  background:
+    radial-gradient(ellipse at 80% 20%, var(--mt-gold-soft) 0%, transparent 55%),
+    linear-gradient(140deg, var(--mt-rose-soft) 0%, var(--mt-surface-card) 100%);
+  border: 1px solid var(--mt-gold-soft);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-glow-gold), var(--mt-shadow-card);
+  color: var(--mt-plum);
+}
+
+body[data-page='home'] .home-hero-cta h1 {
+  color: var(--mt-plum);
+}
+
+body[data-page='home'] .home-hero-cta p {
+  color: var(--mt-plum-muted);
+}
+
+body[data-page='home'] .home-hero-cta__btn {
+  background: var(--mt-plum);
+  color: var(--mt-nav-bg);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+}
+
+
+/* §4 — Readings label */
+body[data-page='home'] .home-readings-label {
+  color: var(--mt-plum-soft);
+}
+
+
+/* §5 — Reading tile grid + tiles */
+body[data-page='home'] .home-reading-grid {
+  /* Grid layout owned by phase-1-home.css §10 — color/surface only here. */
+}
+
+body[data-page='home'] .home-reading-tile {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-card);
+  box-shadow: var(--mt-shadow-panel);
+  color: var(--mt-plum);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+body[data-page='home'] .home-reading-tile:hover {
+  border-color: var(--mt-gold);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+  transform: translateY(-2px);
+}
+
+body[data-page='home'] .home-reading-tile__icon {
+  color: var(--mt-gold);
+}
+
+body[data-page='home'] .home-reading-tile__label {
+  color: var(--mt-plum);
+}
+
+body[data-page='home'] .home-reading-tile__sub {
+  color: var(--mt-plum-muted);
+}
