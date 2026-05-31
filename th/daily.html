@@ -49,21 +49,90 @@
   <!-- End Google Tag Manager (noscript) -->
   <header id="site-header"></header>
 
-  <main class="page-shell board-page">
-    <section class="board-shell">
-      <div class="board-header board-header--daily">
-        <p class="eyebrow" data-i18n="dailyTitle"></p>
-        <p class="board-helper">เลือกไพ่ 1 ใบสำหรับวันนี้</p>
-        <span class="selection-counter" id="daily-counter">0/1</span>
+  <main class="page-shell board-page daily-shell" data-daily-phase="before">
+
+    <!-- STATE 1: Before Draw — ceremonial single card-back -->
+    <section class="daily-state daily-state--before" aria-labelledby="daily-before-title">
+      <div class="daily-topbar daily-topbar--before">
+        <div class="daily-topbar__date-block">
+          <div class="daily-topbar__date">Today</div>
+          <div class="daily-topbar__day thai">วันนี้</div>
+        </div>
+      </div>
+
+      <!-- streak strip: placeholder values; wire to meowtarot_user_progress later -->
+      <div class="daily-streak-strip" aria-label="ต่อเนื่อง 14 วัน">
+        <div class="daily-streak-strip__chip">14</div>
+        <div class="daily-streak-strip__text">
+          <div class="daily-streak-strip__title">Day 14 streak</div>
+          <div class="daily-streak-strip__subtitle thai">ต่อเนื่อง 14 วัน · เก่งมาก</div>
+        </div>
+        <div class="daily-streak-strip__bar" aria-hidden="true">
+          <span class="daily-streak-strip__bar-cell is-filled"></span>
+          <span class="daily-streak-strip__bar-cell is-filled"></span>
+          <span class="daily-streak-strip__bar-cell is-filled"></span>
+          <span class="daily-streak-strip__bar-cell is-filled"></span>
+          <span class="daily-streak-strip__bar-cell is-filled"></span>
+          <span class="daily-streak-strip__bar-cell"></span>
+          <span class="daily-streak-strip__bar-cell"></span>
+        </div>
+      </div>
+
+      <div class="daily-deck-label">
+        <div class="daily-deck-label__eyebrow">From the deck</div>
+        <div class="daily-deck-label__name" id="daily-before-title">Velvet Familiar</div>
+        <div class="daily-deck-label__name-th thai">เวลเวต แฟมิเลียร์</div>
+      </div>
+
+      <div class="daily-bigcard" aria-hidden="true">
+        <div class="daily-bigcard__aura"></div>
+        <div class="daily-bigcard__card">
+          <span class="daily-bigcard__monogram">M</span>
+          <span class="daily-bigcard__wordmark">MeowTarot</span>
+        </div>
+      </div>
+
+      <div class="daily-ceremony">
+        <div class="daily-ceremony__cta">Tap to reveal</div>
+        <div class="daily-ceremony__cta-th thai-serif">แตะเพื่อเปิดไพ่</div>
+        <p class="daily-ceremony__hint">ค่อย ๆ หายใจ. ถือคำถามไว้ในใจ หรือไม่ต้องถือสิ่งใด.</p>
+      </div>
+
+      <div class="daily-state__cta-row">
+        <button class="ritual-cta daily-draw-button" type="button" id="daily-deal-shuffle">Draw card · เปิดไพ่</button>
+      </div>
+    </section>
+
+    <!-- STATE 2: Selection Board — 12-slot grid -->
+    <section class="daily-state daily-state--board" aria-labelledby="daily-board-title">
+      <div class="daily-topbar daily-topbar--board">
+        <div class="daily-topbar__deck">
+          <div class="daily-topbar__deck-eyebrow">From the deck</div>
+          <div class="daily-topbar__deck-name">Velvet Familiar</div>
+        </div>
+        <div class="daily-topbar__streak-chip" aria-label="ต่อเนื่อง 14 วัน">
+          <span class="daily-topbar__streak-num">14</span>
+          <span class="daily-topbar__streak-label">Day 14</span>
+        </div>
+      </div>
+
+      <div class="daily-board-title">
+        <h1 class="daily-board-title__en" id="daily-board-title">Choose your card</h1>
+        <h2 class="daily-board-title__th thai-serif">เลือกไพ่ของคุณ</h2>
+        <p class="daily-board-title__hint">ปล่อยให้สายตาคุณหยุดอยู่ที่ใบหนึ่ง. ไม่มีคำตอบที่ผิด.</p>
       </div>
 
       <div class="card-board card-board--daily" id="daily-board" aria-live="polite"></div>
 
-      <div class="board-actions board-actions--daily board-actions--center">
-        <button class="primary continue-btn action-btn" type="button" id="daily-continue" data-i18n="continue" disabled></button>
-        <button class="ritual-cta action-btn" type="button" id="daily-deal-shuffle">แจกไพ่</button>
+      <div class="daily-board-counter" aria-live="polite">
+        <span id="daily-counter">0/1</span>
+      </div>
+
+      <div class="daily-state__cta-row">
+        <button class="primary continue-btn action-btn daily-continue-button" type="button" id="daily-continue" data-i18n="continue" disabled>Continue · ต่อไป</button>
       </div>
     </section>
+
   </main>
 
   <footer id="site-footer"></footer>

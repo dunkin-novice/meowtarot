@@ -466,6 +466,12 @@ function renderDaily() {
   dealShuffleBtn.onclick = () => {
     dailyBoard.render();
     updateDailySelectionUi([]);
+    // Phase 5: transition State 1 (Before Draw) → State 2 (Selection Board).
+    // The button lives in State 1's markup on daily.html / th/daily.html.
+    // Flipping data-daily-phase swaps which <section.daily-state> is visible
+    // via css/daily.css. Safe no-op on legacy markup that lacks the attribute.
+    const dailyShell = dealShuffleBtn.closest('.daily-shell');
+    if (dailyShell) dailyShell.setAttribute('data-daily-phase', 'board');
   };
 
   const commitDailySelection = () => {

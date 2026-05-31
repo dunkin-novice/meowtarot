@@ -141,4 +141,8 @@
   --mt-font-display-th:    "Noto Serif Thai", "Cormorant Garamond", serif;
   --mt-font-body:          "DM Sans", "IBM Plex Sans Thai", system-ui, sans-serif;
   --mt-font-thai:          "IBM Plex Sans Thai", "DM Sans", sans-serif;
+
+  /* Per-page background gradients (additive — design-doc specific) */
+  --mt-bg-gradient-daily:  linear-gradient(180deg, #ead4ee 0%, #efd0e2 100%);
+  --mt-bg-gradient-daily-after: linear-gradient(180deg, #f1d9ee 0%, #f6dce5 100%);
 }
