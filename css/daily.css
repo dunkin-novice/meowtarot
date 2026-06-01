@@ -53,7 +53,10 @@ body[data-page='daily'] {
 body[data-page='daily'] .daily-shell {
   max-width: 420px;
   margin: 0 auto;
-  padding: 8px 24px 110px;
+  /* Phase 5 BUG 2 fix: padding-top clears the fixed .site-header so the
+   * board heading isn't hidden under the nav. Adapts to --nav-height when
+   * the var is defined globally; falls back to ~76px otherwise. */
+  padding: calc(var(--nav-height, 64px) + 12px) 24px 110px;
   min-height: calc(100dvh - 60px);
   background: transparent;
   border: none;
@@ -244,6 +247,35 @@ body[data-page='daily'] .daily-bigcard__img {
   display: block;
 }
 
+/* Phase 5 BUG 1 fix: when the real card-back <img> is in the DOM, strip the
+ * CSS frame so the image displays at its natural 1568:2720 aspect ratio
+ * without double-framing or cropping. The outer border, gradient, and
+ * ::before/::after gold rings become invisible. The fallback path (no <img>,
+ * e.g. image-load failure or legacy markup) keeps the gradient + borders
+ * intact via the un-overridden base rules above.
+ *
+ * Browser support note: :has() ships in Chrome 105+, Safari 15.4+, Firefox
+ * 121+. Acceptable for the current site audience; degrades to the existing
+ * (slightly-clipped) framed visual on older browsers, not broken. */
+body[data-page='daily'] .daily-bigcard:has(.daily-bigcard__img) {
+  height: auto;
+}
+
+body[data-page='daily'] .daily-bigcard__card:has(.daily-bigcard__img) {
+  background: transparent;
+  border: none;
+  height: auto;
+  aspect-ratio: 1568 / 2720;
+  box-shadow:
+    0 26px 56px -18px rgba(61, 26, 92, 0.60),
+    0 6px 14px -6px rgba(61, 26, 92, 0.40);
+}
+
+body[data-page='daily'] .daily-bigcard__card:has(.daily-bigcard__img)::before,
+body[data-page='daily'] .daily-bigcard__card:has(.daily-bigcard__img)::after {
+  content: none;
+}
+
 body[data-page='daily'] .daily-bigcard__card::before {
   content: "";
   position: absolute;
@@ -329,6 +361,15 @@ body[data-page='daily'] .daily-state__cta-row {
   display: flex;
   justify-content: center;
   margin-top: 26px;
+  /* Phase 5 mobile fix: pin the CTA row above the fixed .bottom-nav so the
+   * Continue / Draw button is always tappable on mobile widths. Sticky stays
+   * in the document flow until it reaches the `bottom` threshold, then
+   * floats above the bottom-nav with safe-area-inset compensation for iOS.
+   * z-index 10 sits above the card grid but well below modal overlays
+   * (.mt-lr-overlay / .mt-dr-overlay live at z-index 9999). */
+  position: sticky;
+  bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 10;
 }
 
 body[data-page='daily'] .daily-draw-button,

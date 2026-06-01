@@ -11,7 +11,10 @@ import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected } from './analytics.js';
 
 const BOARD_CARD_COUNT = 12;
-const DAILY_BOARD_COUNT = 6;
+// Phase 5 BUG 3 fix: changed from 6 → 12 to match design doc ScreenCardBoardDaily.
+// The 12-card spread matches what the question-draw board already renders
+// (BOARD_CARD_COUNT = 12 above). Selection still = 1 of N (DAILY_SELECTION_MAX = 1).
+const DAILY_BOARD_COUNT = 12;
 const CELTIC_CROSS_COUNT = 10;
 const QUESTION_SELECTION_COUNTS = { story: 3, quick: 1 };
 let questionSpread = 'story';
