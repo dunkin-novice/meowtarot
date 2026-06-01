@@ -2393,6 +2393,7 @@ function renderDailyDetails(cards, dict, stage) {
     const caption = document.createElement('div');
     caption.className = 'spread-caption';
 
+    // Orientation eyebrow with optional Roman numeral.
     const orientation = document.createElement('div');
     orientation.className = 'spread-orientation';
     const orientationText = getOrientationLabel(toOrientation(card), state.currentLang);
@@ -2412,6 +2413,7 @@ function renderDailyDetails(cards, dict, stage) {
       caption.appendChild(cardNameTh);
     }
 
+    // Bilingual archetype line (Option 1 from review).
     if (card.archetype_en || card.archetype_th) {
       const archetype = document.createElement('div');
       archetype.className = 'spread-archetype';
@@ -2429,7 +2431,8 @@ function renderDailyDetails(cards, dict, stage) {
     spreadPanel.appendChild(spreadGrid);
     stage.appendChild(spreadPanel);
 
-    // §C. "For today" interpretation panel.
+    // §C. "For today" interpretation panel — daily-specific (header +
+    // EN + TH body + hairline divider + Keyword row).
     const interpPanel = document.createElement('section');
     interpPanel.className = 'daily-interp-panel';
 
@@ -2476,6 +2479,9 @@ function renderDailyDetails(cards, dict, stage) {
       sep.textContent = '·';
       keywordRow.appendChild(sep);
 
+      // Thai keyword data isn't on the card model yet — show the Thai label
+      // with the English keyword value as a graceful bilingual approximation.
+      // Filed: add keywords_light_th to card data for a true translation.
       const thWrap = document.createElement('span');
       thWrap.className = 'daily-interp-panel__keyword thai';
       const thLabel = document.createElement('b');
@@ -2489,7 +2495,10 @@ function renderDailyDetails(cards, dict, stage) {
 
     stage.appendChild(interpPanel);
 
-    // §D. Preserved guidance + advice panels.
+    // §D. Preserved guidance + advice panels (per CLAUDE.md "free reading
+    // result must always feel complete" — they carry per-card hook,
+    // action_prompt, reflection_question, affirmation content). Their CSS
+    // surface restyle from reading.css §13 already applies.
     const detailsWrap = document.createElement('section');
     detailsWrap.className = 'daily-reading-details';
     detailsWrap.appendChild(createDailyDetails(card));
@@ -3082,7 +3091,7 @@ function renderFull(cards, dict) {
     outcome: 'outcome',
   };
 
-  positions.forEach(({ card, position }) => {
+  positions.forEach(({ card, position }, slotIdx) => {
     const layoutSlot = layoutSlotByPosition[position] || 'situation';
     const slot = document.createElement('button');
     slot.className = `reading-spread-card celtic-cross-slot celtic-slot celtic-slot--${layoutSlot} card-slot--${position}`;
@@ -3090,6 +3099,16 @@ function renderFull(cards, dict) {
     slot.dataset.position = position;
     slot.dataset.layoutSlot = layoutSlot;
     slot.setAttribute('aria-label', getFullPositionLabel(dict, position));
+
+    // Phase 5: gold number badge (1-10) top-left of each card — matches
+    // design. positions[] iteration order follows the celtic-cross sequence
+    // (situation, challenge, focus, recentpast, past, nearfuture,
+    // power, environment, hopes, outcome).
+    const badge = document.createElement('span');
+    badge.className = 'celtic-slot__badge';
+    badge.textContent = String(slotIdx + 1);
+    badge.setAttribute('aria-hidden', 'true');
+    slot.appendChild(badge);
 
     slot.appendChild(buildCardArt(card, 'thumb'));
 
@@ -3118,6 +3137,61 @@ function renderFull(cards, dict) {
   });
   spreadPanel.appendChild(spreadLayout);
   readingContent.appendChild(spreadPanel);
+
+  // Phase 5: Celtic Cross summary panel — "Ten cards · ten doors / สิบใบ · สิบประตู"
+  // 2-column grid of all 10 cards with number badge + italic card name +
+  // bilingual position label. Sits between the cross spread and the
+  // per-position interpretation panel.
+  if (isCelticCross) {
+    const summaryPanel = document.createElement('section');
+    summaryPanel.className = 'panel panel--celtic-summary';
+
+    const header = document.createElement('div');
+    header.className = 'celtic-summary__header';
+    const titlePrimary = document.createElement('div');
+    titlePrimary.className = 'celtic-summary__title';
+    titlePrimary.textContent = state.currentLang === 'th' ? 'สิบใบ · สิบประตู' : 'Ten cards · ten doors';
+    header.appendChild(titlePrimary);
+    const titleAlt = document.createElement('div');
+    titleAlt.className = state.currentLang === 'th'
+      ? 'celtic-summary__title-alt'
+      : 'celtic-summary__title-alt thai';
+    titleAlt.textContent = state.currentLang === 'th' ? 'Ten cards · ten doors' : 'สิบใบ · สิบประตู';
+    header.appendChild(titleAlt);
+    summaryPanel.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'celtic-summary__grid';
+
+    positions.forEach(({ card, position }, idx) => {
+      const item = document.createElement('div');
+      item.className = 'celtic-summary__item';
+
+      const num = document.createElement('span');
+      num.className = 'celtic-summary__num';
+      num.textContent = String(idx + 1);
+      item.appendChild(num);
+
+      const text = document.createElement('div');
+      text.className = 'celtic-summary__text';
+
+      const name = document.createElement('div');
+      name.className = 'celtic-summary__name';
+      name.textContent = card.card_name_en || '';
+      text.appendChild(name);
+
+      const posLabel = document.createElement('div');
+      posLabel.className = 'celtic-summary__pos';
+      posLabel.textContent = getFullPositionLabel(dict, position);
+      text.appendChild(posLabel);
+
+      item.appendChild(text);
+      grid.appendChild(item);
+    });
+
+    summaryPanel.appendChild(grid);
+    readingContent.appendChild(summaryPanel);
+  }
 
   const interpretationPanel = document.createElement('div');
   interpretationPanel.className = 'panel full-interpretation-panel';

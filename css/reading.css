@@ -604,6 +604,156 @@ body[data-page='reading'] .action-row .ghost:hover {
 
 
 /* ─────────────────────────────────────────────────────────────────────────
+ * §17 — Celtic Cross (mode=full) — design-doc additions
+ *
+ * The cross+staff grid itself lives in css/styles.css under the existing
+ * body[data-page='reading'][data-reading-mode='full'] selectors. This
+ * block adds the design-doc embellishments:
+ *   - Gold number badge top-left of each card (JS-injected
+ *     .celtic-slot__badge inside renderFull).
+ *   - Hide the .spread-label / .spread-orientation inside celtic-cross
+ *     slots — the design's on-card UI shows only the card art + number;
+ *     position / orientation info lives in the summary panel below.
+ *   - Reorder the right-column staff so Self (slot 7) is at the top and
+ *     Outcome (slot 10) is at the bottom (matches design; the original
+ *     styles.css mapping had Outcome at top).
+ *   - New .panel--celtic-summary "Ten cards · ten doors" 2-column grid.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+
+/* Gold number badge */
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot {
+  position: relative; /* anchor the badge */
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot__badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--mt-gold-deep);
+  color: var(--mt-plum-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mt-font-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 11px;
+  border: 1.5px solid var(--mt-cream);
+  box-shadow: 0 2px 5px rgba(61, 26, 92, 0.40);
+  z-index: 3;
+}
+
+/* Hide caption text on celtic-cross slots — only card art + badge show */
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot .spread-caption {
+  display: none;
+}
+
+
+/* Right-column staff: design order is 7-Self (top) → 8 → 9 → 10-Outcome (bottom).
+ * Existing styles.css has Outcome at top; override here. Same specificity as
+ * the existing rule, source order wins (reading.css loads after styles.css). */
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--power       { grid-area: 1 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--environment { grid-area: 2 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--hopes       { grid-area: 3 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--outcome     { grid-area: 4 / 4; }
+
+
+/* Celtic Cross summary panel ("Ten cards · ten doors") */
+body[data-page='reading'][data-reading-mode='full'] .panel--celtic-summary {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: 18px;
+  box-shadow: var(--mt-soft-shadow);
+  padding: 14px 16px;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__title {
+  font-family: var(--mt-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--mt-plum);
+  letter-spacing: -0.01em;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__title-alt {
+  font-size: 10px;
+  color: var(--mt-plum-mid);
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+  row-gap: 6px;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mt-gold-deep);
+  color: var(--mt-plum-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mt-font-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__text {
+  flex: 1;
+  min-width: 0;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__name {
+  font-family: var(--mt-font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--mt-plum);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__pos {
+  font-family: var(--mt-font-body);
+  font-size: 9px;
+  color: var(--mt-ink-soft);
+  margin-top: 1px;
+  line-height: 1.2;
+}
+
+/* On smaller viewports, drop to single column for readability */
+@media (max-width: 380px) {
+  body[data-page='reading'][data-reading-mode='full'] .celtic-summary__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
  * §18 — Daily-result-specific additions
  *
  * renderDailyDetails (js/reading.js) emits the Quick-Pull-style
