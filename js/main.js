@@ -292,20 +292,22 @@ function animateDailyShuffleSlots(boardEl, slots, onDone) {
   };
 
   const phaseTwoSpread = () => {
-    const spread = [
-      { x: -1, y: 0.35, r: -5 },
-      { x: 0, y: 0.6, r: 3 },
-      { x: 1, y: 0.35, r: 5 },
-      { x: -0.78, y: -0.28, r: -3 },
-      { x: 0, y: -0.5, r: 0 },
-      { x: 0.78, y: -0.28, r: 3 },
-    ];
+    // Phase 5 fix: generate spread vectors algorithmically so the animation
+    // scales to any board count. The previous version was hardcoded to 6
+    // entries; when DAILY_BOARD_COUNT moved from 6 → 12 in commit 5929448,
+    // cards 7-12 fell back to {x:0, y:0, r:0} and sat motionless at center
+    // while cards 1-6 fanned out — the "animation only applies to 6 cards"
+    // bug. Circular fan with slight vertical flattening (×0.5) so it fits
+    // a wider-than-tall daily board; per-card rotation drifts -15° → +15°
+    // for variety.
+    const count = slots.length;
     slots.forEach((slot, idx) => {
-      const vector = spread[idx] || { x: 0, y: 0, r: 0 };
-      const x = Math.round(vector.x * spreadRange);
-      const y = Math.round(vector.y * spreadRange);
+      const angle = (idx / count) * 2 * Math.PI - Math.PI / 2; // start at top
+      const x = Math.round(Math.cos(angle) * spreadRange);
+      const y = Math.round(Math.sin(angle) * spreadRange * 0.5);
+      const r = Math.round((idx / count) * 30 - 15);
       slot.style.transition = `transform 400ms ${SHUFFLE_EASE}`;
-      slot.style.transform = `translate(${x}px, ${y}px) rotate(${vector.r}deg) scale(1.03)`;
+      slot.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg) scale(1.03)`;
     });
   };
 
