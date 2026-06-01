@@ -230,6 +230,20 @@ body[data-page='daily'] .daily-bigcard__card {
   overflow: hidden;
 }
 
+/* Real card-back PNG fills the card; z-index sits above the gradient and the
+ * gold border pseudo-elements so the asset takes over when it loads. The
+ * gradient + monogram/wordmark CSS rules below remain as image-load fallback. */
+body[data-page='daily'] .daily-bigcard__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  z-index: 2;
+  display: block;
+}
+
 body[data-page='daily'] .daily-bigcard__card::before {
   content: "";
   position: absolute;

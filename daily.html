@@ -88,8 +88,11 @@
       <div class="daily-bigcard" aria-hidden="true">
         <div class="daily-bigcard__aura"></div>
         <div class="daily-bigcard__card">
-          <span class="daily-bigcard__monogram">M</span>
-          <span class="daily-bigcard__wordmark">MeowTarot</span>
+          <!-- Real card-back PNG for the active deck — same asset the selection
+               board slots load. JS (main.js staticCardBacks pass + renderDaily)
+               sets img.src via applyCardBackBackground. The CSS gradient on
+               .daily-bigcard__card stays as fallback for image-load failure. -->
+          <img class="card-back daily-bigcard__img" alt="" />
         </div>
       </div>
 

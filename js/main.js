@@ -440,6 +440,17 @@ function renderDaily() {
   const continueBtn = document.getElementById('daily-continue');
   if (!dealShuffleBtn || !board || !counter) return;
 
+  // Phase 5: ensure the State 1 big ceremonial card-back <img> loads the
+  // active deck's 00-back.webp — same asset path the selection board slots
+  // use via setupBoard. This makes State 1 and State 2 show the same real
+  // card back so there's no deck-change flicker between screens. The
+  // staticCardBacks module-load pass should already have set img.src, but
+  // we call again as a safety backstop in case the markup changes or the
+  // querySelectorAll missed it. applyCardBackBackground is idempotent on
+  // IMG elements (just sets src + alt).
+  const bigcardImg = document.querySelector('.daily-bigcard__img');
+  if (bigcardImg) applyCardBackBackground(bigcardImg);
+
   let selectedCards = [];
   const updateDailySelectionUi = (cards) => {
     selectedCards = cards;
@@ -457,7 +468,14 @@ function renderDaily() {
     { animated: true, animationProfile: 'daily' }
   );
 
-  setRitualCtaLabel(dealShuffleBtn, true);
+  // Phase 5: in the rebuilt two-state daily.html / th/daily.html the
+  // before-state button label is set in markup ("Draw card · เปิดไพ่") and
+  // must not be overwritten by the legacy Deal/Shuffle dual-purpose label.
+  // /today/ and any other data-page='daily' surface without .daily-shell
+  // keeps the pre-Phase-5 dynamic label.
+  if (!dealShuffleBtn.closest('.daily-shell')) {
+    setRitualCtaLabel(dealShuffleBtn, true);
+  }
   counter.textContent = `0/${DAILY_SELECTION_MAX}`;
   if (continueBtn) {
     continueBtn.disabled = true;
