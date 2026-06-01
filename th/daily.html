@@ -49,58 +49,11 @@
   <!-- End Google Tag Manager (noscript) -->
   <header id="site-header"></header>
 
-  <main class="page-shell board-page daily-shell" data-daily-phase="before">
+  <main class="page-shell board-page daily-shell">
 
-    <!-- STATE 1: Before Draw — ceremonial single card-back -->
-    <section class="daily-state daily-state--before" aria-labelledby="daily-before-title">
-
-      <!-- streak strip: placeholder values; wire to meowtarot_user_progress later -->
-      <div class="daily-streak-strip" aria-label="ต่อเนื่อง 14 วัน">
-        <div class="daily-streak-strip__chip">14</div>
-        <div class="daily-streak-strip__text">
-          <div class="daily-streak-strip__title">Day 14 streak</div>
-          <div class="daily-streak-strip__subtitle thai">ต่อเนื่อง 14 วัน · เก่งมาก</div>
-        </div>
-        <div class="daily-streak-strip__bar" aria-hidden="true">
-          <span class="daily-streak-strip__bar-cell is-filled"></span>
-          <span class="daily-streak-strip__bar-cell is-filled"></span>
-          <span class="daily-streak-strip__bar-cell is-filled"></span>
-          <span class="daily-streak-strip__bar-cell is-filled"></span>
-          <span class="daily-streak-strip__bar-cell is-filled"></span>
-          <span class="daily-streak-strip__bar-cell"></span>
-          <span class="daily-streak-strip__bar-cell"></span>
-        </div>
-      </div>
-
-      <div class="daily-deck-label">
-        <div class="daily-deck-label__eyebrow">From the deck</div>
-        <div class="daily-deck-label__name" id="daily-before-title">Velvet Familiar</div>
-        <div class="daily-deck-label__name-th thai">เวลเวต แฟมิเลียร์</div>
-      </div>
-
-      <div class="daily-bigcard" aria-hidden="true">
-        <div class="daily-bigcard__aura"></div>
-        <div class="daily-bigcard__card">
-          <!-- Real card-back PNG for the active deck — same asset the selection
-               board slots load. JS (main.js staticCardBacks pass + renderDaily)
-               sets img.src via applyCardBackBackground. The CSS gradient on
-               .daily-bigcard__card stays as fallback for image-load failure. -->
-          <img class="card-back daily-bigcard__img" alt="" />
-        </div>
-      </div>
-
-      <div class="daily-ceremony">
-        <div class="daily-ceremony__cta">Tap to reveal</div>
-        <div class="daily-ceremony__cta-th thai-serif">แตะเพื่อเปิดไพ่</div>
-        <p class="daily-ceremony__hint">ค่อย ๆ หายใจ. ถือคำถามไว้ในใจ หรือไม่ต้องถือสิ่งใด.</p>
-      </div>
-
-      <div class="daily-state__cta-row">
-        <button class="ritual-cta daily-draw-button" type="button" id="daily-deal-shuffle">Draw card · เปิดไพ่</button>
-      </div>
-    </section>
-
-    <!-- STATE 2: Selection Board — 12-slot grid -->
+    <!-- Selection Board — 12-slot grid. The pre-draw ceremonial state was
+         removed in the Phase 5 review pass; users now land directly here
+         and main.js renderDaily auto-deals the 12 cards on init. -->
     <section class="daily-state daily-state--board" aria-labelledby="daily-board-title">
       <div class="daily-topbar daily-topbar--board">
         <div class="daily-topbar__deck">

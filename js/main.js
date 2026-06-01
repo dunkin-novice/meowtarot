@@ -437,22 +437,26 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
 }
 
 function renderDaily() {
+  // Phase 5 review pass: dealShuffleBtn (the "Draw card · เปิดไพ่" button on
+  // the removed Before-Draw state) no longer exists on daily.html/th/daily.html.
+  // We still look it up for /today/ and other legacy data-page='daily' surfaces
+  // that may still ship a Deal button; the handler is gated below.
   const dealShuffleBtn = document.getElementById('daily-deal-shuffle');
   const board = document.getElementById('daily-board');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  if (!dealShuffleBtn || !board || !counter) return;
+  if (!board || !counter) return;
 
-  // Phase 5: ensure the State 1 big ceremonial card-back <img> loads the
-  // active deck's 00-back.webp — same asset path the selection board slots
-  // use via setupBoard. This makes State 1 and State 2 show the same real
-  // card back so there's no deck-change flicker between screens. The
-  // staticCardBacks module-load pass should already have set img.src, but
-  // we call again as a safety backstop in case the markup changes or the
-  // querySelectorAll missed it. applyCardBackBackground is idempotent on
-  // IMG elements (just sets src + alt).
-  const bigcardImg = document.querySelector('.daily-bigcard__img');
-  if (bigcardImg) applyCardBackBackground(bigcardImg);
+  // Phase 5 mobile review fix: signal to CSS that the new daily-shell layout
+  // is active. A real body class gives the cascade a hook every browser
+  // honors (the :has(.daily-shell) approach in commit 1d3a81a was unreliable
+  // for body-level overflow on mobile Safari — cards 7-12 stayed clipped
+  // below the fold). /today/ and other legacy data-page='daily' surfaces
+  // without .daily-shell don't carry this class, so their existing fixed-
+  // height behavior is preserved.
+  if (document.querySelector('.daily-shell')) {
+    document.body.classList.add('daily-shell-active');
+  }
 
   let selectedCards = [];
   const updateDailySelectionUi = (cards) => {
@@ -471,29 +475,30 @@ function renderDaily() {
     { animated: true, animationProfile: 'daily' }
   );
 
-  // Phase 5: in the rebuilt two-state daily.html / th/daily.html the
-  // before-state button label is set in markup ("Draw card · เปิดไพ่") and
-  // must not be overwritten by the legacy Deal/Shuffle dual-purpose label.
-  // /today/ and any other data-page='daily' surface without .daily-shell
-  // keeps the pre-Phase-5 dynamic label.
-  if (!dealShuffleBtn.closest('.daily-shell')) {
-    setRitualCtaLabel(dealShuffleBtn, true);
-  }
   counter.textContent = `0/${DAILY_SELECTION_MAX}`;
   if (continueBtn) {
     continueBtn.disabled = true;
   }
 
-  dealShuffleBtn.onclick = () => {
-    dailyBoard.render();
-    updateDailySelectionUi([]);
-    // Phase 5: transition State 1 (Before Draw) → State 2 (Selection Board).
-    // The button lives in State 1's markup on daily.html / th/daily.html.
-    // Flipping data-daily-phase swaps which <section.daily-state> is visible
-    // via css/daily.css. Safe no-op on legacy markup that lacks the attribute.
-    const dailyShell = dealShuffleBtn.closest('.daily-shell');
-    if (dailyShell) dailyShell.setAttribute('data-daily-phase', 'board');
-  };
+  // Phase 5 review: auto-deal on init. The ceremonial Before-Draw state was
+  // removed; users land directly on the selection board, so we render the
+  // 12 cards immediately instead of waiting for a Draw-button click.
+  dailyBoard.render();
+  updateDailySelectionUi([]);
+
+  // Legacy dealShuffleBtn handler — preserved for /today/ and other pre-
+  // Phase-5 data-page='daily' surfaces that still ship a Deal/Shuffle
+  // button. On daily.html / th/daily.html (Phase 5 markup) this button
+  // is gone, so the block is a no-op.
+  if (dealShuffleBtn) {
+    if (!dealShuffleBtn.closest('.daily-shell')) {
+      setRitualCtaLabel(dealShuffleBtn, true);
+    }
+    dealShuffleBtn.onclick = () => {
+      dailyBoard.render();
+      updateDailySelectionUi([]);
+    };
+  }
 
   const commitDailySelection = () => {
     const pickedCards = selectedCards.length ? selectedCards : dailyBoard.getSelectedCards();

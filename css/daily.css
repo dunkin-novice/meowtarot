@@ -67,18 +67,29 @@ body[data-page='daily'] .daily-shell {
   position: relative;
 }
 
-/* Phase 5 mobile review fix: styles.css's pre-Phase-5 mobile rule pins
- * body[data-page='daily'] to 100dvh + overflow: hidden, which prevents
- * the new .daily-shell from scrolling to reveal the CTA. Override on the
- * Phase 5 surface only (the :has(.daily-shell) check leaves /today/ and
- * other legacy data-page='daily' surfaces untouched). */
-@media (max-width: 480px) {
-  body[data-page='daily']:has(.daily-shell) {
+/* Phase 5 mobile review fix v2: styles.css's pre-Phase-5 mobile rules pin
+ * body[data-page='daily'] to 100dvh + overflow: hidden at @media ≤640px
+ * AND @media ≤480px, which prevents the new .daily-shell from scrolling
+ * — cards 7-12 stayed clipped below the fold with no way to reach them.
+ *
+ * The earlier :has(.daily-shell) attempt (commit 1d3a81a) was unreliable
+ * for body-level overflow on mobile Safari. main.js renderDaily now adds
+ * body.daily-shell-active when the Phase 5 markup is present; class-based
+ * targeting gives the cascade a hook every browser honors.
+ *
+ * Scoped to ≤640px so mid-size phones / small tablets are covered too,
+ * not just iPhone-Pro-class widths. Desktop behavior untouched. /today/
+ * never gets daily-shell-active so its legacy fixed-height stays intact. */
+@media (max-width: 640px) {
+  body.daily-shell-active {
     height: auto;
     overflow: visible;
   }
-  body[data-page='daily']:has(.daily-shell) .page-shell.board-page {
+  body.daily-shell-active .page-shell.board-page {
     height: auto;
+  }
+  body.daily-shell-active .daily-shell {
+    min-height: 0;
   }
 }
 
@@ -86,13 +97,15 @@ body[data-page='daily'] .thai           { font-family: var(--mt-font-thai); }
 body[data-page='daily'] .thai-serif     { font-family: var(--mt-font-display-th); }
 
 
-/* §2 — State machine: which section is visible per data-daily-phase */
-body[data-page='daily'] .daily-state {
-  display: none;
+/* §2 — Phase 5 review: the Before-Draw state was removed. Only
+ * .daily-state--board remains in the markup; just ensure it renders.
+ * The state-machine attribute (data-daily-phase) is no longer set in JS
+ * or HTML. Rules for .daily-state--before / data-daily-phase= are dead
+ * code at this point; left in §3-§7 since they match nothing and don't
+ * cost anything. */
+body[data-page='daily'] .daily-state--board {
+  display: block;
 }
-
-body[data-page='daily'] .daily-shell[data-daily-phase='before'] .daily-state--before { display: block; }
-body[data-page='daily'] .daily-shell[data-daily-phase='board']  .daily-state--board  { display: block; }
 
 
 /* §3 — State 1 top bar */
