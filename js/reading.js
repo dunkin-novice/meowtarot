@@ -2358,11 +2358,143 @@ function createDailyMultiCardDetails(cards, dict) {
 function renderDailyDetails(cards, dict, stage) {
   const count = cards.length;
   if (count === 1) {
-    stage.appendChild(createDailyCardSummaryPanel(cards[0]));
+    const card = cards[0];
+
+    // Phase 5 daily-result rebuild: signal to css/reading.css that the lean
+    // single-card (Quick-Pull-style) layout should apply. Reuses the
+    // .panel--spread / .reading-spread-card / .spread-caption structure I
+    // built for renderQuestion's Quick branch — §3-§11 of reading.css
+    // cover both modes from the data-spread-count='1' attribute.
+    if (readingContent) readingContent.dataset.spreadCount = '1';
+
+    // §A. Top eyebrow: "Your card · today / ไพ่ของคุณ · วันนี้"
+    const recapPanel = document.createElement('section');
+    recapPanel.className = 'panel panel--question-recap';
+    const recapEyebrow = document.createElement('div');
+    recapEyebrow.className = 'question-recap__eyebrow';
+    recapEyebrow.textContent = state.currentLang === 'th' ? 'ไพ่ของคุณ · วันนี้' : 'Your card · today';
+    recapPanel.appendChild(recapEyebrow);
+    stage.appendChild(recapPanel);
+
+    // §B. Single big card + bilingual name + lucky chip (Quick Pull CSS).
+    const spreadPanel = document.createElement('section');
+    spreadPanel.className = 'panel panel--spread';
+    spreadPanel.dataset.spreadCount = '1';
+
+    const spreadGrid = document.createElement('div');
+    spreadGrid.className = 'reading-spread-grid';
+
+    const cardWrap = document.createElement('button');
+    cardWrap.className = 'reading-spread-card';
+    cardWrap.type = 'button';
+    cardWrap.setAttribute('aria-label', card.card_name_en || '');
+    cardWrap.appendChild(buildCardArt(card, 'thumb'));
+
+    const caption = document.createElement('div');
+    caption.className = 'spread-caption';
+
+    const orientation = document.createElement('div');
+    orientation.className = 'spread-orientation';
+    const orientationText = getOrientationLabel(toOrientation(card), state.currentLang);
+    const roman = getMajorArcanaRoman(card);
+    orientation.textContent = roman ? `${orientationText} · ${roman}` : orientationText;
+    caption.appendChild(orientation);
+
+    const cardName = document.createElement('div');
+    cardName.className = 'spread-card-name';
+    cardName.textContent = card.card_name_en || '';
+    caption.appendChild(cardName);
+
+    if (card.alias_th) {
+      const cardNameTh = document.createElement('div');
+      cardNameTh.className = 'spread-card-name-th thai-serif';
+      cardNameTh.textContent = card.alias_th;
+      caption.appendChild(cardNameTh);
+    }
+
+    if (card.archetype_en || card.archetype_th) {
+      const archetype = document.createElement('div');
+      archetype.className = 'spread-archetype';
+      const parts = [card.archetype_en, card.archetype_th].filter(Boolean);
+      archetype.textContent = parts.join(' · ');
+      caption.appendChild(archetype);
+    }
+
+    const luckyChip = buildLuckyColorChip(card);
+    if (luckyChip) caption.appendChild(luckyChip);
+
+    cardWrap.appendChild(caption);
+    cardWrap.addEventListener('click', () => openCardSheet(card));
+    spreadGrid.appendChild(cardWrap);
+    spreadPanel.appendChild(spreadGrid);
+    stage.appendChild(spreadPanel);
+
+    // §C. "For today" interpretation panel.
+    const interpPanel = document.createElement('section');
+    interpPanel.className = 'daily-interp-panel';
+
+    const interpHeader = document.createElement('div');
+    interpHeader.className = 'daily-interp-panel__header';
+    interpHeader.textContent = state.currentLang === 'th' ? 'สำหรับวันนี้' : 'For today';
+    interpPanel.appendChild(interpHeader);
+
+    const inlineEn = card.tarot_imply_en || card.reading_summary_preview_en || '';
+    const inlineTh = card.tarot_imply_th || card.reading_summary_preview_th || '';
+    if (inlineEn) {
+      const p = document.createElement('p');
+      p.className = 'daily-interp-panel__body daily-interp-panel__body--en';
+      p.textContent = inlineEn;
+      interpPanel.appendChild(p);
+    }
+    if (inlineTh) {
+      const p = document.createElement('p');
+      p.className = 'daily-interp-panel__body daily-interp-panel__body--th thai';
+      p.textContent = inlineTh;
+      interpPanel.appendChild(p);
+    }
+
+    const keywords = String(card.keywords_light || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const primaryKeyword = keywords[0];
+    if (primaryKeyword) {
+      const divider = document.createElement('div');
+      divider.className = 'daily-interp-panel__divider';
+      interpPanel.appendChild(divider);
+
+      const keywordRow = document.createElement('div');
+      keywordRow.className = 'daily-interp-panel__keyword-row';
+
+      const enWrap = document.createElement('span');
+      enWrap.className = 'daily-interp-panel__keyword';
+      const enLabel = document.createElement('b');
+      enLabel.textContent = 'Keyword';
+      enWrap.appendChild(enLabel);
+      enWrap.appendChild(document.createTextNode(` · ${primaryKeyword}`));
+      keywordRow.appendChild(enWrap);
+
+      const sep = document.createElement('span');
+      sep.className = 'daily-interp-panel__keyword-sep';
+      sep.textContent = '·';
+      keywordRow.appendChild(sep);
+
+      const thWrap = document.createElement('span');
+      thWrap.className = 'daily-interp-panel__keyword thai';
+      const thLabel = document.createElement('b');
+      thLabel.textContent = 'คำสำคัญ';
+      thWrap.appendChild(thLabel);
+      thWrap.appendChild(document.createTextNode(` · ${primaryKeyword}`));
+      keywordRow.appendChild(thWrap);
+
+      interpPanel.appendChild(keywordRow);
+    }
+
+    stage.appendChild(interpPanel);
+
+    // §D. Preserved guidance + advice panels.
     const detailsWrap = document.createElement('section');
     detailsWrap.className = 'daily-reading-details';
-    detailsWrap.appendChild(createDailyDetails(cards[0]));
+    detailsWrap.appendChild(createDailyDetails(card));
     stage.appendChild(detailsWrap);
+
     appendReadingInternalLinks(stage, cards);
     return;
   }

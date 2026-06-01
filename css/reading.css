@@ -601,3 +601,93 @@ body[data-page='reading'] .action-row .ghost:hover {
   background: rgba(255, 255, 255, 0.80);
   border-color: var(--mt-plum-deep);
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §18 — Daily-result-specific additions
+ *
+ * renderDailyDetails (js/reading.js) emits the Quick-Pull-style
+ * panel--spread[data-spread-count='1'] structure for the single-card
+ * case — most of the layout (card art, orientation eyebrow, name, lucky
+ * chip) is already covered by §3-§11. This block adds the daily-only
+ * extras:
+ *
+ *   - .spread-archetype (italic bilingual line under .spread-card-name-th)
+ *   - .daily-interp-panel ("For today" header + EN+TH body + divider +
+ *     Keyword row), sibling of .panel--spread.
+ *
+ * The data-spread-count='1' attribute is the cascade key — these rules
+ * only render the daily result panel when single-card mode is active.
+ * Quick-Pull question results (also data-spread-count='1') don't render
+ * an archetype or "For today" header because renderQuestion doesn't emit
+ * those elements.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-archetype {
+  font-family: var(--mt-font-display);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--mt-plum-mid);
+  margin-top: 4px;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+body[data-page='reading'] .daily-interp-panel {
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: var(--mt-soft-shadow);
+}
+
+body[data-page='reading'] .daily-interp-panel__header {
+  font-family: var(--mt-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mt-gold-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+body[data-page='reading'] .daily-interp-panel__body {
+  margin: 0;
+  font-family: var(--mt-font-body);
+  line-height: 1.6;
+}
+
+body[data-page='reading'] .daily-interp-panel__body--en {
+  font-size: 13.5px;
+  color: var(--mt-plum);
+  margin-top: 8px;
+}
+
+body[data-page='reading'] .daily-interp-panel__body--th {
+  font-size: 13px;
+  color: var(--mt-plum-mid);
+  line-height: 1.7;
+  margin-top: 10px;
+}
+
+body[data-page='reading'] .daily-interp-panel__divider {
+  height: 1px;
+  background: rgba(201, 147, 58, 0.25);
+  margin: 12px 0;
+}
+
+body[data-page='reading'] .daily-interp-panel__keyword-row {
+  display: flex;
+  gap: 10px;
+  font-family: var(--mt-font-body);
+  font-size: 11px;
+  color: var(--mt-ink-soft);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+body[data-page='reading'] .daily-interp-panel__keyword b {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .daily-interp-panel__keyword-sep {
+  opacity: 0.4;
+}
