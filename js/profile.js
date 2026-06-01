@@ -107,79 +107,170 @@ function renderIdentity(dict) {
   els.identity.appendChild(card);
 }
 
+const THAI_NUMBER_WORDS = [
+  'ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า',
+  'สิบ', 'สิบเอ็ด', 'สิบสอง', 'สิบสาม', 'สิบสี่', 'สิบห้า', 'สิบหก', 'สิบเจ็ด', 'สิบแปด', 'สิบเก้า', 'ยี่สิบ',
+];
+
+function thaiNumberWord(n) {
+  const num = Math.max(0, Number(n) || 0);
+  if (num <= 20) return `${THAI_NUMBER_WORDS[num]}วัน`;
+  if (num < 30) {
+    // Thai uses "เอ็ด" (not "หนึ่ง") for the ones-digit 1 in 21/31/41...
+    const ones = num - 20;
+    return ones === 1 ? 'ยี่สิบเอ็ดวัน' : `ยี่สิบ${THAI_NUMBER_WORDS[ones]}วัน`;
+  }
+  return `${num} วัน`;
+}
+
 function renderStreak(dict) {
   if (!els.streak) return;
   els.streak.innerHTML = '';
   const progress = getUserProgress();
 
-  const card = document.createElement('section');
-  card.className = 'panel';
+  // Top eyebrow row: "Your practice · บันทึกการเดินทาง"
+  const topRow = document.createElement('div');
+  topRow.className = 'profile-top-row';
 
-  const title = document.createElement('h2');
-  title.textContent = dict.profileStreakTitle || (state.currentLang === 'th' ? 'สรุปการเดินทาง' : 'Journey summary');
-  card.appendChild(title);
+  const eyebrowGroup = document.createElement('div');
+  const eyebrowEn = document.createElement('div');
+  eyebrowEn.className = 'profile-top-row__eyebrow';
+  eyebrowEn.textContent = state.currentLang === 'th' ? 'บันทึกการเดินทาง' : 'Your practice';
+  eyebrowGroup.appendChild(eyebrowEn);
 
-  const streak = document.createElement('p');
-  streak.textContent = (dict.profileStreakCurrent || (state.currentLang === 'th' ? 'สตรีคปัจจุบัน: {count} วัน' : 'Current streak: {count} days'))
-    .replace('{count}', String(progress.streak_current || 0));
-  card.appendChild(streak);
+  const eyebrowTh = document.createElement('div');
+  eyebrowTh.className = 'profile-top-row__eyebrow-th';
+  eyebrowTh.textContent = state.currentLang === 'th' ? 'Your practice' : '· บันทึกการเดินทาง';
+  eyebrowGroup.appendChild(eyebrowTh);
 
+  topRow.appendChild(eyebrowGroup);
+  els.streak.appendChild(topRow);
+
+  // Streak hero
+  const hero = document.createElement('div');
+  hero.className = 'profile-streak-hero';
+
+  const heroEyebrow = document.createElement('div');
+  heroEyebrow.className = 'profile-streak-hero__eyebrow';
+  heroEyebrow.textContent = state.currentLang === 'th' ? 'สตรีคปัจจุบัน' : 'Current streak';
+  hero.appendChild(heroEyebrow);
+
+  const currentStreak = Math.max(0, Number(progress.streak_current) || 0);
+  const bestStreak = Math.max(0, Number(progress.streak_best) || 0);
+
+  const heroNum = document.createElement('div');
+  heroNum.className = 'profile-streak-hero__number';
+  heroNum.textContent = String(currentStreak);
+  hero.appendChild(heroNum);
+
+  const heroNumTh = document.createElement('div');
+  heroNumTh.className = 'profile-streak-hero__number-th';
+  heroNumTh.textContent = thaiNumberWord(currentStreak);
+  hero.appendChild(heroNumTh);
+
+  const heroSubtitle = document.createElement('div');
+  heroSubtitle.className = 'profile-streak-hero__subtitle';
+  const isLongest = currentStreak > 0 && currentStreak >= bestStreak;
+  if (state.currentLang === 'th') {
+    heroSubtitle.textContent = isLongest ? 'วันติดต่อกัน · ยาวที่สุดที่เคย' : `วันติดต่อกัน · สูงสุด ${bestStreak} วัน`;
+  } else {
+    heroSubtitle.textContent = isLongest ? 'days in a row · longest yet' : `days in a row · best ${bestStreak}`;
+  }
+  hero.appendChild(heroSubtitle);
+
+  els.streak.appendChild(hero);
+
+  // Progress panel (Next: deck + bar + Moonveil-style info box)
   const nextMilestone = getNextStreakMilestone(progress);
   if (nextMilestone) {
     const { target, current, remaining } = nextMilestone;
     const fillPct = Math.max(0, Math.min(100, Math.round((current / target) * 100)));
     const targetDeck = getAllDecks().find((d) => d.unlock_day === target);
-    const deckName = state.currentLang === 'th'
-      ? (targetDeck?.name_th || targetDeck?.name || '')
-      : (targetDeck?.name || '');
-    const daysLabel = state.currentLang === 'th' ? 'วัน' : 'days';
+    const deckNameEn = targetDeck?.name || '';
+    const deckNameTh = targetDeck?.name_th || deckNameEn;
+    const deckBlurbEn = targetDeck?.blurb_en || targetDeck?.tagline_en || '';
+    const deckBlurbTh = targetDeck?.blurb_th || targetDeck?.tagline_th || '';
+
+    const panel = document.createElement('div');
+    panel.className = 'profile-progress-panel';
+
+    const head = document.createElement('div');
+    head.className = 'profile-progress-panel__head';
+
+    const headLeft = document.createElement('div');
+    const titleEn = document.createElement('div');
+    titleEn.className = 'profile-progress-panel__title';
+    titleEn.textContent = state.currentLang === 'th'
+      ? `สำรับถัดไป · ${deckNameTh}`
+      : `Next: ${deckNameEn}`;
+    headLeft.appendChild(titleEn);
+
+    const titleTh = document.createElement('div');
+    titleTh.className = 'profile-progress-panel__title-th';
+    titleTh.textContent = state.currentLang === 'th'
+      ? `Next · ${deckNameEn}`
+      : `สำรับถัดไป · ${deckNameTh}`;
+    headLeft.appendChild(titleTh);
+    head.appendChild(headLeft);
+
+    const headRight = document.createElement('div');
+    headRight.className = 'profile-progress-panel__remaining';
+    const remNum = document.createElement('div');
+    remNum.className = 'profile-progress-panel__remaining-num';
+    remNum.textContent = String(remaining);
+    headRight.appendChild(remNum);
+    const remLabel = document.createElement('div');
+    remLabel.className = 'profile-progress-panel__remaining-label';
+    remLabel.textContent = state.currentLang === 'th' ? 'วันที่เหลือ' : 'days to go';
+    headRight.appendChild(remLabel);
+    head.appendChild(headRight);
+
+    panel.appendChild(head);
 
     const bar = document.createElement('div');
-    bar.className = 'streak-progress-bar';
+    bar.className = 'profile-progress-bar';
+    const track = document.createElement('div');
+    track.className = 'profile-progress-bar__track';
     const fill = document.createElement('div');
-    fill.className = 'streak-progress-bar__fill';
+    fill.className = 'profile-progress-bar__fill';
     fill.style.width = `${fillPct}%`;
-    bar.appendChild(fill);
-    card.appendChild(bar);
+    const pearl = document.createElement('div');
+    pearl.className = 'profile-progress-bar__pearl';
+    fill.appendChild(pearl);
+    track.appendChild(fill);
+    bar.appendChild(track);
 
-    const progressLabel = document.createElement('p');
-    progressLabel.className = 'streak-progress-label';
-    progressLabel.textContent = `${remaining} ${daysLabel} → ${deckName}`;
-    card.appendChild(progressLabel);
-  } else {
-    const progressLabel = document.createElement('p');
-    progressLabel.className = 'streak-progress-label';
-    progressLabel.textContent = state.currentLang === 'th'
-      ? 'ปลดล็อคไพ่ครบทุกชุดแล้ว 🎉'
-      : 'All streak decks unlocked 🎉';
-    card.appendChild(progressLabel);
+    const labels = document.createElement('div');
+    labels.className = 'profile-progress-bar__labels';
+    const dayCurr = document.createElement('span');
+    dayCurr.textContent = state.currentLang === 'th' ? `วันที่ ${current}` : `Day ${current}`;
+    labels.appendChild(dayCurr);
+    const dayTarget = document.createElement('span');
+    dayTarget.textContent = state.currentLang === 'th' ? `วันที่ ${target} · ปลดล็อก` : `Day ${target} · unlock`;
+    labels.appendChild(dayTarget);
+    bar.appendChild(labels);
+
+    panel.appendChild(bar);
+
+    if (deckBlurbEn || deckBlurbTh) {
+      const blurb = document.createElement('div');
+      blurb.className = 'profile-progress-panel__blurb';
+      const bName = document.createElement('b');
+      bName.textContent = state.currentLang === 'th' ? deckNameTh : deckNameEn;
+      blurb.appendChild(bName);
+      const blurbText = document.createTextNode(' ' + (state.currentLang === 'th' ? (deckBlurbTh || deckBlurbEn) : (deckBlurbEn || deckBlurbTh)));
+      blurb.appendChild(blurbText);
+      if (deckBlurbTh && state.currentLang !== 'th') {
+        const th = document.createElement('div');
+        th.className = 'profile-progress-panel__blurb-th';
+        th.textContent = deckBlurbTh;
+        blurb.appendChild(th);
+      }
+      panel.appendChild(blurb);
+    }
+
+    els.streak.appendChild(panel);
   }
-
-  const total = document.createElement('p');
-  total.textContent = (dict.profileReadingsTotal || (state.currentLang === 'th' ? 'อ่านรายวันทั้งหมด: {count}' : 'Total daily readings: {count}'))
-    .replace('{count}', String(progress.total_daily_reads || 0));
-  card.appendChild(total);
-
-  const phase = computePhase(progress, translations[state.currentLang] || translations.en, translations.en);
-  if (phase?.label) {
-    const phaseLine = document.createElement('p');
-    phaseLine.textContent = (dict.profilePhaseLine || (state.currentLang === 'th' ? 'ช่วงพลัง: {label}' : 'Current phase: {label}'))
-      .replace('{label}', phase.label);
-    card.appendChild(phaseLine);
-  }
-
-  const monthlyStreak = document.createElement('p');
-  const monthDays = getMonthlyReadingDays(state.history);
-  monthlyStreak.textContent = (dict.profileMonthlyStreak || (state.currentLang === 'th' ? 'สตรีคเดือนนี้: {count} วัน' : 'Monthly streak: {count} days'))
-    .replace('{count}', String(computeConsecutiveStreak(monthDays)));
-  card.appendChild(monthlyStreak);
-
-  const energy = document.createElement('p');
-  energy.textContent = (dict.profileMostCommonEnergy || (state.currentLang === 'th' ? 'พลังที่พบบ่อยที่สุด: {label}' : 'Most common energy: {label}'))
-    .replace('{label}', getMostCommonEnergyLabel(dict, state.history));
-  card.appendChild(energy);
-
-  els.streak.appendChild(card);
 }
 
 function getMonthlyReadingDays(history = []) {
@@ -382,6 +473,62 @@ function renderHistory(dict) {
   els.history.appendChild(card);
 }
 
+function renderLifetimeStats(dict) {
+  const host = document.getElementById('profile-lifetime-stats');
+  if (!host) return;
+  host.innerHTML = '';
+
+  const history = Array.isArray(state.history) ? state.history : [];
+  const cardsDrawn = history.reduce((acc, entry) => acc + (Array.isArray(entry?.reading_cards) ? entry.reading_cards.length : 0), 0);
+  const questionsAsked = history.filter((entry) => entry?.mode === 'question').length;
+  let sharesTotal = 0;
+  try {
+    const raw = window.localStorage?.getItem('_mt_shares_total');
+    sharesTotal = Math.max(0, Number(raw) || 0);
+  } catch (_) { /* sandbox */ }
+
+  const panel = document.createElement('div');
+  panel.className = 'profile-lifetime-stats';
+
+  const stats = [
+    {
+      n: cardsDrawn,
+      en: 'Cards drawn',
+      th: 'ไพ่ที่เปิด',
+    },
+    {
+      n: questionsAsked,
+      en: 'Questions asked',
+      th: 'คำถาม',
+    },
+    {
+      n: sharesTotal,
+      en: 'Readings shared',
+      th: 'แชร์แล้ว',
+    },
+  ];
+
+  stats.forEach((s) => {
+    const col = document.createElement('div');
+    col.className = 'profile-lifetime-stat';
+    const num = document.createElement('div');
+    num.className = 'profile-lifetime-stat__num';
+    num.textContent = String(s.n);
+    col.appendChild(num);
+    const label = document.createElement('div');
+    label.className = 'profile-lifetime-stat__label';
+    label.textContent = state.currentLang === 'th' ? s.th : s.en;
+    col.appendChild(label);
+    const labelAlt = document.createElement('div');
+    labelAlt.className = 'profile-lifetime-stat__label-th';
+    labelAlt.textContent = state.currentLang === 'th' ? s.en : s.th;
+    col.appendChild(labelAlt);
+    panel.appendChild(col);
+  });
+
+  host.appendChild(panel);
+}
+
 function renderLoginCta(dict) {
   if (!els.cta) return;
   els.cta.innerHTML = '';
@@ -443,6 +590,7 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   const progress = getUserProgress();
   const deckInvEl = document.getElementById('profile-deck-inventory');
   if (deckInvEl) renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
+  renderLifetimeStats(dict);
   const achieveEl = document.getElementById('profile-achievements');
   if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);
   renderHistory(dict);
