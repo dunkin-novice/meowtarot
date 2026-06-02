@@ -3073,6 +3073,25 @@ function renderFull(cards, dict) {
   const positions = getFullPositionMeta(cards);
   const isCelticCross = cards.length >= 10;
 
+  // Phase 5: bilingual ceremonial hero title above the cross+staff
+  // spread. Matches the design doc's "Your full reading / ดวงเต็ม
+  // สำรับของคุณ" pair shown at the top of ScreenCelticCross. Gated
+  // on isCelticCross so the (rare) non-celtic full-mode path stays
+  // unaffected.
+  if (isCelticCross) {
+    const heroTitle = document.createElement('section');
+    heroTitle.className = 'panel panel--celtic-hero';
+    const titleEn = document.createElement('div');
+    titleEn.className = 'celtic-hero__title';
+    titleEn.textContent = state.currentLang === 'th' ? 'ดวงเต็มสำรับของคุณ' : 'Your full reading';
+    heroTitle.appendChild(titleEn);
+    const titleTh = document.createElement('div');
+    titleTh.className = 'celtic-hero__title-th';
+    titleTh.textContent = state.currentLang === 'th' ? 'Your full reading' : 'ดวงเต็มสำรับของคุณ';
+    heroTitle.appendChild(titleTh);
+    readingContent.appendChild(heroTitle);
+  }
+
   const spreadPanel = document.createElement('div');
   spreadPanel.className = 'panel panel--spread panel--celtic-cross';
 
@@ -4111,6 +4130,10 @@ function configureActionButtons(dict = translations[state.currentLang]) {
         ? 'เปิดไพ่อีกครั้ง'
         : 'Re-draw'
       : (dict.newReading || newReadingBtn.textContent);
+    // Phase 5: full-mode Celtic Cross design ends with a 2-button
+    // action row (Save + Share). Hide the third Re-draw button on
+    // full mode only; daily and question keep all three buttons.
+    newReadingBtn.hidden = state.mode === 'full';
   }
 
   configureSaveButton(dict);

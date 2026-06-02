@@ -841,3 +841,31 @@ body[data-page='reading'] .daily-interp-panel__keyword b {
 body[data-page='reading'] .daily-interp-panel__keyword-sep {
   opacity: 0.4;
 }
+
+
+/* §19 — Celtic Cross bilingual hero title (above the cross+staff spread) */
+body[data-page='reading'] .panel--celtic-hero {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 4px 0 10px;
+  text-align: center;
+}
+
+body[data-page='reading'] .celtic-hero__title {
+  font-family: var(--mt-font-display);
+  font-size: 22px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--mt-plum);
+  line-height: 1;
+}
+
+body[data-page='reading'] .celtic-hero__title-th {
+  font-family: var(--mt-font-display-th);
+  font-size: 13px;
+  color: var(--mt-plum-mid);
+  margin-top: 4px;
+  font-weight: 600;
+}
