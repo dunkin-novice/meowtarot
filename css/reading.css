@@ -267,6 +267,16 @@ body[data-page='reading'] .card-art.is-thumb .card-art-img {
   display: block;
   width: 100%;
   height: 100%;
+  /* Override Phase 4 styles.css `.card-art.is-thumb .card-art-img`
+   * cap (max-width:120px + aspect-ratio:3/5). With the cap in place,
+   * the IMG renders 120px wide × 382px tall inside the 220px Phase 5
+   * container and object-fit:cover crops the card art horizontally
+   * to fill the narrow box — which clips the sides of the
+   * illustration ("card image got cut"). max-width:none + aspect-
+   * ratio:auto let the IMG fill the parent's 220×382 box exactly so
+   * no cropping is needed. */
+  max-width: none;
+  aspect-ratio: auto;
   object-fit: cover;
 }
 
