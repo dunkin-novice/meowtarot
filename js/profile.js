@@ -11,7 +11,7 @@ import { computePhase } from './phase.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
-import { trackProfileRevisit } from './analytics.js';
+import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
 import { renderDeckInventory } from './deck-inventory.js';
 import { renderAchievementsPanel } from './achievements-panel.js';
 
@@ -632,7 +632,17 @@ function onTranslations(dict) {
 
 function switchLanguageInPlace(nextLang) {
   if (!nextLang || nextLang === state.currentLang) return;
+  const fromLocale = state.currentLang;
   state.currentLang = nextLang;
+  // Mirror the side-effects that used to run on the global navbar's
+  // lang-toggle click (locale_switched GA event, persisted locale, and
+  // daily-reminder reschedule) so the profile-page pill is a drop-in
+  // replacement for the removed top-navbar toggle.
+  try { trackLocaleSwitched({ fromLocale, toLocale: nextLang }); } catch (_) {}
+  try { localStorage.setItem('meowtarot_lang', nextLang); } catch (_) {}
+  import('./notifications.js').then(({ isEnabled, scheduleDailyReminder }) => {
+    if (isEnabled()) scheduleDailyReminder(translations[nextLang]);
+  }).catch(() => {});
   applyTranslations(nextLang, onTranslations);
   applyLocaleMeta(nextLang);
 }

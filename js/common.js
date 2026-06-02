@@ -669,20 +669,20 @@ export function initShell(state, afterApply, activePage, options = {}) {
   state.currentLang = normalizeLang(urlLang) || savedLang || 'en';
   localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
 
+  // Phase 5: global top navbar removed. The hamburger nav + brand text
+  // + EN/TH lang toggle that used to render here are replaced by the
+  // bottom tab bar (Features/Today/Draw/Cards/Profile) and the
+  // profile-page language pill (see profile.js renderStreak). We hide
+  // the empty <header id='site-header'> placeholder element so it
+  // doesn't leave a layout gap, and keep navbarCleanup as a no-op for
+  // beforeunload compatibility.
   navbarCleanup?.();
-  navbarCleanup = renderNavbar(document.getElementById('site-header'), (lang) => {
-    if (lang === state.currentLang) return;
-    trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: lang });
-    localStorage.setItem(LANG_STORAGE_KEY, lang);
-    import('./notifications.js').then(({ isEnabled, scheduleDailyReminder }) => {
-      if (isEnabled()) scheduleDailyReminder(translations[lang]);
-    });
-    if (typeof options?.onLangToggle === 'function') {
-      options.onLangToggle(lang);
-      return;
-    }
-    switchLang(lang);
-  });
+  const siteHeader = document.getElementById('site-header');
+  if (siteHeader) {
+    siteHeader.innerHTML = '';
+    siteHeader.hidden = true;
+  }
+  navbarCleanup = () => {};
   renderFooter(document.getElementById('site-footer'));
   highlightActiveNav(activePage);
   attachLogoHome();
