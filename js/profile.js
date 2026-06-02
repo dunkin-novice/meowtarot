@@ -637,7 +637,27 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   renderStreak(dict);
   const progress = getUserProgress();
   const deckInvEl = document.getElementById('profile-deck-inventory');
-  if (deckInvEl) renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
+  if (deckInvEl) {
+    renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
+    // Phase 5: "View all decks" CTA below the horizontal strip routes
+    // to the standalone /decks.html page (ScreenDeckInventory).
+    const seeAll = document.createElement('a');
+    seeAll.className = 'profile-deck-see-all';
+    seeAll.href = localizePath('/decks.html', state.currentLang);
+    const seeAllEn = document.createElement('span');
+    seeAllEn.className = 'profile-deck-see-all__en';
+    seeAllEn.textContent = state.currentLang === 'th' ? 'ดูสำรับทั้งหมด' : 'View all decks';
+    seeAll.appendChild(seeAllEn);
+    const seeAllSep = document.createElement('span');
+    seeAllSep.className = 'profile-deck-see-all__sep';
+    seeAllSep.textContent = ' · ';
+    seeAll.appendChild(seeAllSep);
+    const seeAllAlt = document.createElement('span');
+    seeAllAlt.className = state.currentLang === 'th' ? 'profile-deck-see-all__alt' : 'profile-deck-see-all__alt thai';
+    seeAllAlt.textContent = state.currentLang === 'th' ? 'View all decks' : 'ดูสำรับทั้งหมด';
+    seeAll.appendChild(seeAllAlt);
+    deckInvEl.appendChild(seeAll);
+  }
   renderLifetimeStats(dict);
   const achieveEl = document.getElementById('profile-achievements');
   if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);

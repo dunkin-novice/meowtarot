@@ -1,0 +1,321 @@
+/*
+ * MeowTarot — Phase 5: Deck Inventory standalone page
+ * css/decks.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * Matches ScreenDeckInventory in the design doc (section 10): top bar +
+ * heading hero + status pill + 2-column responsive grid of deck cells.
+ * Each cell has a 5:7 back-image thumbnail, name + Thai name, and an
+ * unlock-state note. Active deck wears a gold border + "Active · ใช้อยู่"
+ * pill on the thumbnail. Locked decks are greyscaled with a lock icon.
+ *
+ * REQUIRES: css/theme-tokens.css (--mt-* namespace).
+ * LOAD ORDER: LAST, after css/phase-3-redesign.css.
+ *
+ * SECTIONS:
+ *   §1  Page background + shell layout
+ *   §2  Top row (back chevron + DECKS·สำรับ eyebrow)
+ *   §3  Heading hero + status pill
+ *   §4  Grid (2-column responsive)
+ *   §5  Deck cell — thumbnail, badges, lock state
+ *   §6  Toast (deck-set / locked hint)
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background + shell layout */
+body[data-page='decks'] {
+  background: var(--mt-bg-gradient-daily-after);
+  color: var(--mt-plum);
+  font-family: var(--mt-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body[data-page='decks'] .page-shell {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 8px 22px 110px;
+  min-height: calc(100dvh - 60px);
+}
+
+body[data-page='decks'] .decks-content {
+  display: block;
+  position: relative;
+}
+
+
+/* §2 — Top row (back chevron + DECKS·สำรับ eyebrow) */
+body[data-page='decks'] .decks-top-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+body[data-page='decks'] .decks-top-row__back {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mt-plum);
+  font-size: 18px;
+  font-family: var(--mt-font-body);
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1;
+}
+
+body[data-page='decks'] .decks-top-row__back:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+body[data-page='decks'] .decks-top-row__eyebrow {
+  text-align: center;
+  font-size: 11px;
+  color: var(--mt-plum-mid);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  align-items: baseline;
+}
+
+body[data-page='decks'] .decks-top-row__eyebrow-sep {
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+body[data-page='decks'] .decks-top-row__eyebrow-alt {
+  font-family: var(--mt-font-thai);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  opacity: 0.85;
+}
+
+body[data-page='decks'] .decks-top-row__spacer {
+  width: 36px;
+}
+
+
+/* §3 — Heading hero + status pill */
+body[data-page='decks'] .decks-heading__en {
+  font-family: var(--mt-font-display);
+  font-size: 30px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--mt-plum);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  margin: 16px 0 0;
+}
+
+body[data-page='decks'] .decks-heading__th {
+  font-family: var(--mt-font-display-th);
+  font-size: 16px;
+  color: var(--mt-plum-mid);
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+body[data-page='decks'] .decks-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+body[data-page='decks'] .decks-status-pill {
+  font-family: var(--mt-font-body);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: var(--mt-radius-pill);
+  background: rgba(61, 26, 92, 0.08);
+  color: var(--mt-plum-mid);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+body[data-page='decks'] .decks-status-alt {
+  font-family: var(--mt-font-thai);
+  font-size: 11px;
+  color: var(--mt-plum-mid);
+}
+
+
+/* §4 — Grid (2-column responsive) */
+body[data-page='decks'] .decks-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 380px) {
+  body[data-page='decks'] .decks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* §5 — Deck cell */
+body[data-page='decks'] .decks-cell {
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid rgba(61, 26, 92, 0.08);
+  box-shadow: var(--mt-soft-shadow);
+  position: relative;
+  cursor: pointer;
+  display: block;
+  text-align: left;
+  font-family: inherit;
+  color: var(--mt-plum);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+body[data-page='decks'] .decks-cell:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px -10px rgba(61, 26, 92, 0.34);
+}
+
+body[data-page='decks'] .decks-cell.is-active {
+  border: 1.5px solid var(--mt-gold);
+  box-shadow: 0 14px 26px -10px rgba(201, 147, 58, 0.4);
+}
+
+body[data-page='decks'] .decks-cell:active {
+  transform: scale(0.98);
+}
+
+body[data-page='decks'] .decks-cell__thumb {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 22px -8px rgba(61, 26, 92, 0.4);
+  background: var(--mt-card-back-deep);
+  border: 0.5px solid var(--mt-gold-soft);
+}
+
+body[data-page='decks'] .decks-cell.is-locked .decks-cell__thumb {
+  filter: saturate(0.35) opacity(0.65);
+}
+
+body[data-page='decks'] .decks-cell__img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+body[data-page='decks'] .decks-cell__active-badge {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  font-family: var(--mt-font-body);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: var(--mt-radius-pill);
+  background: var(--mt-gold);
+  color: var(--mt-plum-deep);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px -4px rgba(201, 147, 58, 0.6);
+}
+
+body[data-page='decks'] .decks-cell__lock {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(61, 26, 92, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  line-height: 1;
+}
+
+body[data-page='decks'] .decks-cell__meta {
+  margin-top: 10px;
+}
+
+body[data-page='decks'] .decks-cell__name {
+  font-family: var(--mt-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  font-style: italic;
+  line-height: 1.1;
+}
+
+body[data-page='decks'] .decks-cell__name-th {
+  font-family: var(--mt-font-thai);
+  font-size: 10px;
+  color: var(--mt-plum-mid);
+  margin-top: 1px;
+}
+
+body[data-page='decks'] .decks-cell__note {
+  font-family: var(--mt-font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-top: 6px;
+}
+
+body[data-page='decks'] .decks-cell.is-unlocked .decks-cell__note {
+  color: var(--mt-gold);
+}
+
+body[data-page='decks'] .decks-cell.is-locked .decks-cell__note {
+  color: var(--mt-ink-soft);
+}
+
+
+/* §6 — Toast */
+body[data-page='decks'] .decks-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(61, 26, 92, 0.92);
+  color: var(--mt-cream);
+  font-family: var(--mt-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--mt-radius-pill);
+  box-shadow: 0 12px 28px -8px rgba(61, 26, 92, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease, transform 240ms ease;
+  z-index: 100;
+  max-width: 88vw;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-page='decks'] .decks-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
