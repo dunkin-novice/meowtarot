@@ -48,7 +48,7 @@ function getActiveTab(pathname) {
   if (normalized === '/' || normalized.startsWith('/index.html/')) return 'home';
   if (normalized.startsWith('/today/')) return 'today';
   if (normalized.startsWith('/daily.html/')) return 'draw';
-  if (normalized.startsWith('/tarot-card-meanings/') || normalized.startsWith('/cards/')) return 'cards';
+  if (normalized.startsWith('/decks.html') || normalized.startsWith('/decks/') || normalized.startsWith('/tarot-card-meanings/') || normalized.startsWith('/cards/')) return 'cards';
   if (normalized.startsWith('/profile.html/')) return 'profile';
   return '';
 }
@@ -160,7 +160,7 @@ function buildNavMarkup(pathname) {
   const tabs = [
     { key: 'home', href: `${prefix}/index.html`, icon: '🏠', label: labels.home },
     { key: 'today', href: `${prefix}/today/`, icon: '📅', label: labels.today },
-    { key: 'cards', href: `${prefix}/tarot-card-meanings/`, icon: '📚', label: labels.cards },
+    { key: 'cards', href: `${prefix}/decks.html`, icon: '📚', label: labels.cards },
     { key: 'profile', href: `${prefix}/profile.html`, icon: '👤', label: labels.profile },
   ];
 
