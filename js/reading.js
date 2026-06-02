@@ -16,6 +16,7 @@ import {
   applyImgFallback,
   DEFAULT_DECK_ID,
   getNewlyUnlockedDecks,
+  getAllDecks,
 } from './data.js';
 import { showDeckRewardPopup } from './deck-reward.js';
 import {
@@ -2789,6 +2790,27 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
         newDecks.forEach((deck) => showDeckRewardPopup(deck, state.currentLang ?? 'th'));
       }, 300);
     }
+
+    // Phase 5: streak-milestone "Halfway · Day N" popup fires when the
+    // user's streak day crosses the midpoint between two consecutive
+    // deck unlocks (e.g. midway between Day 14 and Day 30 → Day 22).
+    // maybeShowStreakMilestonePopup is a no-op if the streak isn't at
+    // a halfway day, if the user has already seen this milestone, or
+    // if the deck-unlock popup is already showing (deck unlock takes
+    // precedence — same day's celebration shouldn't double-fire).
+    setTimeout(async () => {
+      try {
+        const decks = getAllDecks();
+        if (!decks || !decks.length) return;
+        if (document.getElementById('mt-deck-reward-popup')) return;
+        const { maybeShowStreakMilestonePopup } = await import('./streak-milestone.js');
+        maybeShowStreakMilestonePopup({
+          decks,
+          progress: dailyUiState.retention.progress,
+          lang: state.currentLang ?? 'th',
+        });
+      } catch (_) { /* non-fatal — popup is a celebration, not a feature */ }
+    }, 1400);
 
     setTimeout(async () => {
       const { hasBeenAsked, requestAndSchedule } = await import('./notifications.js');

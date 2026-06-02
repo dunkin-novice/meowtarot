@@ -430,6 +430,25 @@ function renderHistory(dict) {
     emptyBody.textContent = dict.profileHistoryLoginBody || (state.currentLang === 'th' ? 'เมื่อเข้าสู่ระบบ คุณจะย้อนดูผลเดิมและติดตามพลังที่เด่นได้ง่ายขึ้น' : 'When signed in, you can revisit past readings and track your dominant energy.');
     empty.appendChild(emptyBody);
 
+    // Phase 5: opening the sign-in gate from the history empty state
+    // surfaces the same Continue-with-Google CTA as the design's
+    // ScreenPopupSignIn. The inline "Sign in with Google" button in
+    // renderIdentity stays as a separate entry point — both call
+    // loginWithProvider('google').
+    const cta = document.createElement('button');
+    cta.type = 'button';
+    cta.className = 'ghost profile-empty-state__cta';
+    cta.textContent = dict.profileSignInCta || (state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Google' : 'Sign in to continue');
+    cta.addEventListener('click', () => {
+      import('./sign-in-gate.js').then(({ showSignInGate }) => {
+        showSignInGate({
+          lang: state.currentLang,
+          onSignIn: () => loginWithProvider('google').catch(() => {}),
+        });
+      }).catch(() => {});
+    });
+    empty.appendChild(cta);
+
     card.appendChild(empty);
     els.history.appendChild(card);
     return;
