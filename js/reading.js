@@ -2744,6 +2744,11 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   if (dailyUiState.animationRunId !== runId) return;
 
   stageRefs.deck.remove();
+  // Phase 5: the ceremonial spread panel built by renderDailyDetails
+  // already shows the revealed card with aura / archetype / lucky chip.
+  // Drop the deal-animation board now so we don't render the same card
+  // twice on the result screen.
+  stageRefs.board.remove();
 
   state.selectedIds = cards.map((entryCard) => getCardSelectionId(entryCard)).filter(Boolean);
   dailyUiState.selectedCardId = state.selectedIds[0] || '';
