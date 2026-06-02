@@ -72,6 +72,16 @@
         <h2 class="daily-board-title__th thai-serif">เลือกไพ่ของคุณ</h2>
       </div>
 
+      <!-- Shuffle: re-deals a fresh 12-card spread and clears any pick -->
+      <div class="daily-shuffle-row">
+        <button class="daily-shuffle-btn" type="button" id="daily-shuffle" aria-label="Shuffle the deck">
+          <span class="daily-shuffle-btn__ico" aria-hidden="true">↻</span>
+          <span>Shuffle</span>
+          <span class="daily-shuffle-btn__sep" aria-hidden="true">·</span>
+          <span class="thai">สับไพ่</span>
+        </button>
+      </div>
+
       <div class="card-board card-board--daily" id="daily-board" aria-live="polite"></div>
 
       <div class="daily-board-counter" aria-live="polite">

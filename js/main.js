@@ -516,6 +516,23 @@ function renderDaily() {
   if (continueBtn) {
     continueBtn.onclick = commitDailySelection;
   }
+
+  // Phase 5: shuffle button above the board re-deals a fresh 12-card
+  // spread and clears the current pick. dailyBoard.render() already
+  // animates the deal and resets selection state; we just guard against
+  // double-taps while the board is mid-animation and spin the icon
+  // during the redraw.
+  const shuffleBtn = document.getElementById('daily-shuffle');
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener('click', () => {
+      if (board.classList.contains('is-locked')) return;
+      shuffleBtn.classList.add('is-spinning');
+      if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+      dailyBoard.render();
+      updateDailySelectionUi([]);
+      window.setTimeout(() => shuffleBtn.classList.remove('is-spinning'), 1500);
+    });
+  }
 }
 
 if (typeof window !== 'undefined' && !window._meowContinueListenerBound) {
