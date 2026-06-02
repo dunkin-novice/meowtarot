@@ -283,6 +283,38 @@ body[data-page='question'] .question-input__hint {
   line-height: 1.4;
 }
 
+body[data-page='question'] .question-input__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 10.5px;
+  color: var(--mt-ink-soft);
+  gap: 12px;
+}
+
+body[data-page='question'] .question-input__counter {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--mt-plum-mid);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-page='question'] .question-input__counter.is-near-limit {
+  color: var(--mt-gold-deep);
+}
+
+body[data-page='question'] .question-input__specific {
+  font-family: var(--mt-font-body);
+  font-weight: 500;
+}
+
+body[data-page='question'] .question-input__specific .thai,
+body[data-page='question'] .question-input__specific-en {
+  opacity: 0.85;
+}
+
 
 /* §6 — Topic chips */
 body[data-page='question'] .question-topics {

@@ -1168,6 +1168,23 @@ async function renderQuestion(dict = translations[state.currentLang] || translat
       });
     });
   });
+
+  // Phase 5: live char counter on the question textarea. Updates the
+  // `#question-text-counter` span as the user types; flips to
+  // .is-near-limit (gold tint) when within 20 chars of the 180-char
+  // maxlength to nudge the user before they're cut off.
+  const questionInput = document.getElementById('question-text-input');
+  const questionCounter = document.getElementById('question-text-counter');
+  if (questionInput && questionCounter) {
+    const max = Number(questionInput.getAttribute('maxlength')) || 180;
+    const updateCounter = () => {
+      const len = questionInput.value.length;
+      questionCounter.textContent = `${len} / ${max}`;
+      questionCounter.classList.toggle('is-near-limit', len >= max - 20);
+    };
+    questionInput.addEventListener('input', updateCounter);
+    updateCounter();
+  }
 }
 
 async function renderQuestionDraw(dict = translations[state.currentLang] || translations.en) {

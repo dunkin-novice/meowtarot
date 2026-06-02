@@ -100,8 +100,13 @@
           placeholder="What's on your mind?"
           aria-label="Your question"
           rows="2"
+          maxlength="180"
         ></textarea>
         <div class="question-input__hint thai" aria-hidden="true">คุณอยากถามอะไร</div>
+        <div class="question-input__meta" aria-hidden="true">
+          <span class="question-input__counter" id="question-text-counter">0 / 180</span>
+          <span class="question-input__specific">Be specific · <span class="thai">ถามให้ชัดเจน</span></span>
+        </div>
       </div>
     </section>
 
