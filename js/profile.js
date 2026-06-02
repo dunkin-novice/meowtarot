@@ -144,6 +144,35 @@ function renderStreak(dict) {
   eyebrowGroup.appendChild(eyebrowTh);
 
   topRow.appendChild(eyebrowGroup);
+
+  // Language toggle pill on the right of the top row. Replaces the
+  // global navbar's EN/TH toggle — language switching is now profile-
+  // only per the Phase 5 navbar removal pass. Clicking either side
+  // calls switchLanguageInPlace which re-applies translations and
+  // re-runs renderAll (so the toggle itself re-renders with the new
+  // language selected).
+  const langPill = document.createElement('div');
+  langPill.className = 'profile-lang-pill';
+  langPill.setAttribute('role', 'group');
+  langPill.setAttribute('aria-label', 'Language');
+  ['en', 'th'].forEach((lang) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'profile-lang-pill__btn';
+    btn.dataset.lang = lang;
+    btn.textContent = lang === 'en' ? 'EN' : 'TH';
+    btn.setAttribute('aria-pressed', String(state.currentLang === lang));
+    if (state.currentLang === lang) {
+      btn.classList.add('is-active');
+    }
+    btn.addEventListener('click', () => {
+      if (state.currentLang === lang) return;
+      switchLanguageInPlace(lang);
+    });
+    langPill.appendChild(btn);
+  });
+  topRow.appendChild(langPill);
+
   els.streak.appendChild(topRow);
 
   // Streak hero

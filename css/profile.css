@@ -527,3 +527,45 @@ body[data-page='profile'] .profile-empty-state__cta {
   color: var(--mt-plum);
   text-decoration: none;
 }
+
+
+/* §10 — Language toggle pill (right of the Your Practice eyebrow) */
+body[data-page='profile'] .profile-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: var(--mt-radius-pill);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--mt-soft-shadow);
+  border: 0.5px solid rgba(212, 154, 44, 0.35);
+  gap: 2px;
+}
+
+body[data-page='profile'] .profile-lang-pill__btn {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: var(--mt-radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--mt-plum-mid);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body[data-page='profile'] .profile-lang-pill__btn:hover {
+  color: var(--mt-plum);
+}
+
+body[data-page='profile'] .profile-lang-pill__btn.is-active {
+  background: var(--mt-plum);
+  color: var(--mt-cream);
+  box-shadow: 0 4px 10px -4px rgba(61, 26, 92, 0.45);
+}
+
+body[data-page='profile'] .profile-lang-pill__btn:active {
+  transform: scale(0.95);
+}
