@@ -138,16 +138,7 @@ function renderStreak(dict) {
   eyebrowEn.textContent = state.currentLang === 'th' ? 'บันทึกการเดินทาง' : 'Your practice';
   eyebrowGroup.appendChild(eyebrowEn);
 
-  const eyebrowTh = document.createElement('div');
-  eyebrowTh.className = 'profile-top-row__eyebrow-th';
-  // EN site is EN-only / TH site is TH-only — no bilingual alt label.
-  if (state.currentLang === 'th') {
-    // intentionally no alt — TH stays single-language too
-    eyebrowTh.textContent = '';
-  } else {
-    eyebrowTh.textContent = '';
-  }
-  // Skip appending the empty alt eyebrow at all.
+  // Single-language per locale — no bilingual alt eyebrow.
 
   topRow.appendChild(eyebrowGroup);
 
@@ -198,10 +189,15 @@ function renderStreak(dict) {
   heroNum.textContent = String(currentStreak);
   hero.appendChild(heroNum);
 
-  const heroNumTh = document.createElement('div');
-  heroNumTh.className = 'profile-streak-hero__number-th';
-  heroNumTh.textContent = thaiNumberWord(currentStreak);
-  hero.appendChild(heroNumTh);
+  // TH-only secondary line under the big gradient number. The Thai
+  // number-word (e.g. "สิบสี่วัน") only renders on the TH site so EN
+  // doesn't leak Thai script into the streak hero.
+  if (state.currentLang === 'th') {
+    const heroNumTh = document.createElement('div');
+    heroNumTh.className = 'profile-streak-hero__number-th';
+    heroNumTh.textContent = thaiNumberWord(currentStreak);
+    hero.appendChild(heroNumTh);
+  }
 
   const heroSubtitle = document.createElement('div');
   heroSubtitle.className = 'profile-streak-hero__subtitle';
@@ -239,13 +235,7 @@ function renderStreak(dict) {
       ? `สำรับถัดไป · ${deckNameTh}`
       : `Next: ${deckNameEn}`;
     headLeft.appendChild(titleEn);
-
-    const titleTh = document.createElement('div');
-    titleTh.className = 'profile-progress-panel__title-th';
-    titleTh.textContent = state.currentLang === 'th'
-      ? `Next · ${deckNameEn}`
-      : `สำรับถัดไป · ${deckNameTh}`;
-    headLeft.appendChild(titleTh);
+    // Single-language per locale — no bilingual alt title-th line.
     head.appendChild(headLeft);
 
     const headRight = document.createElement('div');

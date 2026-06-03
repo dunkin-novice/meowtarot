@@ -2402,24 +2402,21 @@ function renderDailyDetails(cards, dict, stage) {
     orientation.textContent = roman ? `${orientationText} · ${roman}` : orientationText;
     caption.appendChild(orientation);
 
+    // Single-language card name + archetype per active locale.
     const cardName = document.createElement('div');
     cardName.className = 'spread-card-name';
-    cardName.textContent = card.card_name_en || '';
+    cardName.textContent = state.currentLang === 'th'
+      ? (card.alias_th || card.card_name_en || '')
+      : (card.card_name_en || '');
     caption.appendChild(cardName);
 
-    if (card.alias_th) {
-      const cardNameTh = document.createElement('div');
-      cardNameTh.className = 'spread-card-name-th thai-serif';
-      cardNameTh.textContent = card.alias_th;
-      caption.appendChild(cardNameTh);
-    }
-
-    // Bilingual archetype line (Option 1 from review).
-    if (card.archetype_en || card.archetype_th) {
+    const activeArchetype = state.currentLang === 'th'
+      ? (card.archetype_th || card.archetype_en || '')
+      : (card.archetype_en || '');
+    if (activeArchetype) {
       const archetype = document.createElement('div');
       archetype.className = 'spread-archetype';
-      const parts = [card.archetype_en, card.archetype_th].filter(Boolean);
-      archetype.textContent = parts.join(' · ');
+      archetype.textContent = activeArchetype;
       caption.appendChild(archetype);
     }
 
@@ -2442,18 +2439,16 @@ function renderDailyDetails(cards, dict, stage) {
     interpHeader.textContent = state.currentLang === 'th' ? 'สำหรับวันนี้' : 'For today';
     interpPanel.appendChild(interpHeader);
 
-    const inlineEn = card.tarot_imply_en || card.reading_summary_preview_en || '';
-    const inlineTh = card.tarot_imply_th || card.reading_summary_preview_th || '';
-    if (inlineEn) {
+    // Single-language interpretation paragraph per active locale.
+    const inlineActive = state.currentLang === 'th'
+      ? (card.tarot_imply_th || card.reading_summary_preview_th || '')
+      : (card.tarot_imply_en || card.reading_summary_preview_en || '');
+    if (inlineActive) {
       const p = document.createElement('p');
-      p.className = 'daily-interp-panel__body daily-interp-panel__body--en';
-      p.textContent = inlineEn;
-      interpPanel.appendChild(p);
-    }
-    if (inlineTh) {
-      const p = document.createElement('p');
-      p.className = 'daily-interp-panel__body daily-interp-panel__body--th thai';
-      p.textContent = inlineTh;
+      p.className = state.currentLang === 'th'
+        ? 'daily-interp-panel__body daily-interp-panel__body--th thai'
+        : 'daily-interp-panel__body daily-interp-panel__body--en';
+      p.textContent = inlineActive;
       interpPanel.appendChild(p);
     }
 
@@ -2464,32 +2459,19 @@ function renderDailyDetails(cards, dict, stage) {
       divider.className = 'daily-interp-panel__divider';
       interpPanel.appendChild(divider);
 
+      // Single-language keyword row per active locale.
       const keywordRow = document.createElement('div');
       keywordRow.className = 'daily-interp-panel__keyword-row';
 
-      const enWrap = document.createElement('span');
-      enWrap.className = 'daily-interp-panel__keyword';
-      const enLabel = document.createElement('b');
-      enLabel.textContent = 'Keyword';
-      enWrap.appendChild(enLabel);
-      enWrap.appendChild(document.createTextNode(` · ${primaryKeyword}`));
-      keywordRow.appendChild(enWrap);
-
-      const sep = document.createElement('span');
-      sep.className = 'daily-interp-panel__keyword-sep';
-      sep.textContent = '·';
-      keywordRow.appendChild(sep);
-
-      // Thai keyword data isn't on the card model yet — show the Thai label
-      // with the English keyword value as a graceful bilingual approximation.
-      // Filed: add keywords_light_th to card data for a true translation.
-      const thWrap = document.createElement('span');
-      thWrap.className = 'daily-interp-panel__keyword thai';
-      const thLabel = document.createElement('b');
-      thLabel.textContent = 'คำสำคัญ';
-      thWrap.appendChild(thLabel);
-      thWrap.appendChild(document.createTextNode(` · ${primaryKeyword}`));
-      keywordRow.appendChild(thWrap);
+      const wrap = document.createElement('span');
+      wrap.className = state.currentLang === 'th'
+        ? 'daily-interp-panel__keyword thai'
+        : 'daily-interp-panel__keyword';
+      const label = document.createElement('b');
+      label.textContent = state.currentLang === 'th' ? 'คำสำคัญ' : 'Keyword';
+      wrap.appendChild(label);
+      wrap.appendChild(document.createTextNode(` · ${primaryKeyword}`));
+      keywordRow.appendChild(wrap);
 
       interpPanel.appendChild(keywordRow);
     }
@@ -3488,46 +3470,40 @@ function renderQuestion(cards, dict) {
     label.textContent = dict[positionStr] || positionStr;
     caption.appendChild(label);
 
-    // Phase 5: bilingual card name (EN serif + Thai alias).
+    // Single-language card name per active locale (drops the bilingual
+    // EN serif + TH alias stack from the Phase 5 design — the EN site
+    // is EN-only, TH site TH-only).
     const cardName = document.createElement('div');
     cardName.className = 'spread-card-name';
-    cardName.textContent = card.card_name_en || '';
+    cardName.textContent = state.currentLang === 'th'
+      ? (card.alias_th || card.card_name_en || '')
+      : (card.card_name_en || '');
     caption.appendChild(cardName);
 
-    if (card.alias_th) {
-      const cardNameTh = document.createElement('div');
-      cardNameTh.className = 'spread-card-name-th thai-serif';
-      cardNameTh.textContent = card.alias_th;
-      caption.appendChild(cardNameTh);
-    }
-
-    // Phase 5: lucky color chip — Quick only.
+    // Lucky color chip — Quick only.
     if (orderedCards.length === 1) {
       const luckyChip = buildLuckyColorChip(card);
       if (luckyChip) caption.appendChild(luckyChip);
     }
 
-    // Phase 5: inline 2-sentence interpretation (EN + TH stacked).
+    // Single-language inline interpretation paragraph per active locale.
     // Quick uses tarot_imply_*; Story uses standalone_{position}_*.
-    let inlineEn = '';
-    let inlineTh = '';
+    let inlineActive = '';
     if (orderedCards.length === 1) {
-      inlineEn = card.tarot_imply_en || card.reading_summary_preview_en || '';
-      inlineTh = card.tarot_imply_th || card.reading_summary_preview_th || '';
+      inlineActive = state.currentLang === 'th'
+        ? (card.tarot_imply_th || card.reading_summary_preview_th || '')
+        : (card.tarot_imply_en || card.reading_summary_preview_en || '');
     } else {
-      inlineEn = card[`standalone_${positionStr}_en`] || '';
-      inlineTh = card[`standalone_${positionStr}_th`] || '';
+      inlineActive = state.currentLang === 'th'
+        ? (card[`standalone_${positionStr}_th`] || '')
+        : (card[`standalone_${positionStr}_en`] || '');
     }
-    if (inlineEn) {
+    if (inlineActive) {
       const p = document.createElement('p');
-      p.className = 'spread-inline-text spread-inline-text--en';
-      p.textContent = inlineEn;
-      caption.appendChild(p);
-    }
-    if (inlineTh) {
-      const p = document.createElement('p');
-      p.className = 'spread-inline-text spread-inline-text--th thai';
-      p.textContent = inlineTh;
+      p.className = state.currentLang === 'th'
+        ? 'spread-inline-text spread-inline-text--th thai'
+        : 'spread-inline-text spread-inline-text--en';
+      p.textContent = inlineActive;
       caption.appendChild(p);
     }
 
