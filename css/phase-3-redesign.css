@@ -99,3 +99,98 @@ body[data-page='question-draw'] .card-slot {
   background: var(--mt-card-back-bg);
   border-radius: var(--mt-radius-card);
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §2 — Phase 5 floating-pill bottom-nav (overrides §1 + styles.css base)
+ * Matches design doc's BottomNav: 4 tabs, no center button, floating
+ * 28px-radius pill 10px from edges/bottom, translucent white with
+ * backdrop-blur, pastel plum tints. Inline SVG cat glyphs ride on
+ * currentColor so active/inactive tint is one rule.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  body[data-page] .bottom-nav--phase5 {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 110;
+    height: auto;
+    padding: 10px 8px 12px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 28px;
+    box-shadow:
+      0 -2px 16px -6px rgba(61, 26, 92, 0.12),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+      0 12px 28px -12px rgba(61, 26, 92, 0.18);
+  }
+
+  body[data-page] .bottom-nav--phase5 .bottom-nav__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--mt-plum-pale, #a487c4);
+    font-family: var(--mt-font-body, "DM Sans", sans-serif);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    text-decoration: none;
+    padding: 6px 4px;
+    border-radius: 14px;
+    transition: color 160ms ease, transform 140ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body[data-page] .bottom-nav--phase5 .bottom-nav__item:active {
+    transform: scale(0.96);
+  }
+
+  body[data-page] .bottom-nav--phase5 .bottom-nav__item.is-active {
+    color: var(--mt-plum, #3d1a5c);
+    font-weight: 600;
+  }
+
+  body[data-page] .bottom-nav--phase5 .bottom-nav__icon {
+    height: 24px;
+    width: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.85;
+    transition: opacity 160ms ease;
+  }
+
+  body[data-page] .bottom-nav--phase5 .bottom-nav__item.is-active .bottom-nav__icon {
+    opacity: 1;
+  }
+
+  body[data-page] .bottom-nav--phase5 .bottom-nav__icon svg {
+    display: block;
+    width: 22px;
+    height: 22px;
+  }
+
+  body[data-page] .bottom-nav--phase5 .bottom-nav__label {
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Body padding accommodates the floating pill height + bottom inset
+   * + small breathing room. Phase 4 used --bottom-nav-height (64px);
+   * the Phase 5 pill is ~64px tall with the floating offset so the
+   * existing token still fits, but we add a tad more space so the
+   * page content doesn't crowd the pill's top edge. */
+  body.has-bottom-nav {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+}

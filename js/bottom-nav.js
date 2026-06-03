@@ -1,7 +1,18 @@
+/**
+ * bottom-nav.js — Phase 5 floating-pill bottom navigation
+ *
+ * 4 tabs: Today (index/daily landing) · Decks · Ask · Profile.
+ * No center button — the old contextual Share/Continue/Draw center
+ * affordance is gone; Continue/Share live in the page itself, and
+ * Draw is reached via the Today tab → daily.html flow.
+ *
+ * Hand-crafted SVG cat glyphs per tab — kawaii pastel register
+ * matching the design doc's CatIcon style. Single fill="currentColor"
+ * so CSS controls the active vs inactive tint with no JS.
+ */
+
 const MOBILE_QUERY = '(max-width: 768px)';
 const EXCLUDED_PREFIXES = ['/share/', '/docs/', '/sharekit/'];
-const DAILY_CARD_OF_DAY_STORAGE_KEY = 'meowtarot.daily.cardOfTheDay';
-const CONTINUE_BUTTON_IDS = ['daily-continue', 'question-continue', 'overall-continue'];
 
 function normalizePath(pathname = '/') {
   if (!pathname) return '/';
@@ -16,24 +27,16 @@ function getLocaleConfig(pathname) {
     prefix,
     labels: isThai
       ? {
-        home: 'หน้าแรก',
         today: 'วันนี้',
-        draw: 'สุ่มไพ่',
-        cards: 'ความหมายไพ่',
+        decks: 'สำรับ',
+        ask: 'ถาม',
         profile: 'โปรไฟล์',
-        todayCard: 'ดูไพ่วันนี้',
-        continue: 'ดำเนินการต่อ',
-        share: 'แชร์เรื่องราว',
       }
       : {
-        home: 'Home',
         today: 'Today',
-        draw: 'Draw',
-        cards: 'Cards',
+        decks: 'Decks',
+        ask: 'Ask',
         profile: 'Profile',
-        todayCard: "Today's Card",
-        continue: 'Continue',
-        share: 'Share Story',
       },
   };
 }
@@ -45,148 +48,96 @@ function shouldExclude(pathname) {
 
 function getActiveTab(pathname) {
   const normalized = normalizePath(pathname.replace(/^\/th/, '') || '/');
-  if (normalized === '/' || normalized.startsWith('/index.html/')) return 'home';
-  if (normalized.startsWith('/today/')) return 'today';
-  if (normalized.startsWith('/daily.html/')) return 'draw';
-  if (normalized.startsWith('/decks.html') || normalized.startsWith('/decks/') || normalized.startsWith('/tarot-card-meanings/') || normalized.startsWith('/cards/')) return 'cards';
-  if (normalized.startsWith('/profile.html/')) return 'profile';
+  if (
+    normalized === '/' ||
+    normalized.startsWith('/index.html/') ||
+    normalized.startsWith('/today/') ||
+    normalized.startsWith('/daily.html/')
+  ) return 'today';
+  if (
+    normalized.startsWith('/decks.html') ||
+    normalized.startsWith('/decks/') ||
+    normalized.startsWith('/tarot-card-meanings/') ||
+    normalized.startsWith('/cards/')
+  ) return 'decks';
+  if (
+    normalized.startsWith('/question.html') ||
+    normalized.startsWith('/question/') ||
+    normalized.startsWith('/full.html')
+  ) return 'ask';
+  if (normalized.startsWith('/profile.html')) return 'profile';
   return '';
 }
 
-function isOnTodayPath(pathname) {
-  const stripped = pathname.replace(/^\/th/, '') || '/';
-  return stripped.startsWith('/today/');
-}
+/* ─────────────────────────────────────────────────────────────
+ * SVG cat glyphs — single-color paths, currentColor fill so
+ * active/inactive states are CSS-driven. 24x24 viewBox, scales
+ * cleanly to the 22px rendered size.
+ * ───────────────────────────────────────────────────────────── */
 
-function getTodayLocalIso() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+const ICON_TODAY = `
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+    <ellipse cx="10.5" cy="16.5" rx="6.5" ry="3.4"/>
+    <path d="M7 13 L8 8.5 L11 13 Z"/>
+    <path d="M17 4.5 l 0.55 1.3 l 1.4 0.18 l -1 1 l 0.27 1.4 l -1.22 -0.7 l -1.22 0.7 l 0.27 -1.4 l -1 -1 l 1.4 -0.18 z"/>
+  </svg>
+`.trim();
 
-function isTodayCardDrawn() {
-  try {
-    const raw = window.localStorage?.getItem(DAILY_CARD_OF_DAY_STORAGE_KEY);
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return false;
-    return String(parsed.date || '').trim() === getTodayLocalIso();
-  } catch (_) {
-    return false;
-  }
-}
+const ICON_DECKS = `
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+    <rect x="2.8" y="10" width="5.6" height="11.5" rx="0.9" transform="rotate(-14 5.6 15.75)"/>
+    <rect x="9.2" y="9" width="5.6" height="11.5" rx="0.9"/>
+    <rect x="15.6" y="10" width="5.6" height="11.5" rx="0.9" transform="rotate(14 18.4 15.75)"/>
+    <path d="M9 9 L10.5 5 L12 9 Z"/>
+    <path d="M12 9 L13.5 5 L15 9 Z"/>
+  </svg>
+`.trim();
 
-function isContinueReady() {
-  for (const id of CONTINUE_BUTTON_IDS) {
-    const btn = document.getElementById(id);
-    if (btn && !btn.disabled) return true;
-  }
-  return false;
-}
+const ICON_ASK = `
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+    <path d="M3 11 L4.5 6.5 L7 11 Z"/>
+    <path d="M9 11 L11 7 L13 11 Z"/>
+    <circle cx="8" cy="14" r="4.5"/>
+    <circle cx="18" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <path d="M16.9 8.3 q 0 -1.1 1.1 -1.1 q 1.1 0 1.1 1.1 q 0 0.65 -0.55 0.95 l -0.4 0.35" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+    <circle cx="18" cy="10.5" r="0.5"/>
+    <circle cx="14" cy="13" r="0.9"/>
+  </svg>
+`.trim();
 
-function hasContinueContext(page) {
-  if (page === 'daily' && document.getElementById('daily-board')) return true;
-  if (page === 'question-draw') return true;
-  if (page === 'full' && document.getElementById('overall-continue')) return true;
-  return false;
-}
+const ICON_PROFILE = `
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+    <path d="M5 7 L7.5 3 L10 8 Z"/>
+    <path d="M10 8 Q15 8 17 11 Q18.5 14 17 17 Q15 18.5 11 18.5 Q6 18.5 5.5 14 Q5.5 10 6.5 8 Z"/>
+  </svg>
+`.trim();
 
-function getContextualCenterState(pathname) {
-  const page = document.body?.dataset.page || '';
-  const { prefix } = getLocaleConfig(pathname);
-
-  if (page === 'reading') {
-    return { state: 'share' };
-  }
-
-  if (hasContinueContext(page)) {
-    return { state: 'continue', ready: isContinueReady() };
-  }
-
-  if (page === 'daily') {
-    const drawn = isTodayCardDrawn();
-    if (isOnTodayPath(pathname) && drawn) {
-      return { state: 'today', href: `${prefix}/today/` };
-    }
-    if (!drawn) {
-      return { state: 'today', href: `${prefix}/daily.html` };
-    }
-    return { state: 'today', href: `${prefix}/today/` };
-  }
-
-  return { state: 'draw', href: `${prefix}/daily.html` };
-}
-
-const SHARE_ICON_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>';
-
-function buildCenterElement(centerInfo, labels, active) {
-  if (centerInfo.state === 'share') {
-    return `<button type="button" class="bottom-nav__item bottom-nav__item--center bottom-nav__item--share" aria-label="${labels.share}" data-center-action="share">
-        <span class="bottom-nav__center-btn bottom-nav__center-btn--share" aria-hidden="true">${SHARE_ICON_SVG}</span>
-        <span class="bottom-nav__label">${labels.share}</span>
-      </button>`;
-  }
-
-  if (centerInfo.state === 'continue') {
-    const disabled = centerInfo.ready ? '' : 'disabled';
-    const label = labels.continue;
-    return `<button type="button" class="bottom-nav__item bottom-nav__item--center bottom-nav__item--continue" aria-label="${label}" data-center-action="continue" ${disabled}>
-        <span class="bottom-nav__center-btn bottom-nav__center-btn--continue" aria-hidden="true">▶</span>
-        <span class="bottom-nav__label">${label}</span>
-      </button>`;
-  }
-
-  if (centerInfo.state === 'today') {
-    return `<a class="bottom-nav__item bottom-nav__item--center" href="${centerInfo.href}" aria-label="${labels.todayCard}">
-        <span class="bottom-nav__center-btn" aria-hidden="true">🌙</span>
-        <span class="bottom-nav__label">${labels.todayCard}</span>
-      </a>`;
-  }
-
-  const isActive = active === 'draw';
-  return `<a class="bottom-nav__item bottom-nav__item--center ${isActive ? 'is-active' : ''}" href="${centerInfo.href}" aria-label="${labels.draw}">
-      <span class="bottom-nav__center-btn" aria-hidden="true">🐾</span>
-      <span class="bottom-nav__label">${labels.draw}</span>
-    </a>`;
-}
+const ICONS = {
+  today: ICON_TODAY,
+  decks: ICON_DECKS,
+  ask: ICON_ASK,
+  profile: ICON_PROFILE,
+};
 
 function buildNavMarkup(pathname) {
   const { prefix, labels } = getLocaleConfig(pathname);
   const active = getActiveTab(pathname);
-  const centerInfo = getContextualCenterState(pathname);
 
   const tabs = [
-    { key: 'home', href: `${prefix}/index.html`, icon: '🏠', label: labels.home },
-    { key: 'today', href: `${prefix}/today/`, icon: '📅', label: labels.today },
-    { key: 'cards', href: `${prefix}/decks.html`, icon: '📚', label: labels.cards },
-    { key: 'profile', href: `${prefix}/profile.html`, icon: '👤', label: labels.profile },
+    { key: 'today',   href: `${prefix}/index.html`,    label: labels.today },
+    { key: 'decks',   href: `${prefix}/decks.html`,    label: labels.decks },
+    { key: 'ask',     href: `${prefix}/question.html`, label: labels.ask },
+    { key: 'profile', href: `${prefix}/profile.html`,  label: labels.profile },
   ];
 
-  const centerEl = buildCenterElement(centerInfo, labels, active);
+  const tabHtml = tabs.map((tab) => `
+    <a class="bottom-nav__item ${active === tab.key ? 'is-active' : ''}" href="${tab.href}">
+      <span class="bottom-nav__icon" aria-hidden="true">${ICONS[tab.key]}</span>
+      <span class="bottom-nav__label">${tab.label}</span>
+    </a>
+  `).join('');
 
-  return `
-    <nav class="bottom-nav" aria-label="Mobile app navigation">
-      <a class="bottom-nav__item ${active === 'home' ? 'is-active' : ''}" href="${tabs[0].href}">
-        <span class="bottom-nav__icon" aria-hidden="true">${tabs[0].icon}</span>
-        <span class="bottom-nav__label">${tabs[0].label}</span>
-      </a>
-      <a class="bottom-nav__item ${active === 'today' ? 'is-active' : ''}" href="${tabs[1].href}">
-        <span class="bottom-nav__icon" aria-hidden="true">${tabs[1].icon}</span>
-        <span class="bottom-nav__label">${tabs[1].label}</span>
-      </a>
-      ${centerEl}
-      <a class="bottom-nav__item ${active === 'cards' ? 'is-active' : ''}" href="${tabs[2].href}">
-        <span class="bottom-nav__icon" aria-hidden="true">${tabs[2].icon}</span>
-        <span class="bottom-nav__label">${tabs[2].label}</span>
-      </a>
-      <a class="bottom-nav__item ${active === 'profile' ? 'is-active' : ''}" href="${tabs[3].href}">
-        <span class="bottom-nav__icon" aria-hidden="true">${tabs[3].icon}</span>
-        <span class="bottom-nav__label">${tabs[3].label}</span>
-      </a>
-    </nav>
-  `;
+  return `<nav class="bottom-nav bottom-nav--phase5" aria-label="Mobile app navigation">${tabHtml}</nav>`;
 }
 
 function bindWindowListeners() {
@@ -198,25 +149,6 @@ function bindWindowListeners() {
   window.addEventListener('orientationchange', rerender, { passive: true });
 }
 
-function bindShellDelegation(shell) {
-  if (shell.dataset.navClickBound) return;
-  shell.dataset.navClickBound = 'true';
-  shell.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-center-action]');
-    if (!btn) return;
-    if (btn.disabled) {
-      e.preventDefault();
-      return;
-    }
-    const action = btn.dataset.centerAction;
-    if (action === 'share') {
-      document.dispatchEvent(new CustomEvent('meow:request-share'));
-    } else if (action === 'continue') {
-      document.dispatchEvent(new CustomEvent('meow:request-continue'));
-    }
-  }, { capture: true });
-}
-
 function bindMutationObserver() {
   if (typeof window === 'undefined') return;
   if (window._meowNavObserver) return;
@@ -224,12 +156,6 @@ function bindMutationObserver() {
   observer.observe(document.body, {
     attributes: true,
     attributeFilter: ['data-page', 'data-reading-mode', 'data-daily-phase'],
-  });
-  CONTINUE_BUTTON_IDS.forEach((id) => {
-    const btn = document.getElementById(id);
-    if (btn) {
-      observer.observe(btn, { attributes: true, attributeFilter: ['disabled'] });
-    }
   });
   window._meowNavObserver = observer;
 }
@@ -259,6 +185,5 @@ export function renderBottomNav() {
   shell.innerHTML = buildNavMarkup(pathname);
   document.body.classList.add('has-bottom-nav');
 
-  bindShellDelegation(shell);
   bindMutationObserver();
 }
