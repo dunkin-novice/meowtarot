@@ -139,7 +139,11 @@ body[data-page='profile'] .profile-streak-hero__number-th {
 body[data-page='profile'] .profile-streak-hero__subtitle {
   font-size: 12px;
   color: var(--mt-ink-soft);
-  margin-top: 2px;
+  /* breathing room after the 124px gradient number now that the
+   * 18px Thai number-word secondary line (__number-th) is no longer
+   * rendered on the EN site. Was 2px when the Thai serif sat in
+   * between. */
+  margin-top: 8px;
 }
 
 
@@ -155,7 +159,11 @@ body[data-page='profile'] .profile-progress-panel {
 body[data-page='profile'] .profile-progress-panel__head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  /* center-align after the bilingual __title-th secondary line was
+   * dropped — without it, the left column is one line and the right
+   * is two (num + days-to-go label). baseline alignment hung the
+   * left column at the top edge. */
+  align-items: center;
 }
 
 body[data-page='profile'] .profile-progress-panel__title {
