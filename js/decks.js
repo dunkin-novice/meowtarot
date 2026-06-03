@@ -115,16 +115,9 @@ function buildHero(progress, unlockedCount, totalCount) {
   const eyebrowGroup = document.createElement('div');
   eyebrowGroup.className = 'decks-top-row__eyebrow';
   const eyebrowEn = document.createElement('span');
+  // EN-only on EN / TH-only on TH — single-language eyebrow.
   eyebrowEn.textContent = pickLocalized('Decks', 'สำรับ');
   eyebrowGroup.appendChild(eyebrowEn);
-  const eyebrowSep = document.createElement('span');
-  eyebrowSep.className = 'decks-top-row__eyebrow-sep';
-  eyebrowSep.textContent = '·';
-  eyebrowGroup.appendChild(eyebrowSep);
-  const eyebrowAlt = document.createElement('span');
-  eyebrowAlt.className = 'decks-top-row__eyebrow-alt';
-  eyebrowAlt.textContent = pickLocalized('สำรับ', 'Decks');
-  eyebrowGroup.appendChild(eyebrowAlt);
   topRow.appendChild(eyebrowGroup);
 
   const spacer = document.createElement('div');
@@ -138,11 +131,6 @@ function buildHero(progress, unlockedCount, totalCount) {
   headingEn.textContent = pickLocalized('Your decks', 'สำรับของคุณ');
   wrap.appendChild(headingEn);
 
-  const headingTh = document.createElement('div');
-  headingTh.className = 'decks-heading__th thai-serif';
-  headingTh.textContent = pickLocalized('สำรับของคุณ', 'Your decks');
-  wrap.appendChild(headingTh);
-
   const statusRow = document.createElement('div');
   statusRow.className = 'decks-status-row';
 
@@ -152,13 +140,6 @@ function buildHero(progress, unlockedCount, totalCount) {
     ? fmt('ปลดล็อกแล้ว {n} จาก {total}', { n: unlockedCount, total: totalCount })
     : fmt('{n} of {total} unlocked', { n: unlockedCount, total: totalCount });
   statusRow.appendChild(pill);
-
-  const altPill = document.createElement('div');
-  altPill.className = 'decks-status-alt thai';
-  altPill.textContent = state.currentLang === 'th'
-    ? fmt('· {n} of {total} unlocked', { n: unlockedCount, total: totalCount })
-    : fmt('· ปลดล็อกแล้ว {n} จาก {total}', { n: unlockedCount, total: totalCount });
-  statusRow.appendChild(altPill);
 
   wrap.appendChild(statusRow);
   return wrap;
@@ -188,7 +169,7 @@ function buildDeckCell(deck, { progress, activeId, render }) {
   if (isActive) {
     const badge = document.createElement('span');
     badge.className = 'decks-cell__active-badge';
-    badge.textContent = pickLocalized('Active · ใช้อยู่', 'ใช้อยู่ · Active');
+    badge.textContent = pickLocalized('Active', 'ใช้อยู่');
     thumb.appendChild(badge);
   }
 
@@ -205,15 +186,11 @@ function buildDeckCell(deck, { progress, activeId, render }) {
   const meta = document.createElement('div');
   meta.className = 'decks-cell__meta';
 
+  // EN-only on EN / TH-only on TH — single name per locale.
   const nameEn = document.createElement('div');
   nameEn.className = 'decks-cell__name';
-  nameEn.textContent = deck.name || '';
+  nameEn.textContent = pickLocalized(deck.name || '', deck.name_th || deck.name || '');
   meta.appendChild(nameEn);
-
-  const nameTh = document.createElement('div');
-  nameTh.className = 'decks-cell__name-th thai';
-  nameTh.textContent = deck.name_th || '';
-  meta.appendChild(nameTh);
 
   const note = document.createElement('div');
   note.className = 'decks-cell__note';

@@ -27,20 +27,16 @@ const STYLE_ID = 'mt-signin-gate-style';
 const COPY = {
   en: {
     title: 'Sign in to save your reading',
-    titleTh: 'เข้าสู่ระบบเพื่อบันทึกการอ่านไพ่',
     body: 'Your streak, decks, and readings are waiting.',
-    bodyTh: 'สตรีคและไพ่ของคุณรอคุณอยู่',
     primary: 'Continue with Google',
-    secondary: 'Maybe later · ไว้ทีหลัง',
+    secondary: 'Maybe later',
     dismissLabel: 'Dismiss',
   },
   th: {
     title: 'เข้าสู่ระบบเพื่อบันทึกการอ่านไพ่',
-    titleEn: 'Sign in to save your reading',
     body: 'สตรีคและไพ่ของคุณรอคุณอยู่',
-    bodyEn: 'Your streak, decks, and readings are waiting.',
     primary: 'เข้าสู่ระบบด้วย Google',
-    secondary: 'ไว้ทีหลัง · Maybe later',
+    secondary: 'ไว้ทีหลัง',
     dismissLabel: 'ปิด',
   },
 };
@@ -176,10 +172,8 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
     <div class="mt-signin-card" role="document">
       <button type="button" class="mt-signin-dismiss" aria-label="${copy.dismissLabel}">×</button>
       <div class="mt-signin-icon" aria-hidden="true">🐾</div>
-      <h2 id="mt-signin-title" class="mt-signin-title">${lang === 'th' ? copy.title : copy.title}</h2>
-      <div class="mt-signin-title-alt">${lang === 'th' ? copy.titleEn : copy.titleTh}</div>
-      <p class="mt-signin-body">${lang === 'th' ? copy.body : copy.body}</p>
-      <p class="mt-signin-body-alt">${lang === 'th' ? copy.bodyEn : copy.bodyTh}</p>
+      <h2 id="mt-signin-title" class="mt-signin-title">${copy.title}</h2>
+      <p class="mt-signin-body">${copy.body}</p>
       <button type="button" class="mt-signin-cta-primary">
         <span class="mt-signin-cta-primary__g" aria-hidden="true">G</span>
         <span>${copy.primary}</span>

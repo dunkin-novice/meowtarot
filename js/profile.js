@@ -140,8 +140,14 @@ function renderStreak(dict) {
 
   const eyebrowTh = document.createElement('div');
   eyebrowTh.className = 'profile-top-row__eyebrow-th';
-  eyebrowTh.textContent = state.currentLang === 'th' ? 'Your practice' : '· บันทึกการเดินทาง';
-  eyebrowGroup.appendChild(eyebrowTh);
+  // EN site is EN-only / TH site is TH-only — no bilingual alt label.
+  if (state.currentLang === 'th') {
+    // intentionally no alt — TH stays single-language too
+    eyebrowTh.textContent = '';
+  } else {
+    eyebrowTh.textContent = '';
+  }
+  // Skip appending the empty alt eyebrow at all.
 
   topRow.appendChild(eyebrowGroup);
 
@@ -644,18 +650,11 @@ async function renderAll(dict = translations[state.currentLang] || translations.
     const seeAll = document.createElement('a');
     seeAll.className = 'profile-deck-see-all';
     seeAll.href = localizePath('/decks.html', state.currentLang);
+    // EN-only on EN site / TH-only on TH site — drop the bilingual alt.
     const seeAllEn = document.createElement('span');
     seeAllEn.className = 'profile-deck-see-all__en';
     seeAllEn.textContent = state.currentLang === 'th' ? 'ดูสำรับทั้งหมด' : 'View all decks';
     seeAll.appendChild(seeAllEn);
-    const seeAllSep = document.createElement('span');
-    seeAllSep.className = 'profile-deck-see-all__sep';
-    seeAllSep.textContent = ' · ';
-    seeAll.appendChild(seeAllSep);
-    const seeAllAlt = document.createElement('span');
-    seeAllAlt.className = state.currentLang === 'th' ? 'profile-deck-see-all__alt' : 'profile-deck-see-all__alt thai';
-    seeAllAlt.textContent = state.currentLang === 'th' ? 'View all decks' : 'ดูสำรับทั้งหมด';
-    seeAll.appendChild(seeAllAlt);
     deckInvEl.appendChild(seeAll);
   }
   renderLifetimeStats(dict);

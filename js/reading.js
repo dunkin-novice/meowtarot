@@ -3107,10 +3107,7 @@ function renderFull(cards, dict) {
     titleEn.className = 'celtic-hero__title';
     titleEn.textContent = state.currentLang === 'th' ? 'ดวงเต็มสำรับของคุณ' : 'Your full reading';
     heroTitle.appendChild(titleEn);
-    const titleTh = document.createElement('div');
-    titleTh.className = 'celtic-hero__title-th';
-    titleTh.textContent = state.currentLang === 'th' ? 'Your full reading' : 'ดวงเต็มสำรับของคุณ';
-    heroTitle.appendChild(titleTh);
+    // EN-only on EN / TH-only on TH — drop the bilingual alt line.
     readingContent.appendChild(heroTitle);
   }
 
@@ -3198,12 +3195,7 @@ function renderFull(cards, dict) {
     titlePrimary.className = 'celtic-summary__title';
     titlePrimary.textContent = state.currentLang === 'th' ? 'สิบใบ · สิบประตู' : 'Ten cards · ten doors';
     header.appendChild(titlePrimary);
-    const titleAlt = document.createElement('div');
-    titleAlt.className = state.currentLang === 'th'
-      ? 'celtic-summary__title-alt'
-      : 'celtic-summary__title-alt thai';
-    titleAlt.textContent = state.currentLang === 'th' ? 'Ten cards · ten doors' : 'สิบใบ · สิบประตู';
-    header.appendChild(titleAlt);
+    // EN-only on EN / TH-only on TH — drop the bilingual alt title.
     summaryPanel.appendChild(header);
 
     const grid = document.createElement('div');

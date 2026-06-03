@@ -31,10 +31,8 @@ const COPY = {
   en: {
     eyebrow: 'Halfway · Day {day}',
     title: 'Halfway there',
-    titleAlt: 'ใกล้แล้ว',
     body: '{remaining} more days to unlock {deck}',
-    bodyAlt: 'อีก {remaining} วัน — {deckTh}รอคุณอยู่',
-    cta: 'Keep going · สู้ต่อ',
+    cta: 'Keep going',
     autoNote: 'auto-dismiss in 3s',
     barLabelCurrent: 'Day {current}',
     barLabelMid: 'Day {mid} · today',
@@ -43,10 +41,8 @@ const COPY = {
   th: {
     eyebrow: 'ครึ่งทาง · วันที่ {day}',
     title: 'ใกล้แล้ว',
-    titleAlt: 'Halfway there',
     body: 'อีก {remaining} วัน — {deckTh}รอคุณอยู่',
-    bodyAlt: '{remaining} more days to unlock {deck}',
-    cta: 'สู้ต่อ · Keep going',
+    cta: 'สู้ต่อ',
     autoNote: 'ปิดอัตโนมัติใน 3 วินาที',
     barLabelCurrent: 'วันที่ {current}',
     barLabelMid: 'วันที่ {mid} · วันนี้',
@@ -323,9 +319,7 @@ export function maybeShowStreakMilestonePopup({ decks, progress, lang = 'en' } =
         </div>
         <div class="mt-streak-text">
           <h2 class="mt-streak-title">${copy.title}</h2>
-          <div class="mt-streak-title-alt">${copy.titleAlt}</div>
-          <p class="mt-streak-body">${fmt(copy.body, { remaining, deck: `<b>${deckName}</b>`, deckTh: deckNameTh })}</p>
-          <p class="mt-streak-body-alt">${fmt(copy.bodyAlt, { remaining, deck: deckName, deckTh: deckNameTh })}</p>
+          <p class="mt-streak-body">${fmt(copy.body, { remaining, deck: `<b>${lang === 'th' ? deckNameTh : deckName}</b>`, deckTh: deckNameTh })}</p>
         </div>
       </div>
 
