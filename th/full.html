@@ -49,56 +49,50 @@
   <!-- End Google Tag Manager (noscript) -->
   <header id="site-header"></header>
 
-  <main class="page-shell board-page">
-    <section class="board-shell full-board-shell">
-      <div class="board-header">
-        <p class="eyebrow" data-i18n="celticCrossEyebrow"></p>
-        <h1 data-i18n="celticCrossTitle"></h1>
+  <main class="page-shell board-page full-shell">
+
+    <section class="full-state full-state--board" aria-labelledby="full-board-title">
+      <div class="full-topbar full-topbar--board">
+        <div class="full-topbar__deck">
+          <div class="full-topbar__deck-eyebrow">จากสำรับ</div>
+          <div class="full-topbar__deck-name">Velvet Familiar</div>
+        </div>
+        <div class="full-topbar__streak-chip" aria-label="ต่อเนื่อง 14 วัน">
+          <span class="full-topbar__streak-num">14</span>
+          <span class="full-topbar__streak-label">วันที่ 14</span>
+        </div>
       </div>
 
-      <section id="overall-flow" class="full-flow">
-        <div class="board-toolbar" id="overall-toolbar" hidden>
-          <button id="overall-shuffle" type="button" class="secondary" data-i18n="shuffleCards"></button>
-          <span class="selection-counter" id="overall-counter">0/10</span>
-        </div>
+      <div class="full-board-title">
+        <h1 class="full-board-title__en" id="full-board-title">เลือกสิบใบ</h1>
+        <h2 class="full-board-title__th thai-serif">Choose ten cards</h2>
+        <p class="full-board-title__hint">เลือกตามลำดับที่รู้สึก ใบแรกจะกลายเป็น <em>สถานการณ์</em></p>
+      </div>
 
-        <div class="full-stage-copy" id="overall-stage-copy">
-          <p class="eyebrow" id="overall-stage-eyebrow" data-i18n="fullReadingStageDealEyebrow"></p>
-          <h2 id="overall-stage-title" data-i18n="fullReadingStageDealTitle"></h2>
-          <p id="overall-stage-description" data-i18n="fullReadingStageDealBody"></p>
-        </div>
+      <div class="full-shuffle-row">
+        <button class="full-shuffle-btn" type="button" id="full-shuffle" aria-label="สับไพ่">
+          <span class="full-shuffle-btn__ico" aria-hidden="true">↻</span>
+          <span class="thai">สับไพ่</span>
+          <span class="full-shuffle-btn__sep" aria-hidden="true">·</span>
+          <span>Shuffle</span>
+        </button>
+      </div>
 
-        <section id="overall-selection-shell" class="full-selection-shell" aria-live="polite">
-          <div id="overall-deal-stage" class="full-stage-panel full-stage-panel--deal">
-            <div class="full-deal-orbit" id="overall-deal-orbit" aria-hidden="true"></div>
-            <div class="full-deck-area">
-              <button id="overall-draw-deck" type="button" class="full-draw-deck" aria-describedby="overall-stage-description">
-                <span class="full-draw-deck__stack" aria-hidden="true"></span>
-                <span class="full-draw-deck__label" data-i18n="fullReadingDeckReady"></span>
-              </button>
-              <p class="full-deck-area__hint" data-i18n="fullReadingDeckHint"></p>
-            </div>
-          </div>
+      <div class="card-board card-board--full" id="full-board" aria-live="polite"></div>
 
-          <div id="overall-draw-summary" class="full-draw-summary" hidden></div>
+      <div class="full-board-counter" aria-live="polite">
+        <span id="full-counter">0/10</span>
+      </div>
 
-          <section id="overall-arrange-stage" class="full-stage-panel full-stage-panel--arrange" hidden>
-            <div class="full-arrange-copy">
-              <p class="full-arrange-note" data-i18n="fullReadingArrangeHint"></p>
-            </div>
-            <div id="overall-arrange-list" class="full-arrange-list" role="list"></div>
-          </section>
-        </section>
-
-        <div class="board-actions board-actions--center" id="overall-actions" hidden>
-          <button id="overall-continue" type="button" class="primary" data-i18n="continue" disabled></button>
-        </div>
-      </section>
+      <div class="full-state__cta-row">
+        <button class="primary continue-btn action-btn full-continue-button" type="button" id="full-continue" disabled>ต่อไป · Continue</button>
+      </div>
     </section>
+
   </main>
 
   <footer id="site-footer"></footer>
 
-  <script type="module" src="../js/main.js?v=20260520"></script>
+  <script type="module" src="../js/main.js?v=20260603"></script>
 </body>
 </html>

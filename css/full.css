@@ -1,173 +1,403 @@
 /*
- * MeowTarot — Phase 4: Full Reading (Celtic Cross) Page Theme
+ * MeowTarot — Phase 5 B1: Full Reading (Celtic Cross) selection board
  * css/full.css
  * ─────────────────────────────────────────────────────────────────────────
  *
- * RISK LEVEL: Low
- * SCOPE: body[data-page='full'] only — the celtic-cross 10-card SELECTION
- *        and ARRANGE step (rendered by js/main.js). Result of full reading
- *        renders on data-page='reading' and is styled by css/reading.css.
+ * Rebuild of the Phase 4 "deal-board + arrange-list" 2-stage UX into a
+ * single 12-card grid that aligns with the Daily + Ask boards. User
+ * picks 10 cards in order; the result page auto-assigns positions
+ * (1st → The Situation, 2nd → Crossing, … 10th → Outcome) via
+ * js/full-reading-position-order.js.
  *
- * REQUIRES: css/theme-tokens.css (provides --mt-* namespace).
- * LOAD ORDER: must load AFTER css/phase-3-redesign.css.
+ * Mirrors the css/daily.css layout pattern (topbar, title hero,
+ * shuffle button, 4-col grid, counter, CTA) scoped to data-page='full'.
  *
- * STRICT CONSTRAINT (per Phase 4 spec):
- *   ONLY color, background, border-color, box-shadow, text-color rules.
- *   NEVER touch layout / position / z-index / width / height / padding /
- *   margin / display / grid-* / flex-* / transform / border-width /
- *   font-size / line-height.
+ * REQUIRES: css/theme-tokens.css (--mt-* namespace).
+ * LOAD ORDER: LAST. After css/phase-3-redesign.css.
  *
- *   Reason: the celtic-cross selection + arrange UI has complex
- *   positioning (orbital deal, sortable arrange list, 10-slot preview)
- *   that lives in css/styles.css. Layout edits here would risk breaking
- *   the interaction.
- *
- * WHAT THIS FILE DOES:
- *   §1 — Page background
- *   §2 — Board header + counter typography
- *   §3 — Full draw board + slot color states
- *   §4 — Celtic preview + slot color states (is-filled / is-latest / is-next)
- *   §5 — Arrange list item color states (is-dragging)
- *   §6 — Stage copy text colors
- *
- * SELECTORS TARGETED (all confirmed in full.html + js/main.js):
- *   .board-shell, .full-board-shell, .board-header, .eyebrow,
- *   .selection-counter, .full-stage-copy, .full-stage-panel,
- *   .full-draw-board, .full-draw-board__slot, .is-picked-confirm,
- *   .is-awaiting-card, .full-celtic-preview, .full-celtic-preview__slot,
- *   .is-filled, .is-latest, .is-next, .full-celtic-preview__order,
- *   .full-arrange-list, .full-arrange-item, .is-dragging,
- *   .full-arrange-item__order, .full-arrange-item__meta,
- *   .full-arrange-item__position, .full-draw-summary, .full-draw-deck,
- *   .full-deck-area
+ * SECTIONS:
+ *   §1  Page background + shell layout (mirror daily-shell-active)
+ *   §2  Top bar (deck name + streak chip)
+ *   §3  Board title hero (h1 + th + hint)
+ *   §4  Shuffle button row
+ *   §5  Card-board grid override (4-col, 12 slots)
+ *   §6  Card slot states (unselected / selected / dim / disabled)
+ *   §7  Counter
+ *   §8  Continue CTA row
  * ─────────────────────────────────────────────────────────────────────────
  */
 
 
-/* §1 — Page background */
+/* §1 — Page background + shell layout */
 body[data-page='full'] {
-  background:
-    radial-gradient(ellipse at 18%  6%, var(--mt-rose-soft) 0%, transparent 42%),
-    radial-gradient(ellipse at 84% 10%, var(--mt-gold-soft) 0%, transparent 38%),
-    var(--mt-bg-gradient);
+  background: var(--mt-bg-gradient-daily);
+  color: var(--mt-plum);
+  font-family: var(--mt-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body[data-page='full'] .full-shell {
+  max-width: 420px;
+  margin: 0 auto;
+  padding:
+    calc(var(--nav-height, 12px) + 12px) 24px
+    calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 24px);
+  min-height: calc(100dvh - 60px);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+
+/* Mobile Safari overflow fix (mirrors daily-shell-active pattern at
+ * commit 1d3a81a). styles.css pins data-page='full' to 100dvh +
+ * overflow:hidden under @media ≤640px and ≤480px, which would clip
+ * the lower rows of the 12-card grid. body.full-shell-active is
+ * added by main.js renderFullBoard so the cascade has a class hook
+ * every browser honors. */
+@media (max-width: 640px) {
+  body.full-shell-active {
+    height: auto;
+    overflow: visible;
+  }
+  body.full-shell-active .page-shell.board-page {
+    height: auto;
+  }
+  body.full-shell-active .full-shell {
+    min-height: 0;
+  }
+}
+
+body[data-page='full'] .thai      { font-family: var(--mt-font-thai); }
+body[data-page='full'] .thai-serif { font-family: var(--mt-font-display-th); }
+
+
+/* §2 — Top bar (deck name + streak chip) */
+body[data-page='full'] .full-topbar--board {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-top: 6px;
+  gap: 12px;
+}
+
+body[data-page='full'] .full-topbar__deck {
+  grid-column: 2;
+  text-align: center;
+}
+
+body[data-page='full'] .full-topbar__deck-eyebrow {
+  font-size: 9.5px;
+  letter-spacing: 0.28em;
+  color: var(--mt-gold-deep);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+body[data-page='full'] .full-topbar__deck-name {
+  font-family: var(--mt-font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  font-style: italic;
+  margin-top: 1px;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='full'] .full-topbar__streak-chip {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px 5px 5px;
+  border-radius: var(--mt-radius-pill);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--mt-soft-shadow);
+}
+
+body[data-page='full'] .full-topbar__streak-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--mt-rose) 0%, var(--mt-gold-deep) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mt-cream);
+  font-family: var(--mt-font-display);
+  font-weight: 700;
+  font-size: 12px;
+  font-style: italic;
+}
+
+body[data-page='full'] .full-topbar__streak-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mt-plum);
+  letter-spacing: 0.04em;
+}
+
+
+/* §3 — Board title hero */
+body[data-page='full'] .full-board-title {
+  text-align: center;
+  margin-top: 16px;
+}
+
+body[data-page='full'] .full-board-title__en {
+  font-family: var(--mt-font-display);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  font-style: italic;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+body[data-page='full'] .full-board-title__th {
+  font-family: var(--mt-font-display-th);
+  font-size: 16px;
+  color: var(--mt-plum-mid);
+  margin: 3px 0 0;
+  font-weight: 600;
+}
+
+body[data-page='full'] .full-board-title__hint {
+  font-size: 12.5px;
+  color: var(--mt-ink-soft);
+  margin: 8px 0 0;
+  padding: 0 16px;
+  line-height: 1.5;
+}
+
+body[data-page='full'] .full-board-title__hint em {
+  font-family: var(--mt-font-display);
+  font-style: italic;
+  font-weight: 600;
   color: var(--mt-plum);
 }
 
 
-/* §2 — Board header + counter typography */
-body[data-page='full'] .board-header {
+/* §4 — Shuffle button row (mirrors the Phase 5 daily shuffle pattern) */
+body[data-page='full'] .full-shuffle-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+body[data-page='full'] .full-shuffle-btn {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 17px 9px 14px;
+  border-radius: var(--mt-radius-pill);
   color: var(--mt-plum);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(212, 154, 44, 0.45);
+  box-shadow:
+    0 6px 16px -8px rgba(61, 26, 92, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.70);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.2s ease;
 }
 
-body[data-page='full'] .eyebrow {
-  color: var(--mt-gold);
+body[data-page='full'] .full-shuffle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 22px -10px rgba(61, 26, 92, 0.50),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80);
 }
 
-body[data-page='full'] .selection-counter {
-  color: var(--mt-plum-muted);
+body[data-page='full'] .full-shuffle-btn:active { transform: scale(0.97); }
+body[data-page='full'] .full-shuffle-btn:disabled { cursor: default; opacity: 0.62; }
+
+body[data-page='full'] .full-shuffle-btn__ico {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: 0 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--mt-gold-deep), var(--mt-rose));
+  color: var(--mt-cream);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-
-/* §3 — Full draw board + slot color states */
-body[data-page='full'] .full-draw-board {
-  background: var(--mt-surface-card);
-  border-color: var(--mt-nav-border);
-  box-shadow: var(--mt-shadow-panel);
+body[data-page='full'] .full-shuffle-btn.is-spinning .full-shuffle-btn__ico {
+  animation: full-shuffle-spin 0.62s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-body[data-page='full'] .full-draw-board__slot {
-  border-color: var(--mt-nav-border);
-  box-shadow: var(--mt-shadow-card);
+@keyframes full-shuffle-spin { to { transform: rotate(360deg); } }
+
+body[data-page='full'] .full-shuffle-btn__sep {
+  opacity: 0.35;
+  font-weight: 400;
+  margin: 0 -2px;
 }
 
-body[data-page='full'] .full-draw-board__slot.is-picked-confirm {
-  border-color: var(--mt-gold);
-  box-shadow: var(--mt-shadow-glow-gold), var(--mt-shadow-card);
+body[data-page='full'] .full-shuffle-btn .thai {
+  font-family: var(--mt-font-thai);
+  font-weight: 600;
 }
 
-body[data-page='full'] .full-draw-board__slot.is-awaiting-card {
-  border-color: var(--mt-rose);
-  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-card);
-}
-
-
-/* §4 — Celtic preview + slot color states */
-body[data-page='full'] .full-celtic-preview {
-  background: var(--mt-surface-card);
-  border-color: var(--mt-nav-border);
-  box-shadow: var(--mt-shadow-panel);
-}
-
-body[data-page='full'] .full-celtic-preview__slot {
-  border-color: var(--mt-nav-border);
-  background: var(--mt-surface-card);
-  color: var(--mt-plum-muted);
-}
-
-body[data-page='full'] .full-celtic-preview__slot.is-filled {
-  border-color: var(--mt-gold);
-  background: var(--mt-surface-card);
-  color: var(--mt-plum);
-  box-shadow: var(--mt-shadow-glow-gold);
-}
-
-body[data-page='full'] .full-celtic-preview__slot.is-latest {
-  border-color: var(--mt-rose);
-  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-glow-gold);
-}
-
-body[data-page='full'] .full-celtic-preview__slot.is-next {
-  border-color: var(--mt-plum-soft);
-  color: var(--mt-plum);
-  box-shadow: var(--mt-shadow-glow);
-}
-
-body[data-page='full'] .full-celtic-preview__order {
-  color: var(--mt-gold);
+@media (prefers-reduced-motion: reduce) {
+  body[data-page='full'] .full-shuffle-btn.is-spinning .full-shuffle-btn__ico {
+    animation: none;
+  }
 }
 
 
-/* §5 — Arrange list item color states */
-body[data-page='full'] .full-arrange-list {
-  background: var(--mt-surface-card);
-  border-color: var(--mt-nav-border);
-  box-shadow: var(--mt-shadow-panel);
-}
-
-body[data-page='full'] .full-arrange-item {
-  background: var(--mt-surface-card);
-  border-color: var(--mt-nav-border);
-  color: var(--mt-plum);
-  box-shadow: var(--mt-shadow-card);
-}
-
-body[data-page='full'] .full-arrange-item.is-dragging {
-  border-color: var(--mt-gold);
-  background: var(--mt-surface-card);
-  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-glow-gold), var(--mt-shadow-card);
-}
-
-body[data-page='full'] .full-arrange-item__order {
-  color: var(--mt-gold);
-}
-
-body[data-page='full'] .full-arrange-item__meta {
-  color: var(--mt-plum);
-}
-
-body[data-page='full'] .full-arrange-item__position {
-  color: var(--mt-plum-muted);
+/* §5 — Card-board grid (12 slots, 4-col layout) */
+body[data-page='full'] .full-state--board #full-board.card-board--full {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: none;
+  gap: 14px 6px;
+  place-items: center;
+  width: auto;
+  max-width: 320px;
+  max-height: none;
+  margin: 14px auto 0;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 
 
-/* §6 — Stage copy + draw summary text colors */
-body[data-page='full'] .full-stage-copy {
-  color: var(--mt-plum);
+/* §6 — Card slot states */
+body[data-page='full'] .full-state--board #full-board .card-slot {
+  position: relative;
+  width: 100%;
+  max-width: 64px;
+  height: auto;
+  max-height: none;
+  aspect-ratio: 1568 / 2720;
+  border-radius: 6px;
+  border: 0.5px solid var(--mt-gold-pale);
+  overflow: hidden;
+  background: var(--mt-card-back-deep);
+  box-shadow: 0 6px 12px -6px rgba(61, 26, 92, 0.50);
+  opacity: 1;
+  transform: none;
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+  cursor: pointer;
+  padding: 0;
 }
 
-body[data-page='full'] .full-draw-summary {
-  background: var(--mt-surface-card);
-  border-color: var(--mt-gold-soft);
-  color: var(--mt-plum);
-  box-shadow: var(--mt-shadow-panel);
+body[data-page='full'] .full-state--board #full-board .card-slot .card-back {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+body[data-page='full'] .full-state--board #full-board.has-selection .card-slot:not(.is-selected) {
+  opacity: 0.55;
+  transform: none;
+}
+
+body[data-page='full'] .full-state--board #full-board .card-slot.is-selected {
+  transform: translateY(-4px);
+  opacity: 1;
+  border-color: var(--mt-gold-deep);
+  box-shadow:
+    0 8px 18px -6px rgba(201, 147, 58, 0.55),
+    0 0 0 1px rgba(201, 147, 58, 0.45) inset;
+}
+
+body[data-page='full'] .full-state--board #full-board .card-slot:disabled {
+  cursor: default;
+}
+
+/* Selection badge (number 1-10). setupBoard injects a <span
+ * class="selection-badge"> with textContent = pick order. */
+body[data-page='full'] .full-state--board #full-board .card-slot .selection-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mt-gold-deep), var(--mt-rose));
+  color: var(--mt-cream);
+  font-family: var(--mt-font-body);
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-shadow: 0 3px 8px -2px rgba(61, 26, 92, 0.5);
+  animation: full-badge-pop 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes full-badge-pop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+
+
+/* §7 — Counter */
+body[data-page='full'] .full-board-counter {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mt-plum-mid);
+  letter-spacing: 0.06em;
+}
+
+
+/* §8 — Continue CTA row */
+body[data-page='full'] .full-state__cta-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  padding-bottom: 14px;
+}
+
+body[data-page='full'] .full-continue-button {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 16px 26px;
+  border-radius: var(--mt-radius-pill);
+  border: none;
+  background: var(--mt-cta-grad);
+  color: var(--mt-cream);
+  box-shadow: var(--mt-cta-shadow);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  min-width: 220px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.2s ease;
+}
+
+body[data-page='full'] .full-continue-button:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+body[data-page='full'] .full-continue-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

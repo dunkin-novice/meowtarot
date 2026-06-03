@@ -546,560 +546,80 @@ if (typeof window !== 'undefined' && !window._meowContinueListenerBound) {
   });
 }
 
-async function renderOverall() {
-  const toolbar = document.getElementById('overall-toolbar');
-  const shuffleBtn = document.getElementById('overall-shuffle');
-  const counter = document.getElementById('overall-counter');
-  const continueBtn = document.getElementById('overall-continue');
-  const actions = document.getElementById('overall-actions');
-  const stageEyebrow = document.getElementById('overall-stage-eyebrow');
-  const stageTitle = document.getElementById('overall-stage-title');
-  const stageDescription = document.getElementById('overall-stage-description');
-  const dealOrbit = document.getElementById('overall-deal-orbit');
-  const drawDeck = document.getElementById('overall-draw-deck');
-  const drawSummary = document.getElementById('overall-draw-summary');
-  const selectionShell = document.getElementById('overall-selection-shell');
-  const dealStage = document.getElementById('overall-deal-stage');
-  const arrangeStage = document.getElementById('overall-arrange-stage');
-  const arrangeList = document.getElementById('overall-arrange-list');
-  if (
-    !toolbar
-    || !shuffleBtn
-    || !counter
-    || !continueBtn
-    || !actions
-    || !stageEyebrow
-    || !stageTitle
-    || !stageDescription
-    || !dealOrbit
-    || !drawDeck
-    || !drawSummary
-    || !selectionShell
-    || !dealStage
-    || !arrangeStage
-    || !arrangeList
-  ) return null;
+const FULL_BOARD_COUNT = 12;
+const FULL_SELECTION_MAX = 10;
 
-  const { applyTapSwap, buildNextDrawBoard } = await getFullReadingFlowModule();
+function renderFullBoard() {
+  // Phase 5 B1 rebuild: 12-card grid, pick 10 in order, no arrange step.
+  // Positions get auto-assigned by pick order on the result page via
+  // js/full-reading-position-order.js getFullReadingPositionMeta —
+  // first picked card → present (The Situation), second → challenge
+  // (What Crosses), … tenth → outcome. Drops the legacy ~540-line
+  // renderOverall (deal-board with swap + arrange-list with tap-swap).
+  const board = document.getElementById('full-board');
+  const counter = document.getElementById('full-counter');
+  const continueBtn = document.getElementById('full-continue');
+  if (!board || !counter) return null;
 
-  const dict = translations[state.currentLang] || translations.en;
-  const DRAW_BOARD_SIZE = 10;
-  let stage = 'deal';
-  let pool = [];
-  let drawBoardCards = [];
+  // Phase 5 mobile review pattern: same body class signal daily uses to
+  // hand mobile Safari a viewport-sized scrollable shell instead of
+  // letting cards 7-12 clip below the fold.
+  if (document.querySelector('.full-shell')) {
+    document.body.classList.add('full-shell-active');
+  }
+
   let selectedCards = [];
-  let selectedSwapIndex = -1;
-  let dealTimer = null;
-  let pickAnimationTimer = null;
-  let activePickAnimationCleanup = null;
-  let pickAnimationRunId = 0;
-  let boardShuffleTimer = null;
-  let activeBoardShuffleCleanup = null;
-  let boardShuffleRunId = 0;
-  let isBoardShuffleAnimating = false;
-  let isDisposed = false;
-  let isPickAnimating = false;
-  const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-  const clearDealTimer = () => {
-    if (!dealTimer) return;
-    window.clearTimeout(dealTimer);
-    dealTimer = null;
+  const updateFullSelectionUi = (cards) => {
+    selectedCards = cards;
+    counter.textContent = `${cards.length}/${FULL_SELECTION_MAX}`;
+    if (continueBtn) {
+      continueBtn.disabled = cards.length !== FULL_SELECTION_MAX;
+    }
   };
 
-  const clearPickAnimation = ({ unlock = true } = {}) => {
-    if (pickAnimationTimer) {
-      window.clearTimeout(pickAnimationTimer);
-      pickAnimationTimer = null;
-    }
-    if (typeof activePickAnimationCleanup === 'function') {
-      activePickAnimationCleanup();
-      activePickAnimationCleanup = null;
-    }
-    pickAnimationRunId += 1;
-    if (unlock) isPickAnimating = false;
+  const fullBoard = setupBoard(
+    board,
+    FULL_BOARD_COUNT,
+    FULL_SELECTION_MAX,
+    updateFullSelectionUi,
+    { animated: true, animationProfile: 'daily' }
+  );
+
+  counter.textContent = `0/${FULL_SELECTION_MAX}`;
+  if (continueBtn) continueBtn.disabled = true;
+  fullBoard.render();
+  updateFullSelectionUi([]);
+
+  const commitFullSelection = () => {
+    const pickedCards = selectedCards.length ? selectedCards : fullBoard.getSelectedCards();
+    if (pickedCards.length !== FULL_SELECTION_MAX) return;
+    const selectedIds = pickedCards
+      .map((card) => card?.id || card?.card_id)
+      .filter(Boolean);
+    if (selectedIds.length !== FULL_SELECTION_MAX) return;
+    saveSelectionAndGo({ mode: 'full', spread: 'celtic', topic: 'generic', cards: selectedIds });
   };
 
-  const clearBoardShuffleAnimation = ({ unlock = true } = {}) => {
-    if (boardShuffleTimer) {
-      window.clearTimeout(boardShuffleTimer);
-      boardShuffleTimer = null;
-    }
-    if (typeof activeBoardShuffleCleanup === 'function') {
-      activeBoardShuffleCleanup();
-      activeBoardShuffleCleanup = null;
-    }
-    boardShuffleRunId += 1;
-    if (unlock) isBoardShuffleAnimating = false;
-  };
+  if (continueBtn) {
+    continueBtn.onclick = commitFullSelection;
+  }
 
-  const isPoolReady = () => pool.length >= CELTIC_CROSS_COUNT;
-
-  const buildDrawBoardCards = () => buildNextDrawBoard(pool, selectedCards, DRAW_BOARD_SIZE);
-
-  const setStageCopy = (mode) => {
-    if (mode === 'arrange') {
-      stageEyebrow.textContent = dict.fullReadingStageArrangeEyebrow;
-      stageTitle.textContent = dict.fullReadingStageArrangeTitle;
-      stageDescription.textContent = dict.fullReadingStageArrangeBody;
-      return;
-    }
-
-    if (mode === 'draw') {
-      stageEyebrow.textContent = '';
-      stageTitle.textContent = dict.fullReadingStageDrawTitle;
-      stageDescription.textContent = '';
-      return;
-    }
-
-    stageEyebrow.textContent = dict.fullReadingStageDealEyebrow;
-    stageTitle.textContent = dict.fullReadingStageDealTitle;
-    stageDescription.textContent = dict.fullReadingStageDealBody;
-  };
-
-  const updateCounter = () => {
-    counter.textContent = `${selectedCards.length} / ${CELTIC_CROSS_COUNT}`;
-  };
-
-  const updateContinue = () => {
-    continueBtn.disabled = stage !== 'arrange' || selectedCards.length !== CELTIC_CROSS_COUNT;
-  };
-
-  const renderDealOrbit = () => {
-    dealOrbit.innerHTML = '';
-    if (stage !== 'draw') return;
-    const board = document.createElement('div');
-    board.className = 'full-draw-board';
-    drawBoardCards.forEach((_, idx) => {
-      const slot = document.createElement('button');
-      slot.type = 'button';
-      slot.className = 'full-draw-board__slot';
-      slot.dataset.drawBoardIndex = String(idx);
-      slot.setAttribute('aria-label', formatCopy(dict.fullReadingDrawCardLabel, { index: idx + 1 }));
-      slot.appendChild(createCardArt(null, 'full-draw-board__img', { useBack: true }));
-      slot.onclick = () => {
-        const picked = drawBoardCards[idx];
-        if (!picked || stage !== 'draw' || isPickAnimating || isBoardShuffleAnimating) return;
-
-        isPickAnimating = true;
-        board.classList.add('is-picking');
-
-        const commitPick = () => {
-          if (isDisposed || stage !== 'draw') {
-            isPickAnimating = false;
-            return;
-          }
-          selectedCards = [...selectedCards, picked];
-          drawBoardCards = buildDrawBoardCards();
-          isPickAnimating = false;
-
-          if (selectedCards.length >= CELTIC_CROSS_COUNT) {
-            goToArrangeStage();
-            return;
-          }
-          syncUi();
-        };
-
-        const targetIndex = selectedCards.length;
-        runPickAnimation({ board, slot, slotIndex: idx, targetIndex, onDone: commitPick });
-      };
-      board.appendChild(slot);
+  // Same shuffle pattern as the daily board: spin the icon, light haptic,
+  // redeal a fresh 12-card spread, reset selection. Guarded against
+  // double-taps via the is-locked class setupBoard adds during animation.
+  const shuffleBtn = document.getElementById('full-shuffle');
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener('click', () => {
+      if (board.classList.contains('is-locked')) return;
+      shuffleBtn.classList.add('is-spinning');
+      if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+      fullBoard.render();
+      updateFullSelectionUi([]);
+      window.setTimeout(() => shuffleBtn.classList.remove('is-spinning'), 1500);
     });
-    dealOrbit.appendChild(board);
-  };
+  }
 
-  const runPickAnimation = ({
-    board, slot, slotIndex, targetIndex, onDone,
-  }) => {
-    clearPickAnimation({ unlock: false });
-    const runId = pickAnimationRunId;
-    const targetSlot = drawSummary.querySelector(`[data-draw-target-index="${targetIndex}"]`);
-    const finalize = () => {
-      if (runId !== pickAnimationRunId) return;
-      pickAnimationTimer = null;
-      activePickAnimationCleanup = null;
-      board.classList.remove('is-picking');
-      board.classList.remove('is-clearing-spread');
-      board.classList.remove('is-redealing-spread');
-      slot.classList.remove('is-picked-confirm');
-      if (isDisposed || stage !== 'draw') {
-        isPickAnimating = false;
-        return;
-      }
-      onDone?.();
-    };
-
-    if (!board?.isConnected || !slot?.isConnected) {
-      pickAnimationTimer = window.setTimeout(finalize, 0);
-      return;
-    }
-    const slots = Array.from(board.querySelectorAll('.full-draw-board__slot'));
-
-    const reducedMotion = reducedMotionQuery.matches;
-    const clearDuration = reducedMotion ? FULL_PICK_REDUCED_CLEAR_DURATION : FULL_PICK_CLEAR_DURATION;
-    const redealDuration = reducedMotion ? FULL_PICK_REDUCED_REDEAL_DURATION : FULL_PICK_REDEAL_ONLY_DURATION;
-    const confirmDuration = reducedMotion ? FULL_PICK_REDUCED_CONFIRM_DURATION : FULL_PICK_CONFIRM_DURATION;
-
-    const slotCount = Math.max(slots.length, 1);
-    const perSlotDelay = slotCount > 1 ? redealDuration / (slotCount - 1) : 0;
-    const columns = 5;
-    const selectedCol = slotIndex % columns;
-    const selectedRow = Math.floor(slotIndex / columns);
-
-    slots.forEach((candidate, index) => {
-      const clearDelay = Math.abs(slotIndex - index) * (reducedMotion ? 6 : 10);
-      const col = index % columns;
-      const row = Math.floor(index / columns);
-      const driftX = (col - selectedCol) * (reducedMotion ? 4 : 10);
-      const driftY = (row - selectedRow) * (reducedMotion ? 2 : 8) + (reducedMotion ? 8 : 18);
-      candidate.style.setProperty('--clear-delay', `${Math.round(clearDelay)}ms`);
-      candidate.style.setProperty('--clear-shift-x', `${Math.round(driftX)}px`);
-      candidate.style.setProperty('--clear-shift-y', `${Math.round(driftY)}px`);
-      candidate.style.setProperty('--redeal-delay', `${Math.round(index * perSlotDelay)}ms`);
-      candidate.style.setProperty('--redeal-duration', `${Math.round(Math.max(130, redealDuration * 0.34))}ms`);
-      candidate.style.setProperty('--redeal-lift', `${Math.round(reducedMotion ? 6 : 16 + ((row % 2) * 3))}px`);
-    });
-
-    activePickAnimationCleanup = () => {
-      board.classList.remove('is-clearing-spread');
-      board.classList.remove('is-redealing-spread');
-      board.classList.remove('is-picking');
-      slot.classList.remove('is-picked-confirm');
-      if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
-      slots.forEach((candidate) => {
-        candidate.style.removeProperty('--clear-delay');
-        candidate.style.removeProperty('--clear-shift-x');
-        candidate.style.removeProperty('--clear-shift-y');
-        candidate.style.removeProperty('--redeal-delay');
-        candidate.style.removeProperty('--redeal-duration');
-        candidate.style.removeProperty('--redeal-lift');
-      });
-    };
-
-    slot.classList.add('is-picked-confirm');
-
-    pickAnimationTimer = window.setTimeout(() => {
-      if (runId !== pickAnimationRunId) return;
-      slot.classList.remove('is-picked-confirm');
-      board.classList.add('is-clearing-spread');
-      if (targetSlot) targetSlot.classList.add('is-awaiting-card');
-
-      pickAnimationTimer = window.setTimeout(() => {
-        if (runId !== pickAnimationRunId) return;
-        board.classList.remove('is-clearing-spread');
-        board.classList.add('is-redealing-spread');
-
-        pickAnimationTimer = window.setTimeout(() => {
-          if (runId !== pickAnimationRunId) return;
-          board.classList.remove('is-redealing-spread');
-          if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
-          finalize();
-        }, redealDuration);
-      }, clearDuration);
-    }, confirmDuration);
-  };
-
-  const runBoardShuffleAnimation = ({ board, onDone }) => {
-    clearBoardShuffleAnimation({ unlock: false });
-    const runId = boardShuffleRunId;
-    const slots = Array.from(board.querySelectorAll('.full-draw-board__slot'));
-    const reducedMotion = reducedMotionQuery.matches;
-    const clearDuration = reducedMotion ? FULL_PICK_REDUCED_CLEAR_DURATION : FULL_PICK_CLEAR_DURATION;
-    const redealDuration = reducedMotion ? FULL_PICK_REDUCED_REDEAL_DURATION : FULL_PICK_REDEAL_ONLY_DURATION;
-    const slotCount = Math.max(slots.length, 1);
-    const perSlotDelay = slotCount > 1 ? redealDuration / (slotCount - 1) : 0;
-    const columns = 5;
-    const centerIndex = Math.floor(slots.length / 2);
-    const centerCol = centerIndex % columns;
-    const centerRow = Math.floor(centerIndex / columns);
-
-    if (!slots.length) {
-      boardShuffleTimer = window.setTimeout(() => {
-        if (runId !== boardShuffleRunId) return;
-        boardShuffleTimer = null;
-        activeBoardShuffleCleanup = null;
-        onDone?.();
-      }, 0);
-      return;
-    }
-
-    slots.forEach((candidate, index) => {
-      const clearDelay = Math.abs(centerIndex - index) * (reducedMotion ? 5 : 9);
-      const col = index % columns;
-      const row = Math.floor(index / columns);
-      const driftX = (col - centerCol) * (reducedMotion ? 4 : 10);
-      const driftY = (row - centerRow) * (reducedMotion ? 2 : 7) + (reducedMotion ? 7 : 16);
-      candidate.style.setProperty('--clear-delay', `${Math.round(clearDelay)}ms`);
-      candidate.style.setProperty('--clear-shift-x', `${Math.round(driftX)}px`);
-      candidate.style.setProperty('--clear-shift-y', `${Math.round(driftY)}px`);
-      candidate.style.setProperty('--redeal-delay', `${Math.round(index * perSlotDelay)}ms`);
-      candidate.style.setProperty('--redeal-duration', `${Math.round(Math.max(120, redealDuration * 0.34))}ms`);
-      candidate.style.setProperty('--redeal-lift', `${Math.round(reducedMotion ? 6 : 16 + ((row % 2) * 3))}px`);
-    });
-
-    activeBoardShuffleCleanup = () => {
-      board.classList.remove('is-shuffling');
-      board.classList.remove('is-clearing-spread');
-      board.classList.remove('is-redealing-spread');
-      slots.forEach((candidate) => {
-        candidate.style.removeProperty('--clear-delay');
-        candidate.style.removeProperty('--clear-shift-x');
-        candidate.style.removeProperty('--clear-shift-y');
-        candidate.style.removeProperty('--redeal-delay');
-        candidate.style.removeProperty('--redeal-duration');
-        candidate.style.removeProperty('--redeal-lift');
-      });
-    };
-
-    board.classList.add('is-shuffling');
-    board.classList.add('is-clearing-spread');
-
-    boardShuffleTimer = window.setTimeout(() => {
-      if (runId !== boardShuffleRunId) return;
-      board.classList.remove('is-clearing-spread');
-      board.classList.add('is-redealing-spread');
-
-      boardShuffleTimer = window.setTimeout(() => {
-        if (runId !== boardShuffleRunId) return;
-        boardShuffleTimer = null;
-        activeBoardShuffleCleanup = null;
-        board.classList.remove('is-redealing-spread');
-        board.classList.remove('is-shuffling');
-        slots.forEach((candidate) => {
-          candidate.style.removeProperty('--clear-delay');
-          candidate.style.removeProperty('--clear-shift-x');
-          candidate.style.removeProperty('--clear-shift-y');
-          candidate.style.removeProperty('--redeal-delay');
-          candidate.style.removeProperty('--redeal-duration');
-          candidate.style.removeProperty('--redeal-lift');
-        });
-        onDone?.();
-      }, redealDuration);
-    }, clearDuration);
-  };
-
-  const renderDrawSummary = () => {
-    drawSummary.hidden = false;
-    drawSummary.innerHTML = '';
-
-    const preview = document.createElement('div');
-    preview.className = 'full-celtic-preview';
-    preview.setAttribute('aria-hidden', 'true');
-    CELTIC_CROSS_POSITIONS.forEach((position, idx) => {
-      const slot = document.createElement('div');
-      slot.className = `full-celtic-preview__slot full-celtic-preview__slot--${position.key}`;
-      slot.dataset.drawTargetIndex = String(idx);
-      if (idx < selectedCards.length) slot.classList.add('is-filled');
-      if (idx === selectedCards.length - 1) slot.classList.add('is-latest');
-      if (idx === selectedCards.length && selectedCards.length < CELTIC_CROSS_COUNT) slot.classList.add('is-next');
-      const order = document.createElement('span');
-      order.className = 'full-celtic-preview__order';
-      order.textContent = String(idx + 1);
-      slot.appendChild(order);
-      preview.appendChild(slot);
-    });
-    drawSummary.appendChild(preview);
-  };
-
-  const captureArrangeRects = () => {
-    const rects = new Map();
-    arrangeList.querySelectorAll('.full-arrange-item').forEach((item) => {
-      const cardId = item.dataset.cardId;
-      if (!cardId) return;
-      rects.set(cardId, item.getBoundingClientRect());
-    });
-    return rects;
-  };
-
-  const animateArrangeListSwap = (previousRects) => {
-    const items = arrangeList.querySelectorAll('.full-arrange-item');
-    items.forEach((item) => {
-      const cardId = item.dataset.cardId;
-      if (!cardId) return;
-      const previousRect = previousRects.get(cardId);
-      if (!previousRect) return;
-      const nextRect = item.getBoundingClientRect();
-      const deltaX = previousRect.left - nextRect.left;
-      const deltaY = previousRect.top - nextRect.top;
-      if (!deltaX && !deltaY) return;
-
-      if (typeof item.animate === 'function') {
-        item.animate(
-          [
-            { transform: `translate(${deltaX}px, ${deltaY}px)` },
-            { transform: 'translate(0, 0)' },
-          ],
-          {
-            duration: 320,
-            easing: 'cubic-bezier(0.22, 0.68, 0.2, 1)',
-          },
-        );
-        return;
-      }
-
-      item.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-      window.requestAnimationFrame(() => {
-        item.style.transition = 'transform 320ms cubic-bezier(0.22, 0.68, 0.2, 1)';
-        item.style.transform = 'translate(0, 0)';
-        window.setTimeout(() => {
-          item.style.transition = '';
-          item.style.transform = '';
-        }, 320);
-      });
-    });
-  };
-
-  const rerenderArrangeList = (activeIndex = -1, { previousRects = null, animateSwap = false } = {}) => {
-    arrangeList.innerHTML = '';
-
-    selectedCards.forEach((card, idx) => {
-      const item = document.createElement('article');
-      item.className = 'full-arrange-item';
-      item.dataset.index = String(idx);
-      item.dataset.cardId = String(card?.id || card?.card_id || '');
-      item.setAttribute('role', 'listitem');
-      if (idx === activeIndex) item.classList.add('is-dragging');
-
-      const order = document.createElement('div');
-      order.className = 'full-arrange-item__order';
-      order.innerHTML = `<span class="full-arrange-item__order-index">${idx + 1}</span>`;
-      item.appendChild(order);
-
-      item.appendChild(createCardArt(null, 'full-arrange-item__img', { useBack: true }));
-
-      const meta = document.createElement('div');
-      meta.className = 'full-arrange-item__meta';
-
-      const position = document.createElement('p');
-      position.className = 'full-arrange-item__position';
-      position.textContent = dict[CELTIC_CROSS_POSITIONS[idx]?.labelKey] || '';
-      meta.appendChild(position);
-      item.appendChild(meta);
-      item.tabIndex = 0;
-      item.setAttribute('aria-label', formatCopy(dict.fullReadingSwapCardLabel, { index: idx + 1 }));
-      item.onclick = () => {
-        const previousRects = captureArrangeRects();
-        const next = applyTapSwap(selectedCards, selectedSwapIndex, idx);
-        selectedCards = next.cards;
-        selectedSwapIndex = next.selectedIndex;
-        rerenderArrangeList(selectedSwapIndex, { previousRects, animateSwap: next.swapped });
-      };
-      item.onkeydown = (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          item.click();
-        }
-      };
-      arrangeList.appendChild(item);
-    });
-
-    updateContinue();
-    if (animateSwap && previousRects?.size) {
-      window.requestAnimationFrame(() => animateArrangeListSwap(previousRects));
-    }
-  };
-
-  const syncUi = () => {
-    setStageCopy(stage);
-    updateCounter();
-    updateContinue();
-    drawDeck.disabled = true;
-    dealStage.hidden = stage === 'arrange';
-    dealOrbit.hidden = stage !== 'draw';
-    arrangeStage.hidden = stage !== 'arrange';
-    renderDealOrbit();
-    renderDrawSummary();
-    if (stage === 'arrange') rerenderArrangeList(selectedSwapIndex);
-  };
-
-  const goToArrangeStage = () => {
-    clearPickAnimation();
-    stage = 'arrange';
-    requestAnimationFrame(() => {
-      syncUi();
-    });
-  };
-
-  const resetFullFlow = () => {
-    clearDealTimer();
-    clearPickAnimation();
-    clearBoardShuffleAnimation();
-    isPickAnimating = false;
-    isBoardShuffleAnimating = false;
-    stage = 'deal';
-    pool = getDrawableCards(FULL_POOL_SIZE);
-    drawBoardCards = [];
-    selectedCards = [];
-    selectedSwapIndex = -1;
-    syncUi();
-    if (!isPoolReady()) return;
-    dealTimer = window.setTimeout(() => {
-      if (isDisposed) return;
-      stage = 'draw';
-      drawBoardCards = buildDrawBoardCards();
-      syncUi();
-    }, FULL_DEAL_ANIMATION_DURATION);
-  };
-
-  const handleShuffle = () => {
-    if (stage === 'draw') {
-      if (isBoardShuffleAnimating) return;
-      clearPickAnimation();
-      isPickAnimating = false;
-      const activeBoard = dealOrbit.querySelector('.full-draw-board');
-      if (!activeBoard) {
-        drawBoardCards = buildDrawBoardCards();
-        syncUi();
-        return;
-      }
-      isBoardShuffleAnimating = true;
-      runBoardShuffleAnimation({
-        board: activeBoard,
-        onDone: () => {
-          if (isDisposed || stage !== 'draw') {
-            isBoardShuffleAnimating = false;
-            return;
-          }
-          drawBoardCards = buildDrawBoardCards();
-          isBoardShuffleAnimating = false;
-          syncUi();
-        },
-      });
-      return;
-    }
-
-    if (stage === 'deal') {
-      resetFullFlow();
-    }
-  };
-
-  toolbar.hidden = false;
-  actions.hidden = false;
-  continueBtn.disabled = true;
-  shuffleBtn.onclick = () => handleShuffle();
-  drawDeck.onclick = null;
-  continueBtn.onclick = () => {
-    if (selectedCards.length !== CELTIC_CROSS_COUNT) return;
-    saveSelectionAndGo({
-      mode: 'full',
-      spread: 'story',
-      topic: 'generic',
-      cards: selectedCards.map((card) => card.id),
-    });
-  };
-
-  resetFullFlow();
-
-  return () => {
-    if (isDisposed) return;
-    isDisposed = true;
-    clearDealTimer();
-    clearPickAnimation();
-    clearBoardShuffleAnimation();
-    shuffleBtn.onclick = null;
-    drawDeck.onclick = null;
-    continueBtn.onclick = null;
-  };
+  return null;
 }
 
 async function renderQuestion(dict = translations[state.currentLang] || translations.en) {
@@ -1257,7 +777,7 @@ async function renderPage(dict) {
   overallFlowCleanup?.();
   overallFlowCleanup = null;
   if (page === 'daily') renderDaily(dict);
-  if (page === 'overall' || page === 'full') overallFlowCleanup = await renderOverall(dict) || null;
+  if (page === 'overall' || page === 'full') overallFlowCleanup = renderFullBoard() || null;
   if (page === 'question') await renderQuestion(dict);
   if (page === 'question-draw') await renderQuestionDraw(dict);
 }
