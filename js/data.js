@@ -244,7 +244,7 @@ function joinAssetPathSingleSlash(base = '', subpath = '') {
   return joinAssetPath(base, subpath);
 }
 
-// Card images resolve via meow-v2 with runtime existence fallback.
+// Card images resolve via the active deck pack (getActiveDeckId) with runtime existence fallback.
 export function getCardImageUrl(card, options = {}) {
   const orientation = options.orientation || card.orientation || 'upright';
   const baseId = normalizeId(

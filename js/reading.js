@@ -15,6 +15,7 @@ import {
   getCardBackFallbackUrl,
   applyImgFallback,
   DEFAULT_DECK_ID,
+  getActiveDeckId,
   getNewlyUnlockedDecks,
   getAllDecks,
 } from './data.js';
@@ -957,21 +958,36 @@ function resolveImageIds(card, targetOrientation = toOrientation(card)) {
   };
 }
 
+// BUG-020: a user can be parked on an incomplete deck (e.g. boba-oracle, set
+// anonymously via a deck reward) whose card face 404s. Before falling back to a
+// card *back*, try the same card in the default deck (moonmallow, always
+// complete). asset-resolver.js is off-limits (hard rule #4), so derive the
+// default-deck URL here by swapping the /assets/<activeDeck>/ path segment —
+// both decks share identical nn-slug-orientation.webp filenames.
+function toDefaultDeckFaceUrl(url) {
+  const activeDeck = getActiveDeckId();
+  if (!url || activeDeck === DEFAULT_DECK_ID) return null;
+  const swapped = url.replace(`/assets/${activeDeck}/`, `/assets/${DEFAULT_DECK_ID}/`);
+  return swapped !== url ? swapped : null;
+}
+
 function getCardImageUrlWithFallback(card) {
   const orientation = toOrientation(card);
   const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
   const globalSiteFallbackUrl = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
+  const defaultUpright = toDefaultDeckFaceUrl(uprightUrl);
+  const defaultReversed = toDefaultDeckFaceUrl(reversedUrl);
 
   if (orientation === 'reversed') {
     return {
       src: reversedUrl || uprightUrl || backUrl || globalSiteFallbackUrl,
-      candidates: [uprightUrl, backUrl, globalSiteFallbackUrl].filter(Boolean),
+      candidates: [defaultReversed, uprightUrl, defaultUpright, backUrl, globalSiteFallbackUrl].filter(Boolean),
     };
   }
 
   return {
     src: uprightUrl || backUrl,
-    candidates: [backUrl].filter(Boolean),
+    candidates: [defaultUpright, backUrl].filter(Boolean),
   };
 }
 

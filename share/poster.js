@@ -5,11 +5,12 @@ import {
   getCardBackFallbackUrl,
   getCardBackUrl,
   getCardImageFallbackUrl,
+  getActiveDeckId,
+  DEFAULT_DECK_ID,
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { normalizePayload } from './normalize-payload.js';
 import { findCardById, getCelticCrossInterpretation, toOrientation } from '../js/reading-helpers.js';
-import { getLuckyColorVisibilityStyle } from '../js/lucky-color-visibility.js';
 import { getLocalizedField, getOrientationLabel } from '../js/tarot-format.js';
 import {
   buildCardImageUrls,
@@ -902,23 +903,29 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = Infinity) {
   return y + lines.length * lineHeight;
 }
 
-function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
+function fitDailyQuoteText(ctx, text, maxWidth, maxHeight, opts = {}) {
+  const {
+    fontFamily = '"Prata", serif',
+    defaultFontSize = 58,
+    minimumFontSize = 46,
+    addQuotes = true,
+  } = opts;
   const quoteText = String(text || '').trim();
   if (!quoteText) {
     return {
-      fontSize: 58,
-      lineHeight: 72,
+      fontSize: defaultFontSize,
+      lineHeight: Math.round(defaultFontSize * 1.24),
       lines: [],
       isTruncated: false,
-      ascent: 46,
-      descent: 14,
+      ascent: Math.round(defaultFontSize * 0.82),
+      descent: Math.round(defaultFontSize * 0.24),
       occupiedHeight: 0,
     };
   }
 
   const quoteRenderSafety = 8;
   const measureQuoteMetrics = (fontSize) => {
-    ctx.font = `italic 500 ${fontSize}px "Prata", serif`;
+    ctx.font = `italic 500 ${fontSize}px ${fontFamily}`;
     const metrics = ctx.measureText('“Ag”');
     const ascent = Math.max(metrics.actualBoundingBoxAscent || 0, Math.round(fontSize * 0.82));
     const descent = Math.max(metrics.actualBoundingBoxDescent || 0, Math.round(fontSize * 0.24));
@@ -927,10 +934,8 @@ function fitDailyQuoteText(ctx, text, maxWidth, maxHeight) {
   };
 
   // Keep the premium display style, then progressively shrink only as needed.
-  const defaultFontSize = 58;
-  const minimumFontSize = 46;
   const fontStep = 2;
-  const quote = `“${quoteText}”`;
+  const quote = addQuotes ? `“${quoteText}”` : quoteText;
 
   for (let fontSize = defaultFontSize; fontSize >= minimumFontSize; fontSize -= fontStep) {
     const { ascent, descent, lineHeight } = measureQuoteMetrics(fontSize);
@@ -1435,6 +1440,7 @@ function getDailyStrings(lang = 'en') {
     return {
       title: 'MeowTarot',
       subtitle: 'คำทำนายรายวัน',
+      badgePrefix: 'ไพ่ของวันนี้',
       luckyColors: 'สีมงคลวันนี้',
       identitySeparator: '•',
       phasePrefix: 'ช่วงพลัง',
@@ -1443,10 +1449,33 @@ function getDailyStrings(lang = 'en') {
   return {
     title: 'MeowTarot',
     subtitle: 'Daily Reading',
+    badgePrefix: "Today's Card",
     luckyColors: 'Lucky Colors',
     identitySeparator: '•',
     phasePrefix: 'Phase',
   };
+}
+
+// Render-time date for the poster eyebrow, e.g. "THURSDAY · 28 MAY" (EN) /
+// "วันพฤหัสบดี · 28 พฤษภาคม" (TH). The date is display-only social proof of a
+// fresh draw — it is NOT collected and never plumbed through the payload, so it
+// reflects the moment the poster is built. Single language per locale.
+function formatPosterDate(lang = 'en') {
+  const locale = normalizePosterLanguage(lang) === 'th' ? 'th-TH' : 'en-US';
+  try {
+    const parts = new Intl.DateTimeFormat(locale, {
+      weekday: 'long', day: 'numeric', month: 'long',
+    }).formatToParts(new Date());
+    const get = (type) => (parts.find((p) => p.type === type)?.value || '').trim();
+    const weekday = get('weekday');
+    const day = get('day');
+    const month = get('month');
+    if (!weekday || !day || !month) return '';
+    const label = `${weekday} · ${day} ${month}`;
+    return locale === 'en-US' ? label.toUpperCase() : label;
+  } catch (error) {
+    return '';
+  }
 }
 
 
@@ -1724,6 +1753,18 @@ function resolveLuckyInfo(payload, cardEntry) {
   };
 }
 
+// BUG-020: if the active deck is incomplete (e.g. boba-oracle set anonymously),
+// its card face 404s and the poster would fall back to a card back — gutting the
+// visual-proof share (hard rule #8). Derive the default-deck (moonmallow) face by
+// swapping the /assets/<activeDeck>/ path segment (both decks share identical
+// nn-slug-orientation.webp filenames). asset-resolver.js stays untouched (rule #4).
+function toDefaultDeckFaceUrl(url) {
+  const activeDeck = getActiveDeckId();
+  if (!url || activeDeck === DEFAULT_DECK_ID) return null;
+  const swapped = url.replace(`/assets/${activeDeck}/`, `/assets/${DEFAULT_DECK_ID}/`);
+  return swapped !== url ? swapped : null;
+}
+
 export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const payload = normalizePayload(rawPayload) || normalizePayload({});
   if (Array.isArray(payload?.cards) && payload.cards.length) {
@@ -1760,6 +1801,23 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   missingPosterFields.forEach((field) => {
     console.warn(`[Poster] missing poster.${field}`);
   });
+  if (document.fonts?.load) {
+    // Webfonts only fetch once referenced, so request the exact faces the daily
+    // poster draws (incl. italic-serif Cormorant) before relying on fonts.ready.
+    const faceSpecs = [
+      '700 72px "Poppins"',
+      '500 38px "Space Grotesk"',
+      'italic 500 58px "Prata"',
+      'italic 500 132px "Cormorant Garamond"',
+      '500 60px "Cormorant Garamond"',
+      'italic 500 56px "Noto Serif Thai"',
+    ];
+    try {
+      await Promise.all(faceSpecs.map((spec) => document.fonts.load(spec)));
+    } catch (error) {
+      posterDebugLog('warn', '[Poster] font preload failed', error?.message || String(error));
+    }
+  }
   if (document.fonts?.ready) {
     await document.fonts.ready;
   }
@@ -1769,7 +1827,13 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const { width, height } = PRESETS[preset] || PRESETS.story;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
-  const fontFamilies = ['"Poppins", sans-serif', '"Space Grotesk", sans-serif', '"Prata", serif'];
+  const fontFamilies = [
+    '"Poppins", sans-serif',
+    '"Space Grotesk", sans-serif',
+    '"Prata", serif',
+    '"Cormorant Garamond", serif',
+    '"Noto Serif Thai", serif',
+  ];
   fontFamilies.forEach((family) => {
     ctx.font = `16px ${family}`;
     ctx.fillText(' ', 0, 0);
@@ -2153,63 +2217,81 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const cardEntry = cardEntries[0];
     const resolvedOrientation = resolveDailyReadingOrientation(payload, cardEntry);
     const reading = resolveDailyReading(payload, cardEntry, lang);
-    const lucky = resolveLuckyInfo(payload, cardEntry);
-    const luckyColors = (lucky.colors || []).slice(0, 3);
-    const hasLuckyRow = luckyColors.length > 0;
-    const luckyDotColors = luckyColors.map(resolveLuckyColorDot).filter(Boolean).slice(0, 3);
     const mainQuoteText = reading.mainQuoteText || '';
-    const archetypeText = reading.archetype || '';
+    // Card name renders in English in BOTH locales (user direction — interim until
+    // Thai card names land; tarot names commonly stay English in TH). Resolve the
+    // EN name from card data first so a localized payload title can't reintroduce Thai.
     const cardName = toSafeText(
-      payload?.cards?.[0]?.title
+      resolveLocalizedCardName(cardEntry?.card, '', 'en')
+      || payload?.cards?.[0]?.title
       || payload?.cards?.[0]?.name
-      || resolveLocalizedCardName(cardEntry?.card, '', lang)
       || '',
       '',
     ).trim();
-    const hasReadingPanel = Boolean(mainQuoteText);
+    // ScreenPoster (design §11) — ceremonial daily poster: italic-serif wordmark,
+    // gold accent line, render-time date, card + aura, gold-tracked position badge,
+    // big italic-serif card name, gold diamond ornament, full-reading tagline.
+    const hasTagline = Boolean(mainQuoteText);
+    const dateLabel = formatPosterDate(lang);
+    const orientationLabel = reading.orientation || getOrientationLabel(resolvedOrientation, lang);
+    const badgeText = [strings.badgePrefix, orientationLabel].filter(Boolean).join(' · ');
     const isUprightTone = resolvedOrientation === 'upright';
+    // Plum ink on the light upright card; warm ivory on the dark reversed card.
     const textPalette = isUprightTone
-      ? {
-        primary: '#3d1a5c',
-        secondary: '#364063',
-        muted: 'rgba(60,70,90,0.72)',
-      }
-      : {
-        primary: '#F8F5EF',
-        secondary: 'rgba(235,245,255,0.92)',
-        muted: 'rgba(245,245,250,0.88)',
-      };
-    const readingPanelFill = isUprightTone ? 'rgba(255,255,255,0.55)' : 'rgba(32,44,80,0.72)';
-    const quoteShadow = isUprightTone ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.32)';
-    const orientationShadow = isUprightTone ? 'rgba(255, 255, 255, 0.28)' : 'rgba(0, 0, 0, 0.22)';
+      ? { primary: '#3d1a5c', secondary: '#6a3f8e', gold: '#bf8a20', goldSoft: 'rgba(191,138,32,0.62)' }
+      : { primary: '#F8F5EF', secondary: 'rgba(235,245,255,0.92)', gold: '#e7b955', goldSoft: 'rgba(231,185,85,0.72)' };
+    const displayFont = '"Cormorant Garamond", "Noto Serif Thai", serif';
+    const eyebrowFont = '"Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     const layout = {
-      headerTop: 136,
-      cardTop: 248,
-      cardMaxHeight: 900,
-      panelTop: 1286,
-      panelHeight: 320,
-      luckyRowY: 1760,
-      footerY: 1860,
+      wordmarkBaselineY: 142,
+      goldLineTopY: 164,
+      dateBaselineY: 232,
+      cardTop: 300,
+      cardMaxHeight: 820,
+      bottomMargin: 84,
     };
 
-    const footerY = layout.footerY;
-    const panelX = safeMargin;
-    const panelWidth = width - safeMargin * 2;
-    const panelTop = layout.panelTop;
-    const panelHeight = layout.panelHeight;
+    // Centred, letter-spaced eyebrow (date, position badge). drawTrackingText lays
+    // glyphs out from x with left alignment, so set it explicitly; tracking is px (em × size).
+    const drawTrackedEyebrow = (text, y, { color, size, weight = 700, trackingEm = 0.3 }) => {
+      if (!text) return;
+      ctx.save();
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = color;
+      ctx.font = `${weight} ${size}px ${eyebrowFont}`;
+      drawTrackingText(ctx, text, width / 2, y, trackingEm * size);
+      ctx.restore();
+    };
+
+    // Short gold rule with a centred diamond node (design's accent below the card name).
+    const drawGoldOrnament = (centerY, lineWidth) => {
+      ctx.save();
+      ctx.fillStyle = textPalette.goldSoft;
+      ctx.fillRect(width / 2 - lineWidth / 2, centerY - 1.5, lineWidth, 3);
+      ctx.fillStyle = textPalette.gold;
+      ctx.translate(width / 2, centerY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillRect(-8.5, -8.5, 17, 17);
+      ctx.restore();
+    };
 
     const drawHeader = () => {
-      const maxWidth = width - safeMargin * 2;
-      let cursorY = layout.headerTop;
-      ctx.textAlign = 'center';
+      // italic-serif wordmark
+      ctx.save();
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.primary;
-      ctx.font = '700 72px "Poppins", "Space Grotesk", sans-serif';
-      wrapText(ctx, strings.title, width / 2, cursorY, maxWidth, 54, 1);
-      cursorY += 54;
-      ctx.fillStyle = textPalette.secondary;
-      ctx.font = '500 38px "Space Grotesk", sans-serif';
-      wrapText(ctx, strings.subtitle, width / 2, cursorY, maxWidth, 36, 1);
+      ctx.font = `italic 500 60px ${displayFont}`;
+      drawTrackingText(ctx, strings.title, width / 2, layout.wordmarkBaselineY, 0.05 * 60);
+      ctx.restore();
+      // gold accent line under the wordmark (design: 24×1 → 66×3 at poster scale)
+      ctx.save();
+      ctx.fillStyle = textPalette.goldSoft;
+      ctx.fillRect(width / 2 - 33, layout.goldLineTopY, 66, 3);
+      ctx.restore();
+      // render-time date eyebrow — gold, tracked, uppercase (EN) / native (TH)
+      drawTrackedEyebrow(dateLabel, layout.dateBaselineY, { color: textPalette.gold, size: 28, weight: 600, trackingEm: 0.3 });
     };
 
     const resolveCardImage = async () => {
@@ -2245,7 +2327,13 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       });
       const primary = localPrimary || resolvedAssetPrimary;
       emitPosterDebug('waiting_for_card', { url: primary });
-      const fallbackUrls = [...new Set([...(localUpright ? [localUpright] : []), ...fallbackChain, localBack || backUrl].filter(Boolean).filter((item) => item !== primary))];
+      // BUG-020: cross-deck face fallback (default deck) before any card back.
+      const defaultDeckFaces = [
+        toDefaultDeckFaceUrl(primary),
+        toDefaultDeckFaceUrl(uprightUrl),
+        toDefaultDeckFaceUrl(reversedUrl),
+      ].filter(Boolean);
+      const fallbackUrls = [...new Set([...(localUpright ? [localUpright] : []), ...fallbackChain, ...defaultDeckFaces, localBack || backUrl].filter(Boolean).filter((item) => item !== primary))];
       posterCiLog('card_urls', { primary, fallbackUrls });
       const backFallback = localBack || toAssetUrl(resolveCardBackFallbackPath());
       const preloadResults = await preloadImages([
@@ -2273,161 +2361,95 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       return loadPosterCardImageWithTimeout(primary, fallbackUrls);
     };
 
-    const drawReadingPanel = () => {
-      if (!hasReadingPanel) return;
-
+    const drawCardWithAura = (img, cardX, cardYPos, cardW, cardH) => {
+      const cx = cardX + cardW / 2;
+      const cy = cardYPos + cardH / 2;
+      const auraR = Math.max(cardW, cardH) / 2 + 120;
+      // warm radial aura behind the card (design ::before glow)
       ctx.save();
-      ctx.fillStyle = readingPanelFill;
-      drawRoundedRect(ctx, panelX, panelTop, panelWidth, panelHeight, 36);
+      const aura = ctx.createRadialGradient(cx, cy, auraR * 0.2, cx, cy, auraR);
+      aura.addColorStop(0, 'rgba(255, 225, 180, 0.55)');
+      aura.addColorStop(0.55, 'rgba(255, 223, 178, 0.22)');
+      aura.addColorStop(1, 'rgba(255, 223, 178, 0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, auraR, auraR, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.shadowColor = 'rgba(29, 38, 70, 0.18)';
-      ctx.shadowBlur = 40;
-      ctx.shadowOffsetY = 16;
       ctx.restore();
 
-      const quotePaddingTop = 84;
-      const quotePaddingBottom = 42;
-      const quoteEdgeSafety = 6;
-      let panelCursorY = panelTop + quotePaddingTop;
-      const panelCenterX = width / 2;
-      const panelTextWidth = panelWidth - 136;
-      let quoteY = null;
-
-      ctx.textAlign = 'center';
-
-      if (mainQuoteText) {
-        const availableTop = panelCursorY + quoteEdgeSafety;
-        const availableBottom = panelTop + panelHeight - quotePaddingBottom - quoteEdgeSafety;
-        const quoteMaxHeight = Math.max(0, availableBottom - availableTop);
-        const fit = fitDailyQuoteText(ctx, mainQuoteText, panelTextWidth, quoteMaxHeight);
-        const quoteOccupiedHeight = fit.occupiedHeight || (fit.lines.length * fit.lineHeight);
-        const centeredTop = availableTop + (quoteMaxHeight - quoteOccupiedHeight) / 2;
-        const centeredY = centeredTop + fit.ascent;
-        const opticalLift = fit.lines.length >= 3
-          ? Math.min(14, Math.max(6, Math.round(fit.lineHeight * 0.14)))
-          : 0;
-        const minQuoteY = availableTop + fit.ascent;
-        const maxQuoteY = availableBottom - fit.descent - Math.max(0, fit.lines.length - 1) * fit.lineHeight;
-        quoteY = Math.min(maxQuoteY, Math.max(minQuoteY, centeredY - opticalLift));
+      const cardRadius = 30;
+      if (img) {
         ctx.save();
-        ctx.fillStyle = textPalette.primary;
-        ctx.shadowColor = quoteShadow;
-        ctx.shadowBlur = 14;
-        ctx.font = `italic 500 ${fit.fontSize}px "Prata", serif`;
-        fit.lines.forEach((line, index) => {
-          ctx.fillText(line, panelCenterX, quoteY + index * fit.lineHeight);
-        });
-        panelCursorY = quoteY + fit.descent + Math.max(0, fit.lines.length - 1) * fit.lineHeight;
+        ctx.shadowColor = 'rgba(42, 17, 66, 0.40)';
+        ctx.shadowBlur = 60;
+        ctx.shadowOffsetY = 30;
+        drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
+        ctx.fillStyle = '#2a1142';
+        ctx.fill();
         ctx.restore();
+        ctx.save();
+        drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
+        ctx.clip();
+        ctx.drawImage(img, cardX, cardYPos, cardW, cardH);
+        ctx.restore();
+      } else {
+        drawFallbackCardArt(ctx, cardX, cardYPos, cardW, cardH, { radius: cardRadius, label: 'MEOW TAROT' });
       }
-
-      return { quoteY };
     };
 
-    const drawOrientationLabel = () => {
-      if (!reading.orientation) return;
-      const cardBottomY = cardY + cardHeight;
-      const minGapY = cardBottomY + 60;
-      const orientationY = minGapY;
+    // Big italic-serif card name, auto-fit to one line where possible, ≤2 lines.
+    const drawCardName = (topBaselineY) => {
+      if (!cardName) return topBaselineY;
+      const maxWidth = width - safeMargin * 2;
+      const minSize = 66;
+      let fontSize = 132;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = textPalette.muted;
-      ctx.shadowColor = orientationShadow;
-      ctx.shadowBlur = 8;
-      ctx.font = '500 30px "Space Grotesk", sans-serif';
-      wrapText(ctx, reading.orientation, width / 2, orientationY, width - safeMargin * 2, 34, 1);
-      ctx.shadowBlur = 0;
-      return orientationY;
+      while (fontSize > minSize) {
+        ctx.font = `italic 500 ${fontSize}px ${displayFont}`;
+        if (ctx.measureText(cardName).width <= maxWidth) break;
+        fontSize -= 4;
+      }
+      ctx.font = `italic 500 ${fontSize}px ${displayFont}`;
+      const lines = wrapTextLines(ctx, cardName, maxWidth, 2);
+      const lineHeight = Math.round(fontSize * 1.02);
+      ctx.fillStyle = textPalette.primary;
+      lines.forEach((line, i) => ctx.fillText(line, width / 2, topBaselineY + i * lineHeight));
+      const descent = Math.round(fontSize * 0.26);
+      return topBaselineY + (lines.length - 1) * lineHeight + descent;
     };
 
-    const drawArchetypeLabel = (orientationY) => {
-      if (!archetypeText && !cardName) return null;
-      const fallbackY = cardY + cardHeight + 124;
-      const archetypeY = (orientationY || fallbackY - 64) + 64;
+    // Full reading line rendered as an italic-serif tagline (never truncated unless
+    // it overflows the whole band) — keeps the free reading feeling complete.
+    const drawTagline = (startTop) => {
+      if (!hasTagline) return;
+      const taglineWidth = width - 2 * 120;
+      const taglineMaxHeight = Math.max(0, (height - layout.bottomMargin) - startTop);
+      const fit = fitDailyQuoteText(ctx, mainQuoteText, taglineWidth, taglineMaxHeight, {
+        fontFamily: displayFont,
+        defaultFontSize: 56,
+        minimumFontSize: 38,
+        addQuotes: true,
+      });
+      ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.primary;
-      if (cardName) {
-        ctx.font = '600 50px "Playfair Display", "Prata", serif';
-        wrapText(ctx, cardName, width / 2, archetypeY, width - safeMargin * 2, 54, 2);
-      }
-      const meaningY = cardName ? archetypeY + 64 : archetypeY;
-      if (!archetypeText) return meaningY;
-      ctx.font = '600 42px "Space Grotesk", sans-serif';
-      wrapText(ctx, archetypeText, width / 2, meaningY, width - safeMargin * 2, 48, 2);
-      return meaningY;
-    };
-
-    let quoteY = null;
-
-    const drawLuckyRow = () => {
-      if (!hasLuckyRow) return;
-      const minLuckyY = panelTop + panelHeight + 58;
-      const maxLuckyY = footerY - 80;
-      const rowY = Math.min(Math.max(layout.luckyRowY, minLuckyY), maxLuckyY);
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = textPalette.secondary;
-      ctx.font = '700 26px "Space Grotesk", sans-serif';
-      ctx.fillText(strings.luckyColors, width / 2, rowY);
-
-      const dotRadius = 24;
-      const dotGap = 32;
-      const count = luckyDotColors.length;
-      const totalWidth = count * (dotRadius * 2) + (count - 1) * dotGap;
-      let dotX = (width - totalWidth) / 2 + dotRadius;
-      const dotY = rowY + 42;
-      luckyDotColors.forEach((hex) => {
-        const visibility = getLuckyColorVisibilityStyle(hex, readingPanelFill);
-
-        ctx.save();
-        ctx.fillStyle = hex;
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.10)';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetY = 4;
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        ctx.save();
-        ctx.strokeStyle = visibility.ringColor;
-        ctx.lineWidth = visibility.ringWidth;
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, dotRadius - (visibility.ringWidth / 2), 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-
-        dotX += dotRadius * 2 + dotGap;
-      });
-    };
-
-    const drawFooter = () => {
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-      ctx.shadowBlur = 12;
-      ctx.fillStyle = textPalette.muted;
-      ctx.font = '400 28px "Space Grotesk", sans-serif';
-      const safeFooterY = Math.min(footerY, height - safeMargin * 0.6);
-      ctx.fillText('meowtarot.com', width / 2, safeFooterY);
-      ctx.shadowBlur = 0;
+      ctx.font = `italic 500 ${fit.fontSize}px ${displayFont}`;
+      const firstBaseline = startTop + fit.ascent;
+      fit.lines.forEach((line, i) => ctx.fillText(line, width / 2, firstBaseline + i * fit.lineHeight));
+      ctx.restore();
     };
 
     drawHeader();
 
     const cardTopY = layout.cardTop;
-    const gapBeforePanel = 48;
-    const maxCardWidth = Math.min(690, width - safeMargin * 2);
-    const maxCardHeight = Math.min(layout.cardMaxHeight, Math.max(0, panelTop - gapBeforePanel - cardTopY));
+    const maxCardWidth = Math.min(660, width - safeMargin * 2);
+    const maxCardHeight = layout.cardMaxHeight;
     const fallbackAspect = 2 / 3;
-    const fallbackWidth = Math.min(
-      maxCardWidth,
-      maxCardHeight ? maxCardHeight * fallbackAspect : maxCardWidth,
-    );
-    const fallbackHeight = fallbackWidth / fallbackAspect;
+    const fallbackWidth = Math.min(maxCardWidth, maxCardHeight * fallbackAspect);
     cardWidth = fallbackWidth || 560;
-    cardHeight = fallbackHeight || Math.round(560 * 1.5);
+    cardHeight = (fallbackWidth / fallbackAspect) || Math.round(560 * 1.5);
     cardY = cardTopY;
     let cardImg = null;
     try {
@@ -2439,75 +2461,43 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     posterDebugLog('log', '[Poster] Images resolved');
     const imgWidth = cardImg?.naturalWidth || cardWidth || 560;
     const imgHeight = cardImg?.naturalHeight || cardHeight || Math.round(560 * 1.5);
-    const heightScale = maxCardHeight ? maxCardHeight / imgHeight : 1;
-    const scale = Math.min(maxCardWidth / imgWidth, heightScale);
+    const scale = Math.min(maxCardWidth / imgWidth, maxCardHeight / imgHeight);
     cardWidth = Math.max(0, imgWidth * scale);
     cardHeight = Math.max(0, imgHeight * scale);
     const cardX = (width - cardWidth) / 2;
 
     if (cardWidth && cardHeight) {
-      const cardRadius = 28;
-      const drawCardGlow = (blur, alpha) => {
-        ctx.save();
-        ctx.shadowColor = `rgba(255, 245, 220, ${alpha})`;
-        ctx.shadowBlur = blur;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, cardRadius);
-        ctx.fillStyle = 'rgba(255, 245, 220, 0.02)';
-        ctx.fill();
-        ctx.restore();
-      };
-      drawCardGlow(18, 0.42);
-      drawCardGlow(42, 0.30);
-      drawCardGlow(70, 0.18);
-      if (cardImg) {
-        ctx.save();
-        drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, cardRadius);
-        ctx.clip();
-        ctx.drawImage(cardImg, cardX, cardY, cardWidth, cardHeight);
-        ctx.restore();
-      } else {
-        drawFallbackCardArt(ctx, cardX, cardY, cardWidth, cardHeight, { radius: cardRadius, label: 'MEOW TAROT' });
-      }
+      drawCardWithAura(cardImg, cardX, cardY, cardWidth, cardHeight);
       posterCiLog('draw_card', {
         executed: Boolean(cardImg),
         w: Math.round(cardWidth),
         h: Math.round(cardHeight),
       });
     }
-    const textBlocks = {
-      orientationOutsidePanel: Boolean(reading.orientation),
-      archetypeText: Boolean(archetypeText),
-      mainQuoteText: Boolean(mainQuoteText),
-      supportingLine: false,
-    };
+
+    const cardBottomY = cardY + cardHeight;
+    // position badge → card name → gold ornament → full-reading tagline
+    drawTrackedEyebrow(badgeText, cardBottomY + 88, { color: textPalette.gold, size: 27, weight: 700, trackingEm: 0.3 });
+    const nameBottomY = drawCardName(cardBottomY + 200);
+    drawGoldOrnament(nameBottomY + 52, 133);
+    drawTagline(nameBottomY + 96);
+
     posterCiLog('draw_text', {
-      executed: hasReadingPanel,
-      blocks: Object.values(textBlocks).filter(Boolean).length,
-      detail: textBlocks,
+      executed: hasTagline,
+      blocks: [Boolean(badgeText), Boolean(cardName), hasTagline].filter(Boolean).length,
+      detail: { badge: Boolean(badgeText), cardName: Boolean(cardName), tagline: hasTagline },
     });
-    const orientationY = drawOrientationLabel();
-    drawArchetypeLabel(orientationY);
-    ({ quoteY } = drawReadingPanel() || { quoteY: null });
     if (isPosterDebugEnabled()) {
       posterDebugLog('info', '[poster-debug][daily]', {
         lang,
-        orientationLabel: reading.orientation,
-        outsidePanelOrientation: true,
-        archetypeText,
-        tarotImplyUsed: false,
+        dateLabel,
+        badgeText,
+        orientationLabel,
+        cardName,
         mainQuoteSource: reading.mainQuoteSource,
         mainQuoteText,
-        quoteY,
-        supportingLineSource: reading.supportingLineSource,
-        supportLineText: '',
-        luckyColorsLength: luckyColors.length,
-        luckyDotColors,
       });
     }
-    drawLuckyRow();
-    drawFooter();
     posterDebugLog('log', '[Poster] Canvas drawn');
 
     const exportStart = performance.now();
