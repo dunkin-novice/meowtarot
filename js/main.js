@@ -524,14 +524,15 @@ function renderDaily() {
   // during the redraw.
   const shuffleBtn = document.getElementById('daily-shuffle');
   if (shuffleBtn) {
-    shuffleBtn.addEventListener('click', () => {
+    // onclick (not addEventListener) so a re-bind replaces rather than stacks.
+    shuffleBtn.onclick = () => {
       if (board.classList.contains('is-locked')) return;
       shuffleBtn.classList.add('is-spinning');
       if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
       dailyBoard.render();
       updateDailySelectionUi([]);
       window.setTimeout(() => shuffleBtn.classList.remove('is-spinning'), 1500);
-    });
+    };
   }
 }
 
