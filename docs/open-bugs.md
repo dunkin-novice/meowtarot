@@ -827,3 +827,61 @@ On logout, call `localStorage.removeItem('activeDeckId')` (or equivalent reset t
 **Why this works regardless of timing:** the SIGNED_OUT event is the canonical Supabase signal for a just-completed logout, fires synchronously inside the auth listener, and resets the module cache before any UI re-render that calls `getActiveDeck()` reads from the cache. Belt-and-suspenders defense (re-reading from localStorage inside `getActiveDeck()`) was considered but deferred — `resetActiveDeck()` covers all current paths.
 
 **Not changed:** `canUnlockDeck()` (line 129–144) remains the single source of truth for the unlock gate. This fix is additive — it ensures the cache is consistent with localStorage at the SIGNED_OUT boundary, not a replacement for any gate.
+
+---
+
+## BUG-020 — No cross-deck FACE fallback (latent); user's "boba-oracle broke my cards" could not be reproduced
+
+**Status:** NOT reproduced — initial "incomplete deck" diagnosis was WRONG (see Correction). Defensive fix #1 applied same session.
+**Priority:** Medium (latent robustness gap; no confirmed live trigger)
+**Reported:** 2026-06-04
+
+### Symptom
+
+A user reported that their phone, which had `localStorage['meowtarot_active_deck']` set to `boba-oracle` (set without sign-in), failed to load card faces on the reading **result** page. Clearing storage (resetting to default `moonmallow`) appeared to fix it.
+
+### Correction (2026-06-04, same session)
+
+⚠️ My first pass claimed "boba-oracle is incomplete — most cards 404" and marked it **verified**. **That was wrong.** The 404s came from hand-typed card slugs/numbers that don't match the real `card_id`s in `data/cards.json` (e.g. I tested `10-wheel-of-fortune` when the real id is `11-wheel-of-fortune`). Re-tested with the actual ids: **boba-oracle is COMPLETE** — all 78 upright cards return 200 with `?v=2026-03`, and a 13-card reversed sample is also all 200. So missing assets are **not** a confirmed cause, and the user's bug could not be reproduced from the CDN side. Likely real cause is **historical** (boba-oracle art may have lagged when the user hit it and has since been uploaded) and/or a **stale service-worker/cache** on the device that the storage clear incidentally cleared.
+
+### What IS still true (the latent gap this entry now tracks)
+
+1. `setActiveDeck()` persists the active deck for **anonymous** users via the deck-reward popup (`js/deck-reward.js:279`), `js/deck-inventory.js:116`, `js/decks.js:230`. (Same family as BUG-016 / BUG-019.)
+2. There is **no cross-deck fallback to the DEFAULT deck's FACE.** `js/asset-resolver.js` only defines `FALLBACK_BACK_PACK = 'moonmallow'` for the card **back**. So *if* a deck's face is ever missing (a newly added deck whose art lags upload, a partial future deck), the app falls back to a card *back*, never the real moonmallow face — and this would silently degrade the share poster (hard rule #8). This is a real but currently-untriggered robustness gap.
+
+### Reported fix
+
+Fix #1 (caller-level cross-deck face fallback), applied 2026-06-04 to the reading result page and the **daily** poster only:
+
+```
+// at the callers (NOT asset-resolver.js): when the active-deck face URL is
+// unavailable / 404s, insert the DEFAULT_DECK_ID (moonmallow) face URL into the
+// fallback candidate list BEFORE any card back, by swapping the /assets/<deck>/
+// path segment. Added to:
+//   - js/reading.js   getCardImageUrlWithFallback()  candidate lists
+//   - share/poster.js daily resolveCardImage() fallbackUrls
+```
+
+### Why this isn't a drive-by fix
+
+- **`js/asset-resolver.js` is off-limits** (CLAUDE.md hard rule #4 — never touch it or the `resolvePosterCardImageSources` call order). The natural home for a cross-deck fallback (the resolver's fallback chain) cannot be edited, so the fix lives at the callers instead and is necessarily duplicated.
+- Remaining gap: fix #1 only covers the reading result + daily poster. The **question / full / celtic** poster modes have the same latent break (other `resolvePosterCardImageSources` callers in `share/poster.js` at ~lines 1264, 1926, 2046, 2549) and still need the same fallback.
+
+### Files involved
+
+- `js/reading.js` (`getCardImageUrlWithFallback`) — reading result candidate list
+- `share/poster.js` (daily `resolveCardImage`) — daily poster fallback chain
+- `js/deck-reward.js:279`, `js/deck-inventory.js:116`, `js/decks.js:230` — where anonymous active-deck gets set
+- `js/data.js` (`getActiveDeckId`, `DEFAULT_DECK_ID`) — active-deck resolution
+
+### Files explicitly off-limits
+
+- `js/asset-resolver.js` and the `resolvePosterCardImageSources` call order (CLAUDE.md hard rule #4).
+
+### Suggested first session
+
+1. Reproduce on live: set `localStorage.meowtarot_active_deck = 'boba-oracle'`, draw a daily card boba-oracle lacks (e.g. Wheel of Fortune), view result + generate poster → confirm broken/back card.
+2. Verify fix #1 (reading result + daily poster): card now shows the moonmallow face when the active-deck face 404s.
+3. Extend cross-deck face fallback to question / full / celtic poster callers in `share/poster.js`.
+4. Decide on root-cause guard (b): add a per-deck `complete: true/false` flag in `js/data.js` and refuse to set an incomplete deck active (or treat it as default for assets). Coordinate with BUG-016 / BUG-019.
+5. Add a `LOG_DRAFT.jsonl` entry; link BUG-016 / BUG-019.
