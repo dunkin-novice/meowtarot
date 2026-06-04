@@ -81,6 +81,12 @@ body[data-page='daily'] .daily-shell {
  * not just iPhone-Pro-class widths. Desktop behavior untouched. /today/
  * never gets daily-shell-active so its legacy fixed-height stays intact. */
 @media (max-width: 640px) {
+  /* Fit-in-one-screen (Phase 5 review): the user shouldn't have to scroll to
+   * reach Continue. Make the daily shell a viewport-height flex column so the
+   * 12-card grid sizes itself to the leftover space — 3 rows that shrink on
+   * shorter phones — keeping Continue above the bottom nav. Body stays
+   * scrollable as a safety fallback so Continue can never be clipped/unreachable
+   * if a device's chrome is unusually tall. */
   body.daily-shell-active {
     height: auto;
     overflow: visible;
@@ -89,7 +95,41 @@ body[data-page='daily'] .daily-shell {
     height: auto;
   }
   body.daily-shell-active .daily-shell {
+    min-height: 100dvh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  body.daily-shell-active .daily-state--board {
+    flex: 1 1 auto;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Tighten the fixed clusters so the grid gets the most room. */
+  body.daily-shell-active .daily-board-title   { margin-top: 6px; }
+  body.daily-shell-active .daily-shuffle-row   { margin-top: 8px; }
+  body.daily-shell-active .daily-board-counter { margin-top: 6px; }
+  body.daily-shell-active .daily-state__cta-row { margin-top: 10px; }
+
+  /* Grid fills the leftover height; 3 rows divide it evenly. max-height keeps
+   * cards from ever exceeding their natural ~64px (and from overflowing the
+   * column horizontally); on shorter phones the rows + cards shrink to fit. */
+  body.daily-shell-active .daily-state--board #daily-board.card-board--daily {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 345px;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px 7px;
+    margin: 8px auto 0;
+    align-content: center;
+  }
+  /* Size cards by ROW HEIGHT (not a fixed width) so they shrink to fit. */
+  body.daily-shell-active .daily-state--board #daily-board .card-slot {
+    height: 100%;
+    width: auto;
+    max-width: 64px;
   }
 }
 
