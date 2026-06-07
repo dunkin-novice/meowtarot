@@ -374,6 +374,15 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       applyCardBackBackground(cardBack);
       slot.appendChild(cardBack);
       slot.onclick = () => {
+        // BUG-021 tail: ignore taps on slots with no card behind them yet.
+        // On a cold/slow load the daily board renders once before card data
+        // arrives (all slots is-hidden / cardless), then renderDaily runs a
+        // second time with data and rebuilds the board from scratch. A tap in
+        // that first window toggled is-selected on a cardless slot — visible
+        // for a frame, contributing nothing real (cards[i] is undefined), then
+        // silently discarded by the rebuild, so the tap "missed". Guarding on
+        // cards[i] makes the early tap a clean no-op until the card is dealt.
+        if (!cards[i]) return;
         if (selected.includes(i)) {
           selected = selected.filter((idx) => idx !== i);
         } else if (selectionGoal === 1) {
