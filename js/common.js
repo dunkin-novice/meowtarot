@@ -482,7 +482,7 @@ export const translations = {
     celticCrossHoldEnergy: 'โอบพลังนี้ไว้',
     celticCrossAskYourself: 'ลองถามตัวเอง',
     positionPresent: 'สถานการณ์ปัจจุบัน',
-    positionChallenge: 'ความท้าทาย',
+    positionChallenge: 'อุปสรรค',
     positionPast: 'อดีต',
     positionFuture: 'อนาคต',
     positionAbove: 'เป้าหมาย',
