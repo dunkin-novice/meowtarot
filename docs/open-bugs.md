@@ -885,3 +885,38 @@ Fix #1 (caller-level cross-deck face fallback), applied 2026-06-04 to the readin
 3. Extend cross-deck face fallback to question / full / celtic poster callers in `share/poster.js`.
 4. Decide on root-cause guard (b): add a per-deck `complete: true/false` flag in `js/data.js` and refuse to set an incomplete deck active (or treat it as default for assets). Coordinate with BUG-016 / BUG-019.
 5. Add a `LOG_DRAFT.jsonl` entry; link BUG-016 / BUG-019.
+
+---
+
+## BUG-021 — Cold-load: daily board blank + reading "stuck" until the 4.6 MB cards.json downloads
+
+**Status:** Reproduced headless + fixed same session (manifest split + background prefetch). On-device retest pending.
+**Priority:** High (free-core: board unusable / reading appears broken on cold loads, esp. mobile/incognito)
+**Reported:** 2026-06-07
+
+### Symptom
+
+On a cold (incognito / uncached) load, the daily selection board shows 12 card-backs but no selectable cards ("cards don't show first time"); a refresh fixes it. After selecting, the reading result page sits on "Please wait a moment…" for a long time ("reading doesn't load"). Both recover once the data is cached.
+
+### Root cause (verified via headless Chrome)
+
+Both the board (`loadTarotManifest`) and the reading page (`loadTarotData`) blocked on fetching `/data/cards.json` — **4.6 MB raw / 1.15 MB brotli**. `loadTarotManifest` fetched the FULL file then minimalised it client-side, so the board waited on 1.15 MB just to know card identities. Headless repro: board stayed `hidden:12 / withId:0` until `cards.json` completed (still blank at 11.5 s on throttled net), then populated the instant it landed; reading page re-fetched the same file.
+
+### Fix applied (2026-06-07)
+
+- **Manifest split:** new `scripts/generate-cards-manifest.mjs` emits `data/cards-manifest.json` (~28 KB raw / ~2–3 KB compressed — id/names/image/slug only). `loadTarotManifest()` now fetches the manifest first, falling back to the full `cards.json` if it's missing/shape-invalid (graceful degrade). Board populates ~right after JS loads (571 ms localhost vs 3450 ms prod).
+- **Background prefetch:** `renderDaily` fires `loadTarotData()` via `requestIdleCallback` after the board is ready, so the full deck warms (HTTP + localStorage cache) while the user is choosing → the reading page loads from cache, no cold fetch after Continue (verified: reading no longer re-fetches `cards.json`).
+- **Anti-drift:** `generate-seo.yml` regenerates the manifest on every push and commits it, so it can't fall out of sync with `cards.json`.
+
+### Still open / follow-ups
+
+- The full `cards.json` is still 4.6 MB raw — worth investigating a real size reduction (per-language or per-card split) so even an un-prefetched reading is fast. Background prefetch is a cache-warm, not a payload cut.
+- Minor: tapping a card during the board's post-data re-render can miss (selection doesn't stick) — a smaller timing artifact of the renderDaily multi-render; not addressed here.
+- Minor: `LocalNotifications.then()` throws an uncaught `CapacitorException` on web (a Capacitor plugin called in a browser context) — pre-existing, non-fatal; file separately if it matters.
+
+### Files involved
+
+- `js/data.js` (`loadTarotManifest`, `CARDS_MANIFEST_URL`) — manifest-first fetch
+- `js/main.js` (`renderDaily`) — background prefetch of the full deck
+- `scripts/generate-cards-manifest.mjs` (new), `data/cards-manifest.json` (new)
+- `.github/workflows/generate-seo.yml` — regenerates the manifest on push

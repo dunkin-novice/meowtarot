@@ -1,6 +1,7 @@
 import { initShell, localizePath, translations } from './common.js';
 import {
   loadTarotManifest,
+  loadTarotData,
   getCardBackUrl,
   getCardBackFallbackUrl,
   getCardImageUrl,
@@ -487,6 +488,18 @@ function renderDaily() {
   // 12 cards immediately instead of waiting for a Draw-button click.
   dailyBoard.render();
   updateDailySelectionUi([]);
+
+  // Warm the full deck in the background while the user is choosing a card, so
+  // the reading result page (which needs the heavy reading text from the full
+  // cards.json) loads from cache instead of a cold ~1.15MB fetch after Continue.
+  // The board itself only needs the tiny manifest, so this never blocks it
+  // (BUG-021). Fire-and-forget, idle-scheduled.
+  const prefetchFullDeck = () => { loadTarotData().catch(() => {}); };
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(prefetchFullDeck, { timeout: 2500 });
+  } else {
+    setTimeout(prefetchFullDeck, 1200);
+  }
 
   // Legacy dealShuffleBtn handler — preserved for /today/ and other pre-
   // Phase-5 data-page='daily' surfaces that still ship a Deal/Shuffle

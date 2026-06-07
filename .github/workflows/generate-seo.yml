@@ -29,10 +29,14 @@ jobs:
           SEPARATE_LANG_SITEMAPS: ${{ vars.SEPARATE_LANG_SITEMAPS }}
         run: node scripts/generate-seo-files.mjs
 
+      - name: Generate cards manifest (board-only projection of cards.json)
+        run: node scripts/generate-cards-manifest.mjs
+
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update sitemap and robots.txt"
+          commit_message: "chore: update sitemap, robots.txt, cards manifest"
           file_pattern: |
             robots.txt
             sitemap*.xml
+            data/cards-manifest.json
