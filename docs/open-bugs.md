@@ -10,9 +10,11 @@ Format: each entry is `BUG-NNN` (or `ISSUE-NNN` for non-bugs) with sections for 
 
 ## BUG-001 — Thai language not respected on `/reading.html?l=th`
 
-**Status:** Reported, not yet verified.
+**Status:** Closed — verified fixed live (2026-06-07). Fix already shipped in commit `b9d1700`.
 **Priority:** Medium
 **Reported:** 2026-04-30
+
+**Closing note (2026-06-07):** Browser-verified on production via Chrome DevTools MCP. `https://www.meowtarot.com/reading.html?m=d&c=1u&l=th` renders fully in Thai — `document.documentElement.lang === 'th'`, all `[data-i18n]` strings Thai ("ดูดวงรายวัน", "ไพ่ของคุณ · วันนี้", "แชร์คำทำนายนี้"), and the canonical-rewritten URL preserves `l=th` (it is NOT serialized back to `l=en`, contradicting the "seals the bug" claim in the original report). Root-cause inspection confirms the reported fix is live: `js/common.js:568` `getUrlLanguage` now reads `normalizeLang(params.get('lang') || params.get('l'))` — shipped in commit `b9d1700` ("fix(i18n): getUrlLanguage reads l= short param — BUG-001"). The CLAUDE.md rule-clarification concern in the report was moot: the fix landed in `common.js` and works. No further action.
 
 ### Symptom
 
@@ -181,9 +183,11 @@ function readCardOfTheDay() {
 
 ## BUG-004 — Ask-a-question "Other" topic: per-card meanings missing from reading
 
-**Status:** Reported, not yet verified or triaged.
+**Status:** Closed — NOT reproduced. Verified live 2026-06-07; "Other" topic renders per-card meanings correctly by design.
 **Priority:** Medium (to confirm — affects a specific question-mode topic).
 **Reported:** 2026-05-02.
+
+**Closing note (2026-06-07):** Browser-verified on production via Chrome DevTools MCP. `https://www.meowtarot.com/reading.html?m=q&t=o&c=1u,2u,3u&l=en` (topic = Other) renders the full per-card Past/Present/Future meanings for every drawn card (The Fool / The Magician / The High Priestess each show their interpretation paragraph). Compared side-by-side against `t=l` (Love), same cards: both topics render the same core per-card standalone meanings; Love *additionally* shows a topic-specific "Love perspective" block. "Other" has no dedicated per-topic perspective block — that is by design, not a missing meaning. Root cause inspection: `js/reading-helpers.js:181` (`getQuestionMeaningField`) maps the "other" topic to the `standalone_<position>_<lang>` fields, which exist in `cards.json` and render. That mapping has existed since the function was first authored (commit `245c724`), predating this bug's 2026-05-02 filing — so the literal symptom ("per-card meanings do not appear") never reproduced. Likely the reporter expected the topic-specific perspective copy that "Other" legitimately doesn't carry. No fix needed; if product wants "Other" to surface a generic perspective block, that's a feature, not a bug.
 
 ### Symptom
 
