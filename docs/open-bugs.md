@@ -701,9 +701,16 @@ Decision required between (a)/(b)/(c) before any change — each has different i
 
 ## BUG-016 — Deck unlock popup fires for unauthenticated users with wrong deck on poster
 
-**Status:** Reported, not yet verified or triaged.
-**Priority:** High — hits every first-time visitor before login.
+**Status:** Mostly fixed — issues #1 (auth gate) and #2 (timing) shipped in `4a49e3f`, live-verified 2026-06-08. Only issue #3 (deck mismatch on poster) remains, and is now narrow/latent.
+**Priority:** Low (downgraded from High) — the anonymous trigger is closed; the remaining path needs login + an explicit tap + share-without-reload.
 **Reported:** 2026-05-14
+
+**Verification + closure note (2026-06-08):** Confirmed against the deployed `js/reading.js` bundle (Chrome DevTools MCP). Commit `4a49e3f` (2026-05-15, "fix(rewards): auth gate + post-render timing on deck unlock popup — BUG-016") resolved the first two issues:
+- **Issue #1 (auth gate) — FIXED.** `js/reading.js:2781-2782` now wraps the popup in `const currentUser = await getCurrentUser(); if (currentUser) { … showDeckRewardPopup … }`. A logged-out user no longer gets the popup at all. (The reported `reading.js:2606` line ref is stale; the trigger now lives at ~L2780.)
+- **Issue #2 (timing) — FIXED.** The popup now fires after `renderDailyDetails()` renders the result, inside the `if (didCount)` block via `setTimeout(…, 300)` — post-render, not mid-draw.
+- **Issue #3 (deck mismatch) — STILL OPEN (latent).** The authed "Use this deck now" handler at `js/deck-reward.js:278` still calls `setActiveDeck(deck.id)` synchronously with no result-page card-back repaint. So a *logged-in* user who taps it and then generates a poster **without reloading** can still get a result/poster deck mismatch. Much narrower than filed (requires session + explicit tap + share-before-reload). This is the same "post-switch repaint" gap noted in CLAUDE.md's deck-switcher backlog item — fix is a `repaintCardBacks()` after `setActiveDeck`, or defer the switch to next page load. Anonymous users hit the "Sign in to claim" CTA instead, which does not call `setActiveDeck`, so the original anonymous mismatch path is closed.
+
+Remaining work below applies to **issue #3 only**.
 
 ### Symptom
 
@@ -742,9 +749,11 @@ Three separate fix points: (1) auth gate in the daily reading completion path, (
 
 ## BUG-017 — 3rd card missing purple glow on selection in Ask a Question mode
 
-**Status:** Reported, not yet verified or triaged.
+**Status:** Selection logic verified sound (2026-06-08); the deferred-paint symptom does NOT reproduce in Chrome — it is an iOS-Safari compositing quirk. Needs a real-device/Simulator pass; no logic fix required.
 **Priority:** Medium — visual feedback gap, not blocking functionality.
 **Reported:** 2026-05-14
+
+**Verification note (2026-06-08):** Reproduced the 3-card Story flow on the live site at emulated iPhone 390×844 (Chrome DevTools MCP): shuffled, selected 3 cards including a bottom-row 3rd pick. **All three selected cards — including the 3rd — receive the identical purple glow** (`is-selected` + `box-shadow: rgba(198,183,255,0.95) 0 0 0 4px`) and it paints correctly in Chrome (screenshot confirmed). So the selection logic and CSS are correct. The "3rd glow deferred until scroll" symptom is consistent with the bug's own hypothesis — a GPU-compositing deferral specific to **iOS Safari** (likely the 3rd card below the fold when selected) — and cannot be reproduced in Chrome's rendering engine. Fix when revisited is a compositing nudge (`transform: translateZ(0)` / `will-change: transform` / `contain: paint`) on the card-slot, verifiable only on a real iPhone or the iOS Simulator — not a JS selection-logic change. Note: the live board is `.card-slot`-based (`js/main.js setupBoard`), so the "files likely involved" `js/reading.js` ref below is partly stale for the selection wiring.
 
 ### Symptom
 
@@ -894,7 +903,7 @@ Fix #1 (caller-level cross-deck face fallback), applied 2026-06-04 to the readin
 
 ## BUG-021 — Cold-load: daily board blank + reading "stuck" until the 4.6 MB cards.json downloads
 
-**Status:** Reproduced headless + fixed same session (manifest split + background prefetch). On-device retest pending.
+**Status:** Main bug fixed (manifest split + background prefetch, 2026-06-07). Dropped-tap **tail fixed 2026-06-08** (`1c866d8`). Remaining open item: the 4.6 MB `cards.json` payload cut. On-device retest pending.
 **Priority:** High (free-core: board unusable / reading appears broken on cold loads, esp. mobile/incognito)
 **Reported:** 2026-06-07
 
@@ -915,7 +924,7 @@ Both the board (`loadTarotManifest`) and the reading page (`loadTarotData`) bloc
 ### Still open / follow-ups
 
 - The full `cards.json` is still 4.6 MB raw — worth investigating a real size reduction (per-language or per-card split) so even an un-prefetched reading is fast. Background prefetch is a cache-warm, not a payload cut.
-- Minor: tapping a card during the board's post-data re-render can miss (selection doesn't stick) — a smaller timing artifact of the renderDaily multi-render; not addressed here.
+- ~~Minor: tapping a card during the board's post-data re-render can miss (selection doesn't stick) — a smaller timing artifact of the renderDaily multi-render; not addressed here.~~ **FIXED 2026-06-08 (`1c866d8`).** Root cause: `init()` renders the daily board twice (initShell pre-data → all slots cardless/`is-hidden`, then the manifest `.then()` rebuilds with data, wiping the DOM). An early tap toggled `is-selected` on a cardless slot (`cards[i]` undefined → contributed nothing) and was discarded by the rebuild. Fix: guarded `setupBoard`'s slot `onclick` with `if (!cards[i]) return;` so an early tap is a clean no-op until the card is dealt. Verified on localhost (Slow 3G, iPhone 390×844): early tap → `card-slot is-hidden` (no `is-selected`); post-load tap → `card-visible is-selected`, 1/1.
 - Minor: `LocalNotifications.then()` throws an uncaught `CapacitorException` on web (a Capacitor plugin called in a browser context) — pre-existing, non-fatal; file separately if it matters.
 
 ### Files involved
