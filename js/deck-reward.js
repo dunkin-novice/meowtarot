@@ -6,7 +6,7 @@
  * Self-contained DOM injection; no auto-dismiss (user action required).
  */
 
-import { setActiveDeck, markDeckRewardSeen, hasSeenDeckReward } from './data.js';
+import { markDeckRewardSeen, hasSeenDeckReward } from './data.js';
 import { translations } from './common.js';
 import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
@@ -276,7 +276,16 @@ export function showDeckRewardPopup(deck, lang = 'en') {
   if (primaryBtn) {
     if (isAuthed) {
       primaryBtn.addEventListener('click', () => {
-        try { setActiveDeck(deck.id); } catch (_) { /* swallow */ }
+        // BUG-016 #3: defer the active-deck switch instead of flipping it live
+        // on the result page. Switching mid-session desynced the already-
+        // rendered result (drawn deck) from the share poster, which reads the
+        // live active deck at generation time. Routing through the same
+        // pending-claim mechanism the unauth path uses keeps the current
+        // reading + its poster on the deck it was drawn with; auth.js applies
+        // the pending deck on the next page load (onAuthStateChange), so the
+        // new deck takes effect from the user's next reading onward. (Restyling
+        // the on-screen reading on switch is a deferred future feature.)
+        try { localStorage.setItem('meowtarot_pending_deck_claim', deck.id); } catch (_) { /* swallow */ }
         markDeckRewardSeen(deck.id);
         dismiss();
       }, { once: true });
