@@ -701,16 +701,16 @@ Decision required between (a)/(b)/(c) before any change — each has different i
 
 ## BUG-016 — Deck unlock popup fires for unauthenticated users with wrong deck on poster
 
-**Status:** Mostly fixed — issues #1 (auth gate) and #2 (timing) shipped in `4a49e3f`, live-verified 2026-06-08. Only issue #3 (deck mismatch on poster) remains, and is now narrow/latent.
-**Priority:** Low (downgraded from High) — the anonymous trigger is closed; the remaining path needs login + an explicit tap + share-without-reload.
+**Status:** Closed — all three issues addressed. #1 (auth gate) + #2 (timing) shipped `4a49e3f` (live-verified 2026-06-08); #3 (deck mismatch on poster) fixed `ecbcd7d` (2026-06-09).
+**Priority:** Low.
 **Reported:** 2026-05-14
 
 **Verification + closure note (2026-06-08):** Confirmed against the deployed `js/reading.js` bundle (Chrome DevTools MCP). Commit `4a49e3f` (2026-05-15, "fix(rewards): auth gate + post-render timing on deck unlock popup — BUG-016") resolved the first two issues:
 - **Issue #1 (auth gate) — FIXED.** `js/reading.js:2781-2782` now wraps the popup in `const currentUser = await getCurrentUser(); if (currentUser) { … showDeckRewardPopup … }`. A logged-out user no longer gets the popup at all. (The reported `reading.js:2606` line ref is stale; the trigger now lives at ~L2780.)
 - **Issue #2 (timing) — FIXED.** The popup now fires after `renderDailyDetails()` renders the result, inside the `if (didCount)` block via `setTimeout(…, 300)` — post-render, not mid-draw.
-- **Issue #3 (deck mismatch) — STILL OPEN (latent).** The authed "Use this deck now" handler at `js/deck-reward.js:278` still calls `setActiveDeck(deck.id)` synchronously with no result-page card-back repaint. So a *logged-in* user who taps it and then generates a poster **without reloading** can still get a result/poster deck mismatch. Much narrower than filed (requires session + explicit tap + share-before-reload). This is the same "post-switch repaint" gap noted in CLAUDE.md's deck-switcher backlog item — fix is a `repaintCardBacks()` after `setActiveDeck`, or defer the switch to next page load. Anonymous users hit the "Sign in to claim" CTA instead, which does not call `setActiveDeck`, so the original anonymous mismatch path is closed.
+- **Issue #3 (deck mismatch) — FIXED 2026-06-09 (`ecbcd7d`).** Root cause was not a missing repaint — nothing pinned the deck. The result page renders once with `getActiveDeckId()` and the poster reads the live active deck at generation time, so the authed "Use this deck now" calling `setActiveDeck()` mid-session split the two. Fix: the authed claim now writes `meowtarot_pending_deck_claim` (the same mechanism the unauth path uses) instead of flipping the live deck; `getActiveDeckId` reads only `meowtarot_active_deck`, so the current reading + its poster stay on the deck it was drawn with, and `auth.js` (`onAuthStateChange`, L58-64) applies the pending deck on the next page load. File: `js/deck-reward.js`. **Product note:** "Use this deck now" now means "from your next reading"; restyling the on-screen reading to the new deck on tap is a deferred **future feature**. Verified: writing the pending key leaves the active deck unchanged on the current page (live-confirmed); the full logged-in popup→reload→activate round trip is code-traced (no test account).
 
-Remaining work below applies to **issue #3 only**.
+The "Suggested first session" steps below are superseded by the fix above.
 
 ### Symptom
 
