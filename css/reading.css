@@ -322,6 +322,14 @@ body[data-page='reading'] .spread-label {
   text-transform: uppercase;
 }
 
+/* The "Your takeaway" summary-box card names default to #8a719f (~4.25:1 on the
+ * near-white panel) — just under WCAG AA. Deepen the lavender a touch for ~4.8:1
+ * without changing the hue. Same specificity as the styles.css rule; reading.css
+ * loads later so this wins (styles.css stays untouched). */
+body[data-page='reading'][data-reading-mode='full'] .full-integration-box__source {
+  color: #7a6090;
+}
+
 body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-label {
   display: none; /* position is in the floating pill on Story */
 }
