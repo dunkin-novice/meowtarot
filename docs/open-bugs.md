@@ -442,8 +442,10 @@ Removing UI requires confirming no behavioral difference between "Re-draw" and b
 
 ## BUG-010 — /today page unscrollable, image too large
 
-**Status:** Reported, URL needs verification.
+**Status:** Closed — `/today/` redirected to the homepage 2026-06-09 (`2026-06-09-today-redirect`). Not fixed in place; the orphan page was retired per founder decision.
 **Priority:** Medium (page is unusable on mobile).
+
+**Closing note (2026-06-09):** Confirmed live (Chrome DevTools MCP): `/today/` had `body { overflow-y: hidden }` + fixed viewport height, and the card image rendered at 280×600 filling the viewport, so the streak + meaning content was clipped below the fold and unreachable. Since the bottom-nav "Today" tab already routes to the homepage (`9c1231b`), the page was an orphan reachable only by direct URL. Per founder decision, **redirected** rather than fixed: `/today/` → `/`, `/th/today/` → `/th/index.html` via client-side meta-refresh + `location.replace` (GitHub Pages has no server-side 301s), `noindex,follow` + canonical to target, and both URLs removed from `sitemap.xml`. Files: `today/index.html`, `th/today/index.html`, `sitemap.xml`. Verified both redirects land on the homepage.
 **Reported:** 2026-05-03.
 
 ### Symptom
