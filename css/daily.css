@@ -100,6 +100,15 @@ body[data-page='daily'] .daily-shell {
     display: flex;
     flex-direction: column;
   }
+  /* The fixed .site-header is display:none on mobile (bottom-nav.css hides it
+   * ≤768px), so the base padding-top that clears a 64px header is dead space
+   * here. Reclaim it — that ~66px is most of what was pushing Continue below
+   * the floating bottom nav on shorter phones. Selector carries .page-shell +
+   * .board-page (both on this element) to reach (0,4,1), beating styles.css's
+   * body[data-page='daily'] .page-shell.board-page padding (0,3,1). */
+  body.daily-shell-active .page-shell.board-page.daily-shell {
+    padding-top: 14px;
+  }
   body.daily-shell-active .daily-state--board {
     flex: 1 1 auto;
     min-height: 0;
@@ -125,7 +134,9 @@ body[data-page='daily'] .daily-shell {
     margin: 8px auto 0;
     align-content: center;
   }
-  /* Size cards by ROW HEIGHT (not a fixed width) so they shrink to fit. */
+  /* Size cards by ROW HEIGHT (not a fixed width) so they shrink to fit.
+   * (Effective card max-width is set by the §card-grid rule below, which wins
+   * on source order — the responsive clamp lives there.) */
   body.daily-shell-active .daily-state--board #daily-board .card-slot {
     height: 100%;
     width: auto;
@@ -640,7 +651,12 @@ body[data-page='daily'] .daily-state--board #daily-board.card-board--daily {
 body[data-page='daily'] .daily-state--board #daily-board .card-slot {
   position: relative;
   width: 100%;
-  max-width: 64px;
+  /* Width cap scales with viewport height so the 12-card grid shrinks on short
+   * phones. A fixed 64px cap pinned the grid at ~345px, which (with the chrome
+   * + the floating bottom nav) pushed Continue below the fold / behind the nav.
+   * clamp() keeps full 64px cards on tall screens and shrinks them on short
+   * ones so the whole board + Continue fits above the nav with no scroll. */
+  max-width: clamp(38px, calc((100dvh - 384px) / 6), 64px);
   height: auto;
   max-height: none;
   aspect-ratio: 1568 / 2720;
