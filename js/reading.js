@@ -4094,7 +4094,12 @@ function configureSaveButton(dict = translations[state.currentLang]) {
     saveBtn.removeEventListener('click', saveButtonHandler);
   }
 
-  if (state.mode === 'daily' || state.mode === 'question') {
+  if (state.mode === 'daily' || state.mode === 'question' || state.mode === 'full') {
+    // Full (Celtic Cross) now shares via the poster flow like daily/question —
+    // the share/poster pipeline fully supports the celtic payload
+    // (isCelticCrossPosterPayload / renderCelticCrossPoster). It used to fall
+    // through to the bare canvas "Save image" download, which skipped the
+    // reading-specific og:image poster (hard rule #8).
     saveBtn.textContent = state.currentLang === 'th' ? 'แชร์' : 'Share';
     saveButtonHandler = () => openSharePage();
   } else if (isMobile()) {
