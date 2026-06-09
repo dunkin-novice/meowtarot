@@ -303,8 +303,12 @@ body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-caption 
 body[data-page='reading'] .spread-orientation {
   font-family: var(--mt-font-body);
   font-size: 10.5px;
-  letter-spacing: 0.3em;
-  color: var(--mt-gold-deep);
+  letter-spacing: 0.22em;
+  /* --mt-gold-deep (#d49a2c) on the near-white card is only ~2.5:1 — well
+   * below WCAG AA, the worst-reading text on the result page. Use a deeper
+   * gold scoped to this label (not the shared token) for ~5:1, and ease the
+   * heavy 0.3em tracking a touch for legibility. */
+  color: #8d6a14;
   font-weight: 700;
   text-transform: uppercase;
 }
