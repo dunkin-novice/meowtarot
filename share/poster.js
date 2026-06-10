@@ -30,8 +30,8 @@ const PRESETS = {
 };
 
 const FULL_POSITION_LABELS = {
-  en: { present: 'The Present', challenge: 'The Challenge', past: 'The Past', future: 'The Future', above: 'Above', below: 'Below', advice: 'Advice', external: 'External Influences', hopes: 'Hopes & Fears', outcome: 'Outcome' },
-  th: { present: 'สถานการณ์ปัจจุบัน', challenge: 'ความท้าทาย', past: 'อดีต', future: 'อนาคต', above: 'เป้าหมาย', below: 'รากฐาน', advice: 'คำแนะนำ', external: 'อิทธิพลภายนอก', hopes: 'ความหวังและความกลัว', outcome: 'ผลลัพธ์' },
+  en: { present: 'The Present', challenge: 'The Obstacle', past: 'The Past', future: 'The Future', above: 'Above', below: 'Below', advice: 'Advice', external: 'External Influences', hopes: 'Hopes & Fears', outcome: 'Outcome' },
+  th: { present: 'สถานการณ์ปัจจุบัน', challenge: 'อุปสรรค', past: 'อดีต', future: 'อนาคต', above: 'เป้าหมาย', below: 'รากฐาน', advice: 'คำแนะนำ', external: 'อิทธิพลภายนอก', hopes: 'ความหวังและความกลัว', outcome: 'ผลลัพธ์' },
 };
 
 const CELTIC_CROSS_POSITIONS = ['present', 'challenge', 'above', 'past', 'below', 'future', 'advice', 'external', 'hopes', 'outcome'];

@@ -208,7 +208,7 @@ export const translations = {
     celticCrossHoldEnergy: 'Hold this energy',
     celticCrossAskYourself: 'Ask yourself',
     positionPresent: 'The Present',
-    positionChallenge: 'The Challenge',
+    positionChallenge: 'The Obstacle',
     positionPast: 'The Past',
     positionFuture: 'The Future',
     positionAbove: 'Above',
