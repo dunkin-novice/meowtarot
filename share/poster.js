@@ -630,6 +630,25 @@ function mergeCelticCrossCardEntries(payload = {}, cardEntries = []) {
   });
 }
 
+function firstSentenceForNarration(text) {
+  const t = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  const match = t.match(/^[\s\S]*?[.!?](?=\s|$)/);
+  return (match ? match[0] : t).trim();
+}
+
+// Weave the key Celtic positions (Present, the Obstacle/Crossing, Advice,
+// Outcome) into one flowing reading — no position labels, no card names. Each
+// position contributes its lead sentence so the result stays short enough to
+// render large and legible on the poster (replaces the old three cramped
+// low-contrast insight panels).
+function buildCelticNarration(insights = []) {
+  return insights
+    .map((insight) => firstSentenceForNarration(insight && insight.body))
+    .filter(Boolean)
+    .join(' ');
+}
+
 export function resolveCelticCrossPosterContent(payload = {}, cardEntries = []) {
   const lang = normalizePosterLanguage(payload?.lang || 'en');
   const strings = CELTIC_CROSS_POSTER_STRINGS[lang] || CELTIC_CROSS_POSTER_STRINGS.en;
@@ -651,9 +670,11 @@ export function resolveCelticCrossPosterContent(payload = {}, cardEntries = []) 
   };
 
   const present = buildInsight('present');
+  const challenge = buildInsight('challenge');
   const advice = buildInsight('advice');
   const outcome = buildInsight('outcome');
   const heroTitle = normalizeStandaloneAffirmation(outcome.body, lang, strings.heroFallback);
+  const narration = buildCelticNarration([present, challenge, advice, outcome]);
 
   return {
     lang,
@@ -661,8 +682,10 @@ export function resolveCelticCrossPosterContent(payload = {}, cardEntries = []) 
     heroTitle,
     subtitle: strings.subtitle,
     present,
+    challenge,
     advice,
     outcome,
+    narration,
     positionedCards,
   };
 }
@@ -1367,45 +1390,70 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.restore();
   };
 
-  const drawInsights = () => {
-    const order = insights.heroFirst
-      ? [
-        { insight: content.outcome, variant: 'outcome' },
-        { insight: content.present, variant: 'present' },
-        { insight: content.advice, variant: 'advice' },
-      ]
-      : [
-        { insight: content.present, variant: 'present' },
-        { insight: content.advice, variant: 'advice' },
-        { insight: content.outcome, variant: 'outcome' },
-      ];
+  // Single readable narration block (replaces the old 3 cramped low-contrast
+  // insight panels). One flowing reading — Present -> Obstacle -> Advice ->
+  // Outcome — large, full-contrast serif, no labels or card names.
+  const drawNarration = () => {
+    const text = content.narration;
+    if (!text) return;
+    const boxX = insights.x;
+    const boxY = insights.y;
+    const boxW = insights.w;
+    const boxH = Math.max(insights.rowH, footerY - insights.y - 48);
 
-    if (insights.direction === 'column') {
-      order.forEach((item, index) => {
-        drawInsightPanel({
-          x: insights.x,
-          y: insights.y + index * (insights.rowH + insights.gap),
-          w: insights.w,
-          h: item.variant === 'outcome' ? insights.rowH + 8 : insights.rowH,
-          ...item,
-        });
-      });
-      return;
+    const grad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+    grad.addColorStop(0, 'rgba(255,255,255,0.10)');
+    grad.addColorStop(1, 'rgba(255,255,255,0.05)');
+    fillRoundedRect(ctx, boxX, boxY, boxW, boxH, 26, grad);
+    strokeRoundedRect(ctx, boxX, boxY, boxW, boxH, 26, 'rgba(255,255,255,0.16)', 1.25);
+    fillRoundedRect(ctx, boxX, boxY, 4, boxH, 3, 'rgba(201, 147, 58, 0.9)');
+
+    // quiet gold ornament (line + diamond) instead of a text label
+    const ornY = boxY + 42;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(201, 147, 58, 0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(boxX + 44, ornY);
+    ctx.lineTo(boxX + 96, ornY);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(201, 147, 58, 0.92)';
+    ctx.beginPath();
+    ctx.moveTo(boxX + 108, ornY - 5);
+    ctx.lineTo(boxX + 113, ornY);
+    ctx.lineTo(boxX + 108, ornY + 5);
+    ctx.lineTo(boxX + 103, ornY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    const padX = 44;
+    const bodyTop = boxY + 92;
+    const availW = boxW - padX * 2;
+    const availH = boxH - (bodyTop - boxY) - 36;
+    const maxFont = preset === 'square' ? 27 : (preset === 'portrait' ? 29 : 33);
+    const minFont = preset === 'square' ? 20 : 23;
+    // Shrink-to-fit: the reading length varies per spread, so step the font down
+    // until the whole narration fits — never cut a sentence mid-word.
+    let fontSize = maxFont;
+    let lineHeight = Math.round(fontSize * 1.46);
+    let lines = [];
+    for (; fontSize >= minFont; fontSize -= 1) {
+      ctx.font = `500 ${fontSize}px "Cormorant Garamond", "Noto Serif Thai", serif`;
+      lineHeight = Math.round(fontSize * 1.46);
+      lines = wrapTextLines(ctx, text, availW);
+      if (lines.length * lineHeight <= availH) break;
     }
-
-    if (insights.direction === 'portrait-grid') {
-      const halfW = (insights.w - insights.gap) / 2;
-      drawInsightPanel({ x: insights.x, y: insights.y, w: halfW, h: insights.rowH, ...order[0] });
-      drawInsightPanel({ x: insights.x + halfW + insights.gap, y: insights.y, w: halfW, h: insights.rowH, ...order[1] });
-      drawInsightPanel({ x: insights.x, y: insights.y + insights.rowH + insights.gap, w: insights.w, h: insights.rowH + 8, ...order[2] });
-      return;
-    }
-
-    const sideW = Math.max(180, Math.round((insights.w - insights.gap * 2) * 0.3));
-    const outcomeW = insights.w - sideW * 2 - insights.gap * 2;
-    drawInsightPanel({ x: insights.x, y: insights.y, w: sideW, h: insights.rowH, ...order[0] });
-    drawInsightPanel({ x: insights.x + sideW + insights.gap, y: insights.y, w: sideW, h: insights.rowH, ...order[1] });
-    drawInsightPanel({ x: insights.x + sideW * 2 + insights.gap * 2, y: insights.y, w: outcomeW, h: insights.rowH, ...order[2] });
+    const maxLines = Math.max(3, Math.floor(availH / lineHeight));
+    ctx.fillStyle = '#f7f4ee';
+    ctx.font = `500 ${fontSize}px "Cormorant Garamond", "Noto Serif Thai", serif`;
+    lines.slice(0, maxLines).forEach((line, index) => {
+      ctx.fillText(line, boxX + padX, bodyTop + index * lineHeight);
+    });
+    ctx.restore();
   };
 
   drawHeader();
@@ -1414,7 +1462,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     // Keep the implementation canvas-based while mirroring the product's poster--celtic-cross layout structure.
     await drawSingleCard(item);
   }
-  drawInsights();
+  drawNarration();
 
   ctx.save();
   ctx.textAlign = 'center';
