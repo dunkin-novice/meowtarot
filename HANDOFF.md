@@ -1,6 +1,6 @@
 # MeowTarot — Session Handoff / Where We Left Off
 
-**Last updated:** 2026-06-07
+**Last updated:** 2026-06-10
 **Branch:** `main` (in sync with `origin/main`, everything below is pushed & live)
 **Deploy:** web = GitHub Pages from **canonical repo root** (`CNAME` present). `www/` + `ios/` are the Capacitor iOS mirrors only — the web does NOT serve from them.
 
@@ -10,56 +10,78 @@ redesign reference) — still useful background, but this file is current.
 
 ---
 
-## 1. What shipped this session (all pushed to `main`, live)
+## 1. What shipped this session (2026-06-08 → 06-10, all pushed to `main`, live)
+
+(Prior session's ships — Section-11 daily poster `7aecc92`, cold-load `c74e039`, shuffle-freeze `68cdad0`, daily-fit `18c8add` — are in `docs/log.jsonl`.)
 
 | Commit | What |
 |---|---|
-| `7aecc92` | **Share Poster Section 11 (ScreenPoster)** — daily poster rebuilt to the design's ceremonial italic-serif layout (wordmark + gold line, render-time date eyebrow, card + warm aura, "Today's Card · Upright" badge, big italic card name, gold diamond, full-reading tagline). Card name renders in **English in both locales** (user direction). Loads Cormorant Garamond + Noto Serif Thai. `share/poster.js`, `share/index.html`. |
-| `7aecc92` | **Cross-deck face fallback (BUG-020)** — if the active deck's card face fails, fall back to the default deck (moonmallow) face before any card back, at the callers (NOT `asset-resolver.js`). `js/reading.js`, `share/poster.js`. |
-| `68cdad0` | **Shuffle freeze fix** — `#daily-shuffle` bound with `onclick` (not `addEventListener`) so locale-toggle re-renders don't stack listeners → no more frozen-at-center. `js/main.js`. |
-| `18c8add` | **Daily board fits one screen** — `@media ≤640px` + `.daily-shell-active`: 100dvh flex column, grid `repeat(3,1fr)` sized by row height, so all 12 cards + Continue fit with no scroll. `css/daily.css`. |
-| `c74e039` | **Cold-load perf (BUG-021)** — board now loads a ~28 KB `data/cards-manifest.json` instead of the 4.6 MB `cards.json`; `renderDaily` background-prefetches the full deck during selection so the reading loads from cache. New `scripts/generate-cards-manifest.mjs` + `generate-seo.yml` auto-regen. `js/data.js`, `js/main.js`. |
+| verify | **BUG-001 & BUG-004 closed** (stale records) — browser-verified live: `reading.html?l=th` already renders Thai (fix shipped earlier in `b9d1700`); Ask-a-question **"Other"** topic already renders per-card meanings by design (`reading-helpers.js:181` maps `other` → `standalone_*` fields). |
+| `1c866d8` | **Dropped-tap fix (BUG-021 tail)** — daily board renders twice (initShell pre-data → all slots cardless, then manifest `.then()` rebuild). An early tap toggled `is-selected` on a cardless slot then got wiped → "missed". Guarded `setupBoard` onclick: `if (!cards[i]) return`. `js/main.js`. |
+| `ecbcd7d` | **Deck-mismatch fix (BUG-016 #3)** — authed "Use this deck now" now writes `meowtarot_pending_deck_claim` (applied next load by `auth.js`) instead of `setActiveDeck()` live, so result page + poster stay on the deck the reading was drawn with. `js/deck-reward.js`. (#1 auth-gate + #2 timing were already fixed in `4a49e3f`.) |
+| `d764d2f` | **Daily Continue clears the bottom nav** — reclaimed ~80px dead top padding (site-header is `display:none` on mobile) + card `max-width: clamp(38px, calc((100dvh-384px)/6), 64px)` so the 12-card grid shrinks on short phones; Continue clears the floating nav with NO scroll (verified 600/667/844px). `css/daily.css`. |
+| (deck data) | **Reward schedule re-spaced** — streak-unlock days `1/3/7/14/30/60/100/180/365` → **`7/14/21/28/45/60/75/100/125`**. `js/data.js`. |
+| `/today/` | **`/today/` redirected — BUG-010 closed** — retired unscrollable orphan; EN→`/`, TH→`/th/index.html` (meta-refresh + `location.replace`); removed from `sitemap.xml`. `today/index.html`, `th/today/index.html`. |
+| contrast | **Reading-result AA contrast** — gold "Upright/Reversed" tag `#d49a2c`→`#8d6a14` (2.5→5:1); summary-box card names `#8a719f`→`#7a6090` (4.25→5.4:1). `css/reading.css`. |
+| `f395fb9` | **Celtic Cross shares via poster** — full mode's "Save image" → **"Share"** → `openSharePage()` (poster flow) like daily/question. `js/reading.js`. Plus a non-blocking toast for the oversized-payload fallback (was a blocking `alert()` on every Celtic share). |
+| poster | **Celtic poster narration redesign** — replaced 3 cramped low-contrast insight panels with ONE flowing narration (Present → Obstacle → Advice → Outcome, lead sentences, no labels/card names), large full-contrast serif, gold ornament, shrink-to-fit; TH length-capped (Thai has no `.!?` sentence breaks). Removed dead `drawInsightPanel`. `share/poster.js`. |
+| labels | **"The Challenge" → "The Obstacle" / "อุปสรรค"** aligned across reading result (`js/common.js`) + poster (`share/poster.js` `FULL_POSITION_LABELS`), EN+TH (fixed a poster-vs-reading TH mismatch where the poster still said `ความท้าทาย`). |
 
 `docs/log.jsonl` has the full entries (auto-appended on push from `LOG_DRAFT.jsonl`).
+Bug records updated in `docs/open-bugs.md`: BUG-001/004/010/016/021 closed-or-progressed; BUG-006/017 verified Safari-only.
 
 ---
 
 ## 2. NEXT — open tasks (priority order)
 
-### A. cards.json payload cut (BUG-021 follow-up) — biggest remaining win
-The background prefetch is a **cache-warm, not a payload cut**. `cards.json` is
-still **4.6 MB raw**. A reading reached without the prefetch (deep link, very
-fast tap before idle fires) is still slow. Real fix: split into **per-language**
-(`cards-en.json` / `cards-th.json`) or **per-card** files so the reading loads
-only what it needs. Would make the reading instant even cold. Mirror the
-manifest approach: a generator script + `generate-seo.yml` step + graceful
-fallback + `loadTarotData` rewire.
+### A. On-device / real-art poster QA — Dunkin (do this first)
+The Celtic poster **narration redesign** + the **"Obstacle" labels** were verified
+only via a local canvas render-harness (`share/poster-preview/celtic-harness.html`
+— imports `buildPoster`, renders to a blob, screenshot; **CDN card art is
+CORS-blocked on localhost** so it shows fallback gradients — the *text* renders,
+which is what was changed). Needs a real-device pass with actual card art:
+narration legible + complete, gold ornament, "The Obstacle"/"อุปสรรค" labels.
 
-### B. Cross-deck face fallback for the OTHER poster modes (BUG-020 follow-up)
-`c74e039`/`7aecc92` only protect the **daily** poster + reading page. The
-**question / story / celtic** poster modes have the same gap — other
-`resolvePosterCardImageSources` callers in `share/poster.js` (~lines 1264, 1926,
-2046, 2549). Add the same `toDefaultDeckFaceUrl()` fallback to their fallback chains.
+### B. Safari-only UX bugs — need a real iPhone (do NOT reproduce in Chrome)
+Both verified logic/CSS-sound in Chrome; the bug is iOS Safari only.
+- **BUG-006** — shuffle button stays darkened after tap (Safari `:active` retention).
+  Likely fix: `-webkit-tap-highlight-color: transparent` + stop relying on `:active`
+  for the pressed look (or `btn.blur()` on tap).
+- **BUG-017** — 3rd-card selection glow paints late (Safari compositing deferral).
+  Likely fix: `transform: translateZ(0)` / `will-change` / `contain: paint` on
+  `.card-slot.is-selected`.
 
-### C. Two minor bugs found while diagnosing BUG-021 (recorded, not fixed)
-- Tapping a card **during the board's post-data re-render** can miss (selection
-  doesn't stick). Tied to `renderDaily` running twice on load (pre-data + post-data).
-- `LocalNotifications.then()` throws an uncaught `CapacitorException` on web
-  (Capacitor plugin called in a browser context). Pre-existing, non-fatal.
+### C. cards.json payload cut (BUG-021 follow-up) — biggest perf win
+Background prefetch is a **cache-warm, not a payload cut**. `cards.json` is still
+**4.6 MB raw**; a reading reached without the prefetch (deep link / very fast tap)
+is still slow. Split into **per-language** (`cards-en.json`/`cards-th.json`) or
+per-card files: generator script + `generate-seo.yml` step + graceful fallback +
+`loadTarotData` rewire.
 
-### D. Original backlog (from `REDESIGN_HANDOFF.md` §2, not started)
-- **TH homepage parity** — `th/index.html` still serves the old Phase-4 chooser; mirror the Phase-5 EN homepage with Thai copy.
-- **`/today/` decision** — dead Phase-4 page reachable only by direct URL; recommend a redirect to `/index.html`.
-- **Celtic Cross position-label audit** — verify Phase-4 vocab matches the design's "Situation / Crossing / Crown…" naming.
+### D. Other poster modes
+- **Question (3-card) poster readability** — does it have the same cramped/low-contrast
+  text the Celtic poster had (now fixed)? Render it (the harness pattern) and check.
+- **Cross-deck face fallback for question/full/celtic posters (BUG-020 follow-up)** —
+  only the daily poster + reading page have it; other `resolvePosterCardImageSources`
+  callers in `share/poster.js` still fall back to a card *back*.
+
+### E. Backlog / nits
 - **`/tarot-card-meanings/`** — Phase-4 styling, big SEO surface, needs its own design pass.
+- Footer "Start … Reading" links ~4.25:1 (just under AA) — sitewide nit.
+- `LocalNotifications.then()` uncaught `CapacitorException` on web — pre-existing, non-fatal.
+- Dead-code/cleanup: `insightTitles` in `share/poster.js` is now unused by the narration.
+
+**Done since the 2026-06-07 handoff** (so don't re-flag): `/today/` redirect · position-label
+audit → "Obstacle" · TH homepage parity (was already shipped) · daily-board fit · BUG-016 #1–#3.
 
 ---
 
 ## 3. Verification still pending (on-device, by Dunkin)
-- **Poster** — real Canvas QA on a phone (I only verified an HTML/CSS mock): the 132px name, full-reading tagline wrapping, TH shows "The Star" not "ดาว".
-- **Shuffle** — toggle EN/TH a couple times then shuffle: should not freeze.
-- **Daily board fit** — whole board + Continue visible without scroll; cards still comfortably tappable on short phones (capped at 345px grid).
-- **Cold-load (BUG-021)** — fresh incognito / cleared cache: board appears fast, reading loads without long "Please wait a moment…".
+- **Celtic poster** — narration legible/complete + "The Obstacle"/"อุปสรรค" labels, with real card art (see §2A).
+- **Safari-only** — shuffle-button stuck state (BUG-006), 3rd-card glow paint (BUG-017) (see §2B).
+- **Daily Continue-above-nav** — short phone (~≤667px effective): whole board + Continue visible, no scroll, cards tappable.
+- **Cold-load (BUG-021)** — fresh incognito: board appears fast, reading loads without a long "Please wait…", and an eager early tap is cleanly ignored (no phantom selection).
+- **Card-name in TH** — poster/result still resolve the **English** card name on TH surfaces (interim user direction).
 
 ---
 
@@ -72,13 +94,16 @@ fallback + `loadTarotData` rewire.
 - **Headless debugging (how BUG-021 was diagnosed):** system Chrome is at `/Applications/Google Chrome.app`. Recreate the harness:
   `mkdir -p /tmp/mt-debug && cd /tmp/mt-debug && npm init -y && npm i puppeteer-core@23`,
   then `puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true })`, `createBrowserContext()` for a fresh profile, `page.setCacheEnabled(false)`, and CDP `Network.emulateNetworkConditions` to throttle and expose cold-load races. (The `/tmp/mt-debug` scripts from this session do NOT survive a terminal restart.)
-- **Visual previews** live in `share/poster-preview/` (poster `index.html`, daily-fit `daily-fit.html`) — dev artifacts, served via `python3 -m http.server 8765` from repo root, NOT shipped.
+- **Chrome DevTools MCP (NEW — 2026-06-07):** a persistent `chrome-devtools` MCP server is now installed at **user scope** (`~/.claude.json`) — it **supersedes the ad-hoc `/tmp/mt-debug` puppeteer-core harness above** for headless debugging, cold-load repro, screenshots, console/network inspection, and Lighthouse. 29 tools (`navigate_page`, `take_screenshot`, `list_network_requests`, `list_console_messages`, `performance_start_trace`, `lighthouse_audit`, …); drives a fresh isolated Chrome. A second `chrome-mine` entry reuses a persistent logged-in profile (`~/.chrome-mcp-profile`). **Requires a Claude Code restart to load the tools into a session.** First high-value use: browser-verify the two unverified live-site bugs in `open-bugs.md` — **BUG-001** (`reading.html?l=th` renders EN not TH) and **BUG-004** (Ask-a-question "Other" topic drops per-card meanings). Verify-only; both have open product/rule decisions before any fix.
+- **Poster render-harness (NEW — 2026-06-10):** to verify a `share/poster.js` change without the full reading→share flow, use `share/poster-preview/celtic-harness.html` (and `question-harness.html`): they `import { buildPoster }`, feed a minimal payload (`mode:'full'`/`'question'` + card ids), render to a blob `<img>`, and set `window.__posterReady`. Serve `python3 -m http.server <port>` from repo root, navigate, wait for `__posterReady`, screenshot. **Caveat:** CDN card art is **CORS-blocked on localhost** → cards show fallback gradients, but the **text/layout renders** (enough to verify narration/labels; NOT the art). Untracked dev artifacts.
+- **chrome-devtools MCP can wedge:** if it errors "browser already running for …/chrome-profile", the instance is stuck. Killing the chrome procs (`pkill -f chrome-devtools-mcp`) also disconnects the MCP server for the rest of the session → the `mcp__chrome-devtools__*` tools vanish until a **Claude Code restart**. So do browser work in one go.
+- **Visual previews** live in `share/poster-preview/` (poster `index.html`, daily-fit `daily-fit.html`, plus the new harnesses + session screenshots) — dev artifacts, served via `python3 -m http.server` from repo root, NOT shipped.
 - **Asset base:** card art = `https://cdn.meowtarot.com/assets/<deck>/<nn>-<slug>-<orientation>.webp?v=2026-03`. Default deck = `moonmallow` (`getActiveDeckId()`). boba-oracle is a COMPLETE deck (an earlier "incomplete" claim was wrong — see BUG-020 correction).
 
 ---
 
 ## 5. Open bug list
-`docs/open-bugs.md` — newest: BUG-021 (cold-load, fixed this session), BUG-020 (cross-deck fallback, partially fixed). BUG-016/017/019 older.
+`docs/open-bugs.md` (source of truth). This session: **closed** BUG-001, BUG-004, BUG-010, BUG-016 (all 3 issues), BUG-021 tail; **verified Safari-only** (open, need a device) BUG-006, BUG-017. Still open: BUG-020 (cross-deck face fallback for question/full/celtic posters), BUG-021 follow-up (cards.json payload cut), BUG-018 (asset-resolver `FALLBACK_BACK_PACK` — off-limits file).
 
 ---
 
