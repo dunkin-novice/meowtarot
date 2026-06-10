@@ -630,11 +630,21 @@ function mergeCelticCrossCardEntries(payload = {}, cardEntries = []) {
   });
 }
 
-function firstSentenceForNarration(text) {
+function firstSentenceForNarration(text, maxChars = 130) {
   const t = String(text || '').replace(/\s+/g, ' ').trim();
   if (!t) return '';
+  // Prefer the first sentence (Latin sentence-final punctuation). Languages that
+  // don't end sentences with . ! ? — notably Thai — fall through to the whole
+  // string, so cap the length (breaking at a space when possible) to keep the
+  // narration short enough to render large and legible. Also guards runaway EN.
   const match = t.match(/^[\s\S]*?[.!?](?=\s|$)/);
-  return (match ? match[0] : t).trim();
+  let s = (match ? match[0] : t).trim();
+  if (s.length > maxChars) {
+    const cut = s.slice(0, maxChars);
+    const lastSpace = cut.lastIndexOf(' ');
+    s = (lastSpace > maxChars * 0.6 ? cut.slice(0, lastSpace) : cut).trim() + '…';
+  }
+  return s;
 }
 
 // Weave the key Celtic positions (Present, the Obstacle/Crossing, Advice,
@@ -1345,49 +1355,6 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
 
     drawCardMeta({ item, layoutBox, isHeroPosition });
     emitFullCardRenderProbe({ position: item.position, ok: Boolean(image), preset });
-  };
-
-  const drawInsightPanel = ({ x, y, w, h, insight, variant }) => {
-    const gradient = ctx.createLinearGradient(x, y, x, y + h);
-    if (variant === 'outcome') {
-      gradient.addColorStop(0, 'rgba(201, 147, 58, 0.16)');
-      gradient.addColorStop(1, 'rgba(255,255,255,0.08)');
-    } else {
-      gradient.addColorStop(0, 'rgba(255,255,255,0.10)');
-      gradient.addColorStop(1, 'rgba(255,255,255,0.05)');
-    }
-    fillRoundedRect(ctx, x, y, w, h, variant === 'outcome' ? 26 : 22, gradient);
-    strokeRoundedRect(ctx, x, y, w, h, variant === 'outcome' ? 26 : 22, variant === 'outcome' ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.14)', 1.25);
-    fillRoundedRect(ctx, x, y, 4, h, 3, variant === 'outcome' ? 'rgba(201, 147, 58, 0.9)' : 'rgba(201, 147, 58, 0.34)');
-
-    ctx.save();
-    ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(201, 147, 58, 0.98)';
-    ctx.font = `600 ${preset === 'square' ? 11 : 12}px "Space Grotesk", sans-serif`;
-    ctx.fillText(insight.label, x + 20, y + 28);
-
-    ctx.fillStyle = '#f7f4ee';
-    const titleFont = variant === 'outcome'
-      ? (preset === 'square' ? 22 : 26)
-      : (preset === 'square' ? 16 : 19);
-    ctx.font = `700 ${titleFont}px "Space Grotesk", sans-serif`;
-    const titleWidth = w - 40;
-    const titleY = y + 58;
-    const titleLines = wrapTextLines(ctx, insight.title, titleWidth, variant === 'outcome' ? 2 : 2);
-    titleLines.forEach((line, index) => {
-      ctx.fillText(line, x + 20, titleY + index * Math.round(titleFont * 1.18));
-    });
-
-    const bodyFont = variant === 'outcome'
-      ? (preset === 'square' ? 13 : 15)
-      : (preset === 'square' ? 12 : 14);
-    const bodyLineHeight = Math.round(bodyFont * (variant === 'outcome' ? 1.48 : 1.42));
-    const bodyStartY = titleY + titleLines.length * Math.round(titleFont * 1.18) + 18;
-    const maxBodyLines = Math.max(2, Math.floor((h - (bodyStartY - y) - 22) / bodyLineHeight));
-    ctx.fillStyle = variant === 'outcome' ? '#f7f4ee' : 'rgba(255,255,255,0.78)';
-    ctx.font = `500 ${bodyFont}px "Space Grotesk", sans-serif`;
-    wrapText(ctx, insight.body, x + 20, bodyStartY, titleWidth, bodyLineHeight, maxBodyLines);
-    ctx.restore();
   };
 
   // Single readable narration block (replaces the old 3 cramped low-contrast
