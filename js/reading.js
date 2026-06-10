@@ -3940,9 +3940,14 @@ async function openSharePage({ action } = {}) {
       } catch (_) {
         // ignore clipboard errors
       }
-      alert(state.currentLang === 'th'
-        ? `ข้อมูลแชร์ยาวเกินไป (${encodedLength} ตัวอักษร) ระบบจะใช้ลิงก์สำรองและคัดลอกลิงก์ให้แล้ว`
-        : `Share data is too large (${encodedLength} chars). Using fallback link and copying it for you.`);
+      // Non-blocking: the oversized-payload fallback fires on every large
+      // reading (e.g. the 10-card Celtic Cross). A blocking alert() interrupted
+      // every such share; a toast informs without stopping the flow into the
+      // share page. (encodedLength intentionally dropped from the user-facing
+      // copy — it was developer detail.)
+      showTemporaryToast(state.currentLang === 'th'
+        ? 'ลิงก์ยาวเกินไป ใช้ลิงก์สำรองและคัดลอกให้แล้ว'
+        : 'Long reading — using a backup share link (copied for you).');
     }
     window.location.href = shareUrl;
   } catch (error) {
