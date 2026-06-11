@@ -241,7 +241,9 @@ function renderPage(card, slug, mode, orientation) {
 
 function init() {
   initShell(state, null, document.body?.dataset?.page || 'card-meaning');
-  loadTarotData().then(() => {
+  // This page can render BOTH languages in one paint (seoNotes + ?lang=both),
+  // so it needs the full bilingual deck, not a single-locale slice.
+  loadTarotData('both').then(() => {
     const slug = getRequestedSlug();
     const requestedOrientation = getRequestedOrientation();
     const mode = getRequestedMode();

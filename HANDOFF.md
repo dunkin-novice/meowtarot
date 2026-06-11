@@ -1,6 +1,6 @@
 # MeowTarot — Session Handoff / Where We Left Off
 
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-11
 **Branch:** `main` (in sync with `origin/main`, everything below is pushed & live)
 **Deploy:** web = GitHub Pages from **canonical repo root** (`CNAME` present). `www/` + `ios/` are the Capacitor iOS mirrors only — the web does NOT serve from them.
 
@@ -51,12 +51,20 @@ Both verified logic/CSS-sound in Chrome; the bug is iOS Safari only.
   Likely fix: `transform: translateZ(0)` / `will-change` / `contain: paint` on
   `.card-slot.is-selected`.
 
-### C. cards.json payload cut (BUG-021 follow-up) — biggest perf win
-Background prefetch is a **cache-warm, not a payload cut**. `cards.json` is still
-**4.6 MB raw**; a reading reached without the prefetch (deep link / very fast tap)
-is still slow. Split into **per-language** (`cards-en.json`/`cards-th.json`) or
-per-card files: generator script + `generate-seo.yml` step + graceful fallback +
-`loadTarotData` rewire.
+### C. cards.json payload cut (BUG-021 follow-up) — ✅ DONE 2026-06-11 (verified, pending commit)
+Split into **per-language** decks. `scripts/generate-cards-lang.mjs` emits
+`data/cards-en.json` (1.48 MB, **−68%**) + `data/cards-th.json` (3.18 MB, **−32%**)
+as pure slices of `cards.json` (EN identity `card_name_en`/`seo_slug_en` force-kept
+in the TH slice). `loadTarotData(mode)` in `js/data.js` now fetches the current
+locale's slice (`?lang`/`/th/` aware) with **graceful fallback to full `cards.json`**;
+per-variant localStorage cache. `card-page.js` calls `loadTarotData('both')` (it
+paints both languages). `generate-seo.yml` regenerates + commits the two files.
+Browser-verified (chrome-devtools MCP): EN→`cards-en.json`, TH→`cards-th.json`,
+both→`cards.json`. **Follow-ups:** (1) backfill 12 cross-language content gaps in
+`cards.json` (celtic_cross_*, self_future, travel_past/present — one lang blank;
+slice preserves today's blank behavior). (2) iOS/www mirror sync still pending —
+native app degrades gracefully to full `cards.json` (no break, no savings) until
+`cp` + `cap sync`.
 
 ### D. Other poster modes
 - **Question (3-card) poster readability** — does it have the same cramped/low-contrast

@@ -32,11 +32,16 @@ jobs:
       - name: Generate cards manifest (board-only projection of cards.json)
         run: node scripts/generate-cards-manifest.mjs
 
+      - name: Generate per-language card decks (payload cut for readings)
+        run: node scripts/generate-cards-lang.mjs
+
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update sitemap, robots.txt, cards manifest"
+          commit_message: "chore: update sitemap, robots.txt, cards manifest + per-language decks"
           file_pattern: |
             robots.txt
             sitemap*.xml
             data/cards-manifest.json
+            data/cards-en.json
+            data/cards-th.json
