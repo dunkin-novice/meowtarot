@@ -60,30 +60,9 @@
       <h1 class="question-heading__en">What's on your mind?</h1>
     </section>
 
-    <section class="question-shape-picker" role="group" aria-label="Pick a reading shape">
-      <div class="question-shape-picker__eyebrow">Pick a shape</div>
-      <div class="question-shape-picker__panels">
-        <button class="question-shape-card question-spread-btn question-spread-btn--active" data-spread="story" aria-pressed="true">
-          <div class="question-shape-card__num question-shape-card__num--story" aria-hidden="true">3</div>
-          <div class="question-shape-card__text">
-            <div class="question-shape-card__title-row">
-              <span class="question-shape-card__title">Story Spread</span>
-            </div>
-            <div class="question-shape-card__note">A fuller read for something that's been on your mind</div>
-          </div>
-          <div class="question-shape-card__check" aria-hidden="true">✓</div>
-        </button>
-        <button class="question-shape-card question-spread-btn" data-spread="quick" aria-pressed="false">
-          <div class="question-shape-card__num question-shape-card__num--quick" aria-hidden="true">1</div>
-          <div class="question-shape-card__text">
-            <div class="question-shape-card__title-row">
-              <span class="question-shape-card__title">Quick Pull</span>
-            </div>
-            <div class="question-shape-card__note">A fast read for a simple question</div>
-          </div>
-          <div class="question-shape-card__check" aria-hidden="true">✓</div>
-        </button>
-      </div>
+    <section class="question-topics">
+      <div class="question-topics__eyebrow">Topic</div>
+      <div class="topic-card-grid question-topics__chips" id="question-topic-grid"></div>
     </section>
 
     <!-- Question text input: visual placeholder this round. Value not persisted -->
@@ -105,9 +84,30 @@
       </div>
     </section>
 
-    <section class="question-topics">
-      <div class="question-topics__eyebrow">Topic</div>
-      <div class="topic-card-grid question-topics__chips" id="question-topic-grid"></div>
+    <section class="question-shape-picker" role="group" aria-label="Pick a reading shape">
+      <div class="question-shape-picker__eyebrow">Pick a shape</div>
+      <div class="question-shape-picker__panels">
+        <button class="question-shape-card question-spread-btn question-spread-btn--active" data-spread="quick" aria-pressed="true">
+          <div class="question-shape-card__num question-shape-card__num--quick" aria-hidden="true">1</div>
+          <div class="question-shape-card__text">
+            <div class="question-shape-card__title-row">
+              <span class="question-shape-card__title">Quick Pull</span>
+            </div>
+            <div class="question-shape-card__note">A fast read for a simple question</div>
+          </div>
+          <div class="question-shape-card__check" aria-hidden="true">✓</div>
+        </button>
+        <button class="question-shape-card question-spread-btn" data-spread="story" aria-pressed="false">
+          <div class="question-shape-card__num question-shape-card__num--story" aria-hidden="true">3</div>
+          <div class="question-shape-card__text">
+            <div class="question-shape-card__title-row">
+              <span class="question-shape-card__title">Story Spread</span>
+            </div>
+            <div class="question-shape-card__note">A fuller read for something that's been on your mind</div>
+          </div>
+          <div class="question-shape-card__check" aria-hidden="true">✓</div>
+        </button>
+      </div>
     </section>
 
     <div class="question-cta-row">
