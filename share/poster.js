@@ -1058,7 +1058,7 @@ function fitAffirmationText(ctx, text, {
   }
   for (let fontSize = startFontSize; fontSize >= minFontSize; fontSize -= 1) {
     const lineHeight = Math.round(fontSize * lineHeightRatio);
-    ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `620 ${fontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     const lines = wrapTextLines(ctx, value, maxWidth, maxLines);
     const hasClampEllipsis = lines.some((line) => /…$/.test(line));
     if (!hasClampEllipsis || fontSize === minFontSize) {
@@ -1067,7 +1067,7 @@ function fitAffirmationText(ctx, text, {
   }
   const fontSize = minFontSize;
   const lineHeight = Math.round(fontSize * lineHeightRatio);
-  ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+  ctx.font = `620 ${fontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
   return { fontSize, lineHeight, lines: wrapTextLines(ctx, value, maxWidth, maxLines) };
 }
 
@@ -1086,7 +1086,7 @@ function fitMainGuidanceText(ctx, text, { maxWidth, maxLines = 3, maxHeight, sta
 
   for (let fontSize = startFontSize; fontSize >= minFontSize; fontSize -= 2) {
     const lineHeight = Math.round(fontSize * 1.1);
-    ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `620 ${fontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     const lines = wrapTextLines(ctx, value, safeWidth, Number.POSITIVE_INFINITY);
     const occupiedHeight = lines.length * lineHeight;
     if (lines.length <= safeMaxLines && occupiedHeight <= safeMaxHeight) {
@@ -1096,7 +1096,7 @@ function fitMainGuidanceText(ctx, text, { maxWidth, maxLines = 3, maxHeight, sta
 
   const fontSize = minFontSize;
   const lineHeight = Math.round(fontSize * 1.1);
-  ctx.font = `620 ${fontSize}px "Space Grotesk", sans-serif`;
+  ctx.font = `620 ${fontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
   const lines = wrapTextLines(ctx, value, safeWidth, safeMaxLines);
   return { fontSize, lineHeight, lines };
 }
@@ -1110,6 +1110,17 @@ function drawTrackingText(ctx, text, x, y, tracking = 0) {
   if (!value) return;
   if (!tracking) {
     ctx.fillText(value, x, y);
+    return;
+  }
+  // Thai (and other complex scripts) must NOT be split per code point — combining
+  // vowels / tone marks would detach from their base consonant and render as tofu.
+  // Letter-spacing isn't idiomatic for Thai anyway, so draw it as one centred run
+  // (the per-char path below also centres around x).
+  if (/[฀-๿]/.test(value)) {
+    const prevAlign = ctx.textAlign;
+    ctx.textAlign = 'center';
+    ctx.fillText(value, x, y);
+    ctx.textAlign = prevAlign;
     return;
   }
   const chars = Array.from(value);
@@ -1163,7 +1174,7 @@ function drawFallbackCardArt(ctx, x, y, width, height, { radius = 16, label = 'M
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(255,255,255,0.88)';
-  ctx.font = `600 ${Math.max(10, Math.round(Math.min(width, height) * 0.072))}px "Space Grotesk", sans-serif`;
+  ctx.font = `600 ${Math.max(10, Math.round(Math.min(width, height) * 0.072))}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
   ctx.fillText(label, x + width / 2, y + height / 2);
   ctx.restore();
 }
@@ -1214,11 +1225,11 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.shadowColor = 'rgba(0,0,0,0.42)';
     ctx.shadowBlur = 16;
     ctx.fillStyle = '#c9933a';
-    ctx.font = `700 ${header.brandSize}px "Poppins", "Space Grotesk", sans-serif`;
+    ctx.font = `700 ${header.brandSize}px "Poppins", "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     ctx.fillText('MeowTarot', width / 2, header.top);
     ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(201, 147, 58, 0.95)';
-    ctx.font = `600 ${header.eyebrowSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `600 ${header.eyebrowSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     drawTrackingText(ctx, content.strings.eyebrow, width / 2, header.top + 44, 1.2);
 
     const heroWidth = Math.min(width - 180, preset === 'square' ? 820 : 860);
@@ -1230,14 +1241,14 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
       minFontSize: preset === 'square' ? 24 : 28,
     });
     ctx.fillStyle = '#f7f4ee';
-    ctx.font = `700 ${heroFit.fontSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `700 ${heroFit.fontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     heroFit.lines.forEach((line, index) => {
       ctx.fillText(line, width / 2, header.top + 94 + index * heroFit.lineHeight);
     });
 
     const subtitleY = header.top + 94 + heroFit.lines.length * heroFit.lineHeight + 10;
     ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    ctx.font = `500 ${header.subtitleSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `500 ${header.subtitleSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     wrapText(ctx, content.subtitle, width / 2, subtitleY, width - 220, Math.round(header.subtitleSize * 1.45), 2);
     ctx.restore();
   };
@@ -1279,7 +1290,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     const pillFontSize = preset === 'square' ? 11 : 12;
     const labelY = layoutBox.y + spread.cardH / 2 + spread.labelGap;
     ctx.save();
-    ctx.font = `600 ${pillFontSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `600 ${pillFontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     const pillWidth = Math.min(spread.cardW + 18, Math.max(70, ctx.measureText(label).width + pillPaddingX * 2));
     ctx.restore();
     const pillX = layoutBox.x - pillWidth / 2;
@@ -1289,15 +1300,15 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.82)';
-    ctx.font = `600 ${pillFontSize}px "Space Grotesk", sans-serif`;
+    ctx.font = `600 ${pillFontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     ctx.fillText(label, layoutBox.x, labelY + pillHeight - 8);
 
     ctx.fillStyle = '#f7f4ee';
-    ctx.font = `${isHeroPosition ? 600 : 500} ${preset === 'square' ? 11 : 12}px "Space Grotesk", sans-serif`;
+    ctx.font = `${isHeroPosition ? 600 : 500} ${preset === 'square' ? 11 : 12}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     wrapText(ctx, cardName, layoutBox.x, labelY + pillHeight + spread.nameGap + 10, spread.cardW + 24, 15, 2);
 
     ctx.fillStyle = 'rgba(255,255,255,0.56)';
-    ctx.font = `500 ${preset === 'square' ? 9 : 10}px "Space Grotesk", sans-serif`;
+    ctx.font = `500 ${preset === 'square' ? 9 : 10}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     wrapText(ctx, orientationLabel, layoutBox.x, labelY + pillHeight + spread.nameGap + 41, spread.cardW + 24, 13, 1);
     ctx.restore();
   };
@@ -1449,7 +1460,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
   ctx.save();
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(255,255,255,0.58)';
-  ctx.font = `500 ${preset === 'square' ? 24 : 28}px "Space Grotesk", sans-serif`;
+  ctx.font = `500 ${preset === 'square' ? 24 : 28}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
   ctx.fillText(toSafeText(payload?.poster?.footer, 'meowtarot.com'), width / 2, footerY);
   ctx.restore();
 
@@ -1993,7 +2004,7 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
 
   // footer
   ctx.fillStyle = '#aab0c9';
-  ctx.font = '500 28px "Space Grotesk", sans-serif';
+  ctx.font = '500 28px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(toSafeText(payload?.poster?.footer, 'meowtarot.com'), width / 2, height - 56);
 
@@ -2052,6 +2063,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       'italic 500 132px "Cormorant Garamond"',
       '500 60px "Cormorant Garamond"',
       'italic 500 56px "Noto Serif Thai"',
+      // Thai sans fallback for every "Space Grotesk" stack (header/labels/radar) —
+      // without this, Thai combining marks render as tofu on the canvas.
+      '500 32px "IBM Plex Sans Thai"',
+      '600 32px "IBM Plex Sans Thai"',
+      '700 32px "IBM Plex Sans Thai"',
     ];
     try {
       await Promise.all(faceSpecs.map((spec) => document.fonts.load(spec)));
@@ -2070,7 +2086,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const ctx = canvas.getContext('2d');
   const fontFamilies = [
     '"Poppins", sans-serif',
-    '"Space Grotesk", sans-serif',
+    '"Space Grotesk", "IBM Plex Sans Thai", sans-serif',
     '"Prata", serif',
     '"Cormorant Garamond", serif',
     '"Noto Serif Thai", serif',
@@ -2143,11 +2159,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const drawCardLabelBlock = ({ label, orientation, x, y, align = 'center', orientationX = x, orientationY = y + 38, orientationAlign = align }) => {
       ctx.save();
       ctx.fillStyle = '#f7f4ee';
-      ctx.font = '600 18px "Space Grotesk", sans-serif';
+      ctx.font = '600 18px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
       ctx.textAlign = align;
       wrapText(ctx, label, x, y, align === 'center' ? cardW + 24 : 170, 22, 2);
       ctx.fillStyle = '#b8bfd6';
-      ctx.font = '500 15px "Space Grotesk", sans-serif';
+      ctx.font = '500 15px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
       ctx.textAlign = orientationAlign;
       wrapText(ctx, orientation, orientationX, orientationY, orientationAlign === 'center' ? cardW + 18 : 170, 18, 1);
       ctx.restore();
@@ -2155,16 +2171,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     ctx.textAlign = 'center';
     ctx.fillStyle = '#c9933a';
-    ctx.font = '700 62px "Poppins", "Space Grotesk", sans-serif';
+    ctx.font = '700 62px "Poppins", "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     ctx.shadowColor = 'rgba(0,0,0,0.65)';
     ctx.shadowBlur = 14;
     ctx.fillText('MeowTarot', width / 2, 100);
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#efe4c2';
-    ctx.font = '500 24px "Space Grotesk", sans-serif';
+    ctx.font = '500 24px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     drawTrackingText(ctx, toSafeText(payload?.poster?.title, 'Celtic Cross Reading'), width / 2, 142, 0.8);
     ctx.fillStyle = 'rgba(245, 241, 232, 0.92)';
-    ctx.font = '500 20px "Space Grotesk", sans-serif';
+    ctx.font = '500 20px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     drawTrackingText(ctx, toSafeText(payload?.poster?.subtitle, ''), width / 2, 178, 0.35);
 
     for (let i = 0; i < cardEntries.length; i += 1) {
@@ -2212,7 +2228,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     }
 
     ctx.fillStyle = '#aab0c9';
-    ctx.font = '500 28px "Space Grotesk", sans-serif';
+    ctx.font = '500 28px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
     ctx.textAlign = 'center';
     ctx.fillText(footerText, width / 2, height - 90);
@@ -2280,22 +2296,22 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.restore();
 
     ctx.fillStyle = 'rgba(245, 238, 222, 0.88)';
-    ctx.font = '600 24px "Space Grotesk", sans-serif';
+    ctx.font = '600 24px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     drawTrackingText(ctx, questionStrings.eyebrow, width / 2, 100, 1.5);
 
     ctx.fillStyle = '#fff7de';
-    ctx.font = '700 76px "Poppins", "Space Grotesk", sans-serif';
+    ctx.font = '700 76px "Poppins", "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     ctx.shadowColor = 'rgba(11, 13, 26, 0.55)';
     ctx.shadowBlur = 20;
     ctx.fillText(questionStrings.title, width / 2, 166);
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = 'rgba(252, 245, 231, 0.95)';
-    ctx.font = '600 31px "Space Grotesk", sans-serif';
+    ctx.font = '600 31px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     drawTrackingText(ctx, questionStrings.subtitle, width / 2, 212, 0.2);
 
     ctx.fillStyle = 'rgba(235, 228, 214, 0.9)';
-    ctx.font = '500 22px "Space Grotesk", sans-serif';
+    ctx.font = '500 22px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     drawTrackingText(ctx, questionStrings.tertiary, width / 2, 248, 0.8);
 
     for (let i = 0; i < questionCardCount; i += 1) {
@@ -2348,7 +2364,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
       const positionLabel = slots[i] || questionStrings.positions[1];
       ctx.fillStyle = '#fff9eb';
-      ctx.font = '700 22px "Space Grotesk", sans-serif';
+      ctx.font = '700 22px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
       ctx.fillText(positionLabel, x + cardW / 2, labelPillY + 29);
 
       const summaryText = toSafeText(summaries[i], '').trim();
@@ -2361,7 +2377,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.fill();
         ctx.restore();
         ctx.fillStyle = 'rgba(255, 248, 235, 0.96)';
-        ctx.font = '500 18px "Space Grotesk", sans-serif';
+        ctx.font = '500 18px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
         wrapText(ctx, summaryText, x + cardW / 2, summaryY + 36, cardW - 40, 24, 5);
       }
     }
@@ -2420,7 +2436,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
       const labelPoint = toPoint(angle, graphRadius + 44);
       ctx.fillStyle = 'rgba(252, 246, 236, 0.92)';
-      ctx.font = '500 22px "Space Grotesk", sans-serif';
+      ctx.font = '500 22px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
       if (Math.cos(angle) > 0.4) ctx.textAlign = 'left';
       else if (Math.cos(angle) < -0.4) ctx.textAlign = 'right';
       else ctx.textAlign = 'center';
@@ -2450,7 +2466,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     });
 
     ctx.fillStyle = 'rgba(252, 246, 236, 0.94)';
-    ctx.font = '500 24px "Space Grotesk", sans-serif';
+    ctx.font = '500 24px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     wrapText(
       ctx,
       energyBalance.interpretation.join(' '),
@@ -2462,7 +2478,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     );
 
     ctx.fillStyle = 'rgba(228, 230, 245, 0.96)';
-    ctx.font = '500 28px "Space Grotesk", sans-serif';
+    ctx.font = '500 28px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
     ctx.fillText(footerText, width / 2, height - 62);
 
@@ -2790,18 +2806,18 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const keywords = Array.isArray(payload?.keywords) ? payload.keywords.filter(Boolean).slice(0, 3) : [];
   ctx.textAlign = 'center';
   ctx.fillStyle = '#c9933a';
-  ctx.font = '600 72px "Poppins", "Space Grotesk", sans-serif';
+  ctx.font = '600 72px "Poppins", "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
   ctx.fillText(title, width / 2, 150);
 
   ctx.fillStyle = '#d8dbe6';
-  ctx.font = '500 38px "Space Grotesk", sans-serif';
+  ctx.font = '500 38px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
   if (subtitle) {
     ctx.fillText(subtitle, width / 2, 215);
   }
 
   if (keywords.length) {
     ctx.fillStyle = '#f7f4ee';
-    ctx.font = '500 32px "Space Grotesk", sans-serif';
+    ctx.font = '500 32px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     ctx.fillText(keywords.join(' · '), width / 2, 265);
   }
 
@@ -2856,7 +2872,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   posterDebugLog('log', '[Poster] Images resolved');
 
   ctx.fillStyle = '#f7f4ee';
-  ctx.font = '500 30px "Space Grotesk", sans-serif';
+  ctx.font = '500 30px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
   const headline = toSafeText(payload?.headline, '');
   if (!headline.trim()) {
     console.warn('[Poster] missing headline text');
@@ -2864,7 +2880,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   drawTextBlock(ctx, headline, width / 2, height * 0.73, width * 0.78, 38);
 
   ctx.fillStyle = '#aab0c9';
-  ctx.font = '500 28px "Space Grotesk", sans-serif';
+  ctx.font = '500 28px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
   const footerText = toSafeText(payload?.poster?.footer, 'meowtarot.com');
   ctx.fillText(footerText, width / 2, height - 90);
   posterDebugLog('log', '[Poster] Canvas drawn');
