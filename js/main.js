@@ -7,6 +7,9 @@ import {
   getCardImageUrl,
   applyImageFallback,
   normalizeId,
+  getAllDecks,
+  getActiveDeckId,
+  canUnlockDeck,
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected } from './analytics.js';
@@ -807,12 +810,79 @@ async function renderPage(dict) {
   if (page === 'question-draw') await renderQuestionDraw(dict);
 }
 
+// Populate the homepage "Your decks" strip with real decks. The static markup
+// was a redesign placeholder (gradient + "M" monogram, fake names); this renders
+// each deck's actual back using the lightweight 00-back-200 thumbnail, with the
+// deck's real EN/TH name and locked/active state. Display-only: each tile links
+// to the decks page (profile.html), which owns the switch flow — so this avoids
+// the deck-switch repaint requirement (see CLAUDE.md backlog).
+function renderHomeDeckStrip() {
+  const row = document.querySelector('.home-deck-strip__row');
+  if (!row) return;
+  const activeId = getActiveDeckId();
+  const isThai = state.currentLang === 'th';
+  const frag = document.createDocumentFragment();
+
+  getAllDecks().forEach((deck) => {
+    const unlocked = canUnlockDeck(deck.id);
+    const active = deck.id === activeId;
+
+    const tile = document.createElement('a');
+    tile.className = `home-deck-thumb${unlocked ? '' : ' is-locked'}${active ? ' is-active' : ''}`;
+    tile.href = 'profile.html';
+    tile.style.cssText = 'text-decoration: none; color: inherit;';
+    tile.setAttribute('aria-label', deck.name || deck.id);
+
+    const card = document.createElement('div');
+    card.className = 'home-deck-thumb__card';
+
+    const img = document.createElement('img');
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;';
+    // 00-back-200 thumbnail (~12-20KB), graceful fallback to the full 00-back.
+    const thumb = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
+    applyImageFallback(img, thumb, [deck.backImage].filter(Boolean));
+    card.appendChild(img);
+
+    if (active) {
+      const badge = document.createElement('span');
+      badge.textContent = isThai ? 'ใช้อยู่' : 'Active';
+      badge.style.cssText = 'position: absolute; top: 6px; left: 6px; z-index: 2; background: #9270d0; color: #fff; font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 6px;';
+      card.appendChild(badge);
+    }
+    if (!unlocked) {
+      const lock = document.createElement('span');
+      lock.textContent = '🔒';
+      lock.style.cssText = 'position: absolute; top: 6px; right: 6px; z-index: 2; font-size: 13px;';
+      card.appendChild(lock);
+    }
+    tile.appendChild(card);
+
+    const nameEn = document.createElement('div');
+    nameEn.className = 'home-deck-thumb__name';
+    nameEn.textContent = deck.name || '';
+    tile.appendChild(nameEn);
+
+    const nameTh = document.createElement('div');
+    nameTh.className = 'home-deck-thumb__name-th';
+    nameTh.textContent = deck.name_th || '';
+    tile.appendChild(nameTh);
+
+    frag.appendChild(tile);
+  });
+
+  row.replaceChildren(frag);
+}
+
 function init() {
   const page = document.body.dataset.page;
   const navPage = page === 'question-draw' ? 'question' : page;
   initShell(state, (dict) => { void renderPage(dict); }, navPage);
 
   if (page === 'home') {
+    renderHomeDeckStrip();
     void renderPage(translations[state.currentLang] || translations.en);
     return;
   }
