@@ -3584,10 +3584,14 @@ function renderQuestion(cards, dict) {
   const takeawayPanel = buildQuestionTakeawayPanel(orderedCards, dict);
   if (takeawayPanel) readingContent.appendChild(takeawayPanel);
 
-  const energyPanel = buildEnergyPanel(cards, dict);
-  if (energyPanel) {
-    energyPanel.classList.add('energy-panel--subtle');
-    readingContent.appendChild(energyPanel);
+  // Energy balance is a 3-card Story feature. Quick Pull (single card) mirrors the
+  // Daily result — big card + reading, no radar.
+  if (state.spread !== 'quick') {
+    const energyPanel = buildEnergyPanel(cards, dict);
+    if (energyPanel) {
+      energyPanel.classList.add('energy-panel--subtle');
+      readingContent.appendChild(energyPanel);
+    }
   }
 
   appendReadingInternalLinks(readingContent, orderedCards);

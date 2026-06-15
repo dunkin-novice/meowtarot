@@ -1718,7 +1718,18 @@ function resolveSymbolicMetadata(cardEntries) {
 }
 
 
-function resolveEnergyBalance(energyData = {}) {
+// Energy-balance axis names — inline (lowercase) for the interpretation sentence
+// and as display labels for the radar axes. EN + TH (hard rule #2 parity).
+const ENERGY_AXIS_WORDS = {
+  en: { action: 'action', emotion: 'emotion', thinking: 'thinking', stability: 'stability' },
+  th: { action: 'การลงมือทำ', emotion: 'อารมณ์', thinking: 'ความคิด', stability: 'ความมั่นคง' },
+};
+const ENERGY_AXIS_LABELS = {
+  en: { action: 'Action', emotion: 'Emotion', thinking: 'Thinking', stability: 'Stability' },
+  th: { action: 'การลงมือทำ', emotion: 'อารมณ์', thinking: 'ความคิด', stability: 'ความมั่นคง' },
+};
+
+function resolveEnergyBalance(energyData = {}, lang = 'en') {
   const toScore = (value) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return 0;
@@ -1733,14 +1744,19 @@ function resolveEnergyBalance(energyData = {}) {
   };
 
   const ordered = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-  const axisTitle = { action: 'action', emotion: 'emotion', thinking: 'thinking', stability: 'stability' };
-  const dominant = axisTitle[ordered[0]?.[0] || 'action'];
-  const support = axisTitle[ordered[1]?.[0] || 'stability'];
+  const axisWords = ENERGY_AXIS_WORDS[lang] || ENERGY_AXIS_WORDS.en;
+  const dominant = axisWords[ordered[0]?.[0] || 'action'];
+  const support = axisWords[ordered[1]?.[0] || 'stability'];
 
-  const interpretation = [
-    `Your energy is currently led by ${dominant}, with strong support from ${support}.`,
-    'Keep this momentum balanced with gentle reflection to stay grounded and clear.',
-  ];
+  const interpretation = lang === 'th'
+    ? [
+        `ตอนนี้พลังงานของคุณถูกนำด้วย${dominant} โดยมี${support}เป็นแรงหนุนที่ชัดเจน`,
+        'ประคองจังหวะนี้ไว้ด้วยการใคร่ครวญอย่างอ่อนโยน เพื่อให้ใจมั่นคงและชัดเจน',
+      ]
+    : [
+        `Your energy is currently led by ${dominant}, with strong support from ${support}.`,
+        'Keep this momentum balanced with gentle reflection to stay grounded and clear.',
+      ];
 
   return { scores, interpretation };
 }
@@ -2216,8 +2232,6 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const cardEntries = (await buildCardEntries(questionPayload)).slice(0, 3);
     const questionStrings = getQuestionPosterStrings(questionPayload);
     const questionSummaries = resolveQuestionPosterSummaries(questionPayload, cardEntries);
-    const energySource = payload?.energyData || computeQuestionEnergyData(cardEntries) || {};
-    const energyBalance = resolveEnergyBalance(energySource);
     const questionCardCount = orderedQuestionCards.length === 1 ? 1 : 3;
     const isSinglePull = questionCardCount === 1;
     const lang = normalizePosterLanguage(payload?.lang || 'en');
@@ -2242,6 +2256,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       });
     }
 
+    // 3-card Story spread only below — the energy radar is a 3-card feature.
+    const energySource = payload?.energyData || computeQuestionEnergyData(cardEntries) || {};
+    const energyBalance = resolveEnergyBalance(energySource, lang);
     const slots = questionStrings.positions;
     const summaries = questionSummaries;
     const cardGap = 20;
@@ -2356,11 +2373,12 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const graphCenterX = width / 2;
     const graphCenterY = graphPanelY + 214;
     const graphRadius = 124;
+    const axisLabels = ENERGY_AXIS_LABELS[lang] || ENERGY_AXIS_LABELS.en;
     const axisOrder = [
-      { key: 'action', label: 'Action', angle: -Math.PI / 2 },
-      { key: 'emotion', label: 'Emotion', angle: 0 },
-      { key: 'thinking', label: 'Thinking', angle: Math.PI / 2 },
-      { key: 'stability', label: 'Stability', angle: Math.PI },
+      { key: 'action', label: axisLabels.action, angle: -Math.PI / 2 },
+      { key: 'emotion', label: axisLabels.emotion, angle: 0 },
+      { key: 'thinking', label: axisLabels.thinking, angle: Math.PI / 2 },
+      { key: 'stability', label: axisLabels.stability, angle: Math.PI },
     ];
     const toPoint = (angle, radius) => ({
       x: graphCenterX + Math.cos(angle) * radius,
