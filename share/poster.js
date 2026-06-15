@@ -544,6 +544,16 @@ export function resolvePosterCardImageSources(cardEntry, { resolvedPrimary, upri
       || globalSiteFallback
     );
 
+  // BUG-020: before falling back to a card BACK, try the default deck's face of
+  // the SAME card (identical nn-slug-orientation.webp filename), so a deck that is
+  // missing/blocked for a given card still shares real card art — the visual proof
+  // a share needs (hard rule #8). No-op when already on the default deck (returns
+  // null). This previously existed only on the daily poster; routing it through the
+  // shared resolver extends it to the question / full / celtic posters too.
+  const defaultUprightFace = toDefaultDeckFaceUrl(uprightUrl);
+  const defaultReversedFace = toDefaultDeckFaceUrl(reversedUrl);
+  const defaultPrimaryFace = toDefaultDeckFaceUrl(primary);
+
   const fallbackCandidates = orientation === 'reversed'
     ? [
       fromEntry.upright,
@@ -552,6 +562,9 @@ export function resolvePosterCardImageSources(cardEntry, { resolvedPrimary, upri
       fromEntry.default,
       fromCard.default,
       resolvedPrimary,
+      defaultReversedFace,
+      defaultUprightFace,
+      defaultPrimaryFace,
       backUrl,
       globalSiteFallback,
     ]
@@ -559,6 +572,8 @@ export function resolvePosterCardImageSources(cardEntry, { resolvedPrimary, upri
       fromEntry.default,
       fromCard.default,
       resolvedPrimary,
+      defaultUprightFace,
+      defaultPrimaryFace,
       backUrl,
       globalSiteFallback,
     ];
