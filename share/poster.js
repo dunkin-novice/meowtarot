@@ -2024,14 +2024,19 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const energySource = payload?.energyData || computeQuestionEnergyData(cardEntries) || {};
     const energyBalance = resolveEnergyBalance(energySource);
     const questionCardCount = orderedQuestionCards.length === 1 ? 1 : 3;
-    const slots = questionCardCount === 1 ? [questionStrings.positions[1]] : questionStrings.positions;
-    const summaries = questionCardCount === 1 ? [questionSummaries[1] || questionSummaries[0] || ''] : questionSummaries;
+    const isSinglePull = questionCardCount === 1;
+    // Quick Pull (single card) is an "Answer", not a timeline position. Keep the
+    // 3-card spread on Past/Present/Future (hard rule #6 — scoped by mode).
+    const answerLabel = normalizePosterLanguage(payload?.lang || 'en') === 'th' ? 'คำตอบ' : 'Answer';
+    const slots = isSinglePull ? [answerLabel] : questionStrings.positions;
+    const summaries = isSinglePull ? [questionSummaries[1] || questionSummaries[0] || ''] : questionSummaries;
     const cardGap = 20;
-    const cardW = 260;
+    // Single card has the row to itself — magnify it for a hero treatment.
+    const cardW = isSinglePull ? 360 : 260;
     const cardH = Math.round(cardW * 1.5);
     const totalW = cardW * questionCardCount + cardGap * Math.max(0, questionCardCount - 1);
     const startX = (width - totalW) / 2;
-    const cardY = 378;
+    const cardY = isSinglePull ? 352 : 378;
     const textPanelX = 74;
     const textPanelY = 48;
     const textPanelW = width - textPanelX * 2;
