@@ -1,6 +1,6 @@
 # MeowTarot — Session Handoff / Where We Left Off
 
-**Last updated:** 2026-06-11
+**Last updated:** 2026-06-15
 **Branch:** `main` (in sync with `origin/main`, everything below is pushed & live)
 **Deploy:** web = GitHub Pages from **canonical repo root** (`CNAME` present). `www/` + `ios/` are the Capacitor iOS mirrors only — the web does NOT serve from them.
 
@@ -10,7 +10,21 @@ redesign reference) — still useful background, but this file is current.
 
 ---
 
-## 1. What shipped this session (2026-06-08 → 06-10, all pushed to `main`, live)
+## 1. What shipped — recent sessions (all pushed to `main`, live)
+
+### 2026-06-11 → 06-15
+
+| Commit | What |
+|---|---|
+| `f497b4f` | **Per-language cards split (§2C, BUG-021 follow-up)** — `scripts/generate-cards-lang.mjs` slices `cards.json` → `data/cards-en.json` (1.48MB) + `data/cards-th.json` (3.18MB). `loadTarotData(mode)` fetches the current locale's slice (`?lang`/`/th/` aware) w/ graceful fallback to full `cards.json`; `card-page.js` uses `loadTarotData('both')`. EN reading payload **−68%**, TH −32%. `generate-seo.yml` regenerates both. |
+| `9a21f9f` | **Board card-backs load `00-back-200` thumbnail** — `getCardBackUrl({thumb})` in `data.js`; board call sites in `main.js` pass `thumb:true`. Reading-flip + fallbacks stay full-res. 12–24× lighter first board paint. |
+| `27a40fc` | **Homepage "Your decks" strip wired to real decks** — `renderHomeDeckStrip()` in `main.js` replaces the redesign placeholder (gradient + "M" monogram, fake names) with real `00-back-200` thumbnails, EN+TH names, lock/active state; tiles link to `profile.html` (display-only, no repaint gotcha). |
+| `0bad8ba` | **Poster cross-deck face fallback (BUG-020 §2D)** — `resolvePosterCardImageSources` (`share/poster.js`) inserts `toDefaultDeckFaceUrl(...)` before `backUrl` in the fallback chain, so question/full/celtic posters fall back to the default-deck *face* (real art, hard rule #8) before a card back. No-op on default deck; call order untouched (rule #4). |
+| `c55d077` | **Question entry page compacted** — `question.html` + `th/question.html` reordered to topbar → heading → **Topic** → input → spread → Continue. Spread is now a side-by-side row (Quick Pull left + **default-active**, Story Spread right), long note hidden, margins tightened so Continue sits above the fold. `questionSpread` default `story`→`quick` in `main.js`. EN+TH. |
+
+**Also (not in the repo):** the unattended SEO monitor's "Composio outage" (since 2026-05-25) was a **stale MCP server name** — fixed to `mcp__composio__COMPOSIO_REMOTE_BASH_TOOL` + added a D1 directive to skip git-untracked dev scratch under `share/poster-preview/`. In `~/Documents/Claude/Scheduled/meowtarot-daily-maintenance/SKILL.md`.
+
+### 2026-06-08 → 06-10
 
 (Prior session's ships — Section-11 daily poster `7aecc92`, cold-load `c74e039`, shuffle-freeze `68cdad0`, daily-fit `18c8add` — are in `docs/log.jsonl`.)
 
@@ -51,7 +65,7 @@ Both verified logic/CSS-sound in Chrome; the bug is iOS Safari only.
   Likely fix: `transform: translateZ(0)` / `will-change` / `contain: paint` on
   `.card-slot.is-selected`.
 
-### C. cards.json payload cut (BUG-021 follow-up) — ✅ DONE 2026-06-11 (verified, pending commit)
+### C. cards.json payload cut (BUG-021 follow-up) — ✅ SHIPPED 2026-06-11 (`f497b4f`)
 Split into **per-language** decks. `scripts/generate-cards-lang.mjs` emits
 `data/cards-en.json` (1.48 MB, **−68%**) + `data/cards-th.json` (3.18 MB, **−32%**)
 as pure slices of `cards.json` (EN identity `card_name_en`/`seo_slug_en` force-kept
@@ -68,10 +82,10 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 
 ### D. Other poster modes
 - **Question (3-card) poster readability** — does it have the same cramped/low-contrast
-  text the Celtic poster had (now fixed)? Render it (the harness pattern) and check.
-- **Cross-deck face fallback for question/full/celtic posters (BUG-020 follow-up)** —
-  only the daily poster + reading page have it; other `resolvePosterCardImageSources`
-  callers in `share/poster.js` still fall back to a card *back*.
+  text the Celtic poster had (now fixed)? Render it (the harness pattern) and check. STILL OPEN.
+- **Cross-deck face fallback for question/full/celtic posters (BUG-020)** — ✅ SHIPPED
+  2026-06-15 (`0bad8ba`): `resolvePosterCardImageSources` now inserts the default-deck
+  *face* before the card back for all poster modes (call order untouched, rule #4).
 
 ### E. Backlog / nits
 - **`/tarot-card-meanings/`** — Phase-4 styling, big SEO surface, needs its own design pass.
@@ -79,8 +93,25 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 - `LocalNotifications.then()` uncaught `CapacitorException` on web — pre-existing, non-fatal.
 - Dead-code/cleanup: `insightTitles` in `share/poster.js` is now unused by the narration.
 
+### F. Open from the 2026-06-15 session
+- **Friend's "not-downloaded" card image** (on a default-deck reading) — NOT missing art
+  (boba CDN art is 100% complete) and NOT the per-lang split. She's on the **boba deck
+  because she claimed it** (deck-reward → `pending_deck_claim`, re-applied by `auth.js` on
+  each sign-in, so it survives cache clears). The broken front is **unreproducible** locally —
+  every boba face loads (HTTP 206). Prime suspect: **poster-canvas CORS tainting (iOS
+  Safari)**, where the fallback image fails the same way. NEED a screenshot + her
+  device/browser to confirm. Workaround for her: switch to Moonmallow in Profile → Decks.
+- **iOS / www mirror sync pending** — the per-language split + `00-back-200` board thumbs
+  only reached the web. Native degrades gracefully (full `cards.json`, full back) until
+  `cp <files> www/` + `npx cap sync ios`.
+- **Content backfills (non-blocking):** 2 missing veila-tarot fronts on the CDN
+  (`39-three-of-cups-upright`, `40-four-of-cups-upright` — never generated); 12 cross-language
+  gap cells in `cards.json` (celtic_cross_*, self_future, travel_past/present).
+
 **Done since the 2026-06-07 handoff** (so don't re-flag): `/today/` redirect · position-label
-audit → "Obstacle" · TH homepage parity (was already shipped) · daily-board fit · BUG-016 #1–#3.
+audit → "Obstacle" · TH homepage parity (was already shipped) · daily-board fit · BUG-016 #1–#3 ·
+per-language cards split (§2C) · board-back thumbnail · homepage deck strip · poster cross-deck
+fallback (BUG-020) · question-page compaction.
 
 ---
 
