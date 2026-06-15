@@ -16,7 +16,8 @@ redesign reference) — still useful background, but this file is current.
 
 | Commit | What |
 |---|---|
-| `3d7ff2c` | **Quick Pull single-card question poster — magnify + "Answer" (§2D)** — in `share/poster.js` question/story branch, gated single-card (`questionCardCount===1`, `isSinglePull`) behavior: card 260→**360px** (hero, height scales to 540) + `cardY` 378→352 for spacing above the energy radar; position label is now **`Answer`/`คำตอบ`** instead of `positions[1]` (`Present`/`ปัจจุบัน`). 3-card Story spread untouched (still Past/Present/Future @260px, rule #6). EN+TH. Harness-verified EN+TH (text/layout; card art is CORS-fallback on localhost). **iOS:** poster.js `cp`→`www`→`cap sync ios` done — md5 identical across canonical/www/ios. |
+| `31a3ee1` | **Quick Pull result drops energy radar + 3-card poster radar TH-localized (§2D)** — (1) `js/reading.js` `renderQuestion`: energy panel gated on `state.spread !== 'quick'` so the single-card Quick Pull on-screen result mirrors Daily (big card + reading, no radar; matches the takeaway-panel quick-gate). (2) `share/poster.js` `resolveEnergyBalance(energyData, lang)` localizes the radar interpretation + axis labels (EN/TH) via `ENERGY_AXIS_WORDS`/`ENERGY_AXIS_LABELS` (Action→การลงมือทำ, Emotion→อารมณ์, Thinking→ความคิด, Stability→ความมั่นคง); energy compute moved below the single-pull early-return (3-card only). Poster harness-verified TH; **result-page gate NOT browser-verified (manual QA)**. iOS: poster.js + reading.js synced (md5 ✓). |
+| `1f2244c` | **Quick Pull poster → Daily-style (§2D)** — new module-level `renderQuickPullPoster()` in `share/poster.js`: Daily-style ceremonial layout (localized topic headline — current locale only — + gold rule + eyebrow → big card with warm aura → `Answer · <orientation>` badge → big italic card name (EN) → gold ornament → topic reading underneath via `fitDailyQuoteText`). Question branch **early-returns** to it for `isSinglePull` BEFORE the 3-card layout + radar, so the radar never runs for single-pull. Also localized the poster eyebrow at source (`getQuestionPosterStrings` → `dict.questionTitle`, EN/TH). Daily branch + 3-card spread untouched. Supersedes the earlier magnify/"Answer" patch (`3d7ff2c`). Harness-verified EN+TH (card art = CORS-fallback on localhost). iOS synced (md5 ✓). |
 | `f497b4f` | **Per-language cards split (§2C, BUG-021 follow-up)** — `scripts/generate-cards-lang.mjs` slices `cards.json` → `data/cards-en.json` (1.48MB) + `data/cards-th.json` (3.18MB). `loadTarotData(mode)` fetches the current locale's slice (`?lang`/`/th/` aware) w/ graceful fallback to full `cards.json`; `card-page.js` uses `loadTarotData('both')`. EN reading payload **−68%**, TH −32%. `generate-seo.yml` regenerates both. |
 | `9a21f9f` | **Board card-backs load `00-back-200` thumbnail** — `getCardBackUrl({thumb})` in `data.js`; board call sites in `main.js` pass `thumb:true`. Reading-flip + fallbacks stay full-res. 12–24× lighter first board paint. |
 | `27a40fc` | **Homepage "Your decks" strip wired to real decks** — `renderHomeDeckStrip()` in `main.js` replaces the redesign placeholder (gradient + "M" monogram, fake names) with real `00-back-200` thumbnails, EN+TH names, lock/active state; tiles link to `profile.html` (display-only, no repaint gotcha). |
@@ -85,15 +86,18 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 - **Question (3-card) poster readability** — ✅ CHECKED 2026-06-15 (harness render, EN+TH).
   **NOT cramped/low-contrast like Celtic was** — it already uses per-card summary boxes
   + an energy radar; text is legible in both languages. Closed.
-- **Quick Pull single-card poster** — ✅ SHIPPED 2026-06-15 (`3d7ff2c`): magnified hero card
-  + `Present`→`Answer`/`คำตอบ` label (single-card only). Synced to iOS.
-- **Question poster energy radar is EN-only on TH (NEW BUG — open)** — surfaced during the
-  §2D check. `resolveEnergyBalance` interpretation text (`share/poster.js` ~L1740-43) **and**
-  the four radar axis labels `Action/Emotion/Thinking/Stability` (~L2142-45) are hardcoded
-  English with no TH branch; the eyebrow `"Ask a Question"` (`getQuestionPosterStrings`, L756)
-  is also hardcoded EN. On the TH question poster these render in English → violates hard
-  rule #2 (EN/TH parity). Not yet filed in `open-bugs.md`. Real-art on-device pass still
-  pending for the question poster too (same CORS caveat as Celtic §2A).
+- **Quick Pull single-card poster → Daily-style** — ✅ SHIPPED 2026-06-15 (`1f2244c`):
+  `renderQuickPullPoster()` — big card + aura + topic headline + `Answer`/`คำตอบ` badge +
+  card name + ornament + topic reading underneath, **no energy radar**. Topic headline is
+  current-locale only (per user direction). Synced to iOS. **Real-art on-device pass still
+  pending** (harness art is CORS-fallback, same caveat as Celtic §2A).
+- **Quick Pull on-screen result drops the energy radar** — ✅ SHIPPED 2026-06-15 (`31a3ee1`,
+  `js/reading.js`): mirrors the Daily result. **Result-page NOT browser-verified (manual QA)** —
+  on-device, confirm the radar is gone on Quick Pull and still present on the 3-card Story result.
+- **Question poster energy radar EN-only on TH** — ✅ FIXED 2026-06-15 (`31a3ee1` radar +
+  `1f2244c` eyebrow): `resolveEnergyBalance(energyData, lang)` + `ENERGY_AXIS_WORDS`/
+  `ENERGY_AXIS_LABELS` localize the interpretation + axis labels; eyebrow now `dict.questionTitle`.
+  The parity gap is closed (never filed in `open-bugs.md`).
 - **Cross-deck face fallback for question/full/celtic posters (BUG-020)** — ✅ SHIPPED
   2026-06-15 (`0bad8ba`): `resolvePosterCardImageSources` now inserts the default-deck
   *face* before the card back for all poster modes (call order untouched, rule #4).
@@ -112,13 +116,13 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
   every boba face loads (HTTP 206). Prime suspect: **poster-canvas CORS tainting (iOS
   Safari)**, where the fallback image fails the same way. NEED a screenshot + her
   device/browser to confirm. Workaround for her: switch to Moonmallow in Profile → Decks.
-- **iOS / www mirror sync — PARTIAL.** `share/poster.js` is now synced to `www/`+`ios/`
-  (`cap sync ios` 2026-06-15, md5 verified). **Still pending (BUG-015 full reconciliation):**
-  `js/data.js` (per-language split + `00-back-200` thumbs, www ~62 lines behind), `js/main.js`
-  (deck strip, ~81 behind), `common.js`, `reading.js`, + the new `data/cards-en.json` /
-  `data/cards-th.json`. Mirrors also carry pre-existing uncommitted edits + partial `www/`
-  tracking — needs a careful per-file `diff` reconciliation, not a blind `cp`. Native degrades
-  gracefully until then.
+- **iOS / www mirror sync — PARTIAL.** `share/poster.js` **and** `js/reading.js` are now synced
+  to `www/`+`ios/` (`cap sync ios` 2026-06-15, md5 verified — reading.js drift now resolved too).
+  **Still pending (BUG-015 full reconciliation):** `js/data.js` (per-language split + `00-back-200`
+  thumbs, www ~62 lines behind), `js/main.js` (deck strip, ~81 behind), `common.js`, + the new
+  `data/cards-en.json` / `data/cards-th.json`. Mirrors also carry pre-existing uncommitted edits +
+  partial `www/` tracking — needs a careful per-file `diff` reconciliation, not a blind `cp`.
+  Native degrades gracefully until then.
 - **Content backfills (non-blocking):** 2 missing veila-tarot fronts on the CDN
   (`39-three-of-cups-upright`, `40-four-of-cups-upright` — never generated); 12 cross-language
   gap cells in `cards.json` (celtic_cross_*, self_future, travel_past/present).
@@ -127,7 +131,8 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 audit → "Obstacle" · TH homepage parity (was already shipped) · daily-board fit · BUG-016 #1–#3 ·
 per-language cards split (§2C) · board-back thumbnail · homepage deck strip · poster cross-deck
 fallback (BUG-020) · question-page compaction · question-poster readability check (§2D, not cramped) ·
-Quick Pull poster magnify + "Answer" label · poster.js iOS mirror sync.
+Quick Pull poster → Daily-style (no radar) · Quick Pull result drops radar · question-poster radar
+TH-localized + eyebrow localized · poster.js + reading.js iOS mirror sync.
 
 ---
 
@@ -137,6 +142,8 @@ Quick Pull poster magnify + "Answer" label · poster.js iOS mirror sync.
 - **Daily Continue-above-nav** — short phone (~≤667px effective): whole board + Continue visible, no scroll, cards tappable.
 - **Cold-load (BUG-021)** — fresh incognito: board appears fast, reading loads without a long "Please wait…", and an eager early tap is cleanly ignored (no phantom selection).
 - **Card-name in TH** — poster/result still resolve the **English** card name on TH surfaces (interim user direction).
+- **Quick Pull poster (Daily-style)** — real card art on-device: big card fills the frame, topic headline (locale-only), `Answer` badge, reading legible, no radar.
+- **Quick Pull on-screen result** — radar is gone on Quick Pull (single card) but still present on the 3-card Story result; reading reads complete (free-core).
 
 ---
 
@@ -158,7 +165,7 @@ Quick Pull poster magnify + "Answer" label · poster.js iOS mirror sync.
 ---
 
 ## 5. Open bug list
-`docs/open-bugs.md` (source of truth). This session: **closed** BUG-001, BUG-004, BUG-010, BUG-016 (all 3 issues), BUG-021 tail; **verified Safari-only** (open, need a device) BUG-006, BUG-017. Still open: BUG-020 (cross-deck face fallback for question/full/celtic posters), BUG-021 follow-up (cards.json payload cut), BUG-018 (asset-resolver `FALLBACK_BACK_PACK` — off-limits file). **NEW (not yet filed in `open-bugs.md`):** question-poster energy radar + eyebrow are EN-only on TH (see §2D) — EN/TH parity violation.
+`docs/open-bugs.md` (source of truth). This session: **closed** BUG-001, BUG-004, BUG-010, BUG-016 (all 3 issues), BUG-021 tail; **verified Safari-only** (open, need a device) BUG-006, BUG-017. Still open: BUG-020 (cross-deck face fallback for question/full/celtic posters), BUG-021 follow-up (cards.json payload cut), BUG-018 (asset-resolver `FALLBACK_BACK_PACK` — off-limits file). **FIXED this session (never needed filing):** question-poster energy radar + eyebrow were EN-only on TH (see §2D) — now localized (`31a3ee1` / `1f2244c`).
 
 ---
 
