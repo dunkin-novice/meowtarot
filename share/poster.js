@@ -753,7 +753,7 @@ function getQuestionPosterStrings(payload = {}) {
   const supportLine = toSafeText(dict?.[topicConfig.supportKey], '').trim() || spreadFallback;
   return {
     title: heroTitle,
-    eyebrow: 'Ask a Question',
+    eyebrow: toSafeText(dict.questionTitle, 'Ask a Question'),
     subtitle: topicConfig.subtitle,
     tertiary: supportLine,
     positions: [dict.past || 'Past', dict.present || 'Present', dict.future || 'Future'],
@@ -1795,6 +1795,201 @@ function toDefaultDeckFaceUrl(url) {
   return swapped !== url ? swapped : null;
 }
 
+// Quick Pull (single-card Ask-a-Question) poster — a Daily-style ceremonial
+// layout: topic headline → big card with warm aura → Answer badge + card name →
+// gold ornament → the topic reading underneath. NO energy radar (that is a
+// 3-card-spread feature). Background is already painted by drawPosterBackground.
+async function renderQuickPullPoster(ctx, canvas, perf, opts) {
+  const { width, height, payload, lang, card = {}, cardEntry = null, topic, topicTitle, eyebrow, answerLabel } = opts;
+  const safeMargin = 72;
+  const displayFont = '"Cormorant Garamond", "Noto Serif Thai", serif';
+  const eyebrowFont = '"Space Grotesk", "IBM Plex Sans Thai", sans-serif';
+  // Ivory-on-purple — matches the existing question-poster background (not the
+  // orientation-tinted daily palette, whose text sits over the card itself).
+  const palette = { primary: '#fff7de', secondary: 'rgba(252,245,231,0.95)', gold: '#ffe1a8', goldSoft: 'rgba(255,225,165,0.55)' };
+
+  // Card identity / orientation (Quick Pull card is the answer card).
+  const sourceCard = cardEntry?.card || card || {};
+  const orientation = toOrientation(cardEntry?.orientation || card?.orientation || sourceCard?.orientation || 'upright');
+  const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || card?.id || '');
+  const orientedId = baseId ? `${baseId}-${orientation}` : '';
+  const cardName = toSafeText(
+    resolveLocalizedCardName(sourceCard, '', 'en') || card?.title || card?.name || '',
+    '',
+  ).trim();
+  const orientationLabel = getOrientationLabel(orientation, lang);
+  const badgeText = [answerLabel, orientationLabel].filter(Boolean).join(' · ');
+
+  // Reading text = the topic-aware "present"/answer summary for this card. Reuse
+  // the question summary resolver, placing the card in the present slot.
+  const summaries = resolveQuestionPosterSummaries(
+    { ...payload, topic, cards: [null, card, null] },
+    [null, cardEntry, null],
+  );
+  const taglineText = toSafeText(summaries[1] || summaries[0] || summaries[2] || '', '').trim();
+
+  // ---- Header: topic headline (current locale ONLY) + gold rule + eyebrow ----
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  if (eyebrow) {
+    ctx.save();
+    ctx.fillStyle = palette.gold;
+    ctx.font = `600 26px ${eyebrowFont}`;
+    drawTrackingText(ctx, eyebrow, width / 2, 104, 0.18 * 26);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.fillStyle = palette.primary;
+  ctx.font = `italic 600 76px ${displayFont}`;
+  ctx.shadowColor = 'rgba(11, 13, 26, 0.5)';
+  ctx.shadowBlur = 18;
+  ctx.fillText(toSafeText(topicTitle, '').trim(), width / 2, 184);
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle = palette.goldSoft;
+  ctx.fillRect(width / 2 - 36, 214, 72, 3);
+  ctx.restore();
+
+  // ---- Big card with warm aura (Daily treatment) ----
+  const cardTop = 286;
+  const maxCardWidth = Math.min(520, width - safeMargin * 2);
+  const maxCardHeight = 700;
+  let cardImg = null;
+  try {
+    const cardIdentity = orientedId
+      ? { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId }
+      : sourceCard;
+    const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
+    const resolvedPrimary = orientedId ? await resolveCardImageUrl(cardIdentity, orientation) : '';
+    const { primary, fallbackChain } = resolvePosterCardImageSources(
+      { ...(cardEntry || {}), ...card, orientation, card: sourceCard },
+      { resolvedPrimary, uprightUrl, reversedUrl, backUrl, lang },
+    );
+    cardImg = await loadPosterCardImageWithTimeout(primary, fallbackChain);
+  } catch (error) {
+    console.warn('[Poster] quick-pull card image failed', { reason: error?.message || String(error) });
+  }
+  const imgW = cardImg?.naturalWidth || maxCardWidth;
+  const imgH = cardImg?.naturalHeight || Math.round(maxCardWidth * 1.5);
+  const scale = Math.min(maxCardWidth / imgW, maxCardHeight / imgH);
+  const cardW = Math.max(0, imgW * scale);
+  const cardH = Math.max(0, imgH * scale);
+  const cardX = (width - cardW) / 2;
+  const cardYPos = cardTop;
+
+  // warm radial aura behind the card
+  const cx = cardX + cardW / 2;
+  const cy = cardYPos + cardH / 2;
+  const auraR = Math.max(cardW, cardH) / 2 + 110;
+  ctx.save();
+  const aura = ctx.createRadialGradient(cx, cy, auraR * 0.2, cx, cy, auraR);
+  aura.addColorStop(0, 'rgba(255, 225, 180, 0.5)');
+  aura.addColorStop(0.55, 'rgba(255, 223, 178, 0.2)');
+  aura.addColorStop(1, 'rgba(255, 223, 178, 0)');
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, auraR, auraR, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  if (cardW && cardH) {
+    const cardRadius = 28;
+    if (cardImg) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(42, 17, 66, 0.4)';
+      ctx.shadowBlur = 56;
+      ctx.shadowOffsetY = 28;
+      drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
+      ctx.fillStyle = '#2a1142';
+      ctx.fill();
+      ctx.restore();
+      ctx.save();
+      drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
+      ctx.clip();
+      ctx.drawImage(cardImg, cardX, cardYPos, cardW, cardH);
+      ctx.restore();
+    } else {
+      drawFallbackCardArt(ctx, cardX, cardYPos, cardW, cardH, { radius: cardRadius, label: 'MEOW TAROT' });
+    }
+  }
+
+  // ---- Answer badge → card name → gold ornament → reading tagline ----
+  const cardBottomY = cardYPos + cardH;
+  ctx.textAlign = 'center';
+  if (badgeText) {
+    ctx.save();
+    ctx.fillStyle = palette.gold;
+    ctx.font = `700 27px ${eyebrowFont}`;
+    ctx.shadowColor = 'rgba(11, 13, 26, 0.45)';
+    ctx.shadowBlur = 12;
+    drawTrackingText(ctx, badgeText, width / 2, cardBottomY + 70, 0.28 * 27);
+    ctx.restore();
+  }
+
+  let nameBottomY = cardBottomY + 132;
+  if (cardName) {
+    const maxWidth = width - safeMargin * 2;
+    let fontSize = 96;
+    while (fontSize > 56) {
+      ctx.font = `italic 500 ${fontSize}px ${displayFont}`;
+      if (ctx.measureText(cardName).width <= maxWidth) break;
+      fontSize -= 4;
+    }
+    ctx.font = `italic 500 ${fontSize}px ${displayFont}`;
+    const lines = wrapTextLines(ctx, cardName, maxWidth, 2);
+    const lineHeight = Math.round(fontSize * 1.02);
+    ctx.fillStyle = palette.primary;
+    lines.forEach((line, i) => ctx.fillText(line, width / 2, nameBottomY + i * lineHeight));
+    nameBottomY = nameBottomY + (lines.length - 1) * lineHeight + Math.round(fontSize * 0.26);
+  }
+
+  // gold rule + diamond ornament
+  const ornamentY = nameBottomY + 46;
+  ctx.save();
+  ctx.fillStyle = palette.goldSoft;
+  ctx.fillRect(width / 2 - 66, ornamentY - 1.5, 133, 3);
+  ctx.fillStyle = palette.gold;
+  ctx.translate(width / 2, ornamentY);
+  ctx.rotate(Math.PI / 4);
+  ctx.fillRect(-8, -8, 16, 16);
+  ctx.restore();
+
+  if (taglineText) {
+    const footerMargin = 96;
+    const taglineTop = ornamentY + 56;
+    const taglineWidth = width - 2 * 110;
+    const taglineMaxHeight = Math.max(0, (height - footerMargin) - taglineTop);
+    const fit = fitDailyQuoteText(ctx, taglineText, taglineWidth, taglineMaxHeight, {
+      fontFamily: displayFont,
+      defaultFontSize: 48,
+      minimumFontSize: 32,
+      addQuotes: true,
+    });
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = palette.primary;
+    ctx.font = `italic 500 ${fit.fontSize}px ${displayFont}`;
+    const firstBaseline = taglineTop + fit.ascent;
+    fit.lines.forEach((line, i) => ctx.fillText(line, width / 2, firstBaseline + i * fit.lineHeight));
+    ctx.restore();
+  }
+
+  // footer
+  ctx.fillStyle = '#aab0c9';
+  ctx.font = '500 28px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(toSafeText(payload?.poster?.footer, 'meowtarot.com'), width / 2, height - 56);
+
+  const exportStart = performance.now();
+  perf.captureCount += 1;
+  const blob = await exportPoster(canvas);
+  perf.captureMs = exportStart - perf.startedAt - perf.preloadMs;
+  perf.exportMs = performance.now() - exportStart;
+  if (!blob) throw new Error('Failed to build poster blob');
+  return { blob, width, height, perf };
+}
+
 export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   const payload = normalizePayload(rawPayload) || normalizePayload({});
   if (Array.isArray(payload?.cards) && payload.cards.length) {
@@ -2025,18 +2220,36 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const energyBalance = resolveEnergyBalance(energySource);
     const questionCardCount = orderedQuestionCards.length === 1 ? 1 : 3;
     const isSinglePull = questionCardCount === 1;
-    // Quick Pull (single card) is an "Answer", not a timeline position. Keep the
-    // 3-card spread on Past/Present/Future (hard rule #6 — scoped by mode).
-    const answerLabel = normalizePosterLanguage(payload?.lang || 'en') === 'th' ? 'คำตอบ' : 'Answer';
-    const slots = isSinglePull ? [answerLabel] : questionStrings.positions;
-    const summaries = isSinglePull ? [questionSummaries[1] || questionSummaries[0] || ''] : questionSummaries;
+    const lang = normalizePosterLanguage(payload?.lang || 'en');
+    // Quick Pull (single card) is an "Answer", not a timeline position.
+    const answerLabel = lang === 'th' ? 'คำตอบ' : 'Answer';
+
+    // Quick Pull → Daily-style single-card poster (big card + reading underneath,
+    // no energy radar). The 3-card Story spread keeps its own layout below
+    // (hard rule #6 — scoped by mode).
+    if (isSinglePull) {
+      return await renderQuickPullPoster(ctx, canvas, perf, {
+        width,
+        height,
+        payload,
+        lang,
+        topic: String(payload?.topic || '').toLowerCase(),
+        card: orderedQuestionCards[0] || {},
+        cardEntry: cardEntries[0] || null,
+        topicTitle: questionStrings.title,
+        eyebrow: questionStrings.eyebrow,
+        answerLabel,
+      });
+    }
+
+    const slots = questionStrings.positions;
+    const summaries = questionSummaries;
     const cardGap = 20;
-    // Single card has the row to itself — magnify it for a hero treatment.
-    const cardW = isSinglePull ? 360 : 260;
+    const cardW = 260;
     const cardH = Math.round(cardW * 1.5);
     const totalW = cardW * questionCardCount + cardGap * Math.max(0, questionCardCount - 1);
     const startX = (width - totalW) / 2;
-    const cardY = isSinglePull ? 352 : 378;
+    const cardY = 378;
     const textPanelX = 74;
     const textPanelY = 48;
     const textPanelW = width - textPanelX * 2;
