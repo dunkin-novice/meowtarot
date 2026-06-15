@@ -58,18 +58,20 @@ let questionTopicsModulePromise = null;
 
 const staticCardBacks = document.querySelectorAll('.card-back');
 
-function applyCardBackBackground(el) {
+function applyCardBackBackground(el, { thumb = false } = {}) {
   if (!el) return;
+  const backUrl = getCardBackUrl({ thumb });
   if (el.tagName === 'IMG') {
-    applyImageFallback(el, getCardBackUrl(), [CARD_BACK_FALLBACK_URL]);
+    applyImageFallback(el, backUrl, [CARD_BACK_FALLBACK_URL]);
     el.loading = el.loading || 'eager';
     el.alt = '';
     return;
   }
-  el.style.backgroundImage = `url('${getCardBackUrl()}')`;
+  el.style.backgroundImage = `url('${backUrl}')`;
 }
 
-staticCardBacks.forEach(applyCardBackBackground);
+// Board backs render tiny (~40-64px), so use the lightweight 200px thumbnail.
+staticCardBacks.forEach((el) => applyCardBackBackground(el, { thumb: true }));
 
 const stripOrientation = (value = '') => String(value || '').replace(/-(upright|reversed)$/i, '');
 
@@ -371,7 +373,7 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
         cardBack.fetchPriority = 'high';
         cardBack.loading = 'eager';
       }
-      applyCardBackBackground(cardBack);
+      applyCardBackBackground(cardBack, { thumb: true });
       slot.appendChild(cardBack);
       slot.onclick = () => {
         // BUG-021 tail: ignore taps on slots with no card behind them yet.

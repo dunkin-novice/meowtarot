@@ -208,8 +208,12 @@ export function markDeckRewardSeen(deckId) {
   }
 }
 
-export function getCardBackUrl() {
-  return buildAssetUrl(`assets/${getActiveDeck().id}/00-back.webp`, { versioned: true });
+// thumb:true returns the ~12-20KB 200px back (00-back-200.webp) instead of the
+// full ~100-410KB back — use it where the back renders small (the selection
+// board tiles), NOT for the full-size reading flip / card-image fallback.
+export function getCardBackUrl({ thumb = false } = {}) {
+  const file = thumb ? '00-back-200.webp' : '00-back.webp';
+  return buildAssetUrl(`assets/${getActiveDeck().id}/${file}`, { versioned: true });
 }
 
 export function getFallbackDeck(id = activeDeckId) {
