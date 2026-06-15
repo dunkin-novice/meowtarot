@@ -16,6 +16,7 @@ redesign reference) — still useful background, but this file is current.
 
 | Commit | What |
 |---|---|
+| `3d7ff2c` | **Quick Pull single-card question poster — magnify + "Answer" (§2D)** — in `share/poster.js` question/story branch, gated single-card (`questionCardCount===1`, `isSinglePull`) behavior: card 260→**360px** (hero, height scales to 540) + `cardY` 378→352 for spacing above the energy radar; position label is now **`Answer`/`คำตอบ`** instead of `positions[1]` (`Present`/`ปัจจุบัน`). 3-card Story spread untouched (still Past/Present/Future @260px, rule #6). EN+TH. Harness-verified EN+TH (text/layout; card art is CORS-fallback on localhost). **iOS:** poster.js `cp`→`www`→`cap sync ios` done — md5 identical across canonical/www/ios. |
 | `f497b4f` | **Per-language cards split (§2C, BUG-021 follow-up)** — `scripts/generate-cards-lang.mjs` slices `cards.json` → `data/cards-en.json` (1.48MB) + `data/cards-th.json` (3.18MB). `loadTarotData(mode)` fetches the current locale's slice (`?lang`/`/th/` aware) w/ graceful fallback to full `cards.json`; `card-page.js` uses `loadTarotData('both')`. EN reading payload **−68%**, TH −32%. `generate-seo.yml` regenerates both. |
 | `9a21f9f` | **Board card-backs load `00-back-200` thumbnail** — `getCardBackUrl({thumb})` in `data.js`; board call sites in `main.js` pass `thumb:true`. Reading-flip + fallbacks stay full-res. 12–24× lighter first board paint. |
 | `27a40fc` | **Homepage "Your decks" strip wired to real decks** — `renderHomeDeckStrip()` in `main.js` replaces the redesign placeholder (gradient + "M" monogram, fake names) with real `00-back-200` thumbnails, EN+TH names, lock/active state; tiles link to `profile.html` (display-only, no repaint gotcha). |
@@ -81,8 +82,18 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 `cp` + `cap sync`.
 
 ### D. Other poster modes
-- **Question (3-card) poster readability** — does it have the same cramped/low-contrast
-  text the Celtic poster had (now fixed)? Render it (the harness pattern) and check. STILL OPEN.
+- **Question (3-card) poster readability** — ✅ CHECKED 2026-06-15 (harness render, EN+TH).
+  **NOT cramped/low-contrast like Celtic was** — it already uses per-card summary boxes
+  + an energy radar; text is legible in both languages. Closed.
+- **Quick Pull single-card poster** — ✅ SHIPPED 2026-06-15 (`3d7ff2c`): magnified hero card
+  + `Present`→`Answer`/`คำตอบ` label (single-card only). Synced to iOS.
+- **Question poster energy radar is EN-only on TH (NEW BUG — open)** — surfaced during the
+  §2D check. `resolveEnergyBalance` interpretation text (`share/poster.js` ~L1740-43) **and**
+  the four radar axis labels `Action/Emotion/Thinking/Stability` (~L2142-45) are hardcoded
+  English with no TH branch; the eyebrow `"Ask a Question"` (`getQuestionPosterStrings`, L756)
+  is also hardcoded EN. On the TH question poster these render in English → violates hard
+  rule #2 (EN/TH parity). Not yet filed in `open-bugs.md`. Real-art on-device pass still
+  pending for the question poster too (same CORS caveat as Celtic §2A).
 - **Cross-deck face fallback for question/full/celtic posters (BUG-020)** — ✅ SHIPPED
   2026-06-15 (`0bad8ba`): `resolvePosterCardImageSources` now inserts the default-deck
   *face* before the card back for all poster modes (call order untouched, rule #4).
@@ -101,9 +112,13 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
   every boba face loads (HTTP 206). Prime suspect: **poster-canvas CORS tainting (iOS
   Safari)**, where the fallback image fails the same way. NEED a screenshot + her
   device/browser to confirm. Workaround for her: switch to Moonmallow in Profile → Decks.
-- **iOS / www mirror sync pending** — the per-language split + `00-back-200` board thumbs
-  only reached the web. Native degrades gracefully (full `cards.json`, full back) until
-  `cp <files> www/` + `npx cap sync ios`.
+- **iOS / www mirror sync — PARTIAL.** `share/poster.js` is now synced to `www/`+`ios/`
+  (`cap sync ios` 2026-06-15, md5 verified). **Still pending (BUG-015 full reconciliation):**
+  `js/data.js` (per-language split + `00-back-200` thumbs, www ~62 lines behind), `js/main.js`
+  (deck strip, ~81 behind), `common.js`, `reading.js`, + the new `data/cards-en.json` /
+  `data/cards-th.json`. Mirrors also carry pre-existing uncommitted edits + partial `www/`
+  tracking — needs a careful per-file `diff` reconciliation, not a blind `cp`. Native degrades
+  gracefully until then.
 - **Content backfills (non-blocking):** 2 missing veila-tarot fronts on the CDN
   (`39-three-of-cups-upright`, `40-four-of-cups-upright` — never generated); 12 cross-language
   gap cells in `cards.json` (celtic_cross_*, self_future, travel_past/present).
@@ -111,7 +126,8 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 **Done since the 2026-06-07 handoff** (so don't re-flag): `/today/` redirect · position-label
 audit → "Obstacle" · TH homepage parity (was already shipped) · daily-board fit · BUG-016 #1–#3 ·
 per-language cards split (§2C) · board-back thumbnail · homepage deck strip · poster cross-deck
-fallback (BUG-020) · question-page compaction.
+fallback (BUG-020) · question-page compaction · question-poster readability check (§2D, not cramped) ·
+Quick Pull poster magnify + "Answer" label · poster.js iOS mirror sync.
 
 ---
 
@@ -142,7 +158,7 @@ fallback (BUG-020) · question-page compaction.
 ---
 
 ## 5. Open bug list
-`docs/open-bugs.md` (source of truth). This session: **closed** BUG-001, BUG-004, BUG-010, BUG-016 (all 3 issues), BUG-021 tail; **verified Safari-only** (open, need a device) BUG-006, BUG-017. Still open: BUG-020 (cross-deck face fallback for question/full/celtic posters), BUG-021 follow-up (cards.json payload cut), BUG-018 (asset-resolver `FALLBACK_BACK_PACK` — off-limits file).
+`docs/open-bugs.md` (source of truth). This session: **closed** BUG-001, BUG-004, BUG-010, BUG-016 (all 3 issues), BUG-021 tail; **verified Safari-only** (open, need a device) BUG-006, BUG-017. Still open: BUG-020 (cross-deck face fallback for question/full/celtic posters), BUG-021 follow-up (cards.json payload cut), BUG-018 (asset-resolver `FALLBACK_BACK_PACK` — off-limits file). **NEW (not yet filed in `open-bugs.md`):** question-poster energy radar + eyebrow are EN-only on TH (see §2D) — EN/TH parity violation.
 
 ---
 
