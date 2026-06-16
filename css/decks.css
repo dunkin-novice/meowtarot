@@ -294,8 +294,9 @@ body[data-page='decks'] .decks-cell.is-locked .decks-cell__note {
 body[data-page='decks'] .decks-toast {
   position: fixed;
   left: 50%;
-  bottom: 100px;
-  transform: translateX(-50%) translateY(8px);
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%) translateY(8px);
   background: rgba(61, 26, 92, 0.92);
   color: var(--mt-cream);
   font-family: var(--mt-font-body);
@@ -317,5 +318,5 @@ body[data-page='decks'] .decks-toast {
 
 body[data-page='decks'] .decks-toast.is-visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, -50%) translateY(0);
 }

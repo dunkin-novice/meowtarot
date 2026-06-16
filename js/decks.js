@@ -27,6 +27,7 @@ import {
   canUnlockDeck,
 } from './data.js';
 import { getUserProgress } from './progress.js';
+import { getCurrentUserSync, loginWithProvider } from './auth.js';
 import { trackLocaleSwitched } from './analytics.js';
 
 const state = {
@@ -195,7 +196,14 @@ function buildDeckCell(deck, { progress, activeId, render }) {
   const note = document.createElement('div');
   note.className = 'decks-cell__note';
   const streak = Math.max(0, Number(progress?.streak_current) || 0);
-  if (deck.unlock_day == null) {
+  const signedIn = Boolean(getCurrentUserSync());
+  if (!signedIn) {
+    // Logged out: decks/streak don't persist without an account, so every cell is a
+    // sign-in CTA — "own it" for the free defaults, "get it" for the unlock decks.
+    note.textContent = deck.unlock_day == null
+      ? pickLocalized('Sign in to own it', 'ลงชื่อเข้าใช้เพื่อเป็นเจ้าของ')
+      : pickLocalized('Sign in to get it', 'ลงชื่อเข้าใช้เพื่อรับสำรับนี้');
+  } else if (deck.unlock_day == null) {
     note.textContent = pickLocalized('Free · always yours', 'ฟรี · ใช้ได้เสมอ');
   } else if (unlocked) {
     note.textContent = pickLocalized(
@@ -220,6 +228,16 @@ function buildDeckCell(deck, { progress, activeId, render }) {
   cell.appendChild(meta);
 
   cell.addEventListener('click', () => {
+    // Logged out: any deck tap → sign-in gate (matches the "Sign in to own/get it" notes).
+    if (!getCurrentUserSync()) {
+      import('./sign-in-gate.js')
+        .then(({ showSignInGate }) => showSignInGate({
+          lang: state.currentLang,
+          onSignIn: () => loginWithProvider('google').catch(() => {}),
+        }))
+        .catch(() => {});
+      return;
+    }
     if (!unlocked) {
       showDecksToast(state.currentLang === 'th'
         ? fmt('ถึงวันที่ {day} เพื่อปลดล็อก {deck}', { day: deck.unlock_day, deck: deck.name_th || deck.name })
