@@ -813,16 +813,20 @@ async function init() {
   const lang = currentPayload?.lang || 'en';
   const strings = getStrings(lang);
 
+  // Always offer a way home from the poster/share page — in EVERY state (success,
+  // loading, or no-payload error). Homepage always works; the old per-state links
+  // (reading.html / card meaning) fail in the share / in-app-browser context.
+  if (backToReading) {
+    backToReading.hidden = false;
+    backToReading.textContent = lang === 'th' ? 'กลับหน้าแรก' : 'Back to Homepage';
+    backToReading.href = lang === 'th' ? '/th/' : '/';
+  }
+
   logFullPayload(currentPayload);
 
   if (!currentPayload) {
     updatePipelineStage('fail');
     showToast(strings.missing, { tone: 'error', persist: true });
-    if (backToReading) {
-      backToReading.hidden = false;
-      backToReading.textContent = lang === 'th' ? 'กลับหน้าผลการอ่าน' : 'Back to reading';
-      backToReading.href = '/reading.html';
-    }
     setLoading(false, strings);
     setActionLoading(false, strings);
     shareBtn.disabled = true;
@@ -831,13 +835,6 @@ async function init() {
 
   document.title = `${currentPayload.title || 'MeowTarot'} – Share`;
   applySharePrompt(currentPayload);
-  if (backToReading) {
-    // Was "Read Card Meaning" → a card-meaning/reading path that fails in the share
-    // (in-app browser) context. Send users somewhere that always works: the homepage.
-    backToReading.hidden = false;
-    backToReading.textContent = lang === 'th' ? 'กลับหน้าแรก' : 'Back to Homepage';
-    backToReading.href = lang === 'th' ? '/th/' : '/';
-  }
   if (!isIOS()) {
     hintEl.hidden = true;
   }
