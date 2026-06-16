@@ -507,7 +507,13 @@ function openCardSheet(card) {
     ? (state.currentLang === 'th' ? 'หน้านี้เป็นหน้า Canonical แบบเต็ม' : 'This card has a dedicated canonical full page.')
     : (state.currentLang === 'th' ? 'ไปยังหน้าความหมายไพ่แบบมาตรฐาน' : 'Open the standard card meaning page.');
 
-  cardSheetEls.meaningBtn.href = meaningUrl;
+  // Carry the active deck across to the (cross-origin) canonical meaning page so its
+  // card image matches the deck this reading was drawn with, not the default deck.
+  const deckId = getActiveDeckId();
+  const meaningHref = (meaningUrl && meaningUrl !== '#' && deckId)
+    ? `${meaningUrl}${meaningUrl.includes('?') ? '&' : '?'}deck=${encodeURIComponent(deckId)}`
+    : meaningUrl;
+  cardSheetEls.meaningBtn.href = meaningHref;
   cardSheetEls.meaningBtn.target = '_blank';
   cardSheetEls.meaningBtn.rel = 'noopener noreferrer';
   cardSheetEls.meaningBtn.textContent = meaningLabel;

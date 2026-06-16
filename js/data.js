@@ -115,6 +115,15 @@ export const FALLBACK_DECK_ID = 'moonmallow';
 const ACTIVE_DECK_STORAGE_KEY = 'meowtarot_active_deck';
 
 export function getActiveDeckId() {
+  // A ?deck= URL override lets a reading on one origin (apex / the iOS app) carry its
+  // deck to the canonical card-meaning pages on www, where its localStorage active
+  // deck isn't visible — so the meaning-page card image matches the reading's deck.
+  if (typeof window !== 'undefined' && window.location) {
+    try {
+      const param = new URLSearchParams(window.location.search).get('deck');
+      if (param && DECKS[param]) return param;
+    } catch (_) { /* ignore malformed search */ }
+  }
   if (typeof localStorage === 'undefined') return DEFAULT_DECK_ID;
   const stored = localStorage.getItem(ACTIVE_DECK_STORAGE_KEY);
   return (stored && DECKS[stored]) ? stored : DEFAULT_DECK_ID;
