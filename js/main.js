@@ -502,6 +502,17 @@ function renderStreakChip() {
   chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
 }
 
+// Daily-board "From the deck" name. The markup hardcodes "Velvet Familiar"; wire it to
+// the active deck (localized — deck names ARE translated, unlike card names) so it matches
+// the board's card backs. No-op where the element is absent.
+function renderDeckName() {
+  const nameEl = document.querySelector('.daily-topbar__deck-name');
+  if (!nameEl) return;
+  const deck = getAllDecks().find((d) => d.id === getActiveDeckId());
+  if (!deck) return;
+  nameEl.textContent = state.currentLang === 'th' ? (deck.name_th || deck.name) : deck.name;
+}
+
 function renderDaily() {
   // Phase 5 review pass: dealShuffleBtn (the "Draw card · เปิดไพ่" button on
   // the removed Before-Draw state) no longer exists on daily.html/th/daily.html.
@@ -514,6 +525,7 @@ function renderDaily() {
   if (!board || !counter) return;
 
   renderStreakChip();
+  renderDeckName();
 
   // Phase 5 mobile review fix: signal to CSS that the new daily-shell layout
   // is active. A real body class gives the cascade a hook every browser
