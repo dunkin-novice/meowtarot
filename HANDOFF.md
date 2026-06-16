@@ -127,7 +127,12 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
   (public images, anonymous/no-creds) and kills the whole "origin not listed" failure class. **Verified:**
   `curl -H Origin` (apex + capacitor) now returns `access-control-allow-origin: *`, and an in-browser
   `img.crossOrigin='anonymous'` load of boba/moonmallow fronts flipped from **ERROR → loaded**. Fixes both
-  the reading front AND poster canvas. **Note:** `wrangler` is now logged in (was expired). **Still open
+  the reading front AND poster canvas. **Re-verified comprehensively 2026-06-16:** ACAO sweep = **44/44
+  assets (all 11 decks × fronts/reversed/back/200-thumb) → 200 + `ACAO:*`**; all 4 poster modes
+  (daily/question-quick/question-3card/celtic) generate real blobs (canvas not tainted); live homepage +
+  card-meaning page = 0 broken images; and the **live Daily reading result rendered its `crossOrigin`
+  card front (`18-the-star-reversed`, 1696px) end-to-end** from the apex origin. No CORS errors in console
+  (only 404 fallback-probe noise + the 2 known-missing veila fronts). **Note:** `wrangler` is now logged in (was expired). **Still open
   (perf, not the bug):** `cf-cache-status: DYNAMIC` — CDN images aren't edge-cached (every hit → R2); add a
   Cloudflare cache rule for `cdn.meowtarot.com/assets/*`.
 - **iOS / www mirror sync — PARTIAL.** `share/poster.js` **and** `js/reading.js` are now synced
