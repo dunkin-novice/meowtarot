@@ -832,10 +832,11 @@ async function init() {
   document.title = `${currentPayload.title || 'MeowTarot'} – Share`;
   applySharePrompt(currentPayload);
   if (backToReading) {
-    const cardMeaningPath = resolveCardMeaningPath(currentPayload);
+    // Was "Read Card Meaning" → a card-meaning/reading path that fails in the share
+    // (in-app browser) context. Send users somewhere that always works: the homepage.
     backToReading.hidden = false;
-    backToReading.textContent = lang === 'th' ? 'อ่านความหมายไพ่' : 'Read Card Meaning';
-    backToReading.href = cardMeaningPath || currentPayload.canonicalUrl || '/reading.html';
+    backToReading.textContent = lang === 'th' ? 'กลับหน้าแรก' : 'Back to Homepage';
+    backToReading.href = lang === 'th' ? '/th/' : '/';
   }
   if (!isIOS()) {
     hintEl.hidden = true;
