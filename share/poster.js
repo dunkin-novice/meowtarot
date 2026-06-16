@@ -795,12 +795,15 @@ function resolveQuestionPosterSummaries(payload = {}, cardEntries = []) {
       reading[`reading_summary_${slot}_${lang}`],
       reading[`reading_summary_${slot}`],
       card[`reading_summary_${slot}`],
-      card[`reflection_question_${slot}_${lang}`],
-      card[`reflection_question_${slot}`],
-      getLocalizedField(card, 'reflection_question', lang),
-      card.reflection_question_en,
+      // Topic-agnostic position interpretation (a real "present/past/future" answer).
+      getLocalizedField(card, `standalone_${slot}`, lang),
       getLocalizedField(card, 'general_meaning', lang),
+      // EN gap-fillers (always a statement, never the reflection question) so a TH
+      // content gap shows an English interpretation rather than a bare question or
+      // blank. reflection_question is deliberately excluded — it's a prompt, not an answer.
+      card[`standalone_${slot}_en`],
       card.general_meaning_en,
+      card.tarot_imply_en,
     ]);
   });
 }
@@ -1961,7 +1964,7 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
     ctx.restore();
   }
 
-  let nameBottomY = cardBottomY + 132;
+  let nameBottomY = cardBottomY + 152;
   if (cardName) {
     const maxWidth = width - safeMargin * 2;
     let fontSize = 96;

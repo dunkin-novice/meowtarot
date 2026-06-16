@@ -3506,9 +3506,13 @@ function renderQuestion(cards, dict) {
     // Quick uses tarot_imply_*; Story uses standalone_{position}_*.
     let inlineActive = '';
     if (orderedCards.length === 1) {
+      // Quick Pull = the "present" answer. Lead with the standalone present-position
+      // interpretation (a real answer, topic-agnostic so it complements the topic
+      // panel below), never the reflection question. Falls back to the keyword line.
       inlineActive = state.currentLang === 'th'
-        ? (card.tarot_imply_th || card.reading_summary_preview_th || '')
-        : (card.tarot_imply_en || card.reading_summary_preview_en || '');
+        ? (card.standalone_present_th || card.tarot_imply_th || card.reading_summary_preview_th
+           || card.standalone_present_en || card.tarot_imply_en || '')
+        : (card.standalone_present_en || card.tarot_imply_en || card.reading_summary_preview_en || '');
     } else {
       inlineActive = state.currentLang === 'th'
         ? (card[`standalone_${positionStr}_th`] || '')
