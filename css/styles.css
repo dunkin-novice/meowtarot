@@ -6812,6 +6812,13 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
 
   body[data-page='reading'][data-reading-mode='full'] .celtic-slot--challenge {
     position: static;
+    /* Base rule pins this slot at top/left:50% to cross over the center card.
+       The mobile column stack drops that overlap, so the inset must be reset too
+       — otherwise the leftover left:50% shoves the card off the right edge. */
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
     transform: none;
   }
 
