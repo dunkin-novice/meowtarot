@@ -110,13 +110,21 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 - Dead-code/cleanup: `insightTitles` in `share/poster.js` is now unused by the narration.
 
 ### F. Open from the 2026-06-15 session
-- **Friend's "not-downloaded" card image** (on a default-deck reading) — NOT missing art
-  (boba CDN art is 100% complete) and NOT the per-lang split. She's on the **boba deck
-  because she claimed it** (deck-reward → `pending_deck_claim`, re-applied by `auth.js` on
-  each sign-in, so it survives cache clears). The broken front is **unreproducible** locally —
-  every boba face loads (HTTP 206). Prime suspect: **poster-canvas CORS tainting (iOS
-  Safari)**, where the fallback image fails the same way. NEED a screenshot + her
-  device/browser to confirm. Workaround for her: switch to Moonmallow in Profile → Decks.
+- **Reading-page card front doesn't load on fresh devices — ROOT CAUSE FOUND 2026-06-16 (CORS).**
+  The card **front** is an `<img crossOrigin="anonymous">` (`js/reading.js:1092`, set "for cross-origin
+  draw/share paths" — the same element feeds the poster canvas). **`cdn.meowtarot.com` (Cloudflare/R2)
+  returns NO `Access-Control-Allow-Origin` header** (confirmed via `curl -H Origin` and an in-browser
+  `new Image(); img.crossOrigin='anonymous'` test from a different origin: crossOrigin load **fails**,
+  same URL **without** crossOrigin **loads** 768×1376). So fresh clients can't load fronts; the dev's
+  phone only works from **cache**. Card **backs** load fine because they're CSS `background-image`
+  (`js/main.js:73`, never CORS-gated) — which is exactly why `00-back` shows but the front doesn't.
+  Earlier "every face loads HTTP 206" was a `curl` test (curl doesn't enforce CORS), so it missed it.
+  **FIX (CDN side, not code):** make `cdn.meowtarot.com` return `Access-Control-Allow-Origin: *` —
+  either an **R2 bucket CORS policy** (`wrangler r2 bucket cors`, needs `wrangler login` — token is
+  currently expired) or a **Cloudflare Transform Rule → Modify Response Header** (dashboard, no auth).
+  ACAO `*` is safe (public images, anonymous/no-creds). This fixes BOTH the reading front AND poster
+  generation (poster canvas needs CORS too). Bonus: `cf-cache-status: DYNAMIC` — images aren't edge-cached
+  (every hit goes to R2); add a cache rule for perf once CORS is in. Workaround meanwhile: Moonmallow deck.
 - **iOS / www mirror sync — PARTIAL.** `share/poster.js` **and** `js/reading.js` are now synced
   to `www/`+`ios/` (`cap sync ios` 2026-06-15, md5 verified — reading.js drift now resolved too).
   **Still pending (BUG-015 full reconciliation):** `js/data.js` (per-language split + `00-back-200`
