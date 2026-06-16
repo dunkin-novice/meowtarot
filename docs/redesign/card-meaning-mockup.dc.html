@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@500;600&display=swap" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+</style>
+</helmet>
+
+<div style="min-height: 100%; background: linear-gradient(180deg, #f1e4f6 0%, #f6e0ec 55%, #efe2f7 100%); font-family: 'DM Sans', system-ui, sans-serif; color: #4d3a66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;">
+
+  <!-- ── Header chrome ─────────────────────────────────────────── -->
+  <header style="position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: rgba(255,255,255,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(172,130,210,0.16); box-shadow: 0 2px 20px rgba(120,80,180,0.07);">
+    <div style="display: flex; flex-direction: column; gap: 4px; width: 22px; height: 16px; justify-content: center; cursor: pointer;" aria-label="Menu">
+      <span style="display: block; height: 2px; border-radius: 2px; background: #3d1a5c;"></span>
+      <span style="display: block; height: 2px; border-radius: 2px; background: #3d1a5c;"></span>
+      <span style="display: block; height: 2px; border-radius: 2px; background: #3d1a5c;"></span>
+    </div>
+    <a href="#" style="flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 24px; line-height: 1; color: #3d1a5c; letter-spacing: -0.01em; text-decoration: none;">MeowTarot</a>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;">
+      <span style="color: #6b4faa;">EN</span>
+      <span style="color: rgba(61,26,92,0.30);">|</span>
+      <span style="color: rgba(61,26,92,0.45);">TH</span>
+    </div>
+  </header>
+
+  <main style="max-width: 600px; margin: 0 auto; padding: 16px 16px 56px;">
+
+    <!-- ── Breadcrumbs ─────────────────────────────────────────── -->
+    <nav aria-label="Breadcrumb" style="display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: 12px; margin: 6px 2px 18px; color: #8a72a8;">
+      <a href="#" style="color: #6b4faa; text-decoration: none;">Home</a>
+      <span style="color: #d49a2c;">›</span>
+      <a href="#" style="color: #6b4faa; text-decoration: none;">Tarot Card Meanings</a>
+      <span style="color: #d49a2c;">›</span>
+      <span aria-current="page" style="color: #3d1a5c;">The Fool</span>
+    </nav>
+
+    <!-- ── Hero ────────────────────────────────────────────────── -->
+    <section style="background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.88) 100%); border: 1px solid rgba(255,255,255,0.9); border-radius: 26px; box-shadow: 0 16px 44px -16px rgba(61,26,92,0.28); padding: 26px 22px 24px; margin-bottom: 16px;">
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px;">
+
+        <div style="position: relative; flex-shrink: 0;">
+          <div style="position: absolute; inset: -14px; border-radius: 24px; background: radial-gradient(closest-side, rgba(212,154,44,0.30), transparent 75%); filter: blur(6px);" aria-hidden="true"></div>
+          <div style="position: relative; width: 188px; aspect-ratio: 2 / 3; border-radius: 16px; overflow: hidden; border: 1px solid rgba(212,154,44,0.5); box-shadow: 0 18px 40px -12px rgba(61,26,92,0.42); background: linear-gradient(155deg, #3d1a5c 0%, #7a1f66 45%, #d12878 100%);">
+            <img src="{{ imageUrl }}" alt="The Fool tarot card" loading="eager" style="display: block; width: 100%; height: 100%; object-fit: cover;" />
+          </div>
+          <div style="margin-top: 9px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #a487c4;">{{ deckLabel }} deck</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 7px; width: 100%;">
+          <div style="font-size: 11.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #c9933a;">{{ orientationLabel }}</div>
+          <h1 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 44px; line-height: 1.02; color: #3d1a5c; margin: 0; letter-spacing: -0.01em;">The Fool</h1>
+          <div lang="th" style="font-family: 'Noto Serif Thai', 'Cormorant Garamond', serif; font-size: 15px; color: #8a72a8;">Thai name: เดอะ ฟูล</div>
+          <div style="display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; padding: 5px 13px; border-radius: 100px; background: rgba(201,147,58,0.12); border: 1px solid rgba(201,147,58,0.22); font-size: 12.5px; color: #a06a1e; font-weight: 500;">
+            <span style="width: 5px; height: 5px; border-radius: 50%; background: #c9933a;"></span>
+            Archetype · The Cosmic Wanderer
+          </div>
+          <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; line-height: 1.35; color: #6a3f8e; margin: 10px 4px 0; text-wrap: pretty;">{{ introKeywords }}</p>
+        </div>
+
+        <!-- Orientation toggle -->
+        <div role="tablist" aria-label="Meaning orientation" style="display: inline-flex; gap: 4px; padding: 4px; border-radius: 100px; background: rgba(61,26,92,0.07);">
+          <button type="button" role="tab" onClick="{{ setUpright }}" style="{{ uprightStyle }}">Upright</button>
+          <button type="button" role="tab" onClick="{{ setReversed }}" style="{{ reversedStyle }}">Reversed</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Quick Symbolic Profile ──────────────────────────────── -->
+    <section style="background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.9); border-radius: 22px; box-shadow: 0 10px 28px -12px rgba(61,26,92,0.2); padding: 22px; margin-bottom: 16px;">
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 25px; color: #3d1a5c; margin: 0;">Quick Symbolic Profile</h2>
+      <div style="width: 34px; height: 2px; border-radius: 2px; background: {{ accentGrad }}; margin: 9px 0 18px;"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="background: linear-gradient(165deg, rgba(241,228,246,0.7), rgba(246,224,236,0.5)); border: 1px solid rgba(172,130,210,0.14); border-radius: 14px; padding: 13px 14px;">
+          <div style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #a487c4; font-weight: 600;">Zodiac</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #3d1a5c; margin-top: 3px;">Aquarius</div>
+        </div>
+        <div style="background: linear-gradient(165deg, rgba(241,228,246,0.7), rgba(246,224,236,0.5)); border: 1px solid rgba(172,130,210,0.14); border-radius: 14px; padding: 13px 14px;">
+          <div style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #a487c4; font-weight: 600;">Element</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #3d1a5c; margin-top: 3px;">Air</div>
+        </div>
+        <div style="background: linear-gradient(165deg, rgba(241,228,246,0.7), rgba(246,224,236,0.5)); border: 1px solid rgba(172,130,210,0.14); border-radius: 14px; padding: 13px 14px;">
+          <div style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #a487c4; font-weight: 600;">Planet</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #3d1a5c; margin-top: 3px;">Uranus</div>
+        </div>
+        <div style="background: linear-gradient(165deg, rgba(241,228,246,0.7), rgba(246,224,236,0.5)); border: 1px solid rgba(172,130,210,0.14); border-radius: 14px; padding: 13px 14px;">
+          <div style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #a487c4; font-weight: 600;">Numerology</div>
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #3d1a5c; margin-top: 3px;">0</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 13px;">
+        <sc-for list="{{ energy }}" as="e" hint-placeholder-count="4">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+              <span style="font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #6a3f8e; font-weight: 600;">{{ e.label }}</span>
+              <strong style="font-family: 'Cormorant Garamond', serif; font-size: 17px; color: #3d1a5c;">{{ e.value }}</strong>
+            </div>
+            <div style="height: 8px; border-radius: 100px; background: rgba(61,26,92,0.08); overflow: hidden;">
+              <span style="display: block; height: 100%; border-radius: 100px; width: {{ e.pct }}; background: {{ accentGrad }};"></span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ── Core Meaning ────────────────────────────────────────── -->
+    <section style="background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.9); border-radius: 22px; box-shadow: 0 10px 28px -12px rgba(61,26,92,0.2); padding: 22px; margin-bottom: 16px;">
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 25px; color: #3d1a5c; margin: 0;">Core Meaning</h2>
+      <div style="width: 34px; height: 2px; border-radius: 2px; background: {{ accentGrad }}; margin: 9px 0 16px;"></div>
+      <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; line-height: 1.4; color: #4a3560; margin: 0; text-wrap: pretty;">{{ coreMeaning }}</p>
+    </section>
+
+    <!-- ── Reading Summary ─────────────────────────────────────── -->
+    <section style="background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.9); border-radius: 22px; box-shadow: 0 10px 28px -12px rgba(61,26,92,0.2); padding: 22px; margin-bottom: 16px;">
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 25px; color: #3d1a5c; margin: 0;">Reading Summary</h2>
+      <div style="width: 34px; height: 2px; border-radius: 2px; background: {{ accentGrad }}; margin: 9px 0 16px;"></div>
+      <p style="font-size: 15.5px; line-height: 1.72; color: #4d3a66; margin: 0; text-wrap: pretty;">{{ readingSummary }}</p>
+    </section>
+
+    <!-- ── Light & Shadow Keywords ─────────────────────────────── -->
+    <section style="background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.9); border-radius: 22px; box-shadow: 0 10px 28px -12px rgba(61,26,92,0.2); padding: 22px; margin-bottom: 16px;">
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 25px; color: #3d1a5c; margin: 0;">Light &amp; Shadow Keywords</h2>
+      <div style="width: 34px; height: 2px; border-radius: 2px; background: {{ accentGrad }}; margin: 9px 0 18px;"></div>
+
+      <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #c9933a; font-weight: 700; margin-bottom: 9px;">Light</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;">
+        <sc-for list="{{ lightChips }}" as="kw" hint-placeholder-count="6">
+          <span style="padding: 7px 13px; border-radius: 100px; font-size: 13px; font-weight: 500; color: #a06a1e; background: rgba(232,196,120,0.22); border: 1px solid rgba(201,147,58,0.28);">{{ kw }}</span>
+        </sc-for>
+      </div>
+
+      <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #6a3f8e; font-weight: 700; margin-bottom: 9px;">Shadow</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <sc-for list="{{ shadowChips }}" as="kw" hint-placeholder-count="5">
+          <span style="padding: 7px 13px; border-radius: 100px; font-size: 13px; font-weight: 500; color: #6a3f8e; background: rgba(106,63,142,0.1); border: 1px solid rgba(106,63,142,0.18);">{{ kw }}</span>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ── Quick answers (FAQ) ─────────────────────────────────── -->
+    <section style="background: rgba(255,255,255,0.92); border: 1px solid rgba(255,255,255,0.9); border-radius: 22px; box-shadow: 0 10px 28px -12px rgba(61,26,92,0.2); padding: 22px; margin-bottom: 16px;">
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 25px; color: #3d1a5c; margin: 0;">Quick answers</h2>
+      <div style="width: 34px; height: 2px; border-radius: 2px; background: {{ accentGrad }}; margin: 9px 0 6px;"></div>
+
+      <div style="display: flex; flex-direction: column;">
+        <div style="padding: 16px 0; border-bottom: 1px solid rgba(172,130,210,0.16);">
+          <div style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 19px; color: #3d1a5c; margin-bottom: 6px;">What is the core meaning of The Fool?</div>
+          <p style="font-size: 14.5px; line-height: 1.6; color: #5a4570; margin: 0;">New Beginnings, Spontaneity, Leap of Faith, Innocence, Limitless Potential.</p>
+        </div>
+        <div style="padding: 16px 0; border-bottom: 1px solid rgba(172,130,210,0.16);">
+          <div style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 19px; color: #3d1a5c; margin-bottom: 6px;">What does The Fool suggest in a reading?</div>
+          <p style="font-size: 14.5px; line-height: 1.6; color: #5a4570; margin: 0;">Bold choices from your past have led you to a precipice where trust in destiny is required once more. The gates of possibility are swinging open, inviting you to explore.</p>
+        </div>
+        <div style="padding: 16px 0; border-bottom: 1px solid rgba(172,130,210,0.16);">
+          <div style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 19px; color: #3d1a5c; margin-bottom: 6px;">What are the key themes of The Fool?</div>
+          <p style="font-size: 14.5px; line-height: 1.6; color: #5a4570; margin: 0;">Light: Innocence, New beginnings, Freedom, Adventure, Spontaneity, Trust. Shadow: Recklessness, Naivety, Foolishness, Risk-taking, Distraction.</p>
+        </div>
+        <div style="padding: 16px 0;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 19px; color: #3d1a5c; margin-bottom: 6px;">What does The Fool mean in love?</div>
+          <p style="font-size: 14.5px; line-height: 1.6; color: #5a4570; margin: 0;">In love readings, The Fool points to fresh starts, honest curiosity, and taking a heartfelt risk. For singles, it can signal exciting new connections; for couples, it invites trying a new chapter with openness and trust.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Micro CTA ───────────────────────────────────────────── -->
+    <section style="position: relative; overflow: hidden; border-radius: 22px; padding: 26px 22px; margin-bottom: 16px; text-align: center; background: linear-gradient(160deg, #fbeede 0%, #f7e2ec 100%); border: 1px solid rgba(201,147,58,0.22); box-shadow: 0 10px 28px -12px rgba(61,26,92,0.2);">
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 26px; color: #3d1a5c; margin: 0 0 6px;">Draw this energy now</h2>
+      <p style="font-size: 14.5px; line-height: 1.55; color: #6a3f8e; margin: 0 auto 18px; max-width: 360px;">Bring The Fool into a live spread and see how this message lands in your present moment.</p>
+      <a href="#" style="display: inline-block; padding: 14px 30px; border-radius: 100px; background: linear-gradient(135deg, #6e1d4c 0%, #d12878 45%, #e8a838 100%); color: #fdf6ee; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; text-decoration: none; box-shadow: 0 16px 32px -10px rgba(209,40,120,0.55), inset 0 1px 0 rgba(255,255,255,0.3);">Draw now</a>
+    </section>
+
+    <!-- ── Discover more ───────────────────────────────────────── -->
+    <section style="margin-bottom: 18px;">
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 21px; color: #3d1a5c; margin: 0 2px 12px;">Discover more from here</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 9px;">
+        <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 16px; border-radius: 100px; background: rgba(255,255,255,0.85); border: 1px solid rgba(172,130,210,0.2); color: #3d1a5c; font-size: 13.5px; font-weight: 600; text-decoration: none; box-shadow: 0 6px 16px -10px rgba(61,26,92,0.3);">Discover Today's Card</a>
+        <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 16px; border-radius: 100px; background: rgba(255,255,255,0.85); border: 1px solid rgba(172,130,210,0.2); color: #3d1a5c; font-size: 13.5px; font-weight: 600; text-decoration: none; box-shadow: 0 6px 16px -10px rgba(61,26,92,0.3);">Take the Tarot Personality Quiz</a>
+      </div>
+    </section>
+
+    <!-- ── Footer card nav ─────────────────────────────────────── -->
+    <nav aria-label="Card pagination" style="display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 10px;">
+      <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 14px; border-radius: 100px; background: rgba(255,255,255,0.7); border: 1px solid rgba(172,130,210,0.2); color: #6b4faa; font-size: 13px; font-weight: 600; text-decoration: none;">← Homepage</a>
+      <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 14px; border-radius: 100px; background: rgba(255,255,255,0.7); border: 1px solid rgba(172,130,210,0.2); color: #6b4faa; font-size: 13px; font-weight: 600; text-decoration: none;">Card Index</a>
+      <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 14px; border-radius: 100px; background: rgba(255,255,255,0.7); border: 1px solid rgba(172,130,210,0.2); color: #6b4faa; font-size: 13px; font-weight: 600; text-decoration: none;">The Magician →</a>
+    </nav>
+    <div style="display: flex; flex-wrap: wrap; gap: 9px;">
+      <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 14px; border-radius: 100px; background: linear-gradient(135deg, #6e1d4c 0%, #d12878 100%); color: #fdf6ee; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 10px 22px -12px rgba(209,40,120,0.6);">Daily</a>
+      <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 14px; border-radius: 100px; background: rgba(255,255,255,0.7); border: 1px solid rgba(172,130,210,0.2); color: #6b4faa; font-size: 13px; font-weight: 600; text-decoration: none;">Celtic Cross</a>
+      <a href="#" style="flex: 1 1 auto; text-align: center; padding: 12px 14px; border-radius: 100px; background: rgba(255,255,255,0.7); border: 1px solid rgba(172,130,210,0.2); color: #6b4faa; font-size: 13px; font-weight: 600; text-decoration: none;">Ask a Question</a>
+    </div>
+
+  </main>
+
+  <!-- ── Site footer ─────────────────────────────────────────── -->
+  <footer style="padding: 22px 18px; text-align: center; font-size: 12.5px; color: #8a72a8; border-top: 1px solid rgba(172,130,210,0.14);">© 2026 MeowTarot · All rights reserved.</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 430, &quot;height&quot;: 940 },
+  &quot;accent&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;Gold&quot;, &quot;options&quot;: [&quot;Gold&quot;, &quot;Rose&quot;, &quot;Lavender&quot;], &quot;tsType&quot;: &quot;string&quot; },
+  &quot;deck&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;moonmallow&quot;, &quot;options&quot;: [&quot;moonmallow&quot;, &quot;boba-oracle&quot;], &quot;tsType&quot;: &quot;string&quot; }
+}">
+class Component extends DCLogic {
+  state = { orientation: 'upright' };
+
+  renderVals() {
+    const accents = {
+      Gold:     ['#d49a2c', '#e8c478'],
+      Rose:     ['#e8457a', '#f6abc3'],
+      Lavender: ['#9d6fd0', '#c4a8f0'],
+    };
+    const [acc, accSoft] = accents[this.props.accent] || accents.Gold;
+    const accentGrad = `linear-gradient(90deg, ${acc} 0%, ${accSoft} 100%)`;
+
+    const deck = this.props.deck || 'moonmallow';
+    const deckLabels = { 'moonmallow': 'Moonmallow', 'boba-oracle': 'Boba Oracle' };
+    const deckLabel = deckLabels[deck] || deck;
+
+    const isReversed = this.state.orientation === 'reversed';
+    const imageUrl = `https://cdn.meowtarot.com/assets/${deck}/01-the-fool-${isReversed ? 'reversed' : 'upright'}.webp?v=2026-03`;
+
+    const orientationLabel = isReversed ? 'Reversed Meaning' : 'Upright Meaning';
+    const introKeywords = isReversed
+      ? 'Recklessness, Hesitation, Holding Back, Fear of the Unknown, Naivety'
+      : 'New Beginnings, Spontaneity, Leap of Faith, Innocence, Limitless Potential';
+    const coreMeaning = introKeywords;
+    const readingSummary = isReversed
+      ? 'Hesitation has crept in where boldness once lived. A leap you were ready to take now feels uncertain, and old fears whisper for caution. This is a moment to pause honestly — not to abandon the path, but to gather the trust you still need before you step.'
+      : 'Bold choices from your past have led you to a precipice where trust in destiny is required once more. The gates of possibility are swinging open, inviting you to explore. Your future holds freshness and limitless learning.';
+
+    const energy = [
+      { label: 'Fire',  value: 58, pct: '58%' },
+      { label: 'Water', value: 34, pct: '34%' },
+      { label: 'Air',   value: 92, pct: '92%' },
+      { label: 'Earth', value: 22, pct: '22%' },
+    ];
+
+    const lightChips = ['Innocence', 'New beginnings', 'Freedom', 'Adventure', 'Spontaneity', 'Trust'];
+    const shadowChips = ['Recklessness', 'Naivety', 'Foolishness', 'Risk-taking', 'Distraction'];
+
+    const baseBtn = 'border: none; cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 9px 22px; border-radius: 100px; transition: all 0.18s ease;';
+    const activeBtn = `${baseBtn} background: ${accentGrad}; color: #fff; box-shadow: 0 6px 16px -8px rgba(61,26,92,0.45);`;
+    const idleBtn = `${baseBtn} background: transparent; color: #6a3f8e;`;
+
+    return {
+      imageUrl, deckLabel, orientationLabel, introKeywords, coreMeaning,
+      readingSummary, energy, lightChips, shadowChips, accentGrad,
+      uprightStyle: isReversed ? idleBtn : activeBtn,
+      reversedStyle: isReversed ? activeBtn : idleBtn,
+      setUpright: () => this.setState({ orientation: 'upright' }),
+      setReversed: () => this.setState({ orientation: 'reversed' }),
+    };
+  }
+}
+</script>
+</body>
+</html>
