@@ -1,6 +1,6 @@
 # MeowTarot — Session Handoff / Where We Left Off
 
-**Last updated:** 2026-06-15
+**Last updated:** 2026-06-16
 **Branch:** `main` (in sync with `origin/main`, everything below is pushed & live)
 **Deploy:** web = GitHub Pages from **canonical repo root** (`CNAME` present). `www/` + `ios/` are the Capacitor iOS mirrors only — the web does NOT serve from them.
 
@@ -11,6 +11,13 @@ redesign reference) — still useful background, but this file is current.
 ---
 
 ## 1. What shipped — recent sessions (all pushed to `main`, live)
+
+### 2026-06-16
+
+| Commit | What |
+|---|---|
+| `b3a0349` | **Celtic Cross full-reading result page overflowed the right edge on mobile (IMG_4894) — FIXED** — the `.celtic-slot--challenge` card (the one that crosses the center card) is pinned `position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(90deg)` on desktop so it overlaps the situation card. The `@media (max-width:640px)` column-stack override reset only `position`+`transform` but **left `top/left:50%` in place**; a higher-specificity rule computes the slot as `position:relative`, so the leftover `left:50%` (~231px) shoved it off the right edge → **72px horizontal overflow** (card 2 clipped). Fix: also reset `top/left/right/bottom:auto` in that mobile rule (`css/styles.css`). Reproduced live CSS in chrome harness @390px: slot was `left:371/right:591`, after fix `left:140/right:360`, overflow negative. md5 parity canonical=www=ios. |
+| `9a08fde` | **Google sign-in blocked in in-app browsers (IMG_4893: "Access blocked — disallowed_useragent") — FIXED** — Google rejects OAuth inside embedded webviews (LINE/FB/IG/Messenger/TikTok/Android System WebView). New `isInAppBrowser()` (`js/auth.js`, UA sniff: Line/FBAN/FBAV/FB_IAB/Instagram/Messenger/MicroMessenger/TikTok/Snapchat/Pinterest/GSA + `; wv)`). `loginWithProvider` now throws `err.code='IN_APP_BROWSER'` before firing the doomed redirect. The sign-in gate (`js/sign-in-gate.js`) detects it and swaps the Google button for **"Open in your browser to sign in"** guidance + a **Copy-link** button (`navigator.clipboard.writeText(location.href)` → "Link copied ✓"), EN+TH. iOS synced. **Follow-up (separate):** the native Capacitor wrap should do OAuth via `ASWebAuthenticationSession` (system browser), not the in-app guidance path. |
 
 ### 2026-06-11 → 06-15
 
