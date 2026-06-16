@@ -1976,8 +1976,14 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
     ctx.font = `italic 500 ${fontSize}px ${displayFont}`;
     const lines = wrapTextLines(ctx, cardName, maxWidth, 2);
     const lineHeight = Math.round(fontSize * 1.02);
+    // Highlight the card name with a soft drop-shadow so it pops off the pale BG
+    // (same treatment as the topic headline).
+    ctx.save();
     ctx.fillStyle = palette.primary;
+    ctx.shadowColor = 'rgba(11, 13, 26, 0.55)';
+    ctx.shadowBlur = 20;
     lines.forEach((line, i) => ctx.fillText(line, width / 2, nameBottomY + i * lineHeight));
+    ctx.restore();
     nameBottomY = nameBottomY + (lines.length - 1) * lineHeight + Math.round(fontSize * 0.26);
   }
 
