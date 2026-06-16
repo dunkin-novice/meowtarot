@@ -14,6 +14,7 @@ import {
 import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected } from './analytics.js';
 import { getUserProgress } from './progress.js';
+import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
 const BOARD_CARD_COUNT = 12;
 // Phase 5 BUG 3 fix: changed from 6 → 12 to match design doc ScreenCardBoardDaily.
@@ -465,16 +466,40 @@ function renderStreakChip() {
   if (!numEl || !labelEl) return;
   const dict = translations[state.currentLang] || translations.en;
   const streak = Math.max(0, Number(getUserProgress().streak_current) || 0);
-  if (streak >= 1) {
-    numEl.textContent = String(streak);
-    labelEl.textContent = dict.dailyStreakLabel;
-    chip.setAttribute('aria-label', `${streak} ${dict.dailyStreakLabel}`);
-  } else {
-    // No streak yet — gentle prompt instead of a sad "0".
-    numEl.textContent = '✦';
-    labelEl.textContent = dict.dailyStreakStart;
-    chip.setAttribute('aria-label', dict.dailyStreakStart);
+  const signedIn = Boolean(getCurrentUserSync());
+
+  numEl.textContent = streak >= 1 ? String(streak) : '✦';
+
+  if (!signedIn) {
+    // Local streaks are fragile (cache-clear / no cross-device). Show the streak the
+    // user has built AND nudge sign-in to save it — tap opens the sign-in gate.
+    labelEl.textContent = dict.dailyStreakSaveCta;
+    chip.setAttribute('aria-label', dict.dailyStreakSaveCta);
+    chip.classList.add('is-cta');
+    if (!chip.dataset.ctaBound) {
+      chip.dataset.ctaBound = '1';
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('tabindex', '0');
+      const openGate = () => {
+        import('./sign-in-gate.js')
+          .then(({ showSignInGate }) => showSignInGate({
+            lang: state.currentLang,
+            onSignIn: () => loginWithProvider('google').catch(() => {}),
+          }))
+          .catch(() => {});
+      };
+      chip.addEventListener('click', openGate);
+      chip.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGate(); }
+      });
+    }
+    return;
   }
+
+  // Signed in — show the real streak (or a gentle start prompt at 0).
+  chip.classList.remove('is-cta');
+  labelEl.textContent = streak >= 1 ? dict.dailyStreakLabel : dict.dailyStreakStart;
+  chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
 }
 
 function renderDaily() {

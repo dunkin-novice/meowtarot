@@ -535,6 +535,11 @@ body[data-page='daily'] .daily-topbar__streak-chip {
   box-shadow: var(--mt-soft-shadow);
 }
 
+/* Logged-out "Save your fortune" state — the chip is a tappable sign-in CTA. */
+body[data-page='daily'] .daily-topbar__streak-chip.is-cta {
+  cursor: pointer;
+}
+
 body[data-page='daily'] .daily-topbar__streak-num {
   width: 22px;
   height: 22px;
