@@ -677,7 +677,15 @@ async function handleShare() {
 
   const sharePageUrl = window.location.href;
   const isWebp = blob.type === 'image/webp';
-  const fileName = isWebp ? 'meowtarot.webp' : 'meowtarot-daily-reading.png';
+  // Filename reflects the reading mode (was hardcoded 'meowtarot-daily-reading'
+  // for every mode — misleading for Ask-a-Question / Full posters).
+  const modeSlug = (() => {
+    const mode = String(currentPayload?.mode || '').toLowerCase();
+    if (mode === 'question') return 'ask-a-question';
+    if (mode === 'full') return 'celtic-cross';
+    return 'daily-reading';
+  })();
+  const fileName = `meowtarot-${modeSlug}.${isWebp ? 'webp' : 'png'}`;
 
   const fallbackDownload = () => {
     if (!blob) return;

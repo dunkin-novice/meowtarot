@@ -1833,7 +1833,7 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
   const eyebrowFont = '"Space Grotesk", "IBM Plex Sans Thai", sans-serif';
   // Ivory-on-purple — matches the existing question-poster background (not the
   // orientation-tinted daily palette, whose text sits over the card itself).
-  const palette = { primary: '#fff7de', secondary: 'rgba(252,245,231,0.95)', gold: '#ffe1a8', goldSoft: 'rgba(255,225,165,0.55)' };
+  const palette = { primary: '#fff7de', secondary: 'rgba(252,245,231,0.95)', gold: '#ffe1a8', goldSoft: 'rgba(255,225,165,0.55)', reading: '#3d1a5c' };
 
   // Card identity / orientation (Quick Pull card is the answer card).
   const sourceCard = cardEntry?.card || card || {};
@@ -1861,20 +1861,28 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
   if (eyebrow) {
     ctx.save();
     ctx.fillStyle = palette.gold;
-    ctx.font = `600 26px ${eyebrowFont}`;
-    drawTrackingText(ctx, eyebrow, width / 2, 104, 0.18 * 26);
+    ctx.font = `600 27px ${eyebrowFont}`;
+    drawTrackingText(ctx, eyebrow, width / 2, 100, 0.18 * 27);
     ctx.restore();
   }
+  // Topic headline — large, auto-fit to one line so longer topics never overflow.
   ctx.save();
   ctx.fillStyle = palette.primary;
-  ctx.font = `italic 600 76px ${displayFont}`;
   ctx.shadowColor = 'rgba(11, 13, 26, 0.5)';
   ctx.shadowBlur = 18;
-  ctx.fillText(toSafeText(topicTitle, '').trim(), width / 2, 184);
+  const topicText = toSafeText(topicTitle, '').trim();
+  let topicSize = 112;
+  while (topicSize > 72) {
+    ctx.font = `italic 600 ${topicSize}px ${displayFont}`;
+    if (ctx.measureText(topicText).width <= width - safeMargin * 2) break;
+    topicSize -= 4;
+  }
+  ctx.font = `italic 600 ${topicSize}px ${displayFont}`;
+  ctx.fillText(topicText, width / 2, 208);
   ctx.restore();
   ctx.save();
   ctx.fillStyle = palette.goldSoft;
-  ctx.fillRect(width / 2 - 36, 214, 72, 3);
+  ctx.fillRect(width / 2 - 36, 240, 72, 3);
   ctx.restore();
 
   // ---- Big card with warm aura (Daily treatment) ----
@@ -1988,14 +1996,15 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
     const taglineMaxHeight = Math.max(0, (height - footerMargin) - taglineTop);
     const fit = fitDailyQuoteText(ctx, taglineText, taglineWidth, taglineMaxHeight, {
       fontFamily: displayFont,
-      defaultFontSize: 48,
-      minimumFontSize: 32,
+      defaultFontSize: 58,
+      minimumFontSize: 42,
       addQuotes: true,
     });
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = palette.primary;
+    // Deep plum for contrast against the pale lower background (ivory was too faint).
+    ctx.fillStyle = palette.reading;
     ctx.font = `italic 500 ${fit.fontSize}px ${displayFont}`;
     const firstBaseline = taglineTop + fit.ascent;
     fit.lines.forEach((line, i) => ctx.fillText(line, width / 2, firstBaseline + i * fit.lineHeight));
