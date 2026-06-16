@@ -13,6 +13,7 @@ import {
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected } from './analytics.js';
+import { getUserProgress } from './progress.js';
 
 const BOARD_CARD_COUNT = 12;
 // Phase 5 BUG 3 fix: changed from 6 → 12 to match design doc ScreenCardBoardDaily.
@@ -453,6 +454,29 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
   };
 }
 
+// Daily-board top-right streak chip. The markup ships a hardcoded "14"/"Day 14"
+// placeholder; wire it to the real local streak (progress is tracked in localStorage
+// for everyone, signed in or not). No-op on surfaces without the chip (e.g. /today/).
+function renderStreakChip() {
+  const chip = document.querySelector('.daily-topbar__streak-chip');
+  if (!chip) return;
+  const numEl = chip.querySelector('.daily-topbar__streak-num');
+  const labelEl = chip.querySelector('.daily-topbar__streak-label');
+  if (!numEl || !labelEl) return;
+  const dict = translations[state.currentLang] || translations.en;
+  const streak = Math.max(0, Number(getUserProgress().streak_current) || 0);
+  if (streak >= 1) {
+    numEl.textContent = String(streak);
+    labelEl.textContent = dict.dailyStreakLabel;
+    chip.setAttribute('aria-label', `${streak} ${dict.dailyStreakLabel}`);
+  } else {
+    // No streak yet — gentle prompt instead of a sad "0".
+    numEl.textContent = '✦';
+    labelEl.textContent = dict.dailyStreakStart;
+    chip.setAttribute('aria-label', dict.dailyStreakStart);
+  }
+}
+
 function renderDaily() {
   // Phase 5 review pass: dealShuffleBtn (the "Draw card · เปิดไพ่" button on
   // the removed Before-Draw state) no longer exists on daily.html/th/daily.html.
@@ -463,6 +487,8 @@ function renderDaily() {
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
   if (!board || !counter) return;
+
+  renderStreakChip();
 
   // Phase 5 mobile review fix: signal to CSS that the new daily-shell layout
   // is active. A real body class gives the cascade a hook every browser
