@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { buildCardSchema } from '../js/card-seo-schema.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -85,9 +86,31 @@ function injectFaqSection(html, lang, card) {
   return html.replace(/\n\s*<section class="section-block" id="microCta">/, `${section}\n\n      <section class="section-block" id="microCta">`);
 }
 
+// Server-render the card JSON-LD into the (otherwise empty) #cardMeaningSchema tag so
+// it's in the raw HTML for crawlers, not only injected client-side by the page JS.
+function injectCardSchema(html, card, lang, slug) {
+  const baseUrl = 'https://www.meowtarot.com';
+  const pageUrl = lang === 'th' ? `${baseUrl}/th/cards/${slug}/` : `${baseUrl}/cards/${slug}/`;
+  const displayName = lang === 'th'
+    ? (card.alias_th || card.name_th || card.card_name_en || 'ไพ่ทาโรต์')
+    : (card.card_name_en || 'Card');
+  let json;
+  try {
+    json = JSON.stringify(buildCardSchema(card, { lang, pageUrl, baseUrl, displayName }));
+  } catch (_) {
+    return html;
+  }
+  json = json.replace(/<\//g, '<\\/'); // safe to inline in a <script>
+  return html.replace(
+    /(<script type="application\/ld\+json" id="cardMeaningSchema">)[\s\S]*?(<\/script>)/,
+    (_m, open, close) => `${open}${json}${close}`,
+  );
+}
+
 async function updateFile(filePath, card, lang) {
   let html = await fs.readFile(filePath, 'utf8');
   const isThai = lang === 'th';
+  const slug = path.basename(path.dirname(filePath));
 
   const archetype = isThai ? (card.archetype_th || card.archetype_en || '') : (card.archetype_en || card.archetype_th || '');
   const imply = isThai ? (card.tarot_imply_th || card.tarot_imply_en || '') : (card.tarot_imply_en || card.tarot_imply_th || '');
@@ -100,6 +123,7 @@ async function updateFile(filePath, card, lang) {
   html = replaceById(html, 'lightKeywords', card.keywords_light || '');
   html = replaceById(html, 'shadowKeywords', card.keywords_shadow || '');
   html = injectFaqSection(html, lang, card);
+  html = injectCardSchema(html, card, lang, slug);
   // growthCtaSection ("Discover Today's Card" / "Tarot Personality Quiz") archived
   // 2026-06-16 — entry points removed + target pages noindexed. Do not re-inject.
 
