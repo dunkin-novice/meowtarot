@@ -110,21 +110,24 @@ native app degrades gracefully to full `cards.json` (no break, no savings) until
 - Dead-code/cleanup: `insightTitles` in `share/poster.js` is now unused by the narration.
 
 ### F. Open from the 2026-06-15 session
-- **Reading-page card front doesn't load on fresh devices — ROOT CAUSE FOUND 2026-06-16 (CORS).**
+- **Reading-page card front didn't load on fresh devices — ✅ FIXED 2026-06-16 (R2 CORS).**
   The card **front** is an `<img crossOrigin="anonymous">` (`js/reading.js:1092`, set "for cross-origin
-  draw/share paths" — the same element feeds the poster canvas). **`cdn.meowtarot.com` (Cloudflare/R2)
-  returns NO `Access-Control-Allow-Origin` header** (confirmed via `curl -H Origin` and an in-browser
-  `new Image(); img.crossOrigin='anonymous'` test from a different origin: crossOrigin load **fails**,
-  same URL **without** crossOrigin **loads** 768×1376). So fresh clients can't load fronts; the dev's
-  phone only works from **cache**. Card **backs** load fine because they're CSS `background-image`
-  (`js/main.js:73`, never CORS-gated) — which is exactly why `00-back` shows but the front doesn't.
-  Earlier "every face loads HTTP 206" was a `curl` test (curl doesn't enforce CORS), so it missed it.
-  **FIX (CDN side, not code):** make `cdn.meowtarot.com` return `Access-Control-Allow-Origin: *` —
-  either an **R2 bucket CORS policy** (`wrangler r2 bucket cors`, needs `wrangler login` — token is
-  currently expired) or a **Cloudflare Transform Rule → Modify Response Header** (dashboard, no auth).
-  ACAO `*` is safe (public images, anonymous/no-creds). This fixes BOTH the reading front AND poster
-  generation (poster canvas needs CORS too). Bonus: `cf-cache-status: DYNAMIC` — images aren't edge-cached
-  (every hit goes to R2); add a cache rule for perf once CORS is in. Workaround meanwhile: Moonmallow deck.
+  draw/share paths" — the same element feeds the poster canvas). The **R2 bucket `meowtarot-assets`
+  CORS policy only allowed `https://www.meowtarot.com` + `localhost:4173`** — it was **missing the apex
+  `https://meowtarot.com`** (the live GitHub-Pages origin via CNAME) **and `capacitor://localhost`** (the
+  iOS app webview origin). So a crossOrigin request from the real site/app got no `Access-Control-Allow-Origin`
+  → the browser rejected the image. Fresh clients failed; the dev's phone only worked from **cache**. Card
+  **backs** load fine because they're CSS `background-image` (`js/main.js:73`, never CORS-gated) — exactly
+  why `00-back` showed but the front didn't. (Earlier "every face loads HTTP 206" was a `curl` test — curl
+  doesn't enforce CORS — so it missed it.)
+  **Fix applied:** set the bucket CORS to `allowed_origins: *`, methods `GET,HEAD` (via
+  `wrangler r2 bucket cors set meowtarot-assets`). Server-side, live immediately (no deploy). `*` is safe
+  (public images, anonymous/no-creds) and kills the whole "origin not listed" failure class. **Verified:**
+  `curl -H Origin` (apex + capacitor) now returns `access-control-allow-origin: *`, and an in-browser
+  `img.crossOrigin='anonymous'` load of boba/moonmallow fronts flipped from **ERROR → loaded**. Fixes both
+  the reading front AND poster canvas. **Note:** `wrangler` is now logged in (was expired). **Still open
+  (perf, not the bug):** `cf-cache-status: DYNAMIC` — CDN images aren't edge-cached (every hit → R2); add a
+  Cloudflare cache rule for `cdn.meowtarot.com/assets/*`.
 - **iOS / www mirror sync — PARTIAL.** `share/poster.js` **and** `js/reading.js` are now synced
   to `www/`+`ios/` (`cap sync ios` 2026-06-15, md5 verified — reading.js drift now resolved too).
   **Still pending (BUG-015 full reconciliation):** `js/data.js` (per-language split + `00-back-200`
