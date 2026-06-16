@@ -21,6 +21,8 @@
  * dismiss it if needed.
  */
 
+import { isInAppBrowser } from './auth.js';
+
 const OVERLAY_ID = 'mt-signin-gate-overlay';
 const STYLE_ID = 'mt-signin-gate-style';
 
@@ -31,6 +33,10 @@ const COPY = {
     primary: 'Continue with Google',
     secondary: 'Maybe later',
     dismissLabel: 'Dismiss',
+    inAppTitle: 'Open in your browser to sign in',
+    inAppBody: 'Google blocks sign-in inside in-app browsers (LINE, Facebook, etc.). Tap the ··· menu and choose “Open in Safari/Chrome”, then sign in there.',
+    inAppPrimary: 'Copy link',
+    inAppCopied: 'Link copied ✓',
   },
   th: {
     title: 'เข้าสู่ระบบเพื่อบันทึกการอ่านไพ่',
@@ -38,6 +44,10 @@ const COPY = {
     primary: 'เข้าสู่ระบบด้วย Google',
     secondary: 'ไว้ทีหลัง',
     dismissLabel: 'ปิด',
+    inAppTitle: 'เปิดในเบราว์เซอร์เพื่อเข้าสู่ระบบ',
+    inAppBody: 'Google ไม่อนุญาตให้เข้าสู่ระบบในเบราว์เซอร์ในแอป (LINE, Facebook ฯลฯ) แตะเมนู ··· แล้วเลือก “เปิดใน Safari/Chrome” จากนั้นเข้าสู่ระบบ',
+    inAppPrimary: 'คัดลอกลิงก์',
+    inAppCopied: 'คัดลอกแล้ว ✓',
   },
 };
 
@@ -168,15 +178,23 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'mt-signin-title');
 
+  // In-app browsers (LINE/FB/IG/…) can't complete Google OAuth (disallowed_useragent),
+  // so show "open in your browser" guidance + a copy-link button instead of the doomed
+  // Google button.
+  const inApp = isInAppBrowser();
+  const gTitle = inApp ? copy.inAppTitle : copy.title;
+  const gBody = inApp ? copy.inAppBody : copy.body;
+  const gPrimary = inApp ? copy.inAppPrimary : copy.primary;
+  const gBadge = inApp ? '' : '<span class="mt-signin-cta-primary__g" aria-hidden="true">G</span>';
+
   const cardHtml = `
     <div class="mt-signin-card" role="document">
       <button type="button" class="mt-signin-dismiss" aria-label="${copy.dismissLabel}">×</button>
       <div class="mt-signin-icon" aria-hidden="true">🐾</div>
-      <h2 id="mt-signin-title" class="mt-signin-title">${copy.title}</h2>
-      <p class="mt-signin-body">${copy.body}</p>
+      <h2 id="mt-signin-title" class="mt-signin-title">${gTitle}</h2>
+      <p class="mt-signin-body">${gBody}</p>
       <button type="button" class="mt-signin-cta-primary">
-        <span class="mt-signin-cta-primary__g" aria-hidden="true">G</span>
-        <span>${copy.primary}</span>
+        ${gBadge}<span>${gPrimary}</span>
       </button>
       <button type="button" class="mt-signin-cta-secondary">${copy.secondary}</button>
     </div>
@@ -208,7 +226,17 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
     if (e.target === overlay) dismiss();
   });
 
-  overlay.querySelector('.mt-signin-cta-primary')?.addEventListener('click', () => {
+  overlay.querySelector('.mt-signin-cta-primary')?.addEventListener('click', (e) => {
+    if (inApp) {
+      // Copy the page link so the user can paste it into Safari/Chrome and sign in there.
+      const label = e.currentTarget.querySelector('span:last-child');
+      const done = () => { if (label) label.textContent = copy.inAppCopied; };
+      try {
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(window.location.href).then(done).catch(done);
+        else done();
+      } catch (_) { done(); }
+      return; // keep the gate open so they can read the instructions
+    }
     // Hide the popup first so it doesn't obstruct the Google OAuth flow.
     overlay.classList.remove('is-visible');
     window.setTimeout(() => overlay.remove(), 240);

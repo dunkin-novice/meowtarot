@@ -102,7 +102,24 @@ export function getCurrentUserSync() {
   return authState.user ?? null;
 }
 
+// Embedded / in-app webviews (LINE, Facebook, Instagram, Messenger, TikTok, Android
+// System WebView, …) where Google rejects OAuth with `disallowed_useragent` (403).
+// There's no way to complete Google sign-in inside these — the user must open the page
+// in a real browser. Callers should detect this and guide the user instead of firing
+// a doomed OAuth redirect.
+export function isInAppBrowser() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /\b(Line|FBAN|FBAV|FB_IAB|Instagram|Messenger|MicroMessenger|TikTok|Snapchat|Pinterest|GSA)\b/i.test(ua)
+    || /; wv\)/.test(ua); // Android System WebView
+}
+
 export async function loginWithProvider(provider = 'google') {
+  if (isInAppBrowser()) {
+    const err = new Error('Google sign-in is blocked inside in-app browsers — open in Safari/Chrome.');
+    err.code = 'IN_APP_BROWSER';
+    throw err;
+  }
   const client = await getSupabaseClient();
   if (!client) throw new Error(AUTH_CONFIG_ERROR);
   const safeProvider = provider === 'apple' ? 'apple' : 'google';
