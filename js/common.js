@@ -227,7 +227,12 @@ export const translations = {
     profileLogout: 'Log out',
     profilePrivacyLink: 'Privacy Policy',
     footerRights: 'All rights reserved.',
-    footerBugReport: 'Report a bug',
+    footerBugReport: 'Report',
+    profileContactTitle: 'Contact us',
+    profileOtherTitle: 'Other',
+    profileDeactivate: 'Deactivate account',
+    profileDeactivateConfirm: 'All your streak and progress on this device will be deleted. Are you sure?',
+    profileDeactivateYes: 'Yes, delete it',
     profileDeleteAccount: 'Delete account',
     profileDeleteConfirmBody: 'This permanently deletes your account and all saved readings. This cannot be undone.',
     profileDeleteConfirmYes: 'Yes, delete',
@@ -514,6 +519,11 @@ export const translations = {
     profilePrivacyLink: 'นโยบายความเป็นส่วนตัว',
     footerRights: 'สงวนลิขสิทธิ์',
     footerBugReport: 'แจ้งปัญหา',
+    profileContactTitle: 'ติดต่อเรา',
+    profileOtherTitle: 'อื่น ๆ',
+    profileDeactivate: 'ปิดการใช้งานบัญชี',
+    profileDeactivateConfirm: 'สตรีคและความคืบหน้าทั้งหมดบนเครื่องนี้จะถูกลบ แน่ใจไหม?',
+    profileDeactivateYes: 'ยืนยัน ลบทั้งหมด',
     profileDeleteAccount: 'ลบบัญชี',
     profileDeleteConfirmBody: 'การลบบัญชีจะลบบัญชีและการดูไพ่ที่บันทึกไว้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้',
     profileDeleteConfirmYes: 'ยืนยันลบบัญชี',
@@ -720,6 +730,29 @@ export function initShell(state, afterApply, activePage, options = {}) {
   }
 
   renderFooter(document.getElementById('site-footer'), translations[state.currentLang] || translations.en);
+
+  // Floating "Report" button — follows the user on every page (bugs can be anywhere).
+  // Lazy-imports the reporter (heavy html2canvas) only on click. Injected once.
+  if (typeof document !== 'undefined' && document.body && !document.getElementById('mt-report-fab')) {
+    const lang = state.currentLang;
+    const dict = translations[lang] || translations.en;
+    const fab = document.createElement('button');
+    fab.id = 'mt-report-fab';
+    fab.type = 'button';
+    fab.className = 'mt-report-fab';
+    fab.setAttribute('aria-label', dict.footerBugReport || 'Report a bug');
+    fab.innerHTML = `
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="6" y="8" width="12" height="11" rx="6"/><path d="M12 8V5"/><path d="M9 5a3 3 0 0 1 6 0"/>
+        <path d="M6 12H3M21 12h-3M6 16H3M21 16h-3M6.5 8.5 4.5 6.5M17.5 8.5l2-2"/>
+      </svg>
+      <span class="mt-report-fab__label">${dict.footerBugReport || 'Report'}</span>
+    `;
+    fab.addEventListener('click', () => {
+      import('./bug-report.js').then(({ showBugReport }) => showBugReport({ lang })).catch(() => {});
+    });
+    document.body.appendChild(fab);
+  }
 
   // Lightweight CTA tracking: one delegated listener for the key navigation CTAs
   // (hero "Draw today's card", the 3 reading-path tiles, bottom-nav tabs). Bound

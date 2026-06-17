@@ -8,7 +8,7 @@ import {
 } from './common.js';
 import { getAllDecks, loadTarotManifest, normalizeId } from './data.js';
 import { computePhase } from './phase.js';
-import { getUserProgress, getNextStreakMilestone } from './progress.js';
+import { getUserProgress, getNextStreakMilestone, resetLocalProgress } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
@@ -696,6 +696,91 @@ async function refreshCardNameMap() {
   }
 }
 
+// "Contact us" — Instagram + email (moved out of the footer).
+function renderContact(dict) {
+  const host = document.getElementById('profile-contact');
+  if (!host) return;
+  host.innerHTML = '';
+  const th = state.currentLang === 'th';
+
+  const card = document.createElement('section');
+  card.className = 'panel profile-contact';
+
+  const title = document.createElement('h2');
+  title.textContent = dict.profileContactTitle || (th ? 'ติดต่อเรา' : 'Contact us');
+  card.appendChild(title);
+
+  const row = document.createElement('div');
+  row.className = 'profile-contact__links';
+  row.innerHTML = `
+    <a class="profile-contact__link" href="https://www.instagram.com/meowtarotcom/" target="_blank" rel="noopener noreferrer">Instagram</a>
+    <a class="profile-contact__link" href="mailto:hello@meowtarot.com">hello@meowtarot.com</a>
+  `;
+  card.appendChild(row);
+  host.appendChild(card);
+}
+
+// "Other" — deactivate (local journey reset). Distinct from the account-delete
+// in the identity card: this only clears local streak/progress on this device.
+function renderOther(dict) {
+  const host = document.getElementById('profile-other');
+  if (!host) return;
+  host.innerHTML = '';
+  const th = state.currentLang === 'th';
+
+  const card = document.createElement('section');
+  card.className = 'panel profile-other';
+
+  const title = document.createElement('h2');
+  title.textContent = dict.profileOtherTitle || (th ? 'อื่น ๆ' : 'Other');
+  card.appendChild(title);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'profile-other__wrap';
+  card.appendChild(wrap);
+
+  const renderTrigger = () => {
+    wrap.innerHTML = '';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'profile-deactivate-trigger';
+    btn.textContent = dict.profileDeactivate || (th ? 'ปิดการใช้งานบัญชี' : 'Deactivate account');
+    btn.addEventListener('click', renderConfirm);
+    wrap.appendChild(btn);
+  };
+
+  const renderConfirm = () => {
+    wrap.innerHTML = '';
+    const warn = document.createElement('p');
+    warn.className = 'profile-deactivate-warn';
+    warn.textContent = dict.profileDeactivateConfirm
+      || (th ? 'สตรีคและความคืบหน้าทั้งหมดบนเครื่องนี้จะถูกลบ แน่ใจไหม?' : 'All your streak and progress on this device will be deleted. Are you sure?');
+    wrap.appendChild(warn);
+
+    const row = document.createElement('div');
+    row.className = 'profile-deactivate-actions';
+    const yes = document.createElement('button');
+    yes.type = 'button';
+    yes.className = 'profile-deactivate-confirm';
+    yes.textContent = dict.profileDeactivateYes || (th ? 'ยืนยัน ลบทั้งหมด' : 'Yes, delete it');
+    const no = document.createElement('button');
+    no.type = 'button';
+    no.className = 'ghost';
+    no.textContent = dict.profileDeleteCancel || (th ? 'ยกเลิก' : 'Cancel');
+    no.addEventListener('click', renderTrigger);
+    yes.addEventListener('click', () => {
+      try { resetLocalProgress(); } catch (_) {}
+      renderAll();
+    });
+    row.appendChild(yes);
+    row.appendChild(no);
+    wrap.appendChild(row);
+  };
+
+  renderTrigger();
+  host.appendChild(card);
+}
+
 async function renderAll(dict = translations[state.currentLang] || translations.en) {
   await refreshCardNameMap();
   await refreshHistory();
@@ -721,6 +806,8 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   const achieveEl = document.getElementById('profile-achievements');
   if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);
   renderHistory(dict);
+  renderContact(dict);
+  renderOther(dict);
   renderLoginCta(dict);
 }
 

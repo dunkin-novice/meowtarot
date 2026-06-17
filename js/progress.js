@@ -393,6 +393,13 @@ function resetProgress() {
   return fresh;
 }
 
+// Public: wipe local journey (streak, collection, achievements) back to zero.
+// Used by the profile "Deactivate" action. Local only — does NOT delete the
+// signed-in account (that's deleteAccount in auth.js).
+export function resetLocalProgress() {
+  return resetProgress();
+}
+
 function setStreak(n = 0) {
   const progress = getUserProgress();
   const parsed = Math.max(0, Number(n) || 0);

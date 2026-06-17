@@ -1176,13 +1176,37 @@ button,
   opacity: 0.75;
 }
 
-.site-footer__bug {
-  background: none; border: none; padding: 0; margin: 0;
-  font: inherit; color: inherit;
-  text-decoration: underline; text-underline-offset: 2px;
+/* Floating "Report" button — site-wide, sits above the bottom-nav, right side. */
+.mt-report-fab {
+  position: fixed;
+  right: 14px;
+  bottom: calc(var(--mt-bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 14px);
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px 9px 11px;
+  border: 1px solid rgba(197, 177, 220, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.92);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--mt-plum, #3d1a5c);
+  font-family: var(--mt-font-body, "DM Sans", system-ui, sans-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 8px 22px -8px rgba(61, 26, 92, 0.45);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease, opacity 140ms ease;
 }
-.site-footer__bug:hover { opacity: 0.75; }
+.mt-report-fab:hover { opacity: 0.92; }
+.mt-report-fab:active { transform: scale(0.95); }
+.mt-report-fab svg { flex: 0 0 auto; }
+@media (max-width: 380px) {
+  .mt-report-fab__label { display: none; }
+  .mt-report-fab { padding: 10px; }
+}
 
 .meaning-grid {
   display: grid;

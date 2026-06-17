@@ -670,3 +670,30 @@ body[data-page='profile'] .profile-delete-confirm {
   -webkit-tap-highlight-color: transparent;
 }
 body[data-page='profile'] .profile-delete-confirm:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Contact us + Other (deactivate) sections ─────────────────────────────── */
+body[data-page='profile'] .profile-contact__links {
+  display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 6px;
+}
+body[data-page='profile'] .profile-contact__link {
+  font-family: var(--mt-font-body);
+  font-size: 13.5px; font-weight: 600;
+  color: var(--mt-plum-mid, #6a3f8e); text-decoration: none;
+}
+body[data-page='profile'] .profile-contact__link:hover { text-decoration: underline; }
+
+body[data-page='profile'] .profile-deactivate-trigger {
+  background: none; border: none; padding: 4px 0; cursor: pointer;
+  font-family: var(--mt-font-body); font-size: 12.5px; font-weight: 600; color: #b23b4e;
+  -webkit-tap-highlight-color: transparent;
+}
+body[data-page='profile'] .profile-deactivate-trigger:hover { color: #8f2c3d; }
+body[data-page='profile'] .profile-deactivate-warn {
+  margin: 4px 0 12px; font-family: var(--mt-font-body); font-size: 12.5px;
+  line-height: 1.55; color: var(--mt-ink-soft, #7c5e96);
+}
+body[data-page='profile'] .profile-deactivate-actions { display: flex; gap: 10px; align-items: center; }
+body[data-page='profile'] .profile-deactivate-confirm {
+  flex: 0 0 auto; padding: 10px 16px; border: none; border-radius: 12px;
+  background: #b23b4e; color: #fff; font-family: var(--mt-font-body); font-weight: 600; font-size: 13px; cursor: pointer;
+}
