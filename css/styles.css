@@ -3055,6 +3055,85 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   margin: 8px 0 0;
 }
 
+/* ── Suit pages: light "cream" theme to match the card-meaning pages + app ──────
+   The global theme vars are still the old dark theme (--color-text:#f8f9ff,
+   --color-bg:#0b102b), so the suit pages render dark. The card-meaning pages
+   opt into a light treatment; these rules port the same look onto .page-suit
+   (white panels, plum Playfair headings, muted-plum body, cream chips). All
+   scoped under .page-suit so no other surface is affected.
+   Palette mirrors .card-meaning-hero: panel #fff/0.95, radius, plum shadow,
+   lavender border; heading #3d344f; body muted plum. */
+.page-suit .suit-hero,
+.page-suit .hero-card-count,
+.page-suit .suit-card,
+.page-suit .faq-item {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(197, 177, 220, 0.45);
+  box-shadow: 0 14px 34px rgba(70, 50, 105, 0.14);
+}
+
+.page-suit .suit-hero h1,
+.page-suit .hero-card-count .value,
+.page-suit .suit-card h3,
+.page-suit .faq-item summary,
+.page-suit .chip strong {
+  color: #3d344f;
+}
+
+.page-suit .suit-hero h1,
+.page-suit .suit-card h3 {
+  font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+}
+
+.page-suit .eyebrow {
+  color: #8a7fa8;
+}
+
+.page-suit .hero-subtext,
+.page-suit .hero-card-count .label,
+.page-suit .suit-card-summary,
+.page-suit .suit-card-order,
+.page-suit .faq-item p,
+.page-suit .breadcrumbs {
+  color: #5f5277;
+}
+
+/* Info chips → cream pills with plum text */
+.page-suit .chip {
+  background: #fffaf2;
+  border: 1px solid rgba(197, 177, 220, 0.5);
+  color: #5f5277;
+}
+
+/* "Cards in this suit" stat + the highlight rows */
+.page-suit .highlight-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px dashed rgba(197, 177, 220, 0.6);
+  color: #5f5277;
+}
+
+/* 22-card grid items */
+.page-suit .suit-card-link { color: #3d344f; }
+.page-suit .suit-card:hover { border-color: rgba(201, 147, 58, 0.55); }
+.page-suit .suit-card-media {
+  background: radial-gradient(circle at 30% 20%, rgba(197, 177, 220, 0.35), rgba(255, 255, 255, 0.4));
+}
+.page-suit .suit-card-number {
+  background: rgba(61, 52, 79, 0.9);
+  color: #fff8e7;
+}
+
+/* View toggle (grid/list) → light pills */
+.page-suit .view-toggle {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(197, 177, 220, 0.5);
+}
+.page-suit .view-toggle .toggle { color: #5f5277; }
+.page-suit .view-toggle .toggle.active {
+  background: #3d344f;
+  color: #fff8e7;
+}
+
 @media (max-width: 900px) {
   .page-suit .suit-hero {
     grid-template-columns: minmax(0, 1fr);
