@@ -1,9 +1,10 @@
-import { getNewlyUnlockedDecks, normalizeId } from './data.js';
+import { getNewlyUnlockedDecks, getUnlockMilestones, normalizeId } from './data.js';
 
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
 const PROGRESS_VERSION = 2;
 const TOTAL_BASE_CARDS = 78;
-const STREAK_MILESTONES = Object.freeze([1, 3, 7, 14, 30, 60, 100, 180, 365]);
+// Deck-unlock + progress-bar milestones come from ONE source: the deck unlock_day
+// values (getUnlockMilestones in data.js). Don't hardcode a second list here.
 
 function generateLocalUserId() {
   try {
@@ -235,6 +236,8 @@ export function trackCompletedDailyReading(card = null) {
   const progress = getUserProgress();
   const today = todayLocalIsoDate();
   const previousStreak = Number(progress.streak_current) || 0;
+  // Deck unlocks now key off accumulated days drawn — capture the pre-increment total.
+  const previousTotalReads = Number(progress.total_daily_reads) || 0;
 
   if (progress.last_daily_read_date === today) {
     return {
@@ -290,7 +293,7 @@ export function trackCompletedDailyReading(card = null) {
 
   const newlyUnlocked = evaluateAchievements(progress);
 
-  const newlyUnlockedDecks = getNewlyUnlockedDecks(previousStreak, progress.streak_current);
+  const newlyUnlockedDecks = getNewlyUnlockedDecks(previousTotalReads, progress.total_daily_reads);
   newlyUnlockedDecks.forEach((deck) => {
     const key = `deck_${String(deck.id).split('-').join('_')}`;
     if (!progress.achievement_dates[key]) {
@@ -350,10 +353,13 @@ export function getJourneyDays(state = null) {
   return Math.floor(elapsedMs / 86400000) + 1;
 }
 
+// Next deck-unlock milestone, measured in ACCUMULATED days drawn (total_daily_reads)
+// against the shared deck schedule. Drives the profile progress bar (#1).
 export function getNextStreakMilestone(state = null) {
   const progress = state || getUserProgress();
-  const current = Math.max(0, Number(progress?.streak_current) || 0);
-  const target = STREAK_MILESTONES.find((milestone) => current < milestone);
+  const current = Math.max(0, Number(progress?.total_daily_reads) || 0);
+  const milestones = getUnlockMilestones();
+  const target = milestones.find((milestone) => current < milestone);
   if (!target) return null;
   return {
     target,

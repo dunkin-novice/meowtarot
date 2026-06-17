@@ -145,8 +145,10 @@ export function canUnlockDeck(id) {
   if (typeof localStorage === 'undefined') return false;
   try {
     const progress = JSON.parse(localStorage.getItem('meowtarot_user_progress') || '{}');
-    const streak = progress.streak_current ?? 0;
-    return streak >= deck.unlock_day;
+    // Unlock by ACCUMULATED days drawn (total_daily_reads), not consecutive streak —
+    // forgiving: missing a day never sets you back. (User decision 2026-06-18.)
+    const daysDrawn = progress.total_daily_reads ?? 0;
+    return daysDrawn >= deck.unlock_day;
   } catch {
     return false;
   }
@@ -175,13 +177,24 @@ export function getAllDecks() {
   return Object.values(DECKS);
 }
 
-export function getNewlyUnlockedDecks(prevStreak, newStreak) {
-  const prev = Math.max(0, Number(prevStreak) || 0);
-  const next = Math.max(0, Number(newStreak) || 0);
+export function getNewlyUnlockedDecks(prevValue, newValue) {
+  // prevValue/newValue are accumulated-days-drawn counts (see canUnlockDeck).
+  const prev = Math.max(0, Number(prevValue) || 0);
+  const next = Math.max(0, Number(newValue) || 0);
   return Object.values(DECKS)
     .filter((deck) => deck.role === 'streak-unlock' && typeof deck.unlock_day === 'number')
     .filter((deck) => deck.unlock_day > prev && deck.unlock_day <= next)
     .sort((a, b) => a.unlock_day - b.unlock_day);
+}
+
+// SINGLE SOURCE of the unlock milestone schedule (sorted day-values of the
+// streak-unlock decks). The progress bar + deck unlocks both read from this, so
+// the numbers can NEVER drift apart. Currently: 7,14,21,28,45,60,75,100,125.
+export function getUnlockMilestones() {
+  return Object.values(DECKS)
+    .filter((deck) => deck.role === 'streak-unlock' && typeof deck.unlock_day === 'number')
+    .map((deck) => deck.unlock_day)
+    .sort((a, b) => a - b);
 }
 
 const DECK_REWARDS_SEEN_STORAGE_KEY = 'meowtarot_deck_rewards_seen';
