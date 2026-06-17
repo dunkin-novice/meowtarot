@@ -1,6 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
-import { trackLocaleSwitched } from './analytics.js';
+import { trackLocaleSwitched, trackMeaningViewed } from './analytics.js';
 import { renderBottomNav } from './bottom-nav.js';
 
 // Shared translations across all pages.
@@ -706,6 +706,16 @@ export function initShell(state, afterApply, activePage, options = {}) {
   }
   navbarCleanup = () => {};
   renderFooter(document.getElementById('site-footer'), translations[state.currentLang] || translations.en);
+
+  // Card-meaning page view (the 78 /cards/<slug>/ pages each run their own module
+  // but all funnel through initShell, so fire meaning_viewed from this one place).
+  try {
+    const cardMatch = (window.location.pathname || '').match(/\/cards\/([^/]+)\/?$/);
+    if (cardMatch) {
+      const orientation = (new URLSearchParams(window.location.search).get('orientation') || 'upright').toLowerCase();
+      trackMeaningViewed({ cardId: cardMatch[1], orientation, locale: state.currentLang, surface: 'card_page' });
+    }
+  } catch (_) {}
   highlightActiveNav(activePage);
   attachLogoHome();
   bindViewportHeightVariable();

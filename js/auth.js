@@ -1,5 +1,10 @@
 import { maybeShowLoginReward } from './login-reward.js';
 import { setActiveDeck, markDeckRewardSeen, resetActiveDeck } from './data.js';
+import { trackSigninStarted, trackSigninBlocked, trackSigninSucceeded, trackAccountDeleted } from './analytics.js';
+
+function authLocale() {
+  try { return window.location.pathname.startsWith('/th/') ? 'th' : 'en'; } catch (_) { return 'en'; }
+}
 
 const AUTH_SESSION_KEY = 'meowtarot_auth_session';
 const AUTH_CONFIG_ERROR = 'Supabase auth is not configured';
@@ -39,11 +44,23 @@ async function createClient() {
   });
 
   client.auth.onAuthStateChange((_event, session) => {
+    const prevUser = authState.user;
     authState = {
       ...authState,
       user: session?.user || null,
       ready: true,
     };
+    // A genuine new sign-in (not a session restore — those emit INITIAL_SESSION — and
+    // not a token refresh while already logged in).
+    if (_event === 'SIGNED_IN' && !prevUser && session?.user) {
+      try {
+        trackSigninSucceeded({
+          locale: authLocale(),
+          userId: session.user.id || 'anon',
+          provider: session.user.app_metadata?.provider,
+        });
+      } catch (_) {}
+    }
     authListeners.forEach((listener) => {
       try {
         listener(authState.user);
@@ -249,6 +266,7 @@ async function loginAppleNative(client) {
 
 export async function loginWithProvider(provider = 'google') {
   const safeProvider = provider === 'apple' ? 'apple' : 'google';
+  try { trackSigninStarted({ provider: safeProvider, locale: authLocale(), surface: isNativePlatform() ? 'native' : 'web' }); } catch (_) {}
 
   // Native app: system-browser (Google) / native sheet (Apple), never the blocked webview redirect.
   if (isNativePlatform()) {
@@ -259,6 +277,7 @@ export async function loginWithProvider(provider = 'google') {
 
   // Plain web: in-app webviews (LINE/FB/…) can't complete Google OAuth — guide the user out.
   if (isInAppBrowser()) {
+    try { trackSigninBlocked({ reason: 'in_app_browser', locale: authLocale() }); } catch (_) {}
     const err = new Error('Google sign-in is blocked inside in-app browsers — open in Safari/Chrome.');
     err.code = 'IN_APP_BROWSER';
     throw err;
@@ -285,6 +304,7 @@ export async function deleteAccount() {
   const { error } = await client.functions.invoke('delete-account', { method: 'POST' });
   if (error) throw error;
 
+  try { trackAccountDeleted({ locale: authLocale() }); } catch (_) {}
   await logout();
 }
 

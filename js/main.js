@@ -12,7 +12,7 @@ import {
   canUnlockDeck,
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
-import { trackTopicSelected } from './analytics.js';
+import { trackTopicSelected, trackSpreadSelected } from './analytics.js';
 import { getUserProgress } from './progress.js';
 import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
@@ -789,6 +789,7 @@ async function renderQuestion(dict = translations[state.currentLang] || translat
   spreadBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       questionSpread = btn.dataset.spread || 'story';
+      try { trackSpreadSelected({ locale: state.currentLang, spread: questionSpread }); } catch (_) {}
       spreadBtns.forEach((b) => {
         const active = b === btn;
         b.classList.toggle('question-spread-btn--active', active);

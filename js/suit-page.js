@@ -1,6 +1,7 @@
 import { initShell } from './common.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
 import { getCanonicalCardPath } from './canonical-card-routes.js';
+import { trackSuitViewed } from './analytics.js';
 
 const SUIT_RANGES = {
   major: { start: 1, end: 22 },
@@ -794,6 +795,7 @@ function setSeo(config) {
 
 function init() {
   state.suitKey = detectSuit();
+  try { trackSuitViewed({ suit: state.suitKey, locale: isThaiPage ? 'th' : 'en' }); } catch (_) {}
   const copyTable = isThaiPage ? SUIT_COPY_TH : SUIT_COPY;
   const config = copyTable[state.suitKey] || copyTable.major;
 

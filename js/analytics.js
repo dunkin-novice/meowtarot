@@ -229,3 +229,153 @@ export function trackProfileRevisit({ locale, profileId } = {}) {
 
   return isRevisit;
 }
+
+// ─── Extended tracking (2026-06-17) ───────────────────────────────────────────
+// Funnel + engagement + acquisition events. All are fire-and-forget dataLayer
+// pushes; callers wrap in try/catch. See [[MeowTarot Analytics]] for the spec.
+function lc(value, fallback = null) {
+  const v = String(value || '').trim().toLowerCase();
+  return v || fallback;
+}
+
+// Generic CTA / button tap. `cta` = what was tapped, `location` = where.
+export function trackCtaClicked({ cta, location: loc, locale } = {}) {
+  return pushEvent('cta_clicked', {
+    cta: lc(cta, 'unknown'),
+    location: lc(loc, 'unknown'),
+    locale: normalizeLocale(locale),
+  });
+}
+
+// User triggered a shuffle / deal / draw (start of the draw funnel).
+export function trackShuffleHit({ mode, locale } = {}) {
+  return pushEvent('shuffle_hit', {
+    mode: normalizeMode(mode),
+    locale: normalizeLocale(locale),
+  });
+}
+
+// Card(s) flipped / revealed on screen.
+export function trackCardRevealed({ mode, locale, cardCount = 0 } = {}) {
+  return pushEvent('card_revealed', {
+    mode: normalizeMode(mode),
+    locale: normalizeLocale(locale),
+    card_count: Math.max(0, Number(cardCount) || 0),
+  });
+}
+
+// One card chosen during a selection flow (question/full).
+export function trackCardSelected({ mode, locale, position, index = 0 } = {}) {
+  return pushEvent('card_selected', {
+    mode: normalizeMode(mode),
+    locale: normalizeLocale(locale),
+    position: lc(position),
+    card_index: Math.max(0, Number(index) || 0),
+  });
+}
+
+// Ask-a-Question spread choice (quick vs story).
+export function trackSpreadSelected({ locale, spread } = {}) {
+  return pushEvent('spread_selected', {
+    locale: normalizeLocale(locale),
+    spread: lc(spread, 'unknown'),
+  });
+}
+
+// A card-meaning page was viewed (SEO surface). Dedupe per card+orientation+surface per load.
+export function trackMeaningViewed({ cardId, orientation, locale, surface = 'card_page' } = {}) {
+  const card = lc(cardId);
+  const orient = lc(orientation);
+  const surf = lc(surface, 'card_page');
+  return pushEvent('meaning_viewed', {
+    card_id: card,
+    orientation: orient,
+    locale: normalizeLocale(locale),
+    surface: surf,
+  }, `${surf}|${card}|${orient}`);
+}
+
+// Upright/Reversed toggle on a card-meaning page.
+export function trackOrientationToggled({ cardId, orientation, locale } = {}) {
+  return pushEvent('orientation_toggled', {
+    card_id: lc(cardId),
+    orientation: lc(orientation),
+    locale: normalizeLocale(locale),
+  });
+}
+
+// A suit / meanings-index page was viewed. Dedupe per suit per load.
+export function trackSuitViewed({ suit, locale } = {}) {
+  const s = lc(suit);
+  return pushEvent('suit_viewed', {
+    suit: s,
+    locale: normalizeLocale(locale),
+  }, `suit|${s}`);
+}
+
+// User tapped a deck (locked or unlocked).
+export function trackDeckSelected({ deckId, locale, locked = false } = {}) {
+  return pushEvent('deck_selected', {
+    deck_id: lc(deckId),
+    locale: normalizeLocale(locale),
+    locked: Boolean(locked),
+  });
+}
+
+// Sign-in gate shown for a locked deck / gated action.
+export function trackDeckUnlockPrompt({ deckId, locale, reason } = {}) {
+  return pushEvent('deck_unlock_prompt', {
+    deck_id: lc(deckId),
+    locale: normalizeLocale(locale),
+    reason: lc(reason),
+  });
+}
+
+// Sign-in funnel.
+export function trackSigninStarted({ provider, locale, surface } = {}) {
+  return pushEvent('signin_started', {
+    provider: lc(provider, 'google'),
+    locale: normalizeLocale(locale),
+    surface: lc(surface),
+  });
+}
+
+export function trackSigninSucceeded({ provider, locale, userId = 'anon' } = {}) {
+  const uid = normalizeUserId(userId);
+  return pushEvent('signin_succeeded', {
+    provider: lc(provider),
+    locale: normalizeLocale(locale),
+    user_id: uid,
+  }, `signin_succeeded|${uid}`);
+}
+
+// Sign-in could not proceed (e.g. in-app browser blocks Google OAuth).
+export function trackSigninBlocked({ reason = 'in_app_browser', locale } = {}) {
+  return pushEvent('signin_blocked', {
+    reason: lc(reason, 'in_app_browser'),
+    locale: normalizeLocale(locale),
+  });
+}
+
+export function trackAccountDeleted({ locale } = {}) {
+  return pushEvent('account_deleted', {
+    locale: normalizeLocale(locale),
+  });
+}
+
+// Poster funnel (augments share_clicked).
+export function trackSharePosterGenerated({ mode, deckId, locale } = {}) {
+  return pushEvent('share_poster_generated', {
+    mode: normalizeMode(mode),
+    deck_id: lc(deckId),
+    locale: normalizeLocale(locale),
+  });
+}
+
+export function trackSharePosterDownloaded({ mode, deckId, locale } = {}) {
+  return pushEvent('share_poster_downloaded', {
+    mode: normalizeMode(mode),
+    deck_id: lc(deckId),
+    locale: normalizeLocale(locale),
+  });
+}

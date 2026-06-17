@@ -28,7 +28,7 @@ import {
 } from './data.js';
 import { getUserProgress } from './progress.js';
 import { getCurrentUserSync, loginWithProvider } from './auth.js';
-import { trackLocaleSwitched } from './analytics.js';
+import { trackLocaleSwitched, trackDeckSelected, trackDeckUnlockPrompt } from './analytics.js';
 
 const state = {
   currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
@@ -228,8 +228,10 @@ function buildDeckCell(deck, { progress, activeId, render }) {
   cell.appendChild(meta);
 
   cell.addEventListener('click', () => {
+    try { trackDeckSelected({ deckId: deck.id, locale: state.currentLang, locked: !unlocked }); } catch (_) {}
     // Logged out: any deck tap → sign-in gate (matches the "Sign in to own/get it" notes).
     if (!getCurrentUserSync()) {
+      try { trackDeckUnlockPrompt({ deckId: deck.id, locale: state.currentLang, reason: 'signin_required' }); } catch (_) {}
       import('./sign-in-gate.js')
         .then(({ showSignInGate }) => showSignInGate({
           lang: state.currentLang,
@@ -239,6 +241,7 @@ function buildDeckCell(deck, { progress, activeId, render }) {
       return;
     }
     if (!unlocked) {
+      try { trackDeckUnlockPrompt({ deckId: deck.id, locale: state.currentLang, reason: 'streak_locked' }); } catch (_) {}
       showDecksToast(state.currentLang === 'th'
         ? fmt('ถึงวันที่ {day} เพื่อปลดล็อก {deck}', { day: deck.unlock_day, deck: deck.name_th || deck.name })
         : fmt('Reach Day {day} to unlock {deck}', { day: deck.unlock_day, deck: deck.name }));

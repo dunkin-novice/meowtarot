@@ -1,4 +1,5 @@
 import { initShell, pathHasThaiPrefix } from './common.js';
+import { trackMeaningViewed } from './analytics.js';
 import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
 import {
   renderCardHero,
@@ -237,6 +238,10 @@ function renderPage(card, slug, mode, orientation) {
   }
 
   updateSeo(card, slug, mode);
+
+  try {
+    trackMeaningViewed({ cardId: slug, orientation, locale: mode, surface: 'card_page' });
+  } catch (_) {}
 }
 
 function init() {

@@ -53,6 +53,8 @@ import {
   trackReadingCompletedRaw,
   trackReadingStart,
   trackShareClicked,
+  trackShuffleHit,
+  trackCardRevealed,
 } from './analytics.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -2737,6 +2739,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   }
 
   setDailyVisualState(DAILY_VISUAL_STATES.STACKED);
+  try { trackShuffleHit({ mode: 'daily', locale: state.currentLang }); } catch (_) {}
   await animateDailyShuffle(stageRefs);
   if (dailyUiState.animationRunId !== runId) return;
 
@@ -2747,6 +2750,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   setDailyVisualState(DAILY_VISUAL_STATES.REVEALED);
   await animateDailyReveal(stageRefs);
   if (dailyUiState.animationRunId !== runId) return;
+  try { trackCardRevealed({ mode: 'daily', locale: state.currentLang, cardCount: Array.isArray(cards) ? cards.length : 1 }); } catch (_) {}
 
   stageRefs.deck.remove();
   // Phase 5: the ceremonial spread panel built by renderDailyDetails

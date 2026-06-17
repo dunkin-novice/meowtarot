@@ -1,4 +1,5 @@
 import { buildPoster } from './poster.js';
+import { trackSharePosterGenerated, trackSharePosterDownloaded } from '../js/analytics.js';
 import { normalizePayload } from './normalize-payload.js';
 import { getCanonicalCardPath, normalizeCanonicalSlug } from '../js/canonical-card-routes.js';
 
@@ -616,6 +617,7 @@ async function ensurePoster() {
         throw new Error('Poster blob is missing');
       }
       setPosterBlob(result.blob);
+      try { trackSharePosterGenerated({ mode: normalizedPayload?.mode, deckId: normalizedPayload?.deck, locale: normalizedPayload?.lang }); } catch (_) {}
       window.__MEOW_POSTER_STAGE = 'done';
       window.__MEOW_POSTER_EXPORT_BYTES = result.blob?.size || 0;
       window.__MEOW_POSTER_EXPORT_BLOB_TYPE = result.blob?.type || null;
@@ -686,6 +688,7 @@ async function handleShare() {
     return 'daily-reading';
   })();
   const fileName = `meowtarot-${modeSlug}.${isWebp ? 'webp' : 'png'}`;
+  try { trackSharePosterDownloaded({ mode: currentPayload?.mode, deckId: currentPayload?.deck, locale: currentPayload?.lang }); } catch (_) {}
 
   const fallbackDownload = () => {
     if (!blob) return;
