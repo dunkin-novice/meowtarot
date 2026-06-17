@@ -810,8 +810,8 @@ function resolveQuestionPosterSummaries(payload = {}, cardEntries = []) {
 
 async function buildCardEntries(payload) {
   posterDebugLog('log', '[Poster] buildCardEntries: meowTarotCards length', meowTarotCards.length);
-  if (meowTarotCards.length < 150) {
-    await ensureTarotData();
+  if (!deckHasLocale(String(payload?.lang || '').toLowerCase().startsWith('th') ? 'th' : 'en')) {
+    await ensureTarotData(payload?.lang);
     posterDebugLog('log', '[Poster] tarot deck ensured', {
       size: Array.isArray(meowTarotCards) ? meowTarotCards.length : 0,
     });
@@ -860,10 +860,23 @@ async function buildCardEntries(payload) {
 
 let tarotDataPromise = null;
 
-function ensureTarotData() {
-  if (meowTarotCards.length >= 150) return Promise.resolve(meowTarotCards);
+// True when the cached deck actually carries interpretation fields for `locale`.
+function deckHasLocale(locale) {
+  return meowTarotCards.length >= 150 && meowTarotCards.some((c) => c && (
+    c[`reading_summary_present_${locale}`] || c[`standalone_present_${locale}`] || c[`general_meaning_${locale}`]
+  ));
+}
+
+// A poster can be generated in EITHER language regardless of the page URL, but
+// loadTarotData() infers the slice from the URL (`/th/` / `?l=`) — so a Thai poster
+// built on a non-/th/ page would get the EN-only slice and every `_th` lookup would
+// miss, falling back to the English gap-fillers (the "lang doesn't match" bug). So
+// load the full bilingual deck whenever the poster's language isn't already present.
+function ensureTarotData(lang) {
+  const locale = String(lang || '').toLowerCase().startsWith('th') ? 'th' : 'en';
+  if (deckHasLocale(locale)) return Promise.resolve(meowTarotCards);
   if (!tarotDataPromise) {
-    tarotDataPromise = loadTarotData().finally(() => {
+    tarotDataPromise = loadTarotData('both').finally(() => {
       tarotDataPromise = null;
     });
   }
@@ -2059,7 +2072,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
   let cardWidth = 0;
 
   const preloadStart = performance.now();
-  await ensureTarotData();
+  await ensureTarotData(payload?.lang);
   posterCiLog('payload_ok', {
     mode: payload?.mode,
     preset,
