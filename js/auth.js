@@ -133,8 +133,8 @@ export function isInAppBrowser() {
 
 // On iOS/Android the app runs inside a Capacitor WKWebView; `window.Capacitor`
 // is injected by the native bridge (undefined on the plain web). Native sign-in
-// must NOT use the embedded-webview OAuth redirect (Google blocks it) — it uses
-// the system browser (Google) or the native Apple sheet instead.
+// must NOT use the embedded-webview OAuth redirect (Google blocks it) — it opens the
+// system browser instead (for both Google and Apple).
 export function isNativePlatform() {
   try {
     return window?.Capacitor?.isNativePlatform?.() === true;
@@ -146,17 +146,6 @@ export function isNativePlatform() {
 // Custom URL scheme the OAuth redirect returns on. MUST match the iOS Info.plist
 // CFBundleURLTypes entry AND the Supabase Auth "Redirect URLs" allowlist.
 const NATIVE_AUTH_REDIRECT = 'com.meowtarot.app://auth-callback';
-
-function generateNonce() {
-  const bytes = new Uint8Array(32);
-  window.crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => `0${b.toString(16)}`.slice(-2)).join('');
-}
-
-async function sha256Hex(input) {
-  const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(digest), (b) => `0${b.toString(16)}`.slice(-2)).join('');
-}
 
 // Supabase may hand the redirect back as ?code=… (PKCE) or #access_token=…&refresh_token=… (implicit).
 function parseAuthRedirect(url) {
@@ -176,19 +165,22 @@ function parseAuthRedirect(url) {
   return out;
 }
 
-// Google on native: open the consent page in the SYSTEM browser (SFSafariViewController),
-// which Google permits — unlike the embedded webview — then catch the deep-link redirect
-// back into the app and hand the result to Supabase.
-async function loginGoogleNative(client) {
+// Native sign-in (Google AND Apple): open the provider's consent page in the SYSTEM
+// browser (SFSafariViewController) — which both providers permit, unlike the embedded
+// webview — then catch the deep-link redirect back into the app and hand the result to
+// Supabase. We use the browser OAuth flow for Apple too (rather than a native
+// Sign-in-with-Apple plugin) because @capacitor-community/apple-sign-in is pinned to
+// Capacitor 7 and won't resolve on Capacitor 8. Still satisfies App Store 4.8.
+async function loginViaSystemBrowser(client, provider) {
   const { Browser } = await import('./vendor/browser.js');
   const { App } = await import('./vendor/app.js');
 
   const { data, error } = await client.auth.signInWithOAuth({
-    provider: 'google',
+    provider,
     options: { redirectTo: NATIVE_AUTH_REDIRECT, skipBrowserRedirect: true },
   });
   if (error) throw error;
-  if (!data?.url) throw new Error('Could not start Google sign-in');
+  if (!data?.url) throw new Error(`Could not start ${provider} sign-in`);
 
   await new Promise((resolve, reject) => {
     let settled = false;
@@ -239,40 +231,15 @@ async function loginGoogleNative(client) {
   });
 }
 
-// Apple on native: native Sign in with Apple sheet → exchange the identity token with
-// Supabase. Apple needs a nonce: send SHA-256(rawNonce) to Apple, the raw nonce to Supabase.
-async function loginAppleNative(client) {
-  const { SignInWithApple } = await import('./vendor/apple-sign-in.js');
-  const rawNonce = generateNonce();
-  const hashedNonce = await sha256Hex(rawNonce);
-
-  const result = await SignInWithApple.authorize({
-    clientId: 'com.meowtarot.app',
-    redirectURI: NATIVE_AUTH_REDIRECT,
-    scopes: 'email name',
-    nonce: hashedNonce,
-  });
-
-  const idToken = result?.response?.identityToken;
-  if (!idToken) throw new Error('Apple sign-in did not return an identity token');
-
-  const { error } = await client.auth.signInWithIdToken({
-    provider: 'apple',
-    token: idToken,
-    nonce: rawNonce,
-  });
-  if (error) throw error;
-}
-
 export async function loginWithProvider(provider = 'google') {
   const safeProvider = provider === 'apple' ? 'apple' : 'google';
   try { trackSigninStarted({ provider: safeProvider, locale: authLocale(), surface: isNativePlatform() ? 'native' : 'web' }); } catch (_) {}
 
-  // Native app: system-browser (Google) / native sheet (Apple), never the blocked webview redirect.
+  // Native app: both providers via the system browser, never the blocked webview redirect.
   if (isNativePlatform()) {
     const client = await getSupabaseClient();
     if (!client) throw new Error(AUTH_CONFIG_ERROR);
-    return safeProvider === 'apple' ? loginAppleNative(client) : loginGoogleNative(client);
+    return loginViaSystemBrowser(client, safeProvider);
   }
 
   // Plain web: in-app webviews (LINE/FB/…) can't complete Google OAuth — guide the user out.
