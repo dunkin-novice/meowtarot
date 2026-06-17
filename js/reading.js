@@ -2739,7 +2739,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   }
 
   setDailyVisualState(DAILY_VISUAL_STATES.STACKED);
-  try { trackShuffleHit({ mode: 'daily', locale: state.currentLang }); } catch (_) {}
+  try { trackShuffleHit({ mode: 'daily', locale: state.currentLang, source: 'draw' }); } catch (_) {}
   await animateDailyShuffle(stageRefs);
   if (dailyUiState.animationRunId !== runId) return;
 
@@ -3803,6 +3803,7 @@ function buildSharePayload() {
     version: 1,
     lang: state.currentLang,
     mode: state.mode,
+    deck: getActiveDeckId(),
     spread: state.spread,
     topic: state.topic,
     cards: orderedCards.map((card) => ({ id: card.id, orientation: card.orientation, position: card.position })),

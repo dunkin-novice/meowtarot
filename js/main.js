@@ -12,7 +12,7 @@ import {
   canUnlockDeck,
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
-import { trackTopicSelected, trackSpreadSelected } from './analytics.js';
+import { trackTopicSelected, trackSpreadSelected, trackShuffleHit } from './analytics.js';
 import { getUserProgress } from './progress.js';
 import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
@@ -617,6 +617,7 @@ function renderDaily() {
     // onclick (not addEventListener) so a re-bind replaces rather than stacks.
     shuffleBtn.onclick = () => {
       if (board.classList.contains('is-locked')) return;
+      try { trackShuffleHit({ mode: 'daily', locale: state.currentLang, source: 'board' }); } catch (_) {}
       shuffleBtn.classList.add('is-spinning');
       if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
       dailyBoard.render();
@@ -702,6 +703,7 @@ function renderFullBoard() {
   if (shuffleBtn) {
     shuffleBtn.addEventListener('click', () => {
       if (board.classList.contains('is-locked')) return;
+      try { trackShuffleHit({ mode: 'full', locale: state.currentLang, source: 'board' }); } catch (_) {}
       shuffleBtn.classList.add('is-spinning');
       if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
       fullBoard.render();

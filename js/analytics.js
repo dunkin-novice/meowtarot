@@ -247,11 +247,13 @@ export function trackCtaClicked({ cta, location: loc, locale } = {}) {
   });
 }
 
-// User triggered a shuffle / deal / draw (start of the draw funnel).
-export function trackShuffleHit({ mode, locale } = {}) {
+// User triggered a shuffle / deal / draw. source: 'board' = tapped the Shuffle
+// button on the selection board; 'draw' = the auto-shuffle during the reveal.
+export function trackShuffleHit({ mode, locale, source } = {}) {
   return pushEvent('shuffle_hit', {
     mode: normalizeMode(mode),
     locale: normalizeLocale(locale),
+    source: lc(source, 'draw'),
   });
 }
 

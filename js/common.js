@@ -1,6 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
-import { trackLocaleSwitched, trackMeaningViewed } from './analytics.js';
+import { trackLocaleSwitched, trackMeaningViewed, trackCtaClicked } from './analytics.js';
 import { renderBottomNav } from './bottom-nav.js';
 
 // Shared translations across all pages.
@@ -706,6 +706,24 @@ export function initShell(state, afterApply, activePage, options = {}) {
   }
   navbarCleanup = () => {};
   renderFooter(document.getElementById('site-footer'), translations[state.currentLang] || translations.en);
+
+  // Lightweight CTA tracking: one delegated listener for the key navigation CTAs
+  // (hero "Draw today's card", the 3 reading-path tiles, bottom-nav tabs). Bound
+  // once per page; GA4 uses sendBeacon so the push survives the navigation.
+  if (typeof window !== 'undefined' && !window._meowCtaListenerBound) {
+    window._meowCtaListenerBound = true;
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest?.('.home-cta-button, .home-path-card, .bottom-nav__item, [data-cta]');
+      if (!el) return;
+      const hrefSlug = (el.getAttribute('href') || '').split('/').pop().replace('.html', '') || 'home';
+      const cta = el.dataset.cta
+        || (el.classList.contains('home-cta-button') ? 'draw_today'
+          : el.classList.contains('home-path-card') ? ((el.className.match(/home-path-card--(\w+)/) || [])[1] || 'path')
+          : el.classList.contains('bottom-nav__item') ? `nav_${hrefSlug}`
+          : 'cta');
+      try { trackCtaClicked({ cta, location: document.body?.dataset?.page || 'page', locale: state.currentLang }); } catch (_) {}
+    }, { capture: true, passive: true });
+  }
 
   // Card-meaning page view (the 78 /cards/<slug>/ pages each run their own module
   // but all funnel through initShell, so fire meaning_viewed from this one place).
