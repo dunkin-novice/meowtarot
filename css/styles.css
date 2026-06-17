@@ -1142,6 +1142,26 @@ button,
   background: rgba(0, 0, 0, 0.18);
 }
 
+.site-footer__links {
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.site-footer__links a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer__sep {
+  opacity: 0.5;
+}
+
 .meaning-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

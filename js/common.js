@@ -226,6 +226,7 @@ export const translations = {
     profileSignInCta: 'Sign in with Google',
     profileLogout: 'Log out',
     profilePrivacyLink: 'Privacy Policy',
+    footerRights: 'All rights reserved.',
     profileDeleteAccount: 'Delete account',
     profileDeleteConfirmBody: 'This permanently deletes your account and all saved readings. This cannot be undone.',
     profileDeleteConfirmYes: 'Yes, delete',
@@ -510,6 +511,7 @@ export const translations = {
     profileSignInCta: 'เข้าสู่ระบบด้วย Google',
     profileLogout: 'ออกจากระบบ',
     profilePrivacyLink: 'นโยบายความเป็นส่วนตัว',
+    footerRights: 'สงวนลิขสิทธิ์',
     profileDeleteAccount: 'ลบบัญชี',
     profileDeleteConfirmBody: 'การลบบัญชีจะลบบัญชีและการดูไพ่ที่บันทึกไว้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้',
     profileDeleteConfirmYes: 'ยืนยันลบบัญชี',
@@ -703,7 +705,7 @@ export function initShell(state, afterApply, activePage, options = {}) {
     siteHeader.hidden = true;
   }
   navbarCleanup = () => {};
-  renderFooter(document.getElementById('site-footer'));
+  renderFooter(document.getElementById('site-footer'), translations[state.currentLang] || translations.en);
   highlightActiveNav(activePage);
   attachLogoHome();
   bindViewportHeightVariable();
