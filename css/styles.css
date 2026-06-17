@@ -1162,6 +1162,20 @@ button,
   opacity: 0.5;
 }
 
+.site-footer__ig {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.site-footer__ig svg {
+  display: block;
+}
+
+.site-footer__ig:hover {
+  opacity: 0.75;
+}
+
 .meaning-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
