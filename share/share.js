@@ -1,5 +1,5 @@
 import { buildPoster } from './poster.js';
-import { trackSharePosterGenerated, trackSharePosterDownloaded } from '../js/analytics.js';
+import { trackSharePosterGenerated, trackSharePosterDownloaded, trackShareClicked } from '../js/analytics.js';
 import { normalizePayload } from './normalize-payload.js';
 import { getCanonicalCardPath, normalizeCanonicalSlug } from '../js/canonical-card-routes.js';
 
@@ -713,6 +713,7 @@ async function handleShare() {
     if (!navigator.clipboard?.writeText) return false;
     try {
       await navigator.clipboard.writeText(sharePageUrl);
+      try { trackShareClicked({ locale: currentPayload?.lang, mode: currentPayload?.mode, shareChannel: 'copy_link' }); } catch (_) {}
       return true;
     } catch (_) {
       return false;

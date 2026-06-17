@@ -106,12 +106,8 @@ function buildHero(progress, unlockedCount, totalCount) {
   const topRow = document.createElement('div');
   topRow.className = 'decks-top-row';
 
-  const back = document.createElement('a');
-  back.className = 'decks-top-row__back';
-  back.href = localizePath('/profile.html', state.currentLang);
-  back.setAttribute('aria-label', pickLocalized('Back to profile', 'กลับสู่โปรไฟล์'));
-  back.textContent = '‹';
-  topRow.appendChild(back);
+  // No "back" button: Decks is reachable 3 ways (home, profile, bottom-nav), so a
+  // back arrow that always returns to /profile is misleading. Bottom-nav handles nav.
 
   const eyebrowGroup = document.createElement('div');
   eyebrowGroup.className = 'decks-top-row__eyebrow';

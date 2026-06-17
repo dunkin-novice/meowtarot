@@ -1,6 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
-import { trackLocaleSwitched, trackMeaningViewed, trackCtaClicked } from './analytics.js';
+import { trackLocaleSwitched, trackMeaningViewed, trackCtaClicked, trackOrientationToggled } from './analytics.js';
 import { renderBottomNav } from './bottom-nav.js';
 
 // Shared translations across all pages.
@@ -713,11 +713,22 @@ export function initShell(state, afterApply, activePage, options = {}) {
   if (typeof window !== 'undefined' && !window._meowCtaListenerBound) {
     window._meowCtaListenerBound = true;
     document.addEventListener('click', (e) => {
-      const el = e.target.closest?.('.home-cta-button, .home-path-card, .bottom-nav__item, [data-cta]');
+      // Card-meaning orientation toggle (upright/reversed re-renders without a reload,
+      // so meaning_viewed won't re-fire — track the toggle explicitly).
+      const toggle = e.target.closest?.('[data-orientation]');
+      if (toggle) {
+        const cm = (window.location.pathname || '').match(/\/cards\/([^/]+)\/?$/);
+        if (cm) {
+          try { trackOrientationToggled({ cardId: cm[1], orientation: toggle.dataset.orientation, locale: state.currentLang }); } catch (_) {}
+        }
+        return;
+      }
+      const el = e.target.closest?.('.home-cta-button, .home-path-card, .home-deck-strip__see-all, .bottom-nav__item, [data-cta]');
       if (!el) return;
       const hrefSlug = (el.getAttribute('href') || '').split('/').pop().replace('.html', '') || 'home';
       const cta = el.dataset.cta
         || (el.classList.contains('home-cta-button') ? 'draw_today'
+          : el.classList.contains('home-deck-strip__see-all') ? 'see_all_decks'
           : el.classList.contains('home-path-card') ? ((el.className.match(/home-path-card--(\w+)/) || [])[1] || 'path')
           : el.classList.contains('bottom-nav__item') ? `nav_${hrefSlug}`
           : 'cta');

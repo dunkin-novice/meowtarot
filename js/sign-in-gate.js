@@ -259,6 +259,7 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
   overlay.querySelector('.mt-signin-cta-primary')?.addEventListener('click', (e) => {
     if (inApp) {
       // Copy the page link so the user can paste it into Safari/Chrome and sign in there.
+      try { trackPopupDismissed({ popup: 'signin_gate_copy_link', surface: gateSurface, locale: lang }); } catch (_) {}
       const label = e.currentTarget.querySelector('span:last-child');
       const done = () => { if (label) label.textContent = copy.inAppCopied; };
       try {
