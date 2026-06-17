@@ -227,6 +227,7 @@ export const translations = {
     profileLogout: 'Log out',
     profilePrivacyLink: 'Privacy Policy',
     footerRights: 'All rights reserved.',
+    footerBugReport: 'Report a bug',
     profileDeleteAccount: 'Delete account',
     profileDeleteConfirmBody: 'This permanently deletes your account and all saved readings. This cannot be undone.',
     profileDeleteConfirmYes: 'Yes, delete',
@@ -512,6 +513,7 @@ export const translations = {
     profileLogout: 'ออกจากระบบ',
     profilePrivacyLink: 'นโยบายความเป็นส่วนตัว',
     footerRights: 'สงวนลิขสิทธิ์',
+    footerBugReport: 'แจ้งปัญหา',
     profileDeleteAccount: 'ลบบัญชี',
     profileDeleteConfirmBody: 'การลบบัญชีจะลบบัญชีและการดูไพ่ที่บันทึกไว้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้',
     profileDeleteConfirmYes: 'ยืนยันลบบัญชี',
@@ -705,6 +707,18 @@ export function initShell(state, afterApply, activePage, options = {}) {
     siteHeader.hidden = true;
   }
   navbarCleanup = () => {};
+  // Lightweight JS-error ring buffer (last 10) so the bug reporter can attach
+  // recent errors. Installed once per page.
+  if (typeof window !== 'undefined' && !window._mtErrorCaptureBound) {
+    window._mtErrorCaptureBound = true;
+    window.__mtErrors = window.__mtErrors || [];
+    const pushErr = (entry) => {
+      try { window.__mtErrors.push(entry); if (window.__mtErrors.length > 10) window.__mtErrors.shift(); } catch (_) {}
+    };
+    window.addEventListener('error', (e) => pushErr(`${e.message} @ ${(e.filename || '').split('/').pop()}:${e.lineno || 0}`));
+    window.addEventListener('unhandledrejection', (e) => pushErr(`unhandled: ${String(e.reason).slice(0, 160)}`));
+  }
+
   renderFooter(document.getElementById('site-footer'), translations[state.currentLang] || translations.en);
 
   // Lightweight CTA tracking: one delegated listener for the key navigation CTAs

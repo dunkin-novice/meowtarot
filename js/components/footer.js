@@ -8,7 +8,9 @@ export function renderFooter(container, dict = {}) {
   const year = new Date().getFullYear();
   const rights = dict.footerRights || 'All rights reserved.';
   const privacyLabel = dict.profilePrivacyLink || 'Privacy Policy';
-  const isTh = typeof location !== 'undefined' && /^\/th(\/|$)/.test(location.pathname || '');
+  const bugLabel = dict.footerBugReport || 'Report a bug';
+  const lang = (typeof location !== 'undefined' && /^\/th(\/|$)/.test(location.pathname || '')) ? 'th' : 'en';
+  const isTh = lang === 'th';
   const privacyHref = isTh ? '/th/privacy.html' : '/privacy.html';
   container.innerHTML = `
     <div class="site-footer">
@@ -25,9 +27,16 @@ export function renderFooter(container, dict = {}) {
         <a href="mailto:hello@meowtarot.com">hello@meowtarot.com</a>
         <span class="site-footer__sep" aria-hidden="true">·</span>
         <a href="${privacyHref}">${privacyLabel}</a>
+        <span class="site-footer__sep" aria-hidden="true">·</span>
+        <button type="button" class="site-footer__bug">${bugLabel}</button>
       </p>
     </div>
   `;
+
+  // "Report a bug" → lazy-load the reporter (heavy html2canvas only loads on click).
+  container.querySelector('.site-footer__bug')?.addEventListener('click', () => {
+    import('../bug-report.js').then(({ showBugReport }) => showBugReport({ lang })).catch(() => {});
+  });
 
   // In the Capacitor app (WKWebView) a target=_blank external link silently does
   // nothing — open it in the system browser instead. No-op on the plain web.

@@ -1176,6 +1176,14 @@ button,
   opacity: 0.75;
 }
 
+.site-footer__bug {
+  background: none; border: none; padding: 0; margin: 0;
+  font: inherit; color: inherit;
+  text-decoration: underline; text-underline-offset: 2px;
+  cursor: pointer;
+}
+.site-footer__bug:hover { opacity: 0.75; }
+
 .meaning-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
