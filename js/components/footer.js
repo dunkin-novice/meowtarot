@@ -12,6 +12,8 @@ export function renderFooter(container, dict = {}) {
     <div class="site-footer">
       <p>© ${year} MeowTarot · ${rights}</p>
       <p class="site-footer__links">
+        <a href="https://www.instagram.com/meowtarotcom/" target="_blank" rel="noopener" aria-label="MeowTarot on Instagram">Instagram</a>
+        <span class="site-footer__sep" aria-hidden="true">·</span>
         <a href="mailto:hello@meowtarot.com">hello@meowtarot.com</a>
         <span class="site-footer__sep" aria-hidden="true">·</span>
         <a href="${privacyHref}">${privacyLabel}</a>
