@@ -9,7 +9,7 @@ import {
 import { getAllDecks, loadTarotManifest, normalizeId } from './data.js';
 import { computePhase } from './phase.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
-import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
+import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
 import { renderDeckInventory } from './deck-inventory.js';
@@ -89,6 +89,76 @@ function renderIdentity(dict) {
       }
     });
     card.appendChild(logoutBtn);
+
+    const th = state.currentLang === 'th';
+
+    // Privacy policy link.
+    const privacyLink = document.createElement('a');
+    privacyLink.className = 'profile-privacy-link';
+    privacyLink.href = th ? '/th/privacy.html' : '/privacy.html';
+    privacyLink.textContent = dict.profilePrivacyLink || (th ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy');
+    card.appendChild(privacyLink);
+
+    // Delete account — App Store Guideline 5.1.1(v). Two-step inline confirm.
+    const deleteWrap = document.createElement('div');
+    deleteWrap.className = 'profile-delete-wrap';
+    card.appendChild(deleteWrap);
+
+    const renderDeleteTrigger = () => {
+      deleteWrap.innerHTML = '';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'profile-delete-trigger';
+      btn.textContent = dict.profileDeleteAccount || (th ? 'ลบบัญชี' : 'Delete account');
+      btn.addEventListener('click', renderDeleteConfirm);
+      deleteWrap.appendChild(btn);
+    };
+
+    const renderDeleteConfirm = () => {
+      deleteWrap.innerHTML = '';
+      const warn = document.createElement('p');
+      warn.className = 'profile-delete-warn';
+      warn.textContent = dict.profileDeleteConfirmBody
+        || (th
+          ? 'การลบบัญชีจะลบบัญชีและการดูไพ่ที่บันทึกไว้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้'
+          : 'This permanently deletes your account and all saved readings. This cannot be undone.');
+      deleteWrap.appendChild(warn);
+
+      const row = document.createElement('div');
+      row.className = 'profile-delete-actions';
+
+      const confirmBtn = document.createElement('button');
+      confirmBtn.type = 'button';
+      confirmBtn.className = 'profile-delete-confirm';
+      confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'ghost';
+      cancelBtn.textContent = dict.profileDeleteCancel || (th ? 'ยกเลิก' : 'Cancel');
+      cancelBtn.addEventListener('click', renderDeleteTrigger);
+
+      confirmBtn.addEventListener('click', async () => {
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        confirmBtn.textContent = dict.profileDeleting || (th ? 'กำลังลบ…' : 'Deleting…');
+        try {
+          await deleteAccount();
+          // deleteAccount() signs out → the auth-state listener re-renders to the guest view.
+        } catch (_) {
+          confirmBtn.disabled = false;
+          cancelBtn.disabled = false;
+          confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
+          warn.textContent = dict.profileDeleteError || (th ? 'ลบไม่สำเร็จ ลองอีกครั้ง' : 'Could not delete your account. Please try again.');
+        }
+      });
+
+      row.appendChild(confirmBtn);
+      row.appendChild(cancelBtn);
+      deleteWrap.appendChild(row);
+    };
+
+    renderDeleteTrigger();
   } else {
     const loginBtn = document.createElement('button');
     loginBtn.type = 'button';

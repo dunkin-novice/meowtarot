@@ -21,7 +21,7 @@
  * dismiss it if needed.
  */
 
-import { isInAppBrowser } from './auth.js';
+import { isInAppBrowser, isNativePlatform, loginWithProvider } from './auth.js';
 
 const OVERLAY_ID = 'mt-signin-gate-overlay';
 const STYLE_ID = 'mt-signin-gate-style';
@@ -31,6 +31,7 @@ const COPY = {
     title: 'Sign in to save your reading',
     body: 'Your streak, decks, and readings are waiting.',
     primary: 'Continue with Google',
+    applePrimary: 'Continue with Apple',
     secondary: 'Maybe later',
     dismissLabel: 'Dismiss',
     inAppTitle: 'Open in your browser to sign in',
@@ -42,6 +43,7 @@ const COPY = {
     title: 'เข้าสู่ระบบเพื่อบันทึกการอ่านไพ่',
     body: 'สตรีคและไพ่ของคุณรอคุณอยู่',
     primary: 'เข้าสู่ระบบด้วย Google',
+    applePrimary: 'เข้าสู่ระบบด้วย Apple',
     secondary: 'ไว้ทีหลัง',
     dismissLabel: 'ปิด',
     inAppTitle: 'เปิดในเบราว์เซอร์เพื่อเข้าสู่ระบบ',
@@ -160,6 +162,21 @@ function injectStylesOnce() {
       -webkit-tap-highlight-color: transparent;
     }
     .mt-signin-cta-secondary:hover { color: var(--mt-plum, #3d1a5c); }
+
+    .mt-signin-cta-apple {
+      margin-top: 8px; width: 100%;
+      font-family: var(--mt-font-body, "DM Sans", system-ui, sans-serif);
+      font-weight: 600; font-size: 14.5px;
+      padding: 13px 18px; border-radius: 14px;
+      background: #000; color: #fff;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      letter-spacing: 0.01em;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 140ms ease;
+    }
+    .mt-signin-cta-apple:active { transform: scale(0.97); }
+    .mt-signin-cta-apple__logo { font-size: 17px; line-height: 1; margin-top: -2px; }
   `;
   document.head.appendChild(style);
 }
@@ -182,10 +199,17 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
   // so show "open in your browser" guidance + a copy-link button instead of the doomed
   // Google button.
   const inApp = isInAppBrowser();
+  const native = isNativePlatform();
   const gTitle = inApp ? copy.inAppTitle : copy.title;
   const gBody = inApp ? copy.inAppBody : copy.body;
   const gPrimary = inApp ? copy.inAppPrimary : copy.primary;
   const gBadge = inApp ? '' : '<span class="mt-signin-cta-primary__g" aria-hidden="true">G</span>';
+  // Native iOS must also offer Sign in with Apple (App Store Guideline 4.8).
+  const appleBtnHtml = (native && !inApp)
+    ? `<button type="button" class="mt-signin-cta-apple">
+        <span class="mt-signin-cta-apple__logo" aria-hidden="true"></span><span>${copy.applePrimary}</span>
+      </button>`
+    : '';
 
   const cardHtml = `
     <div class="mt-signin-card" role="document">
@@ -196,6 +220,7 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
       <button type="button" class="mt-signin-cta-primary">
         ${gBadge}<span>${gPrimary}</span>
       </button>
+      ${appleBtnHtml}
       <button type="button" class="mt-signin-cta-secondary">${copy.secondary}</button>
     </div>
   `;
@@ -244,6 +269,16 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
     if (typeof onSignIn === 'function') {
       try { onSignIn(); } catch (_) {}
     }
+  });
+
+  // Sign in with Apple (native only) — triggers the native Apple sheet directly.
+  overlay.querySelector('.mt-signin-cta-apple')?.addEventListener('click', () => {
+    overlay.classList.remove('is-visible');
+    window.setTimeout(() => overlay.remove(), 240);
+    document.removeEventListener('keydown', escListener);
+    loginWithProvider('apple').catch((err) => {
+      if (err?.code !== 'CANCELLED') console.warn('Apple sign-in failed', err);
+    });
   });
 
   return overlay;

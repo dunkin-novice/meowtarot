@@ -45,5 +45,18 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Custom URL scheme for the Google OAuth deep-link redirect
+	     (com.meowtarot.app://auth-callback). Must match NATIVE_AUTH_REDIRECT in js/auth.js. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.meowtarot.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.meowtarot.app</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
