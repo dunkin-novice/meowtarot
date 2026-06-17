@@ -2808,7 +2808,10 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   border-radius: 20px;
   display: grid;
   gap: 24px;
-  grid-template-columns: 2fr 1fr;
+  /* minmax(0, …) so the tracks can shrink below their content's min-content
+     width — a long unbreakable line would otherwise blow the column past the
+     container and shove/clip the hero (mobile "broken page" bug). */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   padding: 32px;
 }
 
@@ -3054,7 +3057,7 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
 
 @media (max-width: 900px) {
   .page-suit .suit-hero {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .suit-card-collection.is-list .suit-card-link {
@@ -3070,6 +3073,8 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   .chip {
     width: 100%;
     justify-content: space-between;
+    /* full-width chips: let a long value wrap instead of overflowing the pill */
+    white-space: normal;
   }
 }
 
