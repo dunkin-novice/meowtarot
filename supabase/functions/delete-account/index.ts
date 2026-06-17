@@ -13,7 +13,9 @@
 // SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are injected by
 // the Supabase platform — no manual secrets needed.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// jsr (not esm.sh) per the repo's vendor rule — jsr is the Supabase-recommended
+// import for Edge Functions and resolves on Deno without the esm.sh CDN.
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
