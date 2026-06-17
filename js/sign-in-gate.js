@@ -22,6 +22,7 @@
  */
 
 import { isInAppBrowser, isNativePlatform, loginWithProvider } from './auth.js';
+import { trackPopupShown, trackPopupDismissed } from './analytics.js';
 
 const OVERLAY_ID = 'mt-signin-gate-overlay';
 const STYLE_ID = 'mt-signin-gate-style';
@@ -229,10 +230,14 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
 
   requestAnimationFrame(() => overlay.classList.add('is-visible'));
 
+  const gateSurface = (typeof document !== 'undefined' && document.body?.dataset?.page) || 'page';
+  try { trackPopupShown({ popup: 'signin_gate', surface: gateSurface, locale: lang, inApp }); } catch (_) {}
+
   const dismiss = () => {
     overlay.classList.remove('is-visible');
     window.setTimeout(() => overlay.remove(), 240);
     document.removeEventListener('keydown', escListener);
+    try { trackPopupDismissed({ popup: 'signin_gate', surface: gateSurface, locale: lang }); } catch (_) {}
     if (typeof onDismiss === 'function') {
       try { onDismiss(); } catch (_) {}
     }

@@ -225,6 +225,10 @@ export function maybeShowLoginReward(user, lang) {
     const overlay = buildPopup(deckBackUrl, dict);
     document.body.appendChild(overlay);
 
+    import('./analytics.js')
+      .then(({ trackPopupShown }) => trackPopupShown({ popup: 'login_reward', surface: document.body?.dataset?.page || 'page', deckId: 'veila-tarot', locale: lang }))
+      .catch(() => {});
+
     requestAnimationFrame(() => {
       overlay.classList.add('mt-lr-active');
     });

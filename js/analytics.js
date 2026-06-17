@@ -365,6 +365,27 @@ export function trackAccountDeleted({ locale } = {}) {
   });
 }
 
+// A popup / modal was shown — an interest signal. popup: 'signin_gate' |
+// 'login_reward' | 'deck_reward'. surface = the page it appeared on.
+export function trackPopupShown({ popup, surface, deckId, locale, inApp } = {}) {
+  return pushEvent('popup_shown', {
+    popup: lc(popup, 'unknown'),
+    surface: lc(surface),
+    deck_id: lc(deckId),
+    in_app: inApp === undefined ? null : Boolean(inApp),
+    locale: normalizeLocale(locale),
+  });
+}
+
+// A popup was dismissed/declined (e.g. "Maybe later") — interest-but-not-converted.
+export function trackPopupDismissed({ popup, surface, locale } = {}) {
+  return pushEvent('popup_dismissed', {
+    popup: lc(popup, 'unknown'),
+    surface: lc(surface),
+    locale: normalizeLocale(locale),
+  });
+}
+
 // Poster funnel (augments share_clicked).
 export function trackSharePosterGenerated({ mode, deckId, locale } = {}) {
   return pushEvent('share_poster_generated', {

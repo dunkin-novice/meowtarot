@@ -258,6 +258,10 @@ export function showDeckRewardPopup(deck, lang = 'en') {
 
   document.body.appendChild(overlay);
 
+  import('./analytics.js')
+    .then(({ trackPopupShown }) => trackPopupShown({ popup: 'deck_reward', surface: document.body?.dataset?.page || 'page', deckId: deck.id, locale: lang }))
+    .catch(() => {});
+
   requestAnimationFrame(() => {
     overlay.classList.add('mt-dr-active');
   });
