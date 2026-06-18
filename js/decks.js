@@ -27,7 +27,7 @@ import {
   canUnlockDeck,
 } from './data.js';
 import { getUserProgress } from './progress.js';
-import { getCurrentUserSync, loginWithProvider } from './auth.js';
+import { getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
 import { trackLocaleSwitched, trackDeckSelected, trackDeckUnlockPrompt } from './analytics.js';
 
 const state = {
@@ -352,6 +352,10 @@ function init() {
     onLangToggle: switchLanguageInPlace,
   });
   renderAll();
+  // Auth resolves async: the first paint can run logged-out (everything locked/dull),
+  // and signing in / unlocking a deck must refresh the lock+dull state. Re-render on
+  // every auth change so owned decks lose the dull treatment without a manual reload.
+  subscribeAuthState(() => renderAll());
 }
 
 document.addEventListener('DOMContentLoaded', init);
