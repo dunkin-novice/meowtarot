@@ -57,8 +57,8 @@ Deno.serve(async (req: Request) => {
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     if (!RESEND_API_KEY) return json({ error: 'Email not configured' }, 500);
-    const to = Deno.env.get('BUG_REPORT_TO') || 'info@meowtarot.com';
-    const from = Deno.env.get('BUG_REPORT_FROM') || 'MeowTarot Bugs <bugs@meowtarot.com>';
+    const to = Deno.env.get('BUG_REPORT_TO') || 'feedback@meowtarot.com';
+    const from = Deno.env.get('BUG_REPORT_FROM') || 'MeowTarot Feedback <feedback@meowtarot.com>';
 
     // 2) Build the email.
     const d = diagnostics || {};
