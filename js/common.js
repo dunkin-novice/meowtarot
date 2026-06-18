@@ -698,9 +698,15 @@ export function applyTranslations(currentLang = 'en', afterApply) {
 }
 
 export function initShell(state, afterApply, activePage, options = {}) {
-  const urlLang = getUrlLanguage(window.location);
-  const savedLang = getSavedLang('en');
-  state.currentLang = normalizeLang(urlLang) || savedLang || 'en';
+  // Locale priority: explicit ?lang/?l param  >  /th/ path  >  saved preference  >  en.
+  // (Previously getUrlLanguage returned 'en' for any non-/th/ page — a truthy value
+  // that clobbered the saved TH preference on every navigation: "switch to TH, go to
+  // another page → back to EN". Saved preference must win over the path default.)
+  const params = new URLSearchParams(window.location.search || '');
+  const explicitParam = normalizeLang(params.get('lang') || params.get('l'));
+  const pathLang = pathHasThaiPrefix(window.location.pathname || '/') ? 'th' : null;
+  const savedLang = getSavedLang(null);
+  state.currentLang = explicitParam || pathLang || savedLang || 'en';
   localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
 
   // Phase 5: global top navbar removed. The hamburger nav + brand text
@@ -727,6 +733,35 @@ export function initShell(state, afterApply, activePage, options = {}) {
     };
     window.addEventListener('error', (e) => pushErr(`${e.message} @ ${(e.filename || '').split('/').pop()}:${e.lineno || 0}`));
     window.addEventListener('unhandledrejection', (e) => pushErr(`unhandled: ${String(e.reason).slice(0, 160)}`));
+  }
+
+  // Global EN/TH language toggle (Phase-5 removed the top navbar that hosted it,
+  // leaving it only on Profile). Re-added as a small fixed pill on every page
+  // EXCEPT profile (which has its own in-panel pill). Wired to the page's
+  // onLangToggle switcher, or a built-in in-place switch as fallback.
+  const switchLang = (nextLang) => {
+    if (!nextLang || nextLang === state.currentLang) return;
+    if (typeof options.onLangToggle === 'function') { options.onLangToggle(nextLang); return; }
+    const fromLocale = state.currentLang;
+    state.currentLang = nextLang;
+    try { trackLocaleSwitched({ fromLocale, toLocale: nextLang }); } catch (_) {}
+    try { localStorage.setItem(LANG_STORAGE_KEY, nextLang); } catch (_) {}
+    applyTranslations(nextLang, afterApply);
+    applyLocaleMeta(nextLang);
+  };
+  if (typeof document !== 'undefined' && document.body && activePage !== 'profile' && !document.getElementById('mt-lang-fab')) {
+    const fab = document.createElement('div');
+    fab.id = 'mt-lang-fab';
+    fab.className = 'mt-lang-fab language-toggle';
+    fab.setAttribute('role', 'group');
+    fab.setAttribute('aria-label', 'Language');
+    fab.innerHTML = `
+      <button class="lang-btn" data-lang="en" type="button">EN</button>
+      <span class="divider" aria-hidden="true">|</span>
+      <button class="lang-btn" data-lang="th" type="button">TH</button>
+    `;
+    fab.querySelectorAll('.lang-btn').forEach((b) => b.addEventListener('click', () => switchLang(b.dataset.lang)));
+    document.body.appendChild(fab);
   }
 
   renderFooter(document.getElementById('site-footer'), translations[state.currentLang] || translations.en);

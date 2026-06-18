@@ -1176,6 +1176,41 @@ button,
   opacity: 0.75;
 }
 
+/* Global EN/TH language pill — fixed top-right, light theme (overrides the dark
+   navbar .lang-btn colors). Injected site-wide by initShell (except profile). */
+.mt-lang-fab {
+  position: fixed;
+  /* bottom-left, mirroring the Report FAB (bottom-right) — keeps clear of the
+     daily top-bar streak chip and card/suit breadcrumbs that live up top. */
+  bottom: calc(var(--mt-bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 14px);
+  left: 12px;
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid rgba(197, 177, 220, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.92);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px -8px rgba(61, 26, 92, 0.4);
+  -webkit-tap-highlight-color: transparent;
+}
+.mt-lang-fab .lang-btn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-family: var(--mt-font-body, "DM Sans", system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--mt-ink-soft, #8a7fa8);
+  cursor: pointer;
+}
+.mt-lang-fab .lang-btn.active { color: var(--mt-plum, #3d1a5c); }
+.mt-lang-fab .divider { color: rgba(138, 127, 168, 0.5); font-size: 11px; }
+
 /* Floating "Report" button — site-wide, sits above the bottom-nav, right side. */
 .mt-report-fab {
   position: fixed;
