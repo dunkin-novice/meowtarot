@@ -1100,6 +1100,10 @@ function buildCardArt(card, variant = 'hero') {
   img.crossOrigin = 'anonymous';
 
   const orientation = toOrientation(card);
+  // Reversed cards get a distinct glowing aura (B2-5) so orientation reads at a glance.
+  // The reversed ART is already drawn upside-down (separate -reversed asset), so we
+  // DON'T rotate — just flag it for the glow treatment in CSS.
+  if (orientation === 'reversed') wrap.classList.add('is-reversed');
   const { src, candidates = [] } = getStableCardImageSources(card);
   const { backUrl } = buildCardImageUrls(card, orientation);
   const webpUrl = src || backUrl;
