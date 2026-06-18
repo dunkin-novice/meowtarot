@@ -95,7 +95,7 @@
   --mt-radius-chip:        12px;
   --mt-radius-pill:        100px;
 
-  --mt-nav-bg:             rgba(255, 255, 255, 0.88);
+  --mt-nav-bg:             rgba(255, 255, 255, 0.72); /* translucent frosted glass (blur(16px) in phase-3-redesign) */
   --mt-nav-border:         rgba(61, 26, 92, 0.10);
   --mt-nav-icon-active:    #3d1a5c;
   --mt-nav-icon-inactive:  rgba(61, 26, 92, 0.35);

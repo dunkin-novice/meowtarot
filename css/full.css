@@ -257,21 +257,20 @@ body[data-page='full'] .full-shuffle-btn .thai {
 }
 
 
-/* §5 — Card-board: 78 cards as 4 overlapping rows (~20 per row, fanned/stacked).
-   A 4-column grid made 78 cards ~20 rows tall (endless scroll); here cards overlap
-   horizontally (negative margin) so ~20 fit per line and the whole deck is 4 compact
-   rows. justify-content centres each row; gap is the vertical spacing between rows. */
+/* §5 — Card-board: 40 cards as a clean 10 × 4 grid (no overlap), bigger even cards.
+   (Was 78 cards overlapped ~20/row with a ragged last row.) Tight gaps so the whole
+   board fits with no scroll. */
 body[data-page='full'] .full-state--board #full-board.card-board--full {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-content: flex-start;
-  gap: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: none;
+  gap: 6px 4px;
+  place-items: center;
   width: auto;
-  max-width: 358px;
+  max-width: 360px;
   max-height: none;
-  margin: 14px auto 0;
-  padding: 8px 6px;
+  margin: 12px auto 0;
+  padding: 4px 0;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -282,12 +281,11 @@ body[data-page='full'] .full-state--board #full-board.card-board--full {
 /* §6 — Card slot states */
 body[data-page='full'] .full-state--board #full-board .card-slot {
   position: relative;
-  width: 34px;
-  max-width: none;
+  width: 100%;
+  max-width: 34px;
   height: auto;
   max-height: none;
-  /* Overlap the next card by half (17px step) — ~20 cards per row → 4 rows for 78. */
-  margin-right: -17px;
+  margin-right: 0;
   aspect-ratio: 1568 / 2720;
   border-radius: 6px;
   border: 0.5px solid var(--mt-gold-pale);
@@ -414,4 +412,20 @@ body[data-page='full'] .full-continue-button:not(:disabled):hover {
 body[data-page='full'] .full-continue-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* §B3 — Force-fit on short screens: shrink the chrome so the whole Celtic board
+   (10×4) + Continue fit above the bottom-nav with NO scroll. Tall phones keep the
+   roomier spacing. (Selecting-board "no scrolling at all" request, 2026-06-18.) */
+@media (max-height: 780px) {
+  body[data-page='full'] .full-shell { min-height: 0; padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 8px); }
+  body[data-page='full'] .page-shell.board-page { min-height: 0; }
+  body[data-page='full'] .full-topbar--board { margin-top: 4px; }
+  body[data-page='full'] .full-board-title { margin-top: 6px; }
+  body[data-page='full'] .full-board-title__en { font-size: 21px; }
+  body[data-page='full'] .full-board-title__hint { display: none; }
+  body[data-page='full'] .full-shuffle-row { margin-top: 8px; }
+  body[data-page='full'] .full-state--board #full-board.card-board--full { margin-top: 8px; gap: 5px 3px; }
+  body[data-page='full'] .full-board-counter { margin-top: 6px; }
+  body[data-page='full'] .full-state__cta-row { margin-top: 8px; }
 }

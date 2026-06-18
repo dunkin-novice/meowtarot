@@ -877,7 +877,7 @@ if (typeof window !== 'undefined' && !window._meowContinueListenerBound) {
 
 // Celtic Cross: pick 10 from the FULL 78-card deck (was 12 → "pick 10 of 12" felt
 // pointless). All slots show the same deck-back image, so 78 is cheap to render. B2-4.
-const FULL_BOARD_COUNT = 78;
+const FULL_BOARD_COUNT = 40;
 const FULL_SELECTION_MAX = 10;
 
 function renderFullBoard() {
