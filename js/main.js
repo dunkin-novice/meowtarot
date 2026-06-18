@@ -13,7 +13,7 @@ import {
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected, trackSpreadSelected, trackShuffleHit } from './analytics.js';
-import { getUserProgress } from './progress.js';
+import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
 
 const BOARD_CARD_COUNT = 12;
@@ -459,58 +459,76 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
 // placeholder; wire it to the real local streak (progress is tracked in localStorage
 // for everyone, signed in or not). No-op on surfaces without the chip (e.g. /today/).
 function renderStreakChip() {
-  const chip = document.querySelector('.daily-topbar__streak-chip');
-  if (!chip) return;
-  const numEl = chip.querySelector('.daily-topbar__streak-num');
-  const labelEl = chip.querySelector('.daily-topbar__streak-label');
-  if (!numEl || !labelEl) return;
+  // Covers both the daily AND full/Celtic topbar chips (full's was hardcoded "Day 14").
+  const chips = document.querySelectorAll('.daily-topbar__streak-chip, .full-topbar__streak-chip');
+  if (!chips.length) return;
   const dict = translations[state.currentLang] || translations.en;
-  const streak = Math.max(0, Number(getUserProgress().streak_current) || 0);
   const signedIn = Boolean(getCurrentUserSync());
+  const streak = Math.max(0, Number(getUserProgress().streak_current) || 0);
+  // Logged-in chip shows progress to the NEXT deck unlock (accumulated days) — the
+  // reward goal — instead of a bare streak number. Full bar lives on Profile.
+  const next = getNextStreakMilestone();
 
-  numEl.textContent = streak >= 1 ? String(streak) : '✦';
+  chips.forEach((chip) => {
+    const numEl = chip.querySelector('.daily-topbar__streak-num, .full-topbar__streak-num');
+    const labelEl = chip.querySelector('.daily-topbar__streak-label, .full-topbar__streak-label');
+    if (!numEl || !labelEl) return;
 
-  if (!signedIn) {
-    // Local streaks are fragile (cache-clear / no cross-device). Show the streak the
-    // user has built AND nudge sign-in to save it — tap opens the sign-in gate.
-    labelEl.textContent = dict.dailyStreakSaveCta;
-    chip.setAttribute('aria-label', dict.dailyStreakSaveCta);
-    chip.classList.add('is-cta');
-    if (!chip.dataset.ctaBound) {
-      chip.dataset.ctaBound = '1';
-      chip.setAttribute('role', 'button');
-      chip.setAttribute('tabindex', '0');
-      const openGate = () => {
-        import('./sign-in-gate.js')
-          .then(({ showSignInGate }) => showSignInGate({
-            lang: state.currentLang,
-            onSignIn: () => loginWithProvider('google').catch(() => {}),
-          }))
-          .catch(() => {});
-      };
-      chip.addEventListener('click', openGate);
-      chip.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGate(); }
-      });
+    if (!signedIn) {
+      // Local streaks are fragile (cache-clear / no cross-device). Show the streak the
+      // user has built AND nudge sign-in to save it — tap opens the sign-in gate.
+      numEl.textContent = streak >= 1 ? String(streak) : '✦';
+      labelEl.textContent = dict.dailyStreakSaveCta;
+      chip.setAttribute('aria-label', dict.dailyStreakSaveCta);
+      chip.classList.add('is-cta');
+      if (!chip.dataset.ctaBound) {
+        chip.dataset.ctaBound = '1';
+        chip.setAttribute('role', 'button');
+        chip.setAttribute('tabindex', '0');
+        const openGate = () => {
+          import('./sign-in-gate.js')
+            .then(({ showSignInGate }) => showSignInGate({
+              lang: state.currentLang,
+              onSignIn: () => loginWithProvider('google').catch(() => {}),
+            }))
+            .catch(() => {});
+        };
+        chip.addEventListener('click', openGate);
+        chip.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGate(); }
+        });
+      }
+      return;
     }
-    return;
-  }
 
-  // Signed in — show the real streak (or a gentle start prompt at 0).
-  chip.classList.remove('is-cta');
-  labelEl.textContent = streak >= 1 ? dict.dailyStreakLabel : dict.dailyStreakStart;
-  chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
+    // Signed in.
+    chip.classList.remove('is-cta');
+    if (next) {
+      // Progress to the next deck unlock: big number = days remaining.
+      numEl.textContent = String(next.remaining);
+      labelEl.textContent = dict.deckUnlockProgress || 'to next deck';
+      chip.setAttribute('aria-label', `${next.remaining} ${dict.deckUnlockProgress || 'to next deck'} (${next.current}/${next.target})`);
+    } else {
+      // All decks unlocked — fall back to the streak.
+      numEl.textContent = streak >= 1 ? String(streak) : '✦';
+      labelEl.textContent = streak >= 1 ? dict.dailyStreakLabel : dict.dailyStreakStart;
+      chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
+    }
+  });
 }
 
 // Daily-board "From the deck" name. The markup hardcodes "Velvet Familiar"; wire it to
 // the active deck (localized — deck names ARE translated, unlike card names) so it matches
 // the board's card backs. No-op where the element is absent.
 function renderDeckName() {
-  const nameEl = document.querySelector('.daily-topbar__deck-name');
-  if (!nameEl) return;
+  // Covers both the daily AND full/Celtic topbars (both hardcoded "Velvet Familiar"
+  // in markup — not a real deck). Wire to the active deck, localized.
+  const nameEls = document.querySelectorAll('.daily-topbar__deck-name, .full-topbar__deck-name');
+  if (!nameEls.length) return;
   const deck = getAllDecks().find((d) => d.id === getActiveDeckId());
   if (!deck) return;
-  nameEl.textContent = state.currentLang === 'th' ? (deck.name_th || deck.name) : deck.name;
+  const name = state.currentLang === 'th' ? (deck.name_th || deck.name) : deck.name;
+  nameEls.forEach((el) => { el.textContent = name; });
 }
 
 function renderDaily() {
@@ -638,7 +656,9 @@ if (typeof window !== 'undefined' && !window._meowContinueListenerBound) {
   });
 }
 
-const FULL_BOARD_COUNT = 12;
+// Celtic Cross: pick 10 from the FULL 78-card deck (was 12 → "pick 10 of 12" felt
+// pointless). All slots show the same deck-back image, so 78 is cheap to render. B2-4.
+const FULL_BOARD_COUNT = 78;
 const FULL_SELECTION_MAX = 10;
 
 function renderFullBoard() {
@@ -652,6 +672,11 @@ function renderFullBoard() {
   const counter = document.getElementById('full-counter');
   const continueBtn = document.getElementById('full-continue');
   if (!board || !counter) return null;
+
+  // Wire the Celtic topbar (deck name + chip) — both were hardcoded "Velvet
+  // Familiar"/"Day 14" in full.html markup.
+  renderStreakChip();
+  renderDeckName();
 
   // Phase 5 mobile review pattern: same body class signal daily uses to
   // hand mobile Safari a viewport-sized scrollable shell instead of
@@ -674,7 +699,7 @@ function renderFullBoard() {
     FULL_BOARD_COUNT,
     FULL_SELECTION_MAX,
     updateFullSelectionUi,
-    { animated: true, animationProfile: 'daily' }
+    { animated: false } // 78 slots — skip the per-card deal animation (would jank)
   );
 
   counter.textContent = `0/${FULL_SELECTION_MAX}`;

@@ -280,7 +280,19 @@ function buildDeckCell(deck, { progress, activeId, render }) {
 
   cell.addEventListener('click', () => {
     try { trackDeckSelected({ deckId: deck.id, locale: state.currentLang, locked: !unlocked }); } catch (_) {}
-    // Logged out: any deck tap → sign-in gate (matches the "Sign in to own/get it" notes).
+    // Unlocked deck (incl. the free Moonmallow) → activate it, even when logged out.
+    // (Previously a logged-out guard ran FIRST and showed the sign-in gate on EVERY
+    // tap, so you could never select/return to Moonmallow without signing in — B2-2.)
+    if (unlocked) {
+      if (isActive) return;
+      try { setActiveDeck(deck.id); } catch (_) {}
+      showDecksToast(state.currentLang === 'th'
+        ? fmt('เลือก {deck} เป็นสำรับหลักแล้ว', { deck: deck.name_th || deck.name })
+        : fmt('{deck} is now your active deck', { deck: deck.name }));
+      render();
+      return;
+    }
+    // Locked deck: logged out → sign-in gate; logged in → unlock-conditions popup.
     if (!getCurrentUserSync()) {
       try { trackDeckUnlockPrompt({ deckId: deck.id, locale: state.currentLang, reason: 'signin_required' }); } catch (_) {}
       import('./sign-in-gate.js')
@@ -291,17 +303,8 @@ function buildDeckCell(deck, { progress, activeId, render }) {
         .catch(() => {});
       return;
     }
-    if (!unlocked) {
-      try { trackDeckUnlockPrompt({ deckId: deck.id, locale: state.currentLang, reason: 'streak_locked' }); } catch (_) {}
-      showUnlockConditionPopup(deck);
-      return;
-    }
-    if (isActive) return;
-    try { setActiveDeck(deck.id); } catch (_) {}
-    showDecksToast(state.currentLang === 'th'
-      ? fmt('เลือก {deck} เป็นสำรับหลักแล้ว', { deck: deck.name_th || deck.name })
-      : fmt('{deck} is now your active deck', { deck: deck.name }));
-    render();
+    try { trackDeckUnlockPrompt({ deckId: deck.id, locale: state.currentLang, reason: 'streak_locked' }); } catch (_) {}
+    showUnlockConditionPopup(deck);
   });
 
   return cell;
