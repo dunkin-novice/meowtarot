@@ -524,10 +524,34 @@ function openCardSheet(card) {
   cardSheetEls.meaningMeta.textContent = meaningMeta;
   cardSheetEls.meaningMeta.hidden = false;
 
+  if (cardSheetEls.shareLabel) {
+    cardSheetEls.shareLabel.textContent = state.currentLang === 'th' ? 'แชร์สตอรี่' : 'Share Story';
+  }
+  // The meaning button is now the secondary action under Share Story.
+  cardSheetEls.meaningBtn.classList.remove('primary');
+  cardSheetEls.meaningBtn.classList.add('ghost');
+
   cardSheetEls.overlay.classList.add('is-open');
   cardSheetEls.overlay.setAttribute('aria-hidden', 'false');
   setBodyScrollLocked(true);
   cardSheetEls.closeBtn?.focus();
+}
+
+// Round Instagram-style share button, top-left of the result page → poster/story flow.
+function ensureShareFab() {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (document.getElementById('mt-share-fab')) return;
+  const btn = document.createElement('button');
+  btn.id = 'mt-share-fab';
+  btn.type = 'button';
+  btn.className = 'mt-share-fab';
+  btn.setAttribute('aria-label', state.currentLang === 'th' ? 'แชร์สตอรี่' : 'Share story');
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/>
+    </svg>`;
+  btn.addEventListener('click', () => { openSharePage(); });
+  document.body.appendChild(btn);
 }
 
 function ensureCardSheet() {
@@ -545,8 +569,13 @@ function ensureCardSheet() {
       <p class="card-sheet-title"></p>
       <p class="card-sheet-meaning-meta" id="cardSheetMeaningMeta"></p>
       <div class="card-sheet-actions">
+        <button class="primary card-sheet-share" type="button" id="cardSheetShareBtn">
+          <svg class="card-sheet-share__ig" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          <span class="card-sheet-share__label">Share Story</span>
+        </button>
         <a class="ghost" id="cardSheetMeaningBtn" href="#">Read Card Meaning</a>
-        <button class="primary" type="button" id="cardSheetSaveBtn">Save Image</button>
       </div>
     </section>
   `;
@@ -556,7 +585,8 @@ function ensureCardSheet() {
   cardSheetEls.closeBtn = wrap.querySelector('.card-sheet-close');
   cardSheetEls.image = wrap.querySelector('.card-sheet-media');
   cardSheetEls.title = wrap.querySelector('.card-sheet-title');
-  cardSheetEls.saveBtn = wrap.querySelector('#cardSheetSaveBtn');
+  cardSheetEls.shareBtn = wrap.querySelector('#cardSheetShareBtn');
+  cardSheetEls.shareLabel = wrap.querySelector('.card-sheet-share__label');
   cardSheetEls.meaningBtn = wrap.querySelector('#cardSheetMeaningBtn');
   cardSheetEls.meaningMeta = wrap.querySelector('#cardSheetMeaningMeta');
 
@@ -564,7 +594,11 @@ function ensureCardSheet() {
     if (event.target?.hasAttribute('data-sheet-close')) closeCardSheet();
   });
 
-  cardSheetEls.saveBtn?.addEventListener('click', saveCardImageFromSheet);
+  // Share Story → close the sheet and run the poster/share flow (the IG-story image).
+  cardSheetEls.shareBtn?.addEventListener('click', () => {
+    closeCardSheet();
+    openSharePage();
+  });
   cardSheetEls.closeBtn?.addEventListener('click', closeCardSheet);
 
   let touchStartY = 0;
@@ -4286,6 +4320,7 @@ function init() {
   }
 
   ensureCardSheet();
+  ensureShareFab();
 
   backLink?.addEventListener('click', (event) => {
     if (window.history.length > 1) {

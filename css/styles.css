@@ -4244,6 +4244,15 @@ body.is-modal-open {
   text-align: center;
 }
 
+/* Share Story (primary, IG icon) — the prominent action in the card-tap sheet. */
+.card-sheet-actions .card-sheet-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+.card-sheet-actions .card-sheet-share__ig { flex: 0 0 18px; }
+
 body[data-page='reading'] .primary:disabled {
   opacity: 0.6;
 }
