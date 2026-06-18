@@ -917,23 +917,25 @@ function ellipsizeText(ctx, text, maxWidth) {
 
 function tokenizeText(ctx, text, maxWidth) {
   const value = String(text || '');
-  if (!value) return [];
+  if (!value) return { tokens: [], sep: ' ' };
   const words = value.split(/\s+/).filter(Boolean);
-  if (words.length > 1) return words;
-  if (ctx.measureText(value).width <= maxWidth) return [value];
-  return Array.from(value);
+  if (words.length > 1) return { tokens: words, sep: ' ' };
+  if (ctx.measureText(value).width <= maxWidth) return { tokens: [value], sep: ' ' };
+  // No-space script (Thai/CJK): break by character and join WITHOUT spaces, so a long
+  // Thai reading wraps into clean centred lines instead of space-separated glyphs.
+  return { tokens: Array.from(value), sep: '' };
 }
 
 function wrapTextLines(ctx, text, maxWidth, maxLines = Infinity) {
   if (!text) return [];
-  const tokens = tokenizeText(ctx, text, maxWidth);
+  const { tokens, sep } = tokenizeText(ctx, text, maxWidth);
   const lines = [];
   let line = '';
 
   let overflow = false;
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
-    const candidate = line ? `${line} ${token}`.trim() : token;
+    const candidate = line ? `${line}${sep}${token}` : token;
     if (ctx.measureText(candidate).width > maxWidth && line) {
       lines.push(line);
       line = token;
