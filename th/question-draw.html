@@ -95,6 +95,14 @@
       </div>
     </section>
 
+    <!-- Shuffle pill ABOVE the board — matches the Daily board layout. -->
+    <div class="question-shuffle-row">
+      <button id="question-reset" type="button" class="question-draw-reset" aria-label="สลับไพ่">
+        <span class="question-draw-reset__ico" aria-hidden="true">↻</span>
+        <span>สลับไพ่</span>
+      </button>
+    </div>
+
     <div id="question-card-board" class="card-board card-board--three" aria-live="polite"></div>
 
     <div class="question-draw-counter" aria-live="polite">
@@ -102,7 +110,6 @@
     </div>
 
     <div class="question-draw-cta-row">
-      <button id="question-reset" type="button" class="ghost question-draw-reset">Shuffle · สลับไพ่</button>
       <button id="question-continue" type="button" class="ritual-cta question-draw-button" disabled>
         <span class="question-draw-button__label question-draw-button__label--quick">Draw · เปิดไพ่</span>
         <span class="question-draw-button__label question-draw-button__label--story">Reveal spread · เปิดไพ่</span>
