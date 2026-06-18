@@ -1,5 +1,21 @@
 import { getSupabaseClient } from './auth.js';
 
+// Surface reading-history save failures (#4) instead of swallowing them: console +
+// the global error ring buffer (window.__mtErrors) so the in-app bug reporter
+// attaches them. Common cause: a missing RLS INSERT policy on readings/reading_cards.
+function logReadingHistoryError(where, error) {
+  if (!error) return;
+  const msg = `[reading-history] ${where}: ${error.message || error.code || String(error)}`;
+  try { console.warn(msg, error); } catch (_) {}
+  try {
+    if (typeof window !== 'undefined') {
+      window.__mtErrors = window.__mtErrors || [];
+      window.__mtErrors.push(msg);
+      if (window.__mtErrors.length > 10) window.__mtErrors.shift();
+    }
+  } catch (_) {}
+}
+
 function toLocalIsoDate(input = new Date()) {
   const date = input instanceof Date ? input : new Date(input);
   if (Number.isNaN(date.getTime())) return '';
@@ -87,7 +103,12 @@ export async function saveReadingRecord(userId, record = {}, options = {}) {
       return existing?.id || null;
     }
 
-    if (readingError || !inserted?.id) return null;
+    if (readingError || !inserted?.id) {
+      // Surface WHY history isn't saving (#4) — e.g. RLS ("violates row-level
+      // security policy"), missing table, auth. Was silently swallowed before.
+      logReadingHistoryError('readings.insert', readingError);
+      return null;
+    }
 
     const rows = payload.cards.map((card) => ({
       reading_id: inserted.id,
@@ -98,9 +119,11 @@ export async function saveReadingRecord(userId, record = {}, options = {}) {
     }));
 
     if (!rows.length) return inserted.id;
-    await client.from('reading_cards').insert(rows);
+    const { error: cardsError } = await client.from('reading_cards').insert(rows);
+    if (cardsError) logReadingHistoryError('reading_cards.insert', cardsError);
     return inserted.id;
-  } catch (_) {
+  } catch (e) {
+    logReadingHistoryError('saveReadingRecord', e);
     return null;
   }
 }
