@@ -51,7 +51,7 @@ async function createClient() {
       ready: true,
     };
     // A genuine new sign-in (not a session restore — those emit INITIAL_SESSION — and
-    // not a token refresh while already logged in).
+    // not a token refresh while already logged in). Analytics fires only here.
     if (_event === 'SIGNED_IN' && !prevUser && session?.user) {
       try {
         trackSigninSucceeded({
@@ -60,8 +60,14 @@ async function createClient() {
           provider: session.user.app_metadata?.provider,
         });
       } catch (_) {}
-      // Flush any readings drawn while logged out so the history isn't lost (#5).
-      // Dynamic import avoids a static cycle (reading-history.js imports this file).
+    }
+    // Flush any readings drawn while logged out so the history isn't lost (#5/#4).
+    // Must run on BOTH a fresh SIGNED_IN and a session restore (INITIAL_SESSION) —
+    // opening the app already-logged-in emits INITIAL_SESSION, not SIGNED_IN, so
+    // flushing only on SIGNED_IN would strand a queued reading until the next fresh
+    // login. flushPendingReadings is idempotent (clears the queue first, daily-dedups),
+    // so calling it on session restore is safe. Dynamic import avoids a static cycle.
+    if (session?.user && (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION')) {
       import('./reading-history.js')
         .then(({ flushPendingReadings }) => flushPendingReadings(session.user.id))
         .catch(() => {});

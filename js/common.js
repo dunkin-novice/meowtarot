@@ -609,7 +609,11 @@ function getUrlLanguage(locationLike = window.location) {
 export function computeLanguageHref(targetLang, locationLike = window.location) {
   const pathname = normalizePathname(locationLike?.pathname || '/');
   const params = new URLSearchParams(locationLike?.search || '');
+  // Rewrite BOTH locale param spellings to the target. The reading result page reads `l`
+  // (initShell honours `lang` || `l`); without this a stale `l=en` rides onto the /th/
+  // path and the Thai mirror renders English — the EN/TH toggle then looked dead.
   if (params.has('lang')) params.set('lang', targetLang);
+  if (params.has('l')) params.set('l', targetLang);
   const search = params.toString() ? `?${params.toString()}` : '';
   const hash = locationLike?.hash || '';
   const targetPath = localizePath(pathname, targetLang) || (targetLang === 'th' ? '/th/' : '/');
@@ -747,6 +751,11 @@ export function initShell(state, afterApply, activePage, options = {}) {
     if (!nextLang || nextLang === state.currentLang) return;
     try { trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: nextLang }); } catch (_) {}
     try { localStorage.setItem(LANG_STORAGE_KEY, nextLang); } catch (_) {}
+    // Navigate to the localized path (/ ↔ /th/). computeLanguageHref carries the existing
+    // query params (e.g. the reading's m/s/t/c) and rewrites the locale params to the
+    // target — so the reading RESULT page lands on its baked Thai mirror with the SAME
+    // card and renders fully localized. (A fresh load of /th/reading.html?…&l=th is the
+    // proven-correct render; the old in-place toggle left the card body in EN.)
     window.location.href = computeLanguageHref(nextLang);
   };
   if (typeof document !== 'undefined' && document.body && activePage !== 'profile' && !document.getElementById('mt-lang-fab')) {

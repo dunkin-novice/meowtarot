@@ -617,8 +617,8 @@ function renderLifetimeStats(dict) {
     },
     {
       n: sharesTotal,
-      en: 'Readings shared',
-      th: 'แชร์แล้ว',
+      en: 'Times shared',
+      th: 'จำนวนแชร์',
     },
   ];
 

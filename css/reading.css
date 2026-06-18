@@ -910,3 +910,16 @@ body[data-page='reading'] .card-art.is-reversed .card-art-img {
 @media (prefers-reduced-motion: reduce) {
   body[data-page='reading'] .card-art.is-reversed .card-art-img { animation: none; }
 }
+
+/* §B2-8 — Drop the redundant light panel behind the reading result. The content
+   (card art, title, lucky chip) already reads on the page gradient, so the white
+   .panel--spread / #share-poster-root container was a needless "2nd background"
+   layer. Colour only — layout/spacing unchanged. (Poster image is canvas-drawn in
+   poster.js, NOT from this DOM, so transparency here doesn't affect the share image.) */
+body[data-page='reading'] #share-poster-root,
+body[data-page='reading'] .panel--spread,
+body[data-page='reading'] .panel--question-recap {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}

@@ -12,6 +12,18 @@ redesign reference) — still useful background, but this file is current.
 
 ## 1. What shipped — recent sessions (all pushed to `main`, live)
 
+### 2026-06-18 — in-app bug batches (see `docs/log.jsonl` for full entries)
+
+| Area | What |
+|---|---|
+| Deck unlock | Unlock now keyed to **accumulated daily reads** (`total_daily_reads`) not streak; single milestone source `getUnlockMilestones()` ([7,14,21,28,45,60,75,100,125]); `getNewlyUnlockedDecks(prev,new)`. Homepage/profile lock state now match; owned decks no longer render dull (auth-state re-render). Locked deck tap → unlock-conditions popup (deck art + "draw on N days · M to go"); Moonmallow + other owned decks activate even logged-out. |
+| Topbar | Logged-in daily/full topbar shows **progress to next deck unlock** (number = days remaining, label "to next deck"/"ถึงสำรับใหม่"); logged-out = save CTA; all-unlocked = streak. |
+| Lang | Path-based lang toggle (pill NAVIGATES `/ ↔ /th/`), TH persists across pages (`2026-06-18-lang-toggle-pathbased-correction`). Site-wide floating **Report** button. |
+| Celtic | Selection board now deals all **78 cards** (was 10-of-12), `{animated:false}`. |
+| Result page | **Reversed card** gets a distinct glow (`.card-art.is-reversed`, single chokepoint in `buildCardArt`). **Flattened the result bg** — removed the redundant near-white panel behind the card so content sits on the page gradient (`2026-06-18-reading-result-flatten-bg`). |
+| Profile | Lifetime-stat wording sharpened (kept counting logic): shares stat "Readings shared"→**"Times shared"/"จำนวนแชร์"** (`2026-06-18-profile-stats-wording`). |
+| **OPEN** | **#4 signed-in reading history not always persisting** — diagnostics now surface the error (`window.__mtErrors`); likely RLS INSERT policy; **needs a logged-in TestFlight/dev repro.** |
+
 ### 2026-06-16
 
 | Commit | What |
