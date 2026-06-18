@@ -60,6 +60,11 @@ async function createClient() {
           provider: session.user.app_metadata?.provider,
         });
       } catch (_) {}
+      // Flush any readings drawn while logged out so the history isn't lost (#5).
+      // Dynamic import avoids a static cycle (reading-history.js imports this file).
+      import('./reading-history.js')
+        .then(({ flushPendingReadings }) => flushPendingReadings(session.user.id))
+        .catch(() => {});
     }
     authListeners.forEach((listener) => {
       try {

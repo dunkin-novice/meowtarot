@@ -201,5 +201,49 @@ export async function loadReadings(userId, limit = 20, options = {}) {
   }
 }
 
+// ── Pending-readings queue (for readings done BEFORE login) ───────────────────
+// A reading drawn while logged out can't be saved (no user_id). Queue it locally,
+// then flush to Supabase on sign-in so the history isn't lost (#5).
+const PENDING_READINGS_KEY = 'meowtarot_pending_readings';
+const PENDING_MAX = 50;
+
+function readPendingReadings() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PENDING_READINGS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch (_) { return []; }
+}
+
+export function queuePendingReading(record = {}) {
+  try {
+    if (!record || !Array.isArray(record.cards) || !record.cards.length) return;
+    const queue = readPendingReadings();
+    // Dedupe by mode + card-id signature so the same draw isn't queued twice.
+    const sig = `${record.mode}|${record.cards.map((c) => resolveCardIdToken(c)).join(',')}`;
+    if (queue.some((r) => r.__sig === sig)) return;
+    queue.push({ ...record, __sig: sig, __queued_at: new Date().toISOString() });
+    localStorage.setItem(PENDING_READINGS_KEY, JSON.stringify(queue.slice(-PENDING_MAX)));
+  } catch (_) { /* ignore */ }
+}
+
+// Save every queued reading under the now-known userId, then clear the queue.
+export async function flushPendingReadings(userId) {
+  if (!userId) return;
+  const queue = readPendingReadings();
+  if (!queue.length) return;
+  try { localStorage.removeItem(PENDING_READINGS_KEY); } catch (_) {}
+  for (const rec of queue) {
+    try {
+      await saveReadingRecord(userId, {
+        mode: rec.mode,
+        spread: rec.spread,
+        topic: rec.topic ?? null,
+        lang: rec.lang,
+        cards: rec.cards,
+      });
+    } catch (_) { /* skip a bad record, keep going */ }
+  }
+}
+
 export { toLocalIsoDate };
 export { sanitizeReadingRecord };

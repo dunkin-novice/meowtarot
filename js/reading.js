@@ -46,7 +46,7 @@ import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from '
 import { getCanonicalCardUrl } from './canonical-card-routes.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
-import { saveReadingRecord, upsertCanonicalDailyReading } from './reading-history.js';
+import { saveReadingRecord, upsertCanonicalDailyReading, queuePendingReading } from './reading-history.js';
 import {
   trackDailyStreakIncremented,
   trackReadingComplete,
@@ -2956,15 +2956,26 @@ function shouldDeferNonDailyHistorySave({ userId, rendered, mode, selectedIds })
 }
 
 function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
+  if (!Array.isArray(cards) || !cards.length) return;
+
+  const normalizedCards = buildNormalizedReadingCards(mode, cards);
+  if (!normalizedCards.length) return;
+
   const userId = options.userId || authUiState.user?.id;
-  if (!userId || !Array.isArray(cards) || !cards.length) return;
+  // Logged out: queue the reading so it's saved once the user signs in (#5).
+  if (!userId) {
+    queuePendingReading({
+      mode,
+      spread: state.spread,
+      topic: mode === 'question' ? state.topic : null,
+      lang: state.currentLang,
+      cards: normalizedCards,
+    });
+    return;
+  }
 
   const sessionKey = options.sessionKey || getReadingSessionKey(mode, cards);
   if (!sessionKey || persistedReadingSessionKeys.has(sessionKey) || inFlightReadingSessionKeys.has(sessionKey)) return;
-
-  const normalizedCards = buildNormalizedReadingCards(mode, cards);
-
-  if (!normalizedCards.length) return;
 
   inFlightReadingSessionKeys.add(sessionKey);
 

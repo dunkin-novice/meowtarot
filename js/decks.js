@@ -142,6 +142,61 @@ function buildHero(progress, unlockedCount, totalCount) {
   return wrap;
 }
 
+// Popup shown when a locked deck is tapped (#6): deck preview + the unlock
+// condition stated in accumulated days drawn (matches the new unlock logic).
+function showUnlockConditionPopup(deck) {
+  if (typeof document === 'undefined' || document.getElementById('mt-unlock-popup')) return;
+  const th = state.currentLang === 'th';
+  const progress = getUserProgress();
+  const have = Math.max(0, Number(progress?.total_daily_reads) || 0);
+  const need = Number(deck.unlock_day) || 0;
+  const remaining = Math.max(0, need - have);
+  const name = th ? (deck.name_th || deck.name) : deck.name;
+
+  if (!document.getElementById('mt-unlock-style')) {
+    const st = document.createElement('style');
+    st.id = 'mt-unlock-style';
+    st.textContent = `
+      .mt-unlock-overlay{position:fixed;inset:0;z-index:1250;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(28,12,52,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s ease;}
+      .mt-unlock-overlay.in{opacity:1;}
+      .mt-unlock-card{width:100%;max-width:340px;background:linear-gradient(180deg,#fffaf2,#fdf3ec);border:1px solid rgba(197,177,220,.5);border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 30px 60px -20px rgba(20,8,40,.5);transform:translateY(10px) scale(.98);transition:transform .26s cubic-bezier(.34,1.56,.64,1);}
+      .mt-unlock-overlay.in .mt-unlock-card{transform:none;}
+      .mt-unlock-card img{width:96px;height:auto;border-radius:12px;margin:0 auto 12px;display:block;box-shadow:0 10px 24px -10px rgba(61,26,92,.5);}
+      .mt-unlock-name{font-family:var(--mt-font-display,"Cormorant Garamond",serif);font-style:italic;font-weight:600;font-size:22px;color:var(--mt-plum,#3d1a5c);margin:0 0 4px;}
+      .mt-unlock-cond{font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:14px;color:var(--mt-ink-soft,#6b5b82);margin:6px 0 2px;line-height:1.5;}
+      .mt-unlock-remain{font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:13px;font-weight:600;color:var(--mt-plum-mid,#6a3f8e);margin:2px 0 14px;}
+      .mt-unlock-close{width:100%;padding:12px;border:none;border-radius:14px;background:var(--mt-plum,#3d1a5c);color:#fff8e7;font-family:var(--mt-font-body,"DM Sans",sans-serif);font-weight:600;font-size:14px;cursor:pointer;}
+    `;
+    document.head.appendChild(st);
+  }
+
+  const ov = document.createElement('div');
+  ov.id = 'mt-unlock-popup';
+  ov.className = 'mt-unlock-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  const thumb = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
+  const condText = th
+    ? `เปิดไพ่สะสมครบ ${need} วันเพื่อปลดล็อก ${name}`
+    : `Draw on ${need} days to unlock ${name}`;
+  const remainText = remaining > 0
+    ? (th ? `เปิดไพ่อีก ${remaining} วัน (ตอนนี้ ${have} วัน)` : `${remaining} more day${remaining === 1 ? '' : 's'} to go (you have ${have})`)
+    : (th ? 'พร้อมปลดล็อกแล้ว!' : 'Ready to unlock!');
+  ov.innerHTML = `
+    <div class="mt-unlock-card" role="document">
+      ${thumb ? `<img src="${thumb}" alt="" />` : ''}
+      <p class="mt-unlock-name">${name}</p>
+      <p class="mt-unlock-cond">🔒 ${condText}</p>
+      <p class="mt-unlock-remain">${remainText}</p>
+      <button type="button" class="mt-unlock-close">${th ? 'เข้าใจแล้ว' : 'Got it'}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+  const close = () => { ov.classList.remove('in'); setTimeout(() => ov.remove(), 220); };
+  ov.querySelector('.mt-unlock-close')?.addEventListener('click', close);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+}
+
 function buildDeckCell(deck, { progress, activeId, render }) {
   const cell = document.createElement('button');
   cell.type = 'button';
@@ -238,9 +293,7 @@ function buildDeckCell(deck, { progress, activeId, render }) {
     }
     if (!unlocked) {
       try { trackDeckUnlockPrompt({ deckId: deck.id, locale: state.currentLang, reason: 'streak_locked' }); } catch (_) {}
-      showDecksToast(state.currentLang === 'th'
-        ? fmt('ถึงวันที่ {day} เพื่อปลดล็อก {deck}', { day: deck.unlock_day, deck: deck.name_th || deck.name })
-        : fmt('Reach Day {day} to unlock {deck}', { day: deck.unlock_day, deck: deck.name }));
+      showUnlockConditionPopup(deck);
       return;
     }
     if (isActive) return;

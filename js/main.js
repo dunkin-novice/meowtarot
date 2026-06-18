@@ -14,7 +14,7 @@ import {
 import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected, trackSpreadSelected, trackShuffleHit } from './analytics.js';
 import { getUserProgress } from './progress.js';
-import { getCurrentUserSync, loginWithProvider } from './auth.js';
+import { getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
 
 const BOARD_CARD_COUNT = 12;
 // Phase 5 BUG 3 fix: changed from 6 → 12 to match design doc ScreenCardBoardDaily.
@@ -949,6 +949,11 @@ function init() {
 
   if (page === 'home') {
     renderHomeDeckStrip();
+    // Auth resolves async — the first paint can run before getCurrentUserSync() is
+    // populated, which made the home strip show decks LOCKED while /profile (which
+    // re-renders on auth) showed them UNLOCKED (#3). Re-render the strip when auth
+    // state settles/changes so the two surfaces agree.
+    subscribeAuthState(() => renderHomeDeckStrip());
     void renderPage(translations[state.currentLang] || translations.en);
     return;
   }
