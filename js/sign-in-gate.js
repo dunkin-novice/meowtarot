@@ -182,7 +182,7 @@ function injectStylesOnce() {
   document.head.appendChild(style);
 }
 
-export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
+export function showSignInGate({ lang = 'en', onSignIn, onDismiss, title, body } = {}) {
   if (typeof document === 'undefined' || !document.body) return null;
   if (document.getElementById(OVERLAY_ID)) return null;
 
@@ -201,8 +201,10 @@ export function showSignInGate({ lang = 'en', onSignIn, onDismiss } = {}) {
   // Google button.
   const inApp = isInAppBrowser();
   const native = isNativePlatform();
-  const gTitle = inApp ? copy.inAppTitle : copy.title;
-  const gBody = inApp ? copy.inAppBody : copy.body;
+  // Callers can override the headline/body (e.g. the deck switcher's "unlock new decks"
+  // prompt). The in-app-browser guidance always wins — it explains a hard limitation.
+  const gTitle = inApp ? copy.inAppTitle : (title || copy.title);
+  const gBody = inApp ? copy.inAppBody : (body || copy.body);
   const gPrimary = inApp ? copy.inAppPrimary : copy.primary;
   const gBadge = inApp ? '' : '<span class="mt-signin-cta-primary__g" aria-hidden="true">G</span>';
   // Native iOS must also offer Sign in with Apple (App Store Guideline 4.8).

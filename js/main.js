@@ -248,6 +248,43 @@ function animateDealSlots(boardEl, slots, onDone) {
   });
 }
 
+// Celtic 78-card board deal: simple, jank-free reveal — every card fades + scales in
+// together (so all 4 rows and both sides appear at the same time), then inline styles are
+// cleared. No per-card translate / getBoundingClientRect / staggered timers (those were
+// fragile and could leave cards stuck invisible). ~0.3s vs the old multi-second sweep.
+function animateFullDeal(boardEl, slots, onDone) {
+  // Query the LIVE board nodes (not the passed array) so the reveal always lands on what's
+  // actually on screen — the collect faded the on-screen cards to opacity 0, and these are
+  // the nodes that must be brought back.
+  const live = Array.from(boardEl.querySelectorAll('.card-slot'));
+  requestAnimationFrame(() => {
+    live.forEach((slot) => {
+      slot.classList.add('card-visible');
+      slot.style.transition = 'opacity .28s ease, transform .28s ease';
+      slot.style.opacity = '1';
+      slot.style.transform = 'none';
+    });
+    setTimeout(() => {
+      live.forEach((slot) => {
+        slot.style.transition = '';
+        slot.style.transform = '';
+        slot.style.opacity = '';
+      });
+      onDone?.();
+    }, 340);
+  });
+}
+
+// Simple, jank-free collect for the 78-card board: fade + slight shrink in place, all at
+// once (no fly-to-centre transforms that thrashed layout on overlapping cards).
+function animateSimpleCollect(boardEl, slots) {
+  slots.forEach((slot) => {
+    slot.style.transition = 'opacity .16s ease, transform .16s ease';
+    slot.style.opacity = '0';
+    slot.style.transform = 'scale(0.92)';
+  });
+}
+
 function animateDailyShuffleSlots(boardEl, slots, onDone) {
   const SHUFFLE_EASE = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
   const LANDING_EASE = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
@@ -426,7 +463,9 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     if (withAnimation) {
       boardEl.classList.add('is-locked');
       requestAnimationFrame(() => {
-        const animate = animationProfile === 'daily' ? animateDailyShuffleSlots : animateDealSlots;
+        const animate = animationProfile === 'daily' ? animateDailyShuffleSlots
+          : animationProfile === 'full' ? animateFullDeal
+          : animateDealSlots;
         animate(boardEl, slots, () => {
           boardEl.classList.remove('is-locked');
           refreshBadges();
@@ -447,8 +486,15 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
 
     if (withAnimation && previousSlots.length) {
       boardEl.classList.add('is-locked');
-      animateCollectSlots(boardEl, previousSlots);
-      setTimeout(proceed, STACK_DURATION);
+      if (animationProfile === 'full') {
+        // 78 overlapping cards flying to centre (getBoundingClientRect per card) thrashed
+        // layout and looked buggy. Simple in-place fade-out instead, then re-deal.
+        animateSimpleCollect(boardEl, previousSlots);
+        setTimeout(proceed, 190);
+      } else {
+        animateCollectSlots(boardEl, previousSlots);
+        setTimeout(proceed, STACK_DURATION);
+      }
     } else {
       proceed();
     }
@@ -563,7 +609,23 @@ function wireDeckSwitcher() {
       caret.textContent = '▾';
       host.appendChild(caret);
     }
-    const open = () => showDeckPicker();
+    const open = () => {
+      // Logged out you can only own the default deck, so the picker is a dead end — nudge
+      // sign-in instead ("sign in to get new decks").
+      if (!getCurrentUserSync()) {
+        const d = translations[state.currentLang] || translations.en;
+        import('./sign-in-gate.js')
+          .then(({ showSignInGate }) => showSignInGate({
+            lang: state.currentLang,
+            title: d.deckGateTitle,
+            body: d.deckGateBody,
+            onSignIn: () => loginWithProvider('google').catch(() => {}),
+          }))
+          .catch(() => {});
+        return;
+      }
+      showDeckPicker();
+    };
     host.addEventListener('click', open);
     host.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
@@ -856,7 +918,9 @@ function renderFullBoard() {
     FULL_BOARD_COUNT,
     FULL_SELECTION_MAX,
     updateFullSelectionUi,
-    { animated: false } // 78 slots — skip the per-card deal animation (would jank)
+    // 78-card board: 'full' profile = symmetric center-out reveal (rows in lockstep,
+    // L/R mirrored) + a simple in-place fade collect on shuffle (no buggy fly-to-centre).
+    { animated: false, animationProfile: 'full' }
   );
 
   counter.textContent = `0/${FULL_SELECTION_MAX}`;
@@ -1035,8 +1099,21 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
     counter.textContent = `${cards.length}/${selectionCount}`;
   };
 
-  const boardApi = setupBoard(board, BOARD_CARD_COUNT, selectionCount, updateContinue);
-  shuffleBtn.onclick = () => boardApi.render();
+  const boardApi = setupBoard(board, BOARD_CARD_COUNT, selectionCount, updateContinue, { animated: true, animationProfile: 'daily' });
+  // Match the Daily board: animated initial deal, then a shuffle button above the
+  // board that spins + light-haptics, re-deals a fresh spread and clears the pick.
+  // Guarded against double-taps via the is-locked class setupBoard adds mid-animation.
+  boardApi.render();
+  updateContinue([]);
+  shuffleBtn.onclick = () => {
+    if (board.classList.contains('is-locked')) return;
+    try { trackShuffleHit({ mode: 'question', locale: state.currentLang, source: 'board' }); } catch (_) {}
+    shuffleBtn.classList.add('is-spinning');
+    if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+    boardApi.render();
+    updateContinue([]);
+    window.setTimeout(() => shuffleBtn.classList.remove('is-spinning'), 1500);
+  };
   continueBtn.onclick = () => {
     if (latestSelection.length !== selectionCount) return;
     saveSelectionAndGo({
