@@ -700,15 +700,16 @@ export function applyTranslations(currentLang = 'en', afterApply) {
 }
 
 export function initShell(state, afterApply, activePage, options = {}) {
-  // Locale priority: explicit ?lang/?l param  >  /th/ path  >  saved preference  >  en.
-  // (Previously getUrlLanguage returned 'en' for any non-/th/ page — a truthy value
-  // that clobbered the saved TH preference on every navigation: "switch to TH, go to
-  // another page → back to EN". Saved preference must win over the path default.)
+  // Locale is PATH-BASED: every page has a baked /th/ mirror (Thai static copy), and
+  // the bottom-nav prefixes /th/. So the rendered locale must follow the path, else a
+  // TH user on an EN file gets mixed copy (Thai JS bits + English static). The lang
+  // toggle NAVIGATES between / and /th/ (see the pill below) — that's what makes TH
+  // persist across navigation (the earlier "switch to TH → next page → EN" bug was the
+  // toggle doing a client re-render that never changed the path).
   const params = new URLSearchParams(window.location.search || '');
   const explicitParam = normalizeLang(params.get('lang') || params.get('l'));
-  const pathLang = pathHasThaiPrefix(window.location.pathname || '/') ? 'th' : null;
-  const savedLang = getSavedLang(null);
-  state.currentLang = explicitParam || pathLang || savedLang || 'en';
+  const pathIsThai = pathHasThaiPrefix(window.location.pathname || '/');
+  state.currentLang = explicitParam || (pathIsThai ? 'th' : 'en');
   localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
 
   // Phase 5: global top navbar removed. The hamburger nav + brand text
@@ -738,18 +739,15 @@ export function initShell(state, afterApply, activePage, options = {}) {
   }
 
   // Global EN/TH language toggle (Phase-5 removed the top navbar that hosted it,
-  // leaving it only on Profile). Re-added as a small fixed pill on every page
-  // EXCEPT profile (which has its own in-panel pill). Wired to the page's
-  // onLangToggle switcher, or a built-in in-place switch as fallback.
-  const switchLang = (nextLang) => {
+  // leaving it only on Profile). Re-added as a small fixed pill on every page EXCEPT
+  // profile (own in-panel pill). It NAVIGATES to the localized path (/ ↔ /th/) so the
+  // user lands on the page with the correct baked copy AND the bottom-nav keeps the
+  // locale — not a client re-render (which would leave the static copy in the old lang).
+  const goToLang = (nextLang) => {
     if (!nextLang || nextLang === state.currentLang) return;
-    if (typeof options.onLangToggle === 'function') { options.onLangToggle(nextLang); return; }
-    const fromLocale = state.currentLang;
-    state.currentLang = nextLang;
-    try { trackLocaleSwitched({ fromLocale, toLocale: nextLang }); } catch (_) {}
+    try { trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: nextLang }); } catch (_) {}
     try { localStorage.setItem(LANG_STORAGE_KEY, nextLang); } catch (_) {}
-    applyTranslations(nextLang, afterApply);
-    applyLocaleMeta(nextLang);
+    window.location.href = computeLanguageHref(nextLang);
   };
   if (typeof document !== 'undefined' && document.body && activePage !== 'profile' && !document.getElementById('mt-lang-fab')) {
     const fab = document.createElement('div');
@@ -762,7 +760,11 @@ export function initShell(state, afterApply, activePage, options = {}) {
       <span class="divider" aria-hidden="true">|</span>
       <button class="lang-btn" data-lang="th" type="button">TH</button>
     `;
-    fab.querySelectorAll('.lang-btn').forEach((b) => b.addEventListener('click', () => switchLang(b.dataset.lang)));
+    // reflect the current locale as active on load
+    fab.querySelectorAll('.lang-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.lang === state.currentLang);
+      b.addEventListener('click', () => goToLang(b.dataset.lang));
+    });
     document.body.appendChild(fab);
   }
 
