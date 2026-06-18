@@ -9,6 +9,7 @@ import {
   normalizeId,
   getAllDecks,
   getActiveDeckId,
+  setActiveDeck,
   canUnlockDeck,
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
@@ -219,6 +220,12 @@ function animateDealSlots(boardEl, slots, onDone) {
     slot.style.opacity = '0';
   });
 
+  // Cap the cumulative stagger on big boards: the 78-card Celtic deck at the full
+  // 160ms/card stagger took ~12s to deal. For >24 slots, shrink the per-card delay so
+  // the whole deal lands in ~0.8s; small boards (daily/question = 12) keep the original
+  // ceremonial stagger.
+  const stagger = slots.length > 24 ? Math.max(4, Math.floor(700 / slots.length)) : DEAL_STAGGER;
+
   requestAnimationFrame(() => {
     slots.forEach((slot, idx) => {
       slot.classList.add('card-visible');
@@ -226,10 +233,10 @@ function animateDealSlots(boardEl, slots, onDone) {
       setTimeout(() => {
         slot.style.opacity = '1';
         slot.style.transform = 'translate(0, 0) scale(1)';
-      }, idx * DEAL_STAGGER);
+      }, idx * stagger);
     });
 
-    const total = 350 + slots.length * DEAL_STAGGER + 120;
+    const total = 350 + slots.length * stagger + 120;
     setTimeout(() => {
       slots.forEach((slot) => {
         slot.style.transition = '';
@@ -529,6 +536,156 @@ function renderDeckName() {
   if (!deck) return;
   const name = state.currentLang === 'th' ? (deck.name_th || deck.name) : deck.name;
   nameEls.forEach((el) => { el.textContent = name; });
+  wireDeckSwitcher();
+}
+
+// Re-point every rendered .card-back to the ACTIVE deck's back. Needed after a deck
+// switch from the board picker — the slots were painted once at deal time, so without
+// this they'd keep showing the old deck (the repaint requirement noted in CLAUDE.md).
+function repaintCardBacks() {
+  document.querySelectorAll('.card-back').forEach((el) => applyCardBackBackground(el, { thumb: true }));
+}
+
+// Make the board's "From the deck <name>" label a tappable deck switcher.
+function wireDeckSwitcher() {
+  document.querySelectorAll('.daily-topbar__deck, .full-topbar__deck').forEach((host) => {
+    if (host.dataset.deckSwitch === '1') return;
+    host.dataset.deckSwitch = '1';
+    host.classList.add('mt-deck-switch');
+    host.setAttribute('role', 'button');
+    host.setAttribute('tabindex', '0');
+    const dict = translations[state.currentLang] || translations.en;
+    host.setAttribute('aria-label', dict.deckSwitchAria || 'Change deck');
+    if (!host.querySelector('.mt-deck-switch__caret')) {
+      const caret = document.createElement('span');
+      caret.className = 'mt-deck-switch__caret';
+      caret.setAttribute('aria-hidden', 'true');
+      caret.textContent = '▾';
+      host.appendChild(caret);
+    }
+    const open = () => showDeckPicker();
+    host.addEventListener('click', open);
+    host.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
+}
+
+let deckPickerOpen = false;
+function showDeckPicker() {
+  if (deckPickerOpen) return;
+  deckPickerOpen = true;
+  const dict = translations[state.currentLang] || translations.en;
+  const th = state.currentLang === 'th';
+  ensureDeckPickerStyles();
+
+  const ov = document.createElement('div');
+  ov.className = 'mt-deckpick-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+
+  const card = document.createElement('div');
+  card.className = 'mt-deckpick';
+
+  const title = document.createElement('h2');
+  title.className = 'mt-deckpick__title';
+  title.textContent = dict.deckPickerTitle || 'Your deck';
+  card.appendChild(title);
+
+  const hint = document.createElement('p');
+  hint.className = 'mt-deckpick__hint';
+  hint.textContent = dict.deckPickerHint || '';
+  card.appendChild(hint);
+
+  const grid = document.createElement('div');
+  grid.className = 'mt-deckpick__grid';
+  const activeId = getActiveDeckId();
+
+  const close = () => {
+    deckPickerOpen = false;
+    ov.classList.remove('in');
+    setTimeout(() => ov.remove(), 200);
+  };
+
+  getAllDecks().forEach((deck) => {
+    const owned = canUnlockDeck(deck.id);
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.className = 'mt-deckpick__cell'
+      + (deck.id === activeId ? ' is-active' : '')
+      + (owned ? '' : ' is-locked');
+    const img = document.createElement('img');
+    img.className = 'mt-deckpick__img';
+    img.loading = 'lazy';
+    img.alt = '';
+    img.src = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
+    cell.appendChild(img);
+    const label = document.createElement('span');
+    label.className = 'mt-deckpick__name';
+    label.textContent = th ? (deck.name_th || deck.name) : deck.name;
+    cell.appendChild(label);
+    if (!owned) {
+      const lock = document.createElement('span');
+      lock.className = 'mt-deckpick__lock';
+      lock.setAttribute('aria-hidden', 'true');
+      lock.textContent = '🔒';
+      cell.appendChild(lock);
+      cell.disabled = true;
+    } else {
+      cell.addEventListener('click', () => {
+        try { setActiveDeck(deck.id); } catch (_) {}
+        repaintCardBacks();
+        renderDeckName();
+        close();
+      });
+    }
+    grid.appendChild(cell);
+  });
+  card.appendChild(grid);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'mt-deckpick__close';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', close);
+  card.appendChild(closeBtn);
+
+  ov.appendChild(card);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+}
+
+function ensureDeckPickerStyles() {
+  if (document.getElementById('mt-deckpick-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'mt-deckpick-styles';
+  s.textContent = `
+    .mt-deck-switch{position:relative;cursor:pointer;}
+    .mt-deck-switch__caret{margin-left:6px;font-size:11px;opacity:.7;vertical-align:middle;}
+    .mt-deckpick-overlay{position:fixed;inset:0;z-index:1300;display:flex;align-items:flex-end;justify-content:center;padding:0;background:rgba(28,12,52,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s ease;}
+    .mt-deckpick-overlay.in{opacity:1;}
+    .mt-deckpick{position:relative;width:100%;max-width:520px;max-height:78vh;overflow-y:auto;background:linear-gradient(180deg,#fbf6ff,#f3ecfc);border-radius:22px 22px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(28,12,52,.3);transform:translateY(16px);transition:transform .22s ease;}
+    .mt-deckpick-overlay.in .mt-deckpick{transform:none;}
+    .mt-deckpick__title{margin:0 0 2px;font-family:'Playfair Display',serif;font-size:22px;color:#3d1a5c;text-align:center;}
+    .mt-deckpick__hint{margin:0 0 16px;font-size:12.5px;color:#8b6db0;text-align:center;}
+    .mt-deckpick__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px;}
+    .mt-deckpick__cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border:none;background:transparent;cursor:pointer;border-radius:12px;}
+    .mt-deckpick__cell .mt-deckpick__img{width:100%;max-width:88px;aspect-ratio:1568/2720;object-fit:cover;border-radius:9px;border:1.5px solid transparent;box-shadow:0 5px 12px -5px rgba(61,26,92,.5);transition:transform .15s ease,border-color .15s ease;}
+    .mt-deckpick__cell.is-active .mt-deckpick__img{border-color:var(--mt-gold-deep,#c9933a);box-shadow:0 6px 16px -5px rgba(201,147,58,.6);}
+    .mt-deckpick__cell:not(.is-locked):active .mt-deckpick__img{transform:scale(.95);}
+    .mt-deckpick__name{font-size:11.5px;font-weight:600;color:#3d1a5c;text-align:center;line-height:1.2;}
+    .mt-deckpick__cell.is-locked{position:relative;cursor:default;}
+    .mt-deckpick__cell.is-locked .mt-deckpick__img{filter:grayscale(.85) brightness(.9);opacity:.6;}
+    .mt-deckpick__cell.is-locked .mt-deckpick__name{opacity:.6;}
+    .mt-deckpick__lock{position:absolute;top:6px;right:10px;font-size:15px;}
+    .mt-deckpick__close{position:absolute;top:12px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(61,26,92,.08);color:#3d1a5c;font-size:15px;cursor:pointer;line-height:1;}
+  `;
+  document.head.appendChild(s);
 }
 
 function renderDaily() {

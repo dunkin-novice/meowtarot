@@ -8,7 +8,7 @@ import {
 } from './common.js';
 import { getAllDecks, loadTarotManifest, normalizeId } from './data.js';
 import { computePhase } from './phase.js';
-import { getUserProgress, getNextStreakMilestone, resetLocalProgress } from './progress.js';
+import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
@@ -723,62 +723,13 @@ function renderContact(dict) {
 // "Other" — deactivate (local journey reset). Distinct from the account-delete
 // in the identity card: this only clears local streak/progress on this device.
 function renderOther(dict) {
+  // Removed the old "Deactivate account" action: it only called resetLocalProgress()
+  // (a LOCAL streak/progress wipe — nothing server-side), yet rendered alongside the real
+  // "Delete account" (Guideline 5.1.1(v)) for signed-in users, so the two read as
+  // duplicate/conflicting account-removal options. The logged-in "Delete account" is now
+  // the single deletion path. Hide the (now empty) section so it leaves no layout gap.
   const host = document.getElementById('profile-other');
-  if (!host) return;
-  host.innerHTML = '';
-  const th = state.currentLang === 'th';
-
-  const card = document.createElement('section');
-  card.className = 'panel profile-other';
-
-  const title = document.createElement('h2');
-  title.textContent = dict.profileOtherTitle || (th ? 'อื่น ๆ' : 'Other');
-  card.appendChild(title);
-
-  const wrap = document.createElement('div');
-  wrap.className = 'profile-other__wrap';
-  card.appendChild(wrap);
-
-  const renderTrigger = () => {
-    wrap.innerHTML = '';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'profile-deactivate-trigger';
-    btn.textContent = dict.profileDeactivate || (th ? 'ปิดการใช้งานบัญชี' : 'Deactivate account');
-    btn.addEventListener('click', renderConfirm);
-    wrap.appendChild(btn);
-  };
-
-  const renderConfirm = () => {
-    wrap.innerHTML = '';
-    const warn = document.createElement('p');
-    warn.className = 'profile-deactivate-warn';
-    warn.textContent = dict.profileDeactivateConfirm
-      || (th ? 'สตรีคและความคืบหน้าทั้งหมดบนเครื่องนี้จะถูกลบ แน่ใจไหม?' : 'All your streak and progress on this device will be deleted. Are you sure?');
-    wrap.appendChild(warn);
-
-    const row = document.createElement('div');
-    row.className = 'profile-deactivate-actions';
-    const yes = document.createElement('button');
-    yes.type = 'button';
-    yes.className = 'profile-deactivate-confirm';
-    yes.textContent = dict.profileDeactivateYes || (th ? 'ยืนยัน ลบทั้งหมด' : 'Yes, delete it');
-    const no = document.createElement('button');
-    no.type = 'button';
-    no.className = 'ghost';
-    no.textContent = dict.profileDeleteCancel || (th ? 'ยกเลิก' : 'Cancel');
-    no.addEventListener('click', renderTrigger);
-    yes.addEventListener('click', () => {
-      try { resetLocalProgress(); } catch (_) {}
-      renderAll();
-    });
-    row.appendChild(yes);
-    row.appendChild(no);
-    wrap.appendChild(row);
-  };
-
-  renderTrigger();
-  host.appendChild(card);
+  if (host) { host.innerHTML = ''; host.hidden = true; }
 }
 
 async function renderAll(dict = translations[state.currentLang] || translations.en) {

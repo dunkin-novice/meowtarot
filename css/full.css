@@ -257,18 +257,21 @@ body[data-page='full'] .full-shuffle-btn .thai {
 }
 
 
-/* §5 — Card-board grid (12 slots, 4-col layout) */
+/* §5 — Card-board: 78 cards as 4 overlapping rows (~20 per row, fanned/stacked).
+   A 4-column grid made 78 cards ~20 rows tall (endless scroll); here cards overlap
+   horizontally (negative margin) so ~20 fit per line and the whole deck is 4 compact
+   rows. justify-content centres each row; gap is the vertical spacing between rows. */
 body[data-page='full'] .full-state--board #full-board.card-board--full {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: none;
-  gap: 14px 6px;
-  place-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  gap: 12px 0;
   width: auto;
-  max-width: 320px;
+  max-width: 358px;
   max-height: none;
   margin: 14px auto 0;
-  padding: 4px 0;
+  padding: 8px 6px;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -279,10 +282,12 @@ body[data-page='full'] .full-state--board #full-board.card-board--full {
 /* §6 — Card slot states */
 body[data-page='full'] .full-state--board #full-board .card-slot {
   position: relative;
-  width: 100%;
-  max-width: 64px;
+  width: 34px;
+  max-width: none;
   height: auto;
   max-height: none;
+  /* Overlap the next card by half (17px step) — ~20 cards per row → 4 rows for 78. */
+  margin-right: -17px;
   aspect-ratio: 1568 / 2720;
   border-radius: 6px;
   border: 0.5px solid var(--mt-gold-pale);
@@ -312,9 +317,18 @@ body[data-page='full'] .full-state--board #full-board.has-selection .card-slot:n
   transform: none;
 }
 
+/* Overlapping cards: lift the hovered/focused one above its right neighbour
+   (later siblings paint on top by default) so the whole card is visible on interaction. */
+body[data-page='full'] .full-state--board #full-board .card-slot:hover,
+body[data-page='full'] .full-state--board #full-board .card-slot:focus-visible {
+  z-index: 4;
+  transform: translateY(-3px);
+}
+
 body[data-page='full'] .full-state--board #full-board .card-slot.is-selected {
-  transform: translateY(-4px);
+  transform: translateY(-7px);
   opacity: 1;
+  z-index: 6;
   border-color: var(--mt-gold-deep);
   box-shadow:
     0 8px 18px -6px rgba(201, 147, 58, 0.55),
