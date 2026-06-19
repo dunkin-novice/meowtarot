@@ -36,7 +36,7 @@ import {
   getFullReadingPositionMeta,
 } from './full-reading-position-order.js';
 import { orderQuestionCards, QUESTION_CARD_POSITIONS } from './question-card-order.js';
-import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath, exists } from './asset-resolver.js';
+import { buildCardImageUrls, resolveCardImageUrl, resolvePosterBackgroundPath } from './asset-resolver.js';
 import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
@@ -499,13 +499,17 @@ function openCardSheet(card, opts = {}) {
   cardSheetState.src = src;
 
   applyImgFallback(cardSheetEls.image, src, candidates);
-  resolveCardImageUrl(card, toOrientation(card)).then((resolvedSrc) => {
+  // Source the UPRIGHT art for both orientations; reversed is rotated 180° via the
+  // .is-reversed class on the sheet image (set below). Never request a -reversed asset.
+  resolveCardImageUrl(card, 'upright').then((resolvedSrc) => {
     if (resolvedSrc && resolvedSrc !== cardSheetEls.image.src) {
       cardSheetEls.image.src = resolvedSrc;
       cardSheetState.src = resolvedSrc;
       probeResultCardUrl(resolvedSrc);
     }
   }).catch(() => {});
+  // Reflect real orientation on the sheet image so reversed art rotates 180° in CSS.
+  cardSheetEls.image.classList.toggle('is-reversed', toOrientation(card) === 'reversed');
   cardSheetEls.image.alt = `${getName(card)} — ${getOrientationEnglish(card)}`;
   cardSheetEls.title.textContent = getName(card);
   const slug = getCardBaseSlug(card);
@@ -1033,54 +1037,24 @@ function toDefaultDeckFaceUrl(url) {
 }
 
 function getCardImageUrlWithFallback(card) {
-  const orientation = toOrientation(card);
-  const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
+  // Reversed cards now SOURCE the upright art and are rotated 180° visually
+  // (.card-art.is-reversed in CSS). The *-reversed.webp asset is retired, so we
+  // always request the upright URL here regardless of the card's real orientation.
+  const { uprightUrl, backUrl } = buildCardImageUrls(card, 'upright');
   const globalSiteFallbackUrl = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
   const defaultUpright = toDefaultDeckFaceUrl(uprightUrl);
-  const defaultReversed = toDefaultDeckFaceUrl(reversedUrl);
-
-  if (orientation === 'reversed') {
-    return {
-      src: reversedUrl || uprightUrl || backUrl || globalSiteFallbackUrl,
-      candidates: [defaultReversed, uprightUrl, defaultUpright, backUrl, globalSiteFallbackUrl].filter(Boolean),
-    };
-  }
 
   return {
-    src: uprightUrl || backUrl,
-    candidates: [defaultUpright, backUrl].filter(Boolean),
+    src: uprightUrl || backUrl || globalSiteFallbackUrl,
+    candidates: [defaultUpright, backUrl, globalSiteFallbackUrl].filter(Boolean),
   };
 }
 
 async function resolveReadingResultRuntimeImageUrl(card) {
-  const orientation = toOrientation(card);
-  if (orientation !== 'reversed') return resolveCardImageUrl(card, orientation);
-
-  const cardSlug = getCardBaseSlug(card) || normalizeId(card?.id || card?.card_id || card?.image_id || 'unknown-card');
-  const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
-  const globalSiteFallbackUrl = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
-  const candidates = [reversedUrl, uprightUrl, backUrl, globalSiteFallbackUrl].filter(Boolean);
-  let chosenFinalFallbackUrl = globalSiteFallbackUrl || backUrl || uprightUrl || reversedUrl || '';
-
-  for (const requestedImageUrl of candidates) {
-    const assetExists = await exists(requestedImageUrl);
-
-    if (assetExists) {
-      chosenFinalFallbackUrl = requestedImageUrl;
-    }
-
-    console.debug('[ReadingResult] runtime-image-resolver', {
-      cardSlug,
-      orientation,
-      requestedImageUrl,
-      assetExists,
-      chosenFinalFallbackUrl,
-    });
-
-    if (assetExists) break;
-  }
-
-  return chosenFinalFallbackUrl;
+  // Both orientations source the UPRIGHT art now (reversed is rotated 180° in
+  // CSS, not loaded from a separate -reversed asset). Resolve as upright so we
+  // never probe for the retired *-reversed.webp file.
+  return resolveCardImageUrl(card, 'upright');
 }
 
 function getStableCardImageSources(card) {
@@ -1153,14 +1127,13 @@ function buildCardArt(card, variant = 'hero') {
   img.crossOrigin = 'anonymous';
 
   const orientation = toOrientation(card);
-  // Reversed cards get a distinct glowing aura (B2-5) so orientation reads at a glance.
-  // The reversed ART is already drawn upside-down (separate -reversed asset), so we
-  // DON'T rotate — just flag it for the glow treatment in CSS.
-  // Both orientations glow (so it reads at a glance): reversed = cool purple aura,
-  // upright = warm gold aura (see css/reading.css §B2-5 / §B2-5b).
+  // Reversed cards now SOURCE the upright art and are rotated 180° via CSS
+  // (body[data-page='reading'] .card-art.is-reversed .card-art-img). The label
+  // still says "Reversed"/"กลับหัว" and meanings are unchanged — only the artwork
+  // is the shared upright file, no longer a separate -reversed asset.
   wrap.classList.add(orientation === 'reversed' ? 'is-reversed' : 'is-upright');
   const { src, candidates = [] } = getStableCardImageSources(card);
-  const { backUrl } = buildCardImageUrls(card, orientation);
+  const { backUrl } = buildCardImageUrls(card, 'upright');
   const webpUrl = src || backUrl;
   const jpgUrl = webpUrl.replace(/\.webp(?=\?|$)/i, '.jpg');
   const fallbackCandidates = [jpgUrl, ...candidates, backUrl].filter(Boolean);
@@ -3823,9 +3796,13 @@ function buildSharePayload() {
     const baseId = getBaseCardId(id, normalizeId) || normalizeId(id);
     const cardIdentity = card || { id: `${baseId}-${orientation}` };
     const { uprightUrl, reversedUrl } = buildCardImageUrls(cardIdentity, orientation);
-    const imageByOrientation = orientation === 'reversed'
-      ? (reversedUrl || uprightUrl || '')
-      : (uprightUrl || reversedUrl || '');
+    // Reversed cards now SOURCE the upright art and are rotated 180° at render
+    // time (the poster reads `orientation` and rotates the canvas). So the
+    // payload's primary `image` always points to the UPRIGHT art for both
+    // orientations — never a *-reversed.webp. `orientation` still carries the
+    // real value (label + rotation) and `image_reversed` is kept for legacy
+    // share-link consumers that still read it.
+    const imageByOrientation = uprightUrl || reversedUrl || '';
     const summary = card ? getText(card, `${state.topic}_reading_single`) || getText(card, 'general_meaning') : '';
     return {
       id: baseId,

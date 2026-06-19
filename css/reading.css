@@ -947,3 +947,17 @@ body[data-page='reading'] .mt-share-fab {
 }
 body[data-page='reading'] .mt-share-fab:hover { transform: translateY(-1px); }
 body[data-page='reading'] .mt-share-fab:active { transform: scale(0.94); }
+
+/* §B7 — Reversed-card artwork = UPRIGHT art rotated 180° (2026-06-20).
+ * Reversed cards no longer load a separate *-reversed.webp asset; they SOURCE
+ * the upright art and are flipped visually here. The orientation LABEL still
+ * reads "Reversed"/"กลับหัว" and the reversed MEANINGS are unchanged. The card
+ * BACK (.card-back) is never rotated — only the face image. Applies to the
+ * result face (.card-art .card-art-img) and the tapped card sheet
+ * (.card-sheet-media), both rendered on reading.html. */
+body[data-page='reading'] .card-art.is-reversed .card-art-img {
+  transform: rotate(180deg);
+}
+body[data-page='reading'] .card-sheet-media.is-reversed {
+  transform: rotate(180deg);
+}

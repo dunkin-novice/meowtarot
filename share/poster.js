@@ -1334,12 +1334,16 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     const sourceCard = item.entry?.card || item.payloadCard || {};
     const fallbackBaseId = baseCardId(item.payloadCard?.id || item.payloadCard?.card_id || item.payloadCard?.image_id || item.position);
     const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
-    const orientation = item.orientation;
-    const orientedId = `${baseId}-${orientation}`;
+    // Reversed cards now SOURCE the upright art; the canvas is rotated 180° at
+    // draw time (item.orientation === 'reversed' rotation below). So coerce the
+    // image sourcing to 'upright' here — never request a *-reversed.webp asset.
+    // item.orientation keeps the REAL orientation for the rotate + label/meaning.
+    const imageOrientation = 'upright';
+    const orientedId = `${baseId}-${imageOrientation}`;
     const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
-    const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
-    const resolvedPrimary = await resolveCardImageUrl(cardIdentity, orientation);
-    const { primary, fallbackChain } = resolvePosterCardImageSources({ ...item.entry, ...item.payloadCard, orientation, card: sourceCard }, {
+    const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
+    const resolvedPrimary = await resolveCardImageUrl(cardIdentity, imageOrientation);
+    const { primary, fallbackChain } = resolvePosterCardImageSources({ ...item.entry, ...item.payloadCard, orientation: imageOrientation, card: sourceCard }, {
       resolvedPrimary,
       uprightUrl,
       reversedUrl,
@@ -1909,13 +1913,19 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
   const maxCardHeight = 700;
   let cardImg = null;
   try {
-    const cardIdentity = orientedId
-      ? { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId }
+    // Reversed cards SOURCE the upright art and are rotated 180° at draw time
+    // (see the `orientation === 'reversed'` rotate below). Coerce sourcing to
+    // 'upright' so we never request a *-reversed.webp; `orientation` keeps the
+    // real value for the orientation LABEL.
+    const imageOrientation = 'upright';
+    const uprightOrientedId = baseId ? `${baseId}-${imageOrientation}` : '';
+    const cardIdentity = uprightOrientedId
+      ? { ...sourceCard, id: uprightOrientedId, card_id: uprightOrientedId, image_id: uprightOrientedId }
       : sourceCard;
-    const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
-    const resolvedPrimary = orientedId ? await resolveCardImageUrl(cardIdentity, orientation) : '';
+    const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
+    const resolvedPrimary = uprightOrientedId ? await resolveCardImageUrl(cardIdentity, imageOrientation) : '';
     const { primary, fallbackChain } = resolvePosterCardImageSources(
-      { ...(cardEntry || {}), ...card, orientation, card: sourceCard },
+      { ...(cardEntry || {}), ...card, orientation: imageOrientation, card: sourceCard },
       { resolvedPrimary, uprightUrl, reversedUrl, backUrl, lang },
     );
     cardImg = await loadPosterCardImageWithTimeout(primary, fallbackChain);
@@ -1959,7 +1969,15 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
       ctx.save();
       drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
       ctx.clip();
-      ctx.drawImage(cardImg, cardX, cardYPos, cardW, cardH);
+      if (orientation === 'reversed') {
+        // Reversed = upright art rotated 180° about the card center (mirrors the
+        // celtic poster's reversed rotation). Clip rect is unrotated, image is.
+        ctx.translate(cardX + cardW / 2, cardYPos + cardH / 2);
+        ctx.rotate(Math.PI);
+        ctx.drawImage(cardImg, -cardW / 2, -cardH / 2, cardW, cardH);
+      } else {
+        ctx.drawImage(cardImg, cardX, cardYPos, cardW, cardH);
+      }
       ctx.restore();
     } else {
       drawFallbackCardArt(ctx, cardX, cardYPos, cardW, cardH, { radius: cardRadius, label: 'MEOW TAROT' });
@@ -2181,10 +2199,13 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.restore();
     };
 
-    const drawCardImage = (img, x, y, rotated = false) => {
+    const drawCardImage = (img, x, y, rotated = false, reversed = false) => {
       ctx.save();
       ctx.translate(x, y);
       if (rotated) ctx.rotate(Math.PI / 2);
+      // Reversed = upright art rotated an extra 180° about the card center
+      // (composes with the challenge card's 90° rotation when both apply).
+      if (reversed) ctx.rotate(Math.PI);
       ctx.drawImage(img, -cardW / 2, -cardH / 2, cardW, cardH);
       ctx.restore();
     };
@@ -2223,11 +2244,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const sourceCard = entry?.card || payloadCard;
       const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
       const orientation = toOrientation(entry?.orientation || payloadCard?.orientation || sourceCard?.orientation || 'upright');
-      const orientedId = `${baseId}-${orientation}`;
+      // Reversed cards SOURCE upright art and rotate 180° at draw time. Coerce
+      // sourcing to upright; `orientation` stays real for the label + rotation.
+      const imageOrientation = 'upright';
+      const orientedId = `${baseId}-${imageOrientation}`;
       const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
-      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
-      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, orientation);
-      const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation, card: sourceCard }, {
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, imageOrientation);
+      const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation: imageOrientation, card: sourceCard }, {
         resolvedPrimary,
         uprightUrl,
         reversedUrl,
@@ -2242,7 +2266,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
       try {
         const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
-        drawCardImage(img, layout.x, layout.y, Boolean(layout.rotated));
+        drawCardImage(img, layout.x, layout.y, Boolean(layout.rotated), orientation === 'reversed');
       } catch (error) {
         console.warn('[Poster] full card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
         drawFallbackCardArt(ctx, layout.x - cardW / 2, layout.y - cardH / 2, cardW, cardH, { radius: 18, label: 'MEOW TAROT' });
@@ -2354,10 +2378,13 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const sourceCard = entry?.card || payloadCard;
       const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
       const orientation = toOrientation(entry?.orientation || payloadCard?.orientation || sourceCard?.orientation || 'upright');
-      const orientedId = `${baseId}-${orientation}`;
+      // Reversed cards SOURCE upright art and rotate 180° at draw time. Coerce
+      // sourcing to upright; `orientation` stays real for label + rotation.
+      const imageOrientation = 'upright';
+      const orientedId = `${baseId}-${imageOrientation}`;
       const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
-      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, orientation);
-      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, orientation);
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, imageOrientation);
 
       const x = startX + i * (cardW + cardGap);
       const y = cardY;
@@ -2371,7 +2398,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       ctx.restore();
 
       try {
-        const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation, card: sourceCard }, {
+        const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation: imageOrientation, card: sourceCard }, {
           resolvedPrimary,
           uprightUrl,
           reversedUrl,
@@ -2379,7 +2406,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
           lang: payload?.lang || 'en',
         });
         const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
-        ctx.drawImage(img, x, y, cardW, cardH);
+        if (orientation === 'reversed') {
+          // Reversed = upright art rotated 180° about the card center.
+          ctx.save();
+          ctx.translate(x + cardW / 2, y + cardH / 2);
+          ctx.rotate(Math.PI);
+          ctx.drawImage(img, -cardW / 2, -cardH / 2, cardW, cardH);
+          ctx.restore();
+        } else {
+          ctx.drawImage(img, x, y, cardW, cardH);
+        }
       } catch (error) {
         console.warn('[Poster] question card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
         drawFallbackCardArt(ctx, x, y, cardW, cardH, { radius: 16, label: 'MEOW TAROT' });
@@ -2618,8 +2654,12 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         || cardEntry?.id
         || '',
       );
-      const orientedId = baseId ? `${baseId}-${cardEntry.orientation}` : '';
-      const localPrimary = cardEntry?.card ? resolveLocalPosterFixtureUrl('card', cardEntry.orientation) : '';
+      // Reversed cards SOURCE upright art and rotate 180° at draw time
+      // (drawCardWithAura uses resolvedOrientation). Coerce all sourcing to
+      // 'upright' here so we never request a *-reversed.webp fixture/asset.
+      const imageOrientation = 'upright';
+      const orientedId = baseId ? `${baseId}-${imageOrientation}` : '';
+      const localPrimary = cardEntry?.card ? resolveLocalPosterFixtureUrl('card', imageOrientation) : '';
       const localUpright = cardEntry?.card ? resolveLocalPosterFixtureUrl('card', 'upright') : '';
       const localBack = resolveLocalPosterFixtureUrl('back');
       let uprightUrl = '';
@@ -2629,11 +2669,11 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
       if (orientedId) {
         const cardIdentity = { ...(cardEntry.card || {}), id: orientedId, card_id: orientedId, image_id: orientedId };
-        ({ uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, cardEntry.orientation));
-        resolvedPrimary = await resolveCardImageUrl(cardIdentity, cardEntry.orientation);
+        ({ uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation));
+        resolvedPrimary = await resolveCardImageUrl(cardIdentity, imageOrientation);
       }
 
-      const { primary: resolvedAssetPrimary, fallbackChain } = resolvePosterCardImageSources(cardEntry, {
+      const { primary: resolvedAssetPrimary, fallbackChain } = resolvePosterCardImageSources({ ...cardEntry, orientation: imageOrientation }, {
         resolvedPrimary,
         uprightUrl,
         reversedUrl,
@@ -2705,7 +2745,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.save();
         drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
         ctx.clip();
-        ctx.drawImage(img, cardX, cardYPos, cardW, cardH);
+        if (resolvedOrientation === 'reversed') {
+          // Reversed = upright art rotated 180° about the card center.
+          ctx.translate(cardX + cardW / 2, cardYPos + cardH / 2);
+          ctx.rotate(Math.PI);
+          ctx.drawImage(img, -cardW / 2, -cardH / 2, cardW, cardH);
+        } else {
+          ctx.drawImage(img, cardX, cardYPos, cardW, cardH);
+        }
         ctx.restore();
       } else {
         drawFallbackCardArt(ctx, cardX, cardYPos, cardW, cardH, { radius: cardRadius, label: 'MEOW TAROT' });
@@ -2878,13 +2925,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     if (entry?.card) {
       const baseId = baseCardId(entry.card.id || entry.card.card_id || entry.card.image_id);
-      const orientedId = `${baseId}-${entry.orientation}`;
-      const uprightId = `${baseId}-upright`;
+      // Reversed cards SOURCE upright art and rotate 180° at draw time. Coerce
+      // sourcing to upright; entry.orientation stays real for the rotation.
+      const realOrientation = toOrientation(entry.orientation);
+      const imageOrientation = 'upright';
+      const orientedId = `${baseId}-${imageOrientation}`;
       const cardIdentity = { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
-      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, entry.orientation);
-      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, entry.orientation);
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, imageOrientation);
       try {
-        const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources(entry, {
+        const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, orientation: imageOrientation }, {
           resolvedPrimary,
           uprightUrl,
           reversedUrl,
@@ -2894,7 +2944,16 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         emitPosterDebug('waiting_for_card', { url: selectedUrl });
         const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
         emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardWidth, h: img?.naturalHeight || cardHeight });
-        ctx.drawImage(img, x, y, cardWidth, cardHeight);
+        if (realOrientation === 'reversed') {
+          // Reversed = upright art rotated 180° about the card center.
+          ctx.save();
+          ctx.translate(x + cardWidth / 2, y + cardHeight / 2);
+          ctx.rotate(Math.PI);
+          ctx.drawImage(img, -cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight);
+          ctx.restore();
+        } else {
+          ctx.drawImage(img, x, y, cardWidth, cardHeight);
+        }
       } catch (error) {
         emitLegacyCardProbe({ ok: false, url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, error: error?.message || String(error) });
         console.warn('[Poster] card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
