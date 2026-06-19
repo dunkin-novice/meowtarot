@@ -4148,13 +4148,13 @@ body.is-modal-open {
 .card-sheet-overlay {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  z-index: 1300; /* above the bottom-nav + the lang/report FABs so they don't overlap it */
   display: grid;
-  align-items: end;
+  place-items: center; /* floating CENTERED modal (was a bottom sheet that the FABs overlapped) */
   padding:
-    max(10px, env(safe-area-inset-top, 0px))
-    10px
-    max(10px, env(safe-area-inset-bottom, 0px));
+    max(16px, env(safe-area-inset-top, 0px))
+    16px
+    max(16px, env(safe-area-inset-bottom, 0px));
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -4173,22 +4173,21 @@ body.is-modal-open {
 
 .card-sheet {
   position: relative;
-  border-radius: 20px 20px 0 0;
-  width: min(100%, 520px);
-  max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px);
-  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px);
-  padding: 10px 14px 14px;
+  border-radius: 22px; /* floating card — all corners rounded (was a bottom sheet) */
+  width: min(420px, 92vw);
+  max-height: min(88dvh, calc(100dvh - 32px));
+  padding: 14px 16px 16px;
   background: linear-gradient(180deg, #f7f3ff 0%, #f5efff 100%);
-  box-shadow: 0 -16px 30px rgba(31, 21, 52, 0.24);
-  transform: translateY(16px);
-  transition: transform 0.2s ease;
+  box-shadow: 0 24px 60px rgba(31, 21, 52, 0.36);
+  transform: translateY(10px) scale(0.98);
+  transition: transform 0.2s ease, opacity 0.2s ease;
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .card-sheet-overlay.is-open .card-sheet {
-  transform: translateY(0);
+  transform: none;
 }
 
 .card-sheet-close {
