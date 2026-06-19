@@ -570,7 +570,9 @@ function ensureCardSheet() {
     <div class="card-sheet-backdrop" data-sheet-close></div>
     <section class="card-sheet" role="dialog" aria-modal="true" aria-label="Card details">
       <span class="card-sheet-position" id="cardSheetPosition" hidden></span>
-      <button class="card-sheet-close" type="button" aria-label="Close" data-sheet-close>✕</button>
+      <button class="card-sheet-close" type="button" aria-label="Close" data-sheet-close>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6 18 18 M18 6 6 18"/></svg>
+      </button>
       <div class="card-sheet-media-wrap">
         <img class="card-sheet-media" alt="" />
       </div>

@@ -4192,6 +4192,8 @@ body.is-modal-open {
 
 .card-sheet-close {
   border: 0;
+  padding: 0;
+  line-height: 0;
   background: rgba(65, 53, 91, 0.12);
   color: #40335b;
   width: 34px;
