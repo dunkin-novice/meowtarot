@@ -22,5 +22,9 @@ export function getLocalizedField(card, field, lang = 'en') {
   if (!card || !field) return '';
 
   const locale = normalizeLanguage(lang);
-  return card[`${field}_${locale}`] || '';
+  // EN/TH parity: fall back to the English field when the localized one is empty,
+  // so a missing TH cell shows the English text instead of a BLANK paragraph
+  // (a few story/celtic cells lack TH data). The Quick branch already did this;
+  // this makes story/celtic consistent. (Audit 2026-06-20.)
+  return card[`${field}_${locale}`] || card[`${field}_en`] || '';
 }

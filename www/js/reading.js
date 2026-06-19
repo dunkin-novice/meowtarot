@@ -1329,8 +1329,14 @@ function buildMetaPanel(card, options = {}) {
       || card.zodiac_sign
       || card.astrology_sign;
 
-    if (element) meta.push({ label: state.currentLang === 'th' ? 'ธาตุ' : 'Element', value: element });
-    if (planet) meta.push({ label: state.currentLang === 'th' ? 'ดาว' : 'Planet', value: planet });
+    // EN/TH parity: element + planet are stored as English words ("Fire", "Mars")
+    // with no _th data, so the VALUES showed in English to Thai users (labels were
+    // already Thai). Localize the values here. (Audit 2026-06-20.)
+    const TH_ELEMENT = { fire: 'ไฟ', water: 'น้ำ', air: 'ลม', earth: 'ดิน' };
+    const TH_PLANET = { sun: 'อาทิตย์', moon: 'จันทร์', mercury: 'พุธ', venus: 'ศุกร์', mars: 'อังคาร', jupiter: 'พฤหัสบดี', saturn: 'เสาร์', uranus: 'ยูเรนัส', neptune: 'เนปจูน', pluto: 'พลูโต' };
+    const localizeMeta = (map, v) => (state.currentLang === 'th' ? (map[String(v || '').trim().toLowerCase()] || v) : v);
+    if (element) meta.push({ label: state.currentLang === 'th' ? 'ธาตุ' : 'Element', value: localizeMeta(TH_ELEMENT, element) });
+    if (planet) meta.push({ label: state.currentLang === 'th' ? 'ดาว' : 'Planet', value: localizeMeta(TH_PLANET, planet) });
     if (numerology !== undefined && numerology !== null && numerology !== '') {
       meta.push({ label: state.currentLang === 'th' ? 'เลข' : 'Numerology', value: numerology });
     }
