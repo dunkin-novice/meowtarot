@@ -1243,7 +1243,9 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.shadowColor = 'rgba(0,0,0,0.42)';
     ctx.shadowBlur = 16;
     ctx.fillStyle = '#c9933a';
-    ctx.font = `700 ${header.brandSize}px "Poppins", "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
+    // Brand title in the loaded Cormorant Garamond serif (Poppins isn't preloaded → it
+    // fell back to a blocky sans). Matches the Daily poster's elegant serif style.
+    ctx.font = `italic 700 ${header.brandSize}px "Cormorant Garamond", "Noto Serif Thai", serif`;
     ctx.fillText('MeowTarot', width / 2, header.top);
     ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(201, 147, 58, 0.95)';
@@ -1459,7 +1461,8 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
       if (lines.length * lineHeight <= availH) break;
     }
     const maxLines = Math.max(3, Math.floor(availH / lineHeight));
-    ctx.fillStyle = '#f7f4ee';
+    // Dark plum for readable contrast on the pale reading box (was faint cream #f7f4ee).
+    ctx.fillStyle = '#3d1a5c';
     ctx.font = `500 ${fontSize}px "Cormorant Garamond", "Noto Serif Thai", serif`;
     lines.slice(0, maxLines).forEach((line, index) => {
       ctx.fillText(line, boxX + padX, bodyTop + index * lineHeight);
@@ -2204,7 +2207,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
 
     ctx.textAlign = 'center';
     ctx.fillStyle = '#c9933a';
-    ctx.font = '700 62px "Poppins", "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
+    ctx.font = 'italic 700 62px "Cormorant Garamond", "Noto Serif Thai", serif';
     ctx.shadowColor = 'rgba(0,0,0,0.65)';
     ctx.shadowBlur = 14;
     ctx.fillText('MeowTarot', width / 2, 100);
