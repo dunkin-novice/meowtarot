@@ -537,9 +537,14 @@ function openCardSheet(card, opts = {}) {
   if (cardSheetEls.shareLabel) {
     cardSheetEls.shareLabel.textContent = state.currentLang === 'th' ? 'แชร์สตอรี่' : 'Share Story';
   }
-  // The meaning button is now the secondary action under Share Story.
-  cardSheetEls.meaningBtn.classList.remove('primary');
-  cardSheetEls.meaningBtn.classList.add('ghost');
+  // Celtic Cross: tapping an individual card shouldn't offer "Share Story" (only
+  // the whole spread is shareable) — hide the share CTA in full mode (founder
+  // request 2026-06-20). With Share hidden, the meaning button becomes primary;
+  // otherwise it stays the secondary action under Share Story.
+  const hideSheetShare = state.mode === 'full';
+  if (cardSheetEls.shareBtn) cardSheetEls.shareBtn.hidden = hideSheetShare;
+  cardSheetEls.meaningBtn.classList.toggle('primary', hideSheetShare);
+  cardSheetEls.meaningBtn.classList.toggle('ghost', !hideSheetShare);
 
   cardSheetEls.overlay.classList.add('is-open');
   cardSheetEls.overlay.setAttribute('aria-hidden', 'false');
@@ -547,7 +552,7 @@ function openCardSheet(card, opts = {}) {
   cardSheetEls.closeBtn?.focus();
 }
 
-// Round Instagram-style share button, top-left of the result page → poster/story flow.
+// Round Instagram-style share button, bottom-right of the result page → poster/story flow.
 function ensureShareFab() {
   if (typeof document === 'undefined' || !document.body) return;
   if (document.getElementById('mt-share-fab')) return;
@@ -1711,10 +1716,11 @@ function computeFullReadingEnergyData(cards = []) {
 function buildEnergyPanel(cards, dict) {
   const panel = document.createElement('section');
   panel.className = 'panel energy-balance';
+  const th = state.currentLang === 'th';
 
   const heading = document.createElement('h2');
   heading.className = 'energy-balance__title';
-  heading.textContent = dict.energyTitle || (state.currentLang === 'th' ? 'สมดุลพลังงาน' : 'Energy Balance');
+  heading.textContent = dict.energyTitle || (th ? 'สมดุลพลังงาน' : 'Energy Balance');
   panel.appendChild(heading);
 
   const chartCard = document.createElement('div');
@@ -1745,20 +1751,38 @@ function buildEnergyPanel(cards, dict) {
       <g id="energyRadarDots"></g>
     </svg>
 
-    <div class="energy-radar__label energy-radar__label--top">Action</div>
-    <div class="energy-radar__label energy-radar__label--right">Emotion</div>
-    <div class="energy-radar__label energy-radar__label--bottom">Thinking</div>
-    <div class="energy-radar__label energy-radar__label--left">Stability</div>
+    <div class="energy-radar__label energy-radar__label--top">${th ? 'การกระทำ' : 'Action'}</div>
+    <div class="energy-radar__label energy-radar__label--right">${th ? 'อารมณ์' : 'Emotion'}</div>
+    <div class="energy-radar__label energy-radar__label--bottom">${th ? 'ความคิด' : 'Thinking'}</div>
+    <div class="energy-radar__label energy-radar__label--left">${th ? 'ความมั่นคง' : 'Stability'}</div>
   `;
   chartCard.appendChild(chartWrap);
 
   const interpretation = document.createElement('p');
   interpretation.className = 'energy-interpretation';
-  interpretation.textContent = 'Your energy is currently led by emotion, with strong support from thinking. Keep this momentum balanced with gentle reflection to stay grounded and clear.';
+  interpretation.textContent = '';
   chartCard.appendChild(interpretation);
   panel.appendChild(chartCard);
 
   const energyData = computeFullReadingEnergyData(cards);
+
+  // Wire the data-driven, localized interpretation (the pipeline + sentence_th
+  // existed but was never connected — the text was a hardcoded EN sentence).
+  // computeFullReadingEnergyData returns action/emotion/thinking/stability, but
+  // the matcher expects A/E/T/S — map them here.
+  loadEnergyBalanceInterpretations().then((config) => {
+    const match = resolveEnergyBalanceInterpretation({
+      A: energyData.action, E: energyData.emotion, T: energyData.thinking, S: energyData.stability,
+    }, config || {});
+    const sentence = th
+      ? (match?.sentence_th || match?.sentence_en)
+      : (match?.sentence_en || match?.sentence_th);
+    if (sentence) interpretation.textContent = sentence;
+  }).catch(() => {
+    interpretation.textContent = th
+      ? 'พลังงานของคุณค่อนข้างสมดุลในช่วงนี้ ลองรักษาสมดุลนี้ด้วยการใคร่ครวญอย่างอ่อนโยนเพื่อให้รู้สึกมั่นคงและชัดเจน'
+      : 'Your energies feel fairly balanced right now. Keep this momentum steady with gentle reflection to stay grounded and clear.';
+  });
 
   const svg = chartWrap.querySelector('.energy-radar');
   const gridGroup = svg?.querySelector('#energyRadarGrid');
@@ -3562,7 +3586,10 @@ function renderQuestion(cards, dict) {
         ? (card[`standalone_${positionStr}_th`] || '')
         : (card[`standalone_${positionStr}_en`] || '');
     }
-    if (inlineActive) {
+    // Quick (1-card) result: omit the standalone inline meaning — the topic
+    // perspective panel below is the single answer (founder request 2026-06-20).
+    // The 3-card Story spread keeps its per-position standalone text.
+    if (inlineActive && orderedCards.length > 1) {
       const p = document.createElement('p');
       p.className = state.currentLang === 'th'
         ? 'spread-inline-text spread-inline-text--th thai'
@@ -3605,10 +3632,15 @@ function renderQuestion(cards, dict) {
       const block = document.createElement('div');
       block.className = 'question-story-item';
 
-      const label = document.createElement('p');
-      label.className = 'question-story-item__label';
-      label.textContent = item.label;
-      block.appendChild(label);
+      // Single-card quick result: the lone position is always "Present", so a
+      // "PRESENT" label is misleading — show body only. Story keeps its
+      // Past / Present / Future labels.
+      if (orderedCards.length > 1) {
+        const label = document.createElement('p');
+        label.className = 'question-story-item__label';
+        label.textContent = item.label;
+        block.appendChild(label);
+      }
 
       const body = document.createElement('p');
       body.className = 'question-story-item__body';
