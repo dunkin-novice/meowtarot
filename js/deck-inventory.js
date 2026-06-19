@@ -21,7 +21,21 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
   container.innerHTML = '';
 
   const activeId = getActiveDeckId();
-  const decks = getAllDecks();
+  // Auto-sort so available decks are always up front: active deck first, then
+  // other unlocked decks, then locked ones — each tier ordered by unlock_day.
+  // Reads canUnlockDeck() (the single unlock-truth source), so adding decks or
+  // new unlock requirements (streak, gift, achievement) needs no change here.
+  const decks = getAllDecks().slice().sort((a, b) => {
+    const ua = canUnlockDeck(a.id) ? 0 : 1;
+    const ub = canUnlockDeck(b.id) ? 0 : 1;
+    if (ua !== ub) return ua - ub;                       // available before locked
+    const aa = a.id === activeId ? 0 : 1;
+    const ab = b.id === activeId ? 0 : 1;
+    if (aa !== ab) return aa - ab;                       // active first within tier
+    const da = a.unlock_day == null ? -1 : a.unlock_day; // defaults (null) first
+    const db = b.unlock_day == null ? -1 : b.unlock_day;
+    return da - db;
+  });
 
   const panel = document.createElement('section');
   panel.className = 'panel';

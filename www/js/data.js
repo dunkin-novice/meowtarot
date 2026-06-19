@@ -141,7 +141,7 @@ const DECK_GIFTS = {
   'krs.socialngame@gmail.com': ['pawbit'],
 };
 
-function isGiftedDeck(id) {
+export function isGiftedDeck(id) {
   try {
     const email = String(getCurrentUserSync()?.email || '').trim().toLowerCase();
     return Boolean(email && DECK_GIFTS[email] && DECK_GIFTS[email].includes(id));

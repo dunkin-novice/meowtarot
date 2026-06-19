@@ -6,7 +6,7 @@
  * Self-contained DOM injection; no auto-dismiss (user action required).
  */
 
-import { markDeckRewardSeen, hasSeenDeckReward } from './data.js';
+import { markDeckRewardSeen, hasSeenDeckReward, getAllDecks, canUnlockDeck, isGiftedDeck } from './data.js';
 import { translations } from './common.js';
 import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
@@ -219,6 +219,9 @@ export function showDeckRewardPopup(deck, lang = 'en') {
   const primaryName = getPrimaryName(deck, lang);
   const secondaryName = getSecondaryName(deck, lang);
   const dayValue = deck.unlock_day == null ? '' : String(deck.unlock_day);
+  // A gifted deck isn't earned by a streak day, so the "You reached Day N" copy
+  // doesn't apply — use the gift-specific eyebrow + body instead.
+  const gift = isGiftedDeck(deck.id);
 
   const overlay = document.createElement('div');
   overlay.id = POPUP_ID;
@@ -228,7 +231,12 @@ export function showDeckRewardPopup(deck, lang = 'en') {
   overlay.setAttribute('aria-labelledby', 'mt-dr-title');
 
   const titleText = fmt(dict.deckRewardTitle, { deck: primaryName });
-  const bodyText = fmt(dict.deckRewardBody, { day: dayValue, deck: primaryName });
+  const bodyText = gift
+    ? fmt(dict.deckRewardGiftBody || dict.deckRewardBody, { deck: primaryName })
+    : fmt(dict.deckRewardBody, { day: dayValue, deck: primaryName });
+  const eyebrowText = gift
+    ? (dict.deckRewardGiftEyebrow || dict.deckRewardEyebrow)
+    : dict.deckRewardEyebrow;
   const isAuthed = !!getCurrentUserSync();
   const primaryCtaText = isAuthed
     ? dict.deckRewardClaimCta
@@ -246,7 +254,7 @@ export function showDeckRewardPopup(deck, lang = 'en') {
       <div class="mt-dr-card-wrap">
         <img class="mt-dr-card" src="${escapeHtml(deck.backImage)}" alt="" />
       </div>
-      <p class="mt-dr-eyebrow">${escapeHtml(dict.deckRewardEyebrow)}</p>
+      <p class="mt-dr-eyebrow">${escapeHtml(eyebrowText)}</p>
       <h2 id="mt-dr-title" class="mt-dr-title">${escapeHtml(titleText)}</h2>
       ${secondaryName ? `<p class="mt-dr-subtitle">${escapeHtml(secondaryName)}</p>` : ''}
       <p class="mt-dr-body">${escapeHtml(bodyText)}</p>
@@ -311,4 +319,33 @@ export function showDeckRewardPopup(deck, lang = 'en') {
       dismiss();
     }, { once: true });
   }
+}
+
+/**
+ * Surface a popup for ANY deck that is now available to the signed-in user but
+ * whose reward they haven't seen yet — covers gifted decks (no streak crossing)
+ * and future achievement-unlocked decks, plus any streak deck whose popup was
+ * missed (e.g. earned while logged out). Streak-day crossings still fire their
+ * own popup inline on the daily result; this is the catch-all on app open.
+ *
+ * Scalable by design: it reads canUnlockDeck() (the single source of unlock
+ * truth) for every deck, so new decks / new unlock requirements need no change
+ * here. Default decks are excluded (they were never a "reward"). Shows one at a
+ * time (the popup is a singleton); the rest surface on subsequent opens.
+ *
+ * @param {string} lang - 'en' | 'th'
+ */
+export function maybeShowUnseenDeckRewards(lang = 'en') {
+  if (typeof document === 'undefined' || !document.body) return;
+  // Don't stack on top of the login-reward popup or an already-open deck popup.
+  if (document.getElementById('mt-login-reward-popup')) return;
+  if (document.getElementById(POPUP_ID)) return;
+
+  const next = getAllDecks().find((deck) => {
+    if (!deck || deck.role === 'default') return false; // defaults aren't rewards
+    const rewardable = deck.role === 'streak-unlock' || isGiftedDeck(deck.id);
+    return rewardable && canUnlockDeck(deck.id) && !hasSeenDeckReward(deck.id);
+  });
+
+  if (next) showDeckRewardPopup(next, lang);
 }

@@ -92,6 +92,15 @@ async function createClient() {
     maybeShowLoginReward(session?.user, window.location.pathname.startsWith('/th/') ? 'th' : 'en', {
       fresh: _event === 'SIGNED_IN' && !prevUser, // true only on a genuine new sign-in (not a page-load session restore)
     });
+    // Surface a popup for any newly-available deck (gift / achievement) the user
+    // hasn't acknowledged. Dynamic import avoids a static auth<->deck-reward cycle;
+    // the helper self-guards against stacking on the login-reward popup above.
+    if (session?.user) {
+      const lang = window.location.pathname.startsWith('/th/') ? 'th' : 'en';
+      import('./deck-reward.js')
+        .then(({ maybeShowUnseenDeckRewards }) => maybeShowUnseenDeckRewards(lang))
+        .catch(() => {});
+    }
     try {
       const pendingClaim = localStorage.getItem('meowtarot_pending_deck_claim');
       if (pendingClaim && session?.user) {
