@@ -8,6 +8,7 @@ import {
   applyImageFallback,
   normalizeId,
   getAllDecks,
+  getDecksForDisplay,
   getActiveDeckId,
   setActiveDeck,
   canUnlockDeck,
@@ -815,12 +816,13 @@ function showDeckPicker() {
     setTimeout(() => ov.remove(), 200);
   };
 
-  getAllDecks().forEach((deck) => {
+  getDecksForDisplay().forEach((deck) => {
     const owned = canUnlockDeck(deck.id);
+    const isActive = deck.id === activeId;
     const cell = document.createElement('button');
     cell.type = 'button';
     cell.className = 'mt-deckpick__cell'
-      + (deck.id === activeId ? ' is-active' : '')
+      + (isActive ? ' is-active' : '')
       + (owned ? '' : ' is-locked');
     const img = document.createElement('img');
     img.className = 'mt-deckpick__img';
@@ -828,6 +830,12 @@ function showDeckPicker() {
     img.alt = '';
     img.src = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
     cell.appendChild(img);
+    if (isActive) {
+      const activeBadge = document.createElement('span');
+      activeBadge.className = 'mt-deckpick__active';
+      activeBadge.textContent = th ? 'ใช้อยู่' : 'Active';
+      cell.appendChild(activeBadge);
+    }
     const label = document.createElement('span');
     label.className = 'mt-deckpick__name';
     label.textContent = th ? (deck.name_th || deck.name) : deck.name;
@@ -882,7 +890,8 @@ function ensureDeckPickerStyles() {
     .mt-deckpick__title{margin:0 0 2px;font-family:'Playfair Display',serif;font-size:22px;color:#3d1a5c;text-align:center;}
     .mt-deckpick__hint{margin:0 0 16px;font-size:12.5px;color:#8b6db0;text-align:center;}
     .mt-deckpick__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px;}
-    .mt-deckpick__cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border:none;background:transparent;cursor:pointer;border-radius:12px;}
+    .mt-deckpick__cell{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border:none;background:transparent;cursor:pointer;border-radius:12px;}
+    .mt-deckpick__active{position:absolute;top:3px;left:50%;transform:translateX(-50%);z-index:2;background:#9270d0;color:#fff;font-size:8.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;white-space:nowrap;}
     .mt-deckpick__cell .mt-deckpick__img{width:100%;max-width:88px;aspect-ratio:1568/2720;object-fit:cover;border-radius:9px;border:1.5px solid transparent;box-shadow:0 5px 12px -5px rgba(61,26,92,.5);transition:transform .15s ease,border-color .15s ease;}
     .mt-deckpick__cell.is-active .mt-deckpick__img{border-color:var(--mt-gold-deep,#c9933a);box-shadow:0 6px 16px -5px rgba(201,147,58,.6);}
     .mt-deckpick__cell:not(.is-locked):active .mt-deckpick__img{transform:scale(.95);}
@@ -1294,7 +1303,7 @@ function renderHomeDeckStrip() {
   const isThai = state.currentLang === 'th';
   const frag = document.createDocumentFragment();
 
-  getAllDecks().forEach((deck) => {
+  getDecksForDisplay().forEach((deck) => {
     const unlocked = canUnlockDeck(deck.id);
     const active = deck.id === activeId;
 

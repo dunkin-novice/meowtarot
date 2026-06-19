@@ -193,6 +193,21 @@ export function getAllDecks() {
   return Object.values(DECKS);
 }
 
+// Shared display order for EVERY deck surface (profile "My Decks", home strip,
+// board "Your deck" picker) so they always match: available decks first, then by
+// unlock day. It does NOT move the active deck to the front — active is shown via
+// glow + an "Active" label, not by reordering (founder decision 2026-06-20).
+export function getDecksForDisplay() {
+  return getAllDecks().slice().sort((a, b) => {
+    const ua = canUnlockDeck(a.id) ? 0 : 1;
+    const ub = canUnlockDeck(b.id) ? 0 : 1;
+    if (ua !== ub) return ua - ub;                        // available before locked
+    const da = a.unlock_day == null ? -1 : a.unlock_day;  // defaults (null) first
+    const db = b.unlock_day == null ? -1 : b.unlock_day;
+    return da - db;
+  });
+}
+
 export function getNewlyUnlockedDecks(prevValue, newValue) {
   // prevValue/newValue are accumulated-days-drawn counts (see canUnlockDeck).
   const prev = Math.max(0, Number(prevValue) || 0);

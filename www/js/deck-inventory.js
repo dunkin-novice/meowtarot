@@ -6,7 +6,7 @@
  * show a Day-N badge and surface a brief unlock hint on tap.
  */
 
-import { getAllDecks, getActiveDeckId, setActiveDeck, canUnlockDeck } from './data.js';
+import { getActiveDeckId, setActiveDeck, canUnlockDeck, getDecksForDisplay } from './data.js';
 
 function fmt(template, vars) {
   let result = String(template || '');
@@ -21,21 +21,10 @@ export function renderDeckInventory(container, progress, dict, lang, onDeckSwitc
   container.innerHTML = '';
 
   const activeId = getActiveDeckId();
-  // Auto-sort so available decks are always up front: active deck first, then
-  // other unlocked decks, then locked ones — each tier ordered by unlock_day.
-  // Reads canUnlockDeck() (the single unlock-truth source), so adding decks or
-  // new unlock requirements (streak, gift, achievement) needs no change here.
-  const decks = getAllDecks().slice().sort((a, b) => {
-    const ua = canUnlockDeck(a.id) ? 0 : 1;
-    const ub = canUnlockDeck(b.id) ? 0 : 1;
-    if (ua !== ub) return ua - ub;                       // available before locked
-    const aa = a.id === activeId ? 0 : 1;
-    const ab = b.id === activeId ? 0 : 1;
-    if (aa !== ab) return aa - ab;                       // active first within tier
-    const da = a.unlock_day == null ? -1 : a.unlock_day; // defaults (null) first
-    const db = b.unlock_day == null ? -1 : b.unlock_day;
-    return da - db;
-  });
+  // Shared display order (available-first, by unlock_day) — same on the home strip
+  // and board picker so all three match. Active is shown via glow + "Active" badge
+  // below, NOT by moving it to the front.
+  const decks = getDecksForDisplay();
 
   const panel = document.createElement('section');
   panel.className = 'panel';
