@@ -1,6 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
-import { trackLocaleSwitched } from './analytics.js';
+import { trackLocaleSwitched, trackMeaningViewed, trackCtaClicked, trackOrientationToggled } from './analytics.js';
 import { renderBottomNav } from './bottom-nav.js';
 
 // Shared translations across all pages.
@@ -25,6 +25,9 @@ export const translations = {
     ctaOverall: 'Full Reading',
     ctaQuestion: 'Ask a Question',
     dailyTitle: 'Daily Reading',
+    dailyStreakLabel: 'day streak',
+    dailyStreakStart: 'Start your streak',
+    dailyStreakSaveCta: 'Save your fortune',
     dailyDesc: 'Tap once a day to reveal today’s cat-guided message.',
     dailyDraw: 'Draw your card for today',
     dailyRedraw: 'Draw for today',
@@ -208,7 +211,7 @@ export const translations = {
     celticCrossHoldEnergy: 'Hold this energy',
     celticCrossAskYourself: 'Ask yourself',
     positionPresent: 'The Present',
-    positionChallenge: 'The Challenge',
+    positionChallenge: 'The Obstacle',
     positionPast: 'The Past',
     positionFuture: 'The Future',
     positionAbove: 'Above',
@@ -222,6 +225,31 @@ export const translations = {
     profileGuestLabel: 'Not signed in',
     profileSignInCta: 'Sign in with Google',
     profileLogout: 'Log out',
+    profilePrivacyLink: 'Privacy Policy',
+    footerRights: 'All rights reserved.',
+    footerBugReport: 'Report',
+    deckUnlockProgress: 'to next deck',
+    deckPickerTitle: 'Your deck',
+    deckSwitchAria: 'Change deck',
+    deckPickerHint: 'Tap a deck to use it on the board',
+    deckGateTitle: 'Log in to get a new deck!',
+    deckGateBody: 'New decks are saved to your account — sign in to unlock and switch.',
+    rewardPopupTitle: 'Your next reward',
+    rewardDaysToGo: 'days to go',
+    rewardKeepGoing: 'Open the app daily to keep your streak and unlock this deck.',
+    profileContactTitle: 'Contact us',
+    profileOtherTitle: 'Other',
+    profileDeactivate: 'Deactivate account',
+    profileDeactivateConfirm: 'Are you sure you want to delete your account?',
+    profileDeactivateYes: 'Yes, continue',
+    profileDeleteAccount: 'Delete account',
+    profileDeleteConfirmBody: 'This permanently deletes your account and all saved readings. This cannot be undone.',
+    profileDeleteConfirmYes: 'Yes, delete',
+    profileDeleteFinalBody: "You're deleting your account. All your decks and saved readings will be gone for good. This can't be undone.",
+    profileDeleteCheckbox: 'I understand my decks and readings will be permanently deleted.',
+    profileDeleteCancel: 'Cancel',
+    profileDeleting: 'Deleting…',
+    profileDeleteError: 'Could not delete your account. Please try again.',
     profileStreakTitle: 'Journey summary',
     profileStreakCurrent: 'Current streak: {count} days',
     profileReadingsTotal: 'Total daily readings: {count}',
@@ -255,6 +283,8 @@ export const translations = {
     deckRewardClaimCta: 'Use this deck now',
     deckRewardLaterCta: 'Maybe later',
     deckRewardActivatedToast: 'Deck switched to {deck}',
+    deckRewardSignInCta: 'Sign in to claim',
+    deckRewardSignInBody: 'Sign in to save your deck unlock across devices.',
     profileAchievementsTitle: 'Your Journey',
     profileAchievementUnlockedDate: 'Achieved {date}',
     profileAchievementLocked: 'Locked',
@@ -263,6 +293,7 @@ export const translations = {
     loginRewardTitle: 'Welcome to MeowTarot',
     loginRewardBody: 'Your progress is saved. Start with the Moonmallow deck — yours forever.',
     loginRewardClaimCta: 'Start my journey',
+    loginWelcomeBack: 'Welcome back! 🐾',
     loginRewardDismissCta: 'Maybe later',
     achievement_deck_boba_oracle: 'Boba Oracle unlocked',
     achievement_deck_meow_nakorn: 'Meow Nakorn unlocked',
@@ -273,6 +304,9 @@ export const translations = {
     achievement_deck_sugar_paws: 'Sugar Paws unlocked',
     achievement_deck_sushicat: 'Sushicat unlocked',
     achievement_deck_inkmess: 'InkMess unlocked',
+    notifDailyTitle: 'Your lucky color today 🐱',
+    notifDailyBody: 'Check your lucky color today!',
+    notifPermissionNudge: 'Want a daily reminder to draw your card?',
   },
   th: {
     navHome: 'หน้าหลัก',
@@ -294,6 +328,9 @@ export const translations = {
     ctaOverall: 'ดูดวงชีวิต',
     ctaQuestion: 'ถามคำถาม',
     dailyTitle: 'ดูดวงรายวัน',
+    dailyStreakLabel: 'วันต่อเนื่อง',
+    dailyStreakStart: 'เริ่มสตรีคของคุณ',
+    dailyStreakSaveCta: 'บันทึกดวงของคุณ',
     dailyDesc: 'แตะวันละครั้งเพื่อเปิดข้อความนำทางประจำวัน',
     dailyDraw: 'สุ่มไพ่ประจำวันของคุณ',
     dailyRedraw: 'ดึงไพ่สำหรับวันนี้',
@@ -477,7 +514,7 @@ export const translations = {
     celticCrossHoldEnergy: 'โอบพลังนี้ไว้',
     celticCrossAskYourself: 'ลองถามตัวเอง',
     positionPresent: 'สถานการณ์ปัจจุบัน',
-    positionChallenge: 'ความท้าทาย',
+    positionChallenge: 'อุปสรรค',
     positionPast: 'อดีต',
     positionFuture: 'อนาคต',
     positionAbove: 'เป้าหมาย',
@@ -491,6 +528,31 @@ export const translations = {
     profileGuestLabel: 'ยังไม่ได้เข้าสู่ระบบ',
     profileSignInCta: 'เข้าสู่ระบบด้วย Google',
     profileLogout: 'ออกจากระบบ',
+    profilePrivacyLink: 'นโยบายความเป็นส่วนตัว',
+    footerRights: 'สงวนลิขสิทธิ์',
+    footerBugReport: 'แจ้งปัญหา',
+    deckUnlockProgress: 'ถึงสำรับใหม่',
+    deckPickerTitle: 'สำรับของคุณ',
+    deckSwitchAria: 'เปลี่ยนสำรับ',
+    deckPickerHint: 'เลือกสำรับ',
+    deckGateTitle: 'ล็อกอินเพื่อรับสำรับใหม่!',
+    deckGateBody: 'สำรับใหม่จะผูกกับบัญชีของคุณ เข้าสู่ระบบเพื่อปลดล็อกและเปลี่ยนสำรับ',
+    rewardPopupTitle: 'รางวัลถัดไปของคุณ',
+    rewardDaysToGo: 'วันที่เหลือ',
+    rewardKeepGoing: 'เปิดแอปทุกวันเพื่อรักษาสตรีคและปลดล็อกสำรับนี้',
+    profileContactTitle: 'ติดต่อเรา',
+    profileOtherTitle: 'อื่น ๆ',
+    profileDeactivate: 'ปิดการใช้งานบัญชี',
+    profileDeactivateConfirm: 'แน่ใจไหมว่าต้องการลบบัญชี?',
+    profileDeactivateYes: 'ใช่ ดำเนินการต่อ',
+    profileDeleteAccount: 'ลบบัญชี',
+    profileDeleteConfirmBody: 'การลบบัญชีจะลบบัญชีและการดูไพ่ที่บันทึกไว้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้',
+    profileDeleteConfirmYes: 'ยืนยันลบบัญชี',
+    profileDeleteFinalBody: 'คุณกำลังลบบัญชี สำรับและการดูไพ่ที่บันทึกไว้ทั้งหมดจะหายไปอย่างถาวร และย้อนกลับไม่ได้',
+    profileDeleteCheckbox: 'ฉันเข้าใจว่าสำรับและการดูไพ่ของฉันจะถูกลบอย่างถาวร',
+    profileDeleteCancel: 'ยกเลิก',
+    profileDeleting: 'กำลังลบ…',
+    profileDeleteError: 'ลบไม่สำเร็จ ลองอีกครั้ง',
     profileStreakTitle: 'สรุปการเดินทาง',
     profileStreakCurrent: 'สตรีคปัจจุบัน: {count} วัน',
     profileReadingsTotal: 'อ่านรายวันทั้งหมด: {count}',
@@ -524,6 +586,8 @@ export const translations = {
     deckRewardClaimCta: 'ใช้สำรับนี้เลย',
     deckRewardLaterCta: 'ไว้ทีหลัง',
     deckRewardActivatedToast: 'เปลี่ยนเป็นสำรับ {deck} แล้ว',
+    deckRewardSignInCta: 'เข้าสู่ระบบเพื่อรับไพ่',
+    deckRewardSignInBody: 'เข้าสู่ระบบเพื่อบันทึกไพ่ที่ปลดล็อคไว้ในทุกอุปกรณ์',
     profileAchievementsTitle: 'เส้นทางของคุณ',
     profileAchievementUnlockedDate: 'สำเร็จเมื่อ {date}',
     profileAchievementLocked: 'ยังล็อคอยู่',
@@ -532,6 +596,7 @@ export const translations = {
     loginRewardTitle: 'ยินดีต้อนรับสู่ MeowTarot',
     loginRewardBody: 'ความคืบหน้าของคุณถูกบันทึกแล้ว เริ่มต้นด้วยสำรับเหมียวฝันหวาน — เป็นของคุณตลอดไป',
     loginRewardClaimCta: 'เริ่มต้นการเดินทาง',
+    loginWelcomeBack: 'ยินดีต้อนรับกลับ! 🐾',
     loginRewardDismissCta: 'ไว้ทีหลัง',
     achievement_deck_boba_oracle: 'ปลดล็อคแมวชานมแล้ว',
     achievement_deck_meow_nakorn: 'ปลดล็อคนครหมียวแล้ว',
@@ -542,6 +607,9 @@ export const translations = {
     achievement_deck_sugar_paws: 'ปลดล็อคเหมียวละมุนแล้ว',
     achievement_deck_sushicat: 'ปลดล็อคเหมียวซูชิแล้ว',
     achievement_deck_inkmess: 'ปลดล็อคเหมียวยุ่งแล้ว',
+    notifDailyTitle: 'สีมงคลวันนี้ของคุณ 🐱',
+    notifDailyBody: 'เช็คสีมงคลของคุณวันนี้เลย!',
+    notifPermissionNudge: 'อยากรับการแจ้งเตือนเพื่อจั่วไพ่ทุกวันไหม?',
   },
 };
 
@@ -554,7 +622,8 @@ function normalizeLang(value) {
 }
 
 function getUrlLanguage(locationLike = window.location) {
-  const urlLang = normalizeLang(new URLSearchParams(locationLike?.search || '').get('lang'));
+  const params = new URLSearchParams(locationLike?.search || '');
+  const urlLang = normalizeLang(params.get('lang') || params.get('l'));
   if (urlLang) return urlLang;
   return pathHasThaiPrefix(locationLike?.pathname || '/') ? 'th' : 'en';
 }
@@ -562,7 +631,11 @@ function getUrlLanguage(locationLike = window.location) {
 export function computeLanguageHref(targetLang, locationLike = window.location) {
   const pathname = normalizePathname(locationLike?.pathname || '/');
   const params = new URLSearchParams(locationLike?.search || '');
+  // Rewrite BOTH locale param spellings to the target. The reading result page reads `l`
+  // (initShell honours `lang` || `l`); without this a stale `l=en` rides onto the /th/
+  // path and the Thai mirror renders English — the EN/TH toggle then looked dead.
   if (params.has('lang')) params.set('lang', targetLang);
+  if (params.has('l')) params.set('l', targetLang);
   const search = params.toString() ? `?${params.toString()}` : '';
   const hash = locationLike?.hash || '';
   const targetPath = localizePath(pathname, targetLang) || (targetLang === 'th' ? '/th/' : '/');
@@ -653,23 +726,142 @@ export function applyTranslations(currentLang = 'en', afterApply) {
 }
 
 export function initShell(state, afterApply, activePage, options = {}) {
-  const urlLang = getUrlLanguage(window.location);
-  const savedLang = getSavedLang('en');
-  state.currentLang = normalizeLang(urlLang) || savedLang || 'en';
+  // Locale is PATH-BASED: every page has a baked /th/ mirror (Thai static copy), and
+  // the bottom-nav prefixes /th/. So the rendered locale must follow the path, else a
+  // TH user on an EN file gets mixed copy (Thai JS bits + English static). The lang
+  // toggle NAVIGATES between / and /th/ (see the pill below) — that's what makes TH
+  // persist across navigation (the earlier "switch to TH → next page → EN" bug was the
+  // toggle doing a client re-render that never changed the path).
+  const params = new URLSearchParams(window.location.search || '');
+  const explicitParam = normalizeLang(params.get('lang') || params.get('l'));
+  const pathIsThai = pathHasThaiPrefix(window.location.pathname || '/');
+  state.currentLang = explicitParam || (pathIsThai ? 'th' : 'en');
   localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
 
+  // Phase 5: global top navbar removed. The hamburger nav + brand text
+  // + EN/TH lang toggle that used to render here are replaced by the
+  // bottom tab bar (Features/Today/Draw/Cards/Profile) and the
+  // profile-page language pill (see profile.js renderStreak). We hide
+  // the empty <header id='site-header'> placeholder element so it
+  // doesn't leave a layout gap, and keep navbarCleanup as a no-op for
+  // beforeunload compatibility.
   navbarCleanup?.();
-  navbarCleanup = renderNavbar(document.getElementById('site-header'), (lang) => {
-    if (lang === state.currentLang) return;
-    trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: lang });
-    localStorage.setItem(LANG_STORAGE_KEY, lang);
-    if (typeof options?.onLangToggle === 'function') {
-      options.onLangToggle(lang);
-      return;
+  const siteHeader = document.getElementById('site-header');
+  if (siteHeader) {
+    siteHeader.innerHTML = '';
+    siteHeader.hidden = true;
+  }
+  navbarCleanup = () => {};
+  // Lightweight JS-error ring buffer (last 10) so the bug reporter can attach
+  // recent errors. Installed once per page.
+  if (typeof window !== 'undefined' && !window._mtErrorCaptureBound) {
+    window._mtErrorCaptureBound = true;
+    window.__mtErrors = window.__mtErrors || [];
+    const pushErr = (entry) => {
+      try { window.__mtErrors.push(entry); if (window.__mtErrors.length > 10) window.__mtErrors.shift(); } catch (_) {}
+    };
+    window.addEventListener('error', (e) => pushErr(`${e.message} @ ${(e.filename || '').split('/').pop()}:${e.lineno || 0}`));
+    window.addEventListener('unhandledrejection', (e) => pushErr(`unhandled: ${String(e.reason).slice(0, 160)}`));
+  }
+
+  // Global EN/TH language toggle (Phase-5 removed the top navbar that hosted it,
+  // leaving it only on Profile). Re-added as a small fixed pill on every page EXCEPT
+  // profile (own in-panel pill). It NAVIGATES to the localized path (/ ↔ /th/) so the
+  // user lands on the page with the correct baked copy AND the bottom-nav keeps the
+  // locale — not a client re-render (which would leave the static copy in the old lang).
+  const goToLang = (nextLang) => {
+    if (!nextLang || nextLang === state.currentLang) return;
+    try { trackLocaleSwitched({ fromLocale: state.currentLang, toLocale: nextLang }); } catch (_) {}
+    try { localStorage.setItem(LANG_STORAGE_KEY, nextLang); } catch (_) {}
+    // Navigate to the localized path (/ ↔ /th/). computeLanguageHref carries the existing
+    // query params (e.g. the reading's m/s/t/c) and rewrites the locale params to the
+    // target — so the reading RESULT page lands on its baked Thai mirror with the SAME
+    // card and renders fully localized. (A fresh load of /th/reading.html?…&l=th is the
+    // proven-correct render; the old in-place toggle left the card body in EN.)
+    window.location.href = computeLanguageHref(nextLang);
+  };
+  if (typeof document !== 'undefined' && document.body && activePage !== 'profile' && !document.getElementById('mt-lang-fab')) {
+    const fab = document.createElement('div');
+    fab.id = 'mt-lang-fab';
+    fab.className = 'mt-lang-fab language-toggle';
+    fab.setAttribute('role', 'group');
+    fab.setAttribute('aria-label', 'Language');
+    fab.innerHTML = `
+      <button class="lang-btn" data-lang="en" type="button">EN</button>
+      <span class="divider" aria-hidden="true">|</span>
+      <button class="lang-btn" data-lang="th" type="button">TH</button>
+    `;
+    // reflect the current locale as active on load
+    fab.querySelectorAll('.lang-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.lang === state.currentLang);
+      b.addEventListener('click', () => goToLang(b.dataset.lang));
+    });
+    document.body.appendChild(fab);
+  }
+
+  renderFooter(document.getElementById('site-footer'), translations[state.currentLang] || translations.en);
+
+  // Floating "Report" button — follows the user on every page (bugs can be anywhere).
+  // Lazy-imports the reporter (heavy html2canvas) only on click. Injected once.
+  if (typeof document !== 'undefined' && document.body && !document.getElementById('mt-report-fab')) {
+    const lang = state.currentLang;
+    const dict = translations[lang] || translations.en;
+    const fab = document.createElement('button');
+    fab.id = 'mt-report-fab';
+    fab.type = 'button';
+    fab.className = 'mt-report-fab';
+    fab.setAttribute('aria-label', dict.footerBugReport || 'Report a bug');
+    fab.innerHTML = `
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="6" y="8" width="12" height="11" rx="6"/><path d="M12 8V5"/><path d="M9 5a3 3 0 0 1 6 0"/>
+        <path d="M6 12H3M21 12h-3M6 16H3M21 16h-3M6.5 8.5 4.5 6.5M17.5 8.5l2-2"/>
+      </svg>
+      <span class="mt-report-fab__label">${dict.footerBugReport || 'Report'}</span>
+    `;
+    fab.addEventListener('click', () => {
+      import('./bug-report.js').then(({ showBugReport }) => showBugReport({ lang })).catch(() => {});
+    });
+    document.body.appendChild(fab);
+  }
+
+  // Lightweight CTA tracking: one delegated listener for the key navigation CTAs
+  // (hero "Draw today's card", the 3 reading-path tiles, bottom-nav tabs). Bound
+  // once per page; GA4 uses sendBeacon so the push survives the navigation.
+  if (typeof window !== 'undefined' && !window._meowCtaListenerBound) {
+    window._meowCtaListenerBound = true;
+    document.addEventListener('click', (e) => {
+      // Card-meaning orientation toggle (upright/reversed re-renders without a reload,
+      // so meaning_viewed won't re-fire — track the toggle explicitly).
+      const toggle = e.target.closest?.('[data-orientation]');
+      if (toggle) {
+        const cm = (window.location.pathname || '').match(/\/cards\/([^/]+)\/?$/);
+        if (cm) {
+          try { trackOrientationToggled({ cardId: cm[1], orientation: toggle.dataset.orientation, locale: state.currentLang }); } catch (_) {}
+        }
+        return;
+      }
+      const el = e.target.closest?.('.home-cta-button, .home-path-card, .home-deck-strip__see-all, .bottom-nav__item, [data-cta]');
+      if (!el) return;
+      const hrefSlug = (el.getAttribute('href') || '').split('/').pop().replace('.html', '') || 'home';
+      const cta = el.dataset.cta
+        || (el.classList.contains('home-cta-button') ? 'draw_today'
+          : el.classList.contains('home-deck-strip__see-all') ? 'see_all_decks'
+          : el.classList.contains('home-path-card') ? ((el.className.match(/home-path-card--(\w+)/) || [])[1] || 'path')
+          : el.classList.contains('bottom-nav__item') ? `nav_${hrefSlug}`
+          : 'cta');
+      try { trackCtaClicked({ cta, location: document.body?.dataset?.page || 'page', locale: state.currentLang }); } catch (_) {}
+    }, { capture: true, passive: true });
+  }
+
+  // Card-meaning page view (the 78 /cards/<slug>/ pages each run their own module
+  // but all funnel through initShell, so fire meaning_viewed from this one place).
+  try {
+    const cardMatch = (window.location.pathname || '').match(/\/cards\/([^/]+)\/?$/);
+    if (cardMatch) {
+      const orientation = (new URLSearchParams(window.location.search).get('orientation') || 'upright').toLowerCase();
+      trackMeaningViewed({ cardId: cardMatch[1], orientation, locale: state.currentLang, surface: 'card_page' });
     }
-    switchLang(lang);
-  });
-  renderFooter(document.getElementById('site-footer'));
+  } catch (_) {}
   highlightActiveNav(activePage);
   attachLogoHome();
   bindViewportHeightVariable();

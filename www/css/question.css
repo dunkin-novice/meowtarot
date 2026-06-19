@@ -1,0 +1,679 @@
+/*
+ * MeowTarot — Phase 5: Ask Flow Structural Theme
+ * css/question.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * Translates three design-doc components into real CSS scoped to two
+ * data-pages:
+ *   - body[data-page='question']      — entry (ScreenAskEntry)
+ *   - body[data-page='question-draw'] — selection board for both spreads
+ *                                       (ScreenAskBoardQuick + ScreenAskBoardStory)
+ *
+ * Story / Quick variation on the draw page is handled by a single
+ * data-question-spread attribute set by js/main.js renderQuestionDraw().
+ * CSS toggles which title, which legend, and which draw-button label is
+ * visible. No DOM rewriting.
+ *
+ * STATE 3 (post-reveal results) lives on /reading.html and is styled by
+ * css/reading.css. Not touched here.
+ *
+ * REQUIRES: css/theme-tokens.css (provides --mt-* namespace, Phase 3 + 5).
+ * LOAD ORDER: LAST. After css/phase-3-redesign.css.
+ *
+ * SECTIONS:
+ *   §1  Page background + shell layout
+ *   §2  Entry top bar
+ *   §3  Entry heading (What's on your mind?)
+ *   §4  Pick-a-shape eyebrow + two chooser panels
+ *   §5  Question text input (visual placeholder this round)
+ *   §6  Topic chips eyebrow + pill chips
+ *   §7  Continue CTA (entry)
+ *   §8  Draw page top bar
+ *   §9  Draw page question recap (dashed)
+ *   §10 Draw page title (Quick / Story swap via attribute)
+ *   §11 Draw page position legend (Story only via attribute)
+ *   §12 Draw page counter
+ *   §13 Draw CTA (Quick / Story label swap via attribute)
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background + shell layout (shared by both pages) */
+body[data-page='question'],
+body[data-page='question-draw'] {
+  background: var(--mt-bg-gradient-question);
+  color: var(--mt-plum);
+  font-family: var(--mt-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body[data-page='question'] .question-shell,
+body[data-page='question-draw'] .question-draw-shell {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 8px 20px 110px;
+  min-height: calc(100dvh - 60px);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+
+body[data-page='question'] .thai,
+body[data-page='question-draw'] .thai            { font-family: var(--mt-font-thai); }
+body[data-page='question'] .thai-serif,
+body[data-page='question-draw'] .thai-serif      { font-family: var(--mt-font-display-th); }
+
+
+/* §2 — Entry top bar */
+body[data-page='question'] .question-topbar {
+  text-align: center;
+  margin-top: 6px;
+}
+
+body[data-page='question'] .question-topbar__eyebrow {
+  font-size: 11px;
+  color: var(--mt-plum-mid);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+body[data-page='question'] .question-topbar__eyebrow-th {
+  font-size: 11px;
+  color: var(--mt-plum-pale);
+  margin-top: 2px;
+}
+
+
+/* §3 — Entry heading */
+body[data-page='question'] .question-heading {
+  margin-top: 8px;
+}
+
+body[data-page='question'] .question-heading__en {
+  font-family: var(--mt-font-display);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--mt-plum);
+  font-style: italic;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+body[data-page='question'] .question-heading__th {
+  font-size: 15px;
+  color: var(--mt-plum-mid);
+  margin: 4px 0 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+
+/* §4 — Pick-a-shape chooser */
+body[data-page='question'] .question-shape-picker {
+  margin-top: 10px;
+}
+
+body[data-page='question'] .question-shape-picker__eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: var(--mt-gold-deep);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+body[data-page='question'] .question-shape-picker__panels {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+body[data-page='question'] .question-shape-card {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(61, 26, 92, 0.08);
+  border-radius: 14px;
+  padding: 9px 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--mt-soft-shadow);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--mt-plum);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+body[data-page='question'] .question-shape-card.question-spread-btn--active {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1.5px solid var(--mt-gold-deep);
+  box-shadow: 0 14px 26px -10px rgba(201, 147, 58, 0.35);
+}
+
+body[data-page='question'] .question-shape-card__num {
+  width: 30px;
+  height: 38px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mt-cream);
+  font-family: var(--mt-font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 15px;
+  border: 0.5px solid var(--mt-gold-pale);
+  box-shadow: 0 6px 12px -4px rgba(61, 26, 92, 0.30);
+  flex-shrink: 0;
+}
+
+body[data-page='question'] .question-shape-card__num--quick {
+  background: linear-gradient(160deg, var(--mt-rose) 0%, var(--mt-gold-deep) 100%);
+}
+
+body[data-page='question'] .question-shape-card__num--story {
+  background: linear-gradient(160deg, var(--mt-plum-mid) 0%, var(--mt-plum-pale) 100%);
+}
+
+body[data-page='question'] .question-shape-card__text {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+body[data-page='question'] .question-shape-card__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+body[data-page='question'] .question-shape-card__title {
+  font-family: var(--mt-font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='question'] .question-shape-card__title-th {
+  font-size: 11px;
+  color: var(--mt-plum-mid);
+}
+
+body[data-page='question'] .question-shape-card__note {
+  display: none;
+}
+
+body[data-page='question'] .question-shape-card__check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mt-gold-deep);
+  color: var(--mt-cream);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+body[data-page='question'] .question-shape-card.question-spread-btn--active .question-shape-card__check {
+  display: flex;
+}
+
+
+/* §5 — Question text input */
+body[data-page='question'] .question-input {
+  margin-top: 10px;
+}
+
+body[data-page='question'] .question-input__eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: var(--mt-gold-deep);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+body[data-page='question'] .question-input__panel {
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--mt-rose-pale);
+  min-height: 62px;
+  box-shadow: var(--mt-soft-shadow);
+}
+
+body[data-page='question'] .question-input__textarea {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  resize: none;
+  font-family: var(--mt-font-display);
+  font-size: 16px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--mt-plum);
+  letter-spacing: -0.01em;
+}
+
+body[data-page='question'] .question-input__textarea::placeholder {
+  color: var(--mt-ink-soft);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+body[data-page='question'] .question-input__hint {
+  font-size: 11.5px;
+  color: var(--mt-ink-soft);
+  opacity: 0.6;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+body[data-page='question'] .question-input__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 10.5px;
+  color: var(--mt-ink-soft);
+  gap: 12px;
+}
+
+body[data-page='question'] .question-input__counter {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--mt-plum-mid);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-page='question'] .question-input__counter.is-near-limit {
+  color: var(--mt-gold-deep);
+}
+
+body[data-page='question'] .question-input__specific {
+  font-family: var(--mt-font-body);
+  font-weight: 500;
+}
+
+body[data-page='question'] .question-input__specific .thai,
+body[data-page='question'] .question-input__specific-en {
+  opacity: 0.85;
+}
+
+
+/* §6 — Topic chips */
+body[data-page='question'] .question-topics {
+  margin-top: 10px;
+}
+
+body[data-page='question'] .question-topics__eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: var(--mt-gold-deep);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+body[data-page='question'] .question-topics__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+body[data-page='question'] .question-topic-chip {
+  font-family: var(--mt-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: var(--mt-radius-pill);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--mt-plum);
+  border: 1px solid rgba(61, 26, 92, 0.12);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+body[data-page='question'] .question-topic-chip:hover {
+  border-color: var(--mt-gold-deep);
+}
+
+body[data-page='question'] .question-topic-chip.is-active {
+  background: var(--mt-plum);
+  color: var(--mt-cream);
+  border-color: var(--mt-plum);
+  box-shadow: 0 6px 14px -6px rgba(61, 26, 92, 0.40);
+}
+
+body[data-page='question'] .question-topic-chip__th {
+  font-size: 9.5px;
+  opacity: 0.75;
+}
+
+
+/* §7 — Continue CTA (entry) */
+body[data-page='question'] .question-cta-row {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+body[data-page='question'] .question-continue-button {
+  width: 100%;
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 16px 26px;
+  border-radius: var(--mt-radius-pill);
+  border: none;
+  background: var(--mt-cta-grad);
+  color: var(--mt-cream);
+  box-shadow: var(--mt-cta-shadow);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+body[data-page='question'] .question-continue-button:not(:disabled):hover,
+body[data-page='question'] .question-continue-button:not(:disabled):focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    0 20px 36px -8px rgba(209, 40, 120, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  outline: none;
+}
+
+body[data-page='question'] .question-continue-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* §8 — Draw page top bar */
+body[data-page='question-draw'] .question-draw-topbar {
+  text-align: center;
+  margin-top: 6px;
+}
+
+body[data-page='question-draw'] .question-draw-topbar__eyebrow {
+  font-size: 11px;
+  color: var(--mt-plum-mid);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  display: none;
+}
+
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='quick'] .question-draw-topbar__eyebrow--quick { display: block; }
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='story'] .question-draw-topbar__eyebrow--story { display: block; }
+
+
+/* §9 — Draw page question recap (dashed panel) */
+body[data-page='question-draw'] .question-draw-recap {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 14px;
+  padding: 10px 14px;
+  border: 1px dashed var(--mt-rose-pale);
+  text-align: center;
+}
+
+body[data-page='question-draw'] .question-draw-recap__eyebrow {
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--mt-gold-deep);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+body[data-page='question-draw'] .question-draw-recap__text {
+  font-family: var(--mt-font-display);
+  font-size: 15px;
+  color: var(--mt-plum);
+  font-style: italic;
+  line-height: 1.3;
+  margin: 2px 0 0;
+  letter-spacing: -0.01em;
+}
+
+
+/* §10 — Draw page title (Quick / Story swap) */
+body[data-page='question-draw'] .question-draw-title {
+  text-align: center;
+  margin-top: 14px;
+}
+
+body[data-page='question-draw'] .question-draw-title__en,
+body[data-page='question-draw'] .question-draw-title__th {
+  display: none;
+  margin: 0;
+}
+
+body[data-page='question-draw'] .question-draw-title__en {
+  font-family: var(--mt-font-display);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--mt-plum);
+  font-style: italic;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='question-draw'] .question-draw-title__th {
+  font-size: 13px;
+  color: var(--mt-plum-mid);
+  margin-top: 1px;
+  font-weight: 600;
+}
+
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='quick'] .question-draw-title__en--quick,
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='quick'] .question-draw-title__th--quick { display: block; }
+
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='story'] .question-draw-title__en--story,
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='story'] .question-draw-title__th--story { display: block; }
+
+/* Story title is a bit smaller because the text is longer */
+body[data-page='question-draw'] .question-draw-title__en--story { font-size: 20px; }
+body[data-page='question-draw'] .question-draw-title__th--story { font-size: 12px; }
+
+
+/* §11 — Position legend (Story only) */
+body[data-page='question-draw'] .question-draw-legend {
+  display: none;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 0 6px;
+}
+
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='story'] .question-draw-legend {
+  display: flex;
+}
+
+body[data-page='question-draw'] .question-draw-legend__item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--mt-plum);
+  background: rgba(255, 255, 255, 0.65);
+  padding: 4px 8px;
+  border-radius: var(--mt-radius-pill);
+  border: 1px solid rgba(61, 26, 92, 0.08);
+}
+
+body[data-page='question-draw'] .question-draw-legend__num {
+  font-family: var(--mt-font-display);
+  font-style: italic;
+  font-weight: 700;
+  color: var(--mt-gold-deep);
+}
+
+body[data-page='question-draw'] .question-draw-legend__label-th {
+  font-size: 9.5px;
+  color: var(--mt-plum-mid);
+}
+
+
+/* Pull the card-board up slightly into the new layout */
+body[data-page='question-draw'] .card-board--three {
+  margin-top: 14px;
+}
+
+
+/* §12 — Counter */
+body[data-page='question-draw'] .question-draw-counter {
+  text-align: center;
+  margin-top: 14px;
+  font-family: var(--mt-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mt-plum-mid);
+  letter-spacing: 0.06em;
+}
+
+
+/* §13 — Draw CTA row (shuffle + Draw/Reveal button) */
+body[data-page='question-draw'] .question-draw-cta-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* Shuffle row + pill ABOVE the board — matched to the Daily board's .daily-shuffle-btn
+   (↻ gradient icon + ivory pill) so the two selection boards read identically. */
+body[data-page='question-draw'] .question-shuffle-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+body[data-page='question-draw'] .question-draw-reset {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 17px 9px 14px;
+  border-radius: var(--mt-radius-pill);
+  color: var(--mt-plum);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(212, 154, 44, 0.45);
+  box-shadow: 0 6px 16px -8px rgba(61, 26, 92, 0.40),
+              inset 0 1px 0 rgba(255, 255, 255, 0.70);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.2s ease;
+}
+
+body[data-page='question-draw'] .question-draw-reset:hover {
+  transform: translateY(-1px);
+  color: var(--mt-plum);
+  box-shadow: 0 10px 22px -10px rgba(61, 26, 92, 0.50),
+              inset 0 1px 0 rgba(255, 255, 255, 0.80);
+}
+body[data-page='question-draw'] .question-draw-reset:active { transform: scale(0.97); }
+body[data-page='question-draw'] .question-draw-reset:disabled { cursor: default; opacity: 0.62; }
+
+body[data-page='question-draw'] .question-draw-reset__ico {
+  width: 22px; height: 22px; border-radius: 50%; flex: 0 0 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--mt-gold-deep), var(--mt-rose));
+  color: var(--mt-cream); font-size: 14px; font-weight: 700; line-height: 1;
+}
+body[data-page='question-draw'] .question-draw-reset.is-spinning .question-draw-reset__ico {
+  animation: question-shuffle-spin 0.62s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes question-shuffle-spin { to { transform: rotate(360deg); } }
+
+/* Match the Daily board grid exactly: 4 columns + daily card sizing. Overrides the
+   mobile 3-col rule in styles.css (question.css loads last, equal specificity). */
+body[data-page='question-draw'] #question-card-board.card-board--three {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 6px;
+  place-items: center;
+  width: auto;
+  max-width: 320px;
+  margin: 14px auto 0;
+  padding: 4px 0;
+}
+body[data-page='question-draw'] #question-card-board.card-board--three .card-slot {
+  width: 100%;
+  max-width: 64px;
+}
+
+body[data-page='question-draw'] .question-draw-button {
+  width: 100%;
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 16px 26px;
+  border-radius: var(--mt-radius-pill);
+  border: none;
+  background: var(--mt-cta-grad);
+  color: var(--mt-cream);
+  box-shadow: var(--mt-cta-shadow);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+body[data-page='question-draw'] .question-draw-button:not(:disabled):hover,
+body[data-page='question-draw'] .question-draw-button:not(:disabled):focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    0 20px 36px -8px rgba(209, 40, 120, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  outline: none;
+}
+
+body[data-page='question-draw'] .question-draw-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body[data-page='question-draw'] .question-draw-button__label { display: none; }
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='quick'] .question-draw-button__label--quick { display: inline; }
+body[data-page='question-draw'] .question-draw-shell[data-question-spread='story'] .question-draw-button__label--story { display: inline; }
+
+/* Force-fit on short screens: compact the chrome so the question board + Continue
+   fit above the bottom-nav with no scroll (matches the daily/full boards). */
+@media (max-height: 780px) {
+  body[data-page='question-draw'] .question-draw-shell {
+    min-height: 0;
+    padding-top: 4px;
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+  body[data-page='question-draw'] .question-draw-topbar { margin-top: 2px; }
+  body[data-page='question-draw'] .question-draw-recap { margin-top: 8px; }
+  body[data-page='question-draw'] .question-draw-title { margin-top: 8px; }
+  body[data-page='question-draw'] .question-draw-title__en { font-size: 20px; }
+  body[data-page='question-draw'] .question-shuffle-row { margin-top: 8px; }
+  body[data-page='question-draw'] #question-card-board.card-board--three { margin-top: 8px !important; gap: 7px 6px !important; }
+  body[data-page='question-draw'] #question-card-board.card-board--three .card-slot { max-width: 52px; }
+  body[data-page='question-draw'] .question-draw-counter { margin-top: 6px; }
+  body[data-page='question-draw'] .question-draw-cta-row { margin-top: 8px; }
+  /* Footer isn't needed during card selection — hide it so it doesn't force scroll. */
+  body[data-page='question-draw'] #site-footer { display: none; }
+}

@@ -4,18 +4,10 @@ import {
   resolveCardBackPath,
   buildCardImageUrls,
 } from './asset-resolver.js';
+import { getCurrentUserSync } from './auth.js';
 
 // Deck configuration (for future multi-deck support)
 export const DECKS = {
-  'meow-v2': {
-    id: 'meow-v2',
-    name: 'MeowTarot v2',
-    name_th: 'เหมียวฝันหวาน',
-    role: 'default',
-    unlock_day: null,
-    assetsBase: resolveDeckAssetBase('assets/meow-v2'),
-    backImage: buildAssetUrl('assets/meow-v2/00-back.webp'),
-  },
   'moonmallow': {
     id: 'moonmallow',
     name: 'Moonmallow',
@@ -39,7 +31,7 @@ export const DECKS = {
     name: 'Boba Oracle',
     name_th: 'แมวชานม',
     role: 'streak-unlock',
-    unlock_day: 1,
+    unlock_day: 7,
     assetsBase: resolveDeckAssetBase('assets/boba-oracle'),
     backImage: buildAssetUrl('assets/boba-oracle/00-back.webp'),
   },
@@ -48,7 +40,7 @@ export const DECKS = {
     name: 'Meow Nakorn',
     name_th: 'นครหมียว',
     role: 'streak-unlock',
-    unlock_day: 3,
+    unlock_day: 14,
     assetsBase: resolveDeckAssetBase('assets/meow-nakorn'),
     backImage: buildAssetUrl('assets/meow-nakorn/00-back.webp'),
   },
@@ -57,7 +49,7 @@ export const DECKS = {
     name: 'Moonveil',
     name_th: 'จันทราขนฟู',
     role: 'streak-unlock',
-    unlock_day: 7,
+    unlock_day: 21,
     assetsBase: resolveDeckAssetBase('assets/moonveil'),
     backImage: buildAssetUrl('assets/moonveil/00-back.webp'),
   },
@@ -66,7 +58,7 @@ export const DECKS = {
     name: 'Overtime Oracle',
     name_th: 'แมวโอที',
     role: 'streak-unlock',
-    unlock_day: 14,
+    unlock_day: 28,
     assetsBase: resolveDeckAssetBase('assets/overtime-oracle'),
     backImage: buildAssetUrl('assets/overtime-oracle/00-back.webp'),
   },
@@ -75,7 +67,7 @@ export const DECKS = {
     name: 'Pawbit',
     name_th: 'พิกเซลเหมียว',
     role: 'streak-unlock',
-    unlock_day: 30,
+    unlock_day: 45,
     assetsBase: resolveDeckAssetBase('assets/pawbit'),
     backImage: buildAssetUrl('assets/pawbit/00-back.webp'),
   },
@@ -93,7 +85,7 @@ export const DECKS = {
     name: 'Sugar Paws',
     name_th: 'เหมียวละมุน',
     role: 'streak-unlock',
-    unlock_day: 100,
+    unlock_day: 75,
     assetsBase: resolveDeckAssetBase('assets/sugar-paws'),
     backImage: buildAssetUrl('assets/sugar-paws/00-back.webp'),
   },
@@ -102,7 +94,7 @@ export const DECKS = {
     name: 'Sushicat',
     name_th: 'เหมียวซูชิ',
     role: 'streak-unlock',
-    unlock_day: 180,
+    unlock_day: 100,
     assetsBase: resolveDeckAssetBase('assets/sushicat'),
     backImage: buildAssetUrl('assets/sushicat/00-back.webp'),
   },
@@ -111,20 +103,30 @@ export const DECKS = {
     name: 'Inkmess',
     name_th: 'เหมียวยุ่ง',
     role: 'streak-unlock',
-    unlock_day: 365,
+    unlock_day: 125,
     assetsBase: resolveDeckAssetBase('assets/inkmess'),
     backImage: buildAssetUrl('assets/inkmess/00-back.webp'),
   },
 };
 
-export const DEFAULT_DECK_ID = 'meow-v2';
-export const FALLBACK_DECK_ID = 'meow-v2';
+export const DEFAULT_DECK_ID = 'moonmallow';
+export const FALLBACK_DECK_ID = 'moonmallow';
 
 const ACTIVE_DECK_STORAGE_KEY = 'meowtarot_active_deck';
 
 export function getActiveDeckId() {
+  // A ?deck= URL override lets a reading on one origin (apex / the iOS app) carry its
+  // deck to the canonical card-meaning pages on www, where its localStorage active
+  // deck isn't visible — so the meaning-page card image matches the reading's deck.
+  if (typeof window !== 'undefined' && window.location) {
+    try {
+      const param = new URLSearchParams(window.location.search).get('deck');
+      if (param && DECKS[param]) return param;
+    } catch (_) { /* ignore malformed search */ }
+  }
   if (typeof localStorage === 'undefined') return DEFAULT_DECK_ID;
-  return localStorage.getItem(ACTIVE_DECK_STORAGE_KEY) || DEFAULT_DECK_ID;
+  const stored = localStorage.getItem(ACTIVE_DECK_STORAGE_KEY);
+  return (stored && DECKS[stored]) ? stored : DEFAULT_DECK_ID;
 }
 
 export let activeDeckId = getActiveDeckId();
@@ -136,13 +138,17 @@ export function getActiveDeck() {
 export function canUnlockDeck(id) {
   const deck = DECKS[id];
   if (!deck) return false;
+  if (id === 'moonmallow') return true;
+  if (!getCurrentUserSync()) return false;
   if (deck.role === 'default') return true;
   if (!deck.unlock_day) return true;
   if (typeof localStorage === 'undefined') return false;
   try {
     const progress = JSON.parse(localStorage.getItem('meowtarot_user_progress') || '{}');
-    const streak = progress.streak_current ?? 0;
-    return streak >= deck.unlock_day;
+    // Unlock by ACCUMULATED days drawn (total_daily_reads), not consecutive streak —
+    // forgiving: missing a day never sets you back. (User decision 2026-06-18.)
+    const daysDrawn = progress.total_daily_reads ?? 0;
+    return daysDrawn >= deck.unlock_day;
   } catch {
     return false;
   }
@@ -163,17 +169,32 @@ export function setActiveDeck(id) {
   activeDeckId = id;
 }
 
+export function resetActiveDeck() {
+  activeDeckId = DEFAULT_DECK_ID;
+}
+
 export function getAllDecks() {
   return Object.values(DECKS);
 }
 
-export function getNewlyUnlockedDecks(prevStreak, newStreak) {
-  const prev = Math.max(0, Number(prevStreak) || 0);
-  const next = Math.max(0, Number(newStreak) || 0);
+export function getNewlyUnlockedDecks(prevValue, newValue) {
+  // prevValue/newValue are accumulated-days-drawn counts (see canUnlockDeck).
+  const prev = Math.max(0, Number(prevValue) || 0);
+  const next = Math.max(0, Number(newValue) || 0);
   return Object.values(DECKS)
     .filter((deck) => deck.role === 'streak-unlock' && typeof deck.unlock_day === 'number')
     .filter((deck) => deck.unlock_day > prev && deck.unlock_day <= next)
     .sort((a, b) => a.unlock_day - b.unlock_day);
+}
+
+// SINGLE SOURCE of the unlock milestone schedule (sorted day-values of the
+// streak-unlock decks). The progress bar + deck unlocks both read from this, so
+// the numbers can NEVER drift apart. Currently: 7,14,21,28,45,60,75,100,125.
+export function getUnlockMilestones() {
+  return Object.values(DECKS)
+    .filter((deck) => deck.role === 'streak-unlock' && typeof deck.unlock_day === 'number')
+    .map((deck) => deck.unlock_day)
+    .sort((a, b) => a - b);
 }
 
 const DECK_REWARDS_SEEN_STORAGE_KEY = 'meowtarot_deck_rewards_seen';
@@ -209,8 +230,12 @@ export function markDeckRewardSeen(deckId) {
   }
 }
 
-export function getCardBackUrl() {
-  return buildAssetUrl(`assets/${getActiveDeck().id}/00-back.webp`, { versioned: true });
+// thumb:true returns the ~12-20KB 200px back (00-back-200.webp) instead of the
+// full ~100-410KB back — use it where the back renders small (the selection
+// board tiles), NOT for the full-size reading flip / card-image fallback.
+export function getCardBackUrl({ thumb = false } = {}) {
+  const file = thumb ? '00-back-200.webp' : '00-back.webp';
+  return buildAssetUrl(`assets/${getActiveDeck().id}/${file}`, { versioned: true });
 }
 
 export function getFallbackDeck(id = activeDeckId) {
@@ -245,7 +270,7 @@ function joinAssetPathSingleSlash(base = '', subpath = '') {
   return joinAssetPath(base, subpath);
 }
 
-// Card images resolve via meow-v2 with runtime existence fallback.
+// Card images resolve via the active deck pack (getActiveDeckId) with runtime existence fallback.
 export function getCardImageUrl(card, options = {}) {
   const orientation = options.orientation || card.orientation || 'upright';
   const baseId = normalizeId(
@@ -299,6 +324,17 @@ export const applyImgFallback = applyImageFallback;
 // Dynamic deck used by the app
 export let meowTarotCards = [];
 const CARDS_JSON_URL = new URL('../data/cards.json', import.meta.url).toString();
+// Tiny board-only projection (~28KB raw / ~2-3KB compressed) generated by
+// scripts/generate-cards-manifest.mjs. The board waits on this instead of the
+// ~4.6MB cards.json so cold loads aren't blank (BUG-021). Falls back to the
+// full cards.json if missing/invalid.
+const CARDS_MANIFEST_URL = new URL('../data/cards-manifest.json', import.meta.url).toString();
+// Per-language projections of cards.json (generated by
+// scripts/generate-cards-lang.mjs). loadTarotData() fetches the slice for the
+// current locale (EN ~1.5MB / TH ~3.2MB) instead of the full ~4.6MB bilingual
+// deck, falling back to CARDS_JSON_URL if a slice is missing/invalid.
+const CARDS_EN_URL = new URL('../data/cards-en.json', import.meta.url).toString();
+const CARDS_TH_URL = new URL('../data/cards-th.json', import.meta.url).toString();
 export let meowTarotManifest = [];
 
 export const TAROT_DATA_VERSION = '2024-10-01';
@@ -452,6 +488,11 @@ if (typeof window !== 'undefined') {
   window.meowTarotManifest = meowTarotManifest;
 }
 
+// One-time cleanup: the pre-split full-deck cache (~4.6MB under the unsuffixed
+// key) is superseded by per-language slices cached under `${key}_<variant>`.
+// Drop it so it doesn't crowd the localStorage quota.
+clearCachedKey(FULL_DECK_STORAGE_KEY);
+
 export function loadTarotManifest() {
   if (manifestLoaded && meowTarotManifest.length) return Promise.resolve(meowTarotManifest);
 
@@ -471,17 +512,33 @@ export function loadTarotManifest() {
     clearCachedKey(MANIFEST_STORAGE_KEY);
   }
 
-  return fetch(CARDS_JSON_URL, { cache: 'force-cache' })
-    .then((res) => {
-      if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
-      return res.json();
-    })
+  const fetchJson = (url) => fetch(url, { cache: 'force-cache' }).then((res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    return res.json();
+  });
+
+  // Manifest-first (small) with graceful fallback to the full cards.json so a
+  // missing/stale manifest degrades to the old behaviour rather than breaking.
+  return fetchJson(CARDS_MANIFEST_URL)
     .then((data) => {
-      const rawCards = extractCards(data);
-      if (!rawCards.length) {
-        throw new Error('cards.json loaded but no cards array found (expected {cards:[...]} or [...])');
+      const normalized = normalizeCards(extractCards(data).map(minimalizeCard));
+      if (!hasExpectedDeckShape(normalized, MIN_EXPECTED_MANIFEST_SIZE)) {
+        throw new Error('cards-manifest.json shape invalid');
       }
-      meowTarotManifest = normalizeCards(rawCards.map(minimalizeCard));
+      return normalized;
+    })
+    .catch((manifestErr) => {
+      console.warn('Card manifest unavailable; falling back to full cards.json', manifestErr?.message || manifestErr);
+      return fetchJson(CARDS_JSON_URL).then((data) => {
+        const rawCards = extractCards(data);
+        if (!rawCards.length) {
+          throw new Error('cards.json loaded but no cards array found (expected {cards:[...]} or [...])');
+        }
+        return normalizeCards(rawCards.map(minimalizeCard));
+      });
+    })
+    .then((normalizedManifest) => {
+      meowTarotManifest = normalizedManifest;
       manifestLoaded = true;
       writeLocalJSON(MANIFEST_STORAGE_KEY, meowTarotManifest);
       if (typeof window !== 'undefined') {
@@ -500,45 +557,91 @@ export function loadTarotManifest() {
     });
 }
 
-// Load full deck from JSON, fall back to static tarotCards if anything fails
-export function loadTarotData() {
-  if (fullDeckLoaded && meowTarotCards.length) return Promise.resolve(meowTarotCards);
+// Current locale for picking a per-language deck slice. Mirrors getUrlLanguage()
+// in common.js (?lang/?l override, else /th/ path prefix) without importing it,
+// to keep the data layer dependency-free.
+function currentLangForData() {
+  if (typeof window === 'undefined') return 'en';
+  try {
+    const params = new URLSearchParams(window.location.search || '');
+    const param = (params.get('lang') || params.get('l') || '').toLowerCase();
+    if (param === 'th' || param === 'en') return param;
+    return /^\/th(\/|$)/.test(window.location.pathname || '/') ? 'th' : 'en';
+  } catch (error) {
+    return 'en';
+  }
+}
 
-  const cached = readLocalJSON(FULL_DECK_STORAGE_KEY);
+// Which deck to load: 'en'/'th' slice for a single locale, or 'both' (the full
+// bilingual cards.json) for pages that render both languages at once.
+function resolveDeckVariant(mode) {
+  if (mode === 'both' || mode === 'full') return 'both';
+  if (mode === 'en' || mode === 'th') return mode;
+  return currentLangForData();
+}
+
+function deckUrlForVariant(variant) {
+  if (variant === 'en') return CARDS_EN_URL;
+  if (variant === 'th') return CARDS_TH_URL;
+  return CARDS_JSON_URL;
+}
+
+let loadedDeckVariant = null;
+
+// Load the deck from JSON, fall back to static tarotCards if anything fails.
+// mode: undefined → current locale slice; 'en'/'th' → that slice; 'both'/'full'
+// → the full bilingual cards.json (use only when both languages render at once).
+export function loadTarotData(mode) {
+  const variant = resolveDeckVariant(mode);
+  if (fullDeckLoaded && loadedDeckVariant === variant && meowTarotCards.length) {
+    return Promise.resolve(meowTarotCards);
+  }
+
+  const storageKey = `${FULL_DECK_STORAGE_KEY}_${variant}`;
+  const cached = readLocalJSON(storageKey);
   if (Array.isArray(cached) && cached.length) {
     const normalizedDeck = normalizeCards(cached);
     if (hasExpectedDeckShape(normalizedDeck, MIN_EXPECTED_DECK_SIZE)) {
       meowTarotCards = normalizedDeck;
       fullDeckLoaded = true;
-      writeLocalJSON(FULL_DECK_STORAGE_KEY, meowTarotCards);
+      loadedDeckVariant = variant;
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
       }
       return Promise.resolve(meowTarotCards);
     }
-    console.warn('Ignoring stale tarot full-deck cache; refetching cards payload.');
-    clearCachedKey(FULL_DECK_STORAGE_KEY);
+    console.warn('Ignoring stale tarot deck cache; refetching cards payload.');
+    clearCachedKey(storageKey);
   }
 
-  return fetch(CARDS_JSON_URL, { cache: 'force-cache' })
-    .then((res) => {
-      if (!res.ok) throw new Error(`Failed to fetch data/cards.json (HTTP ${res.status})`);
-      return res.json();
-    })
-    .then((data) => {
-      // Support BOTH:
-      // 1) { cards: [...] }
-      // 2) [ ... ]
-      const rawCards = extractCards(data);
+  const fetchDeck = (url) => fetch(url, { cache: 'force-cache' }).then((res) => {
+    if (!res.ok) throw new Error(`Failed to fetch ${url} (HTTP ${res.status})`);
+    return res.json();
+  }).then((data) => {
+    // Support BOTH { cards: [...] } and [ ... ].
+    const rawCards = extractCards(data);
+    if (!rawCards.length) {
+      throw new Error(`${url} loaded but no cards array found (expected {cards:[...]} or [...])`);
+    }
+    return rawCards;
+  });
 
-      if (!rawCards.length) {
-        throw new Error('cards.json loaded but no cards array found (expected {cards:[...]} or [...])');
-      }
+  const primaryUrl = deckUrlForVariant(variant);
+  // Per-language slice first; gracefully degrade to the full bilingual deck so a
+  // missing/invalid slice behaves like the old single-file load rather than breaking.
+  const fetchChain = variant === 'both'
+    ? fetchDeck(CARDS_JSON_URL)
+    : fetchDeck(primaryUrl).catch((sliceErr) => {
+        console.warn(`Per-language deck (${primaryUrl}) unavailable; falling back to full cards.json`, sliceErr?.message || sliceErr);
+        return fetchDeck(CARDS_JSON_URL);
+      });
 
+  return fetchChain
+    .then((rawCards) => {
       meowTarotCards = normalizeCards(rawCards);
       fullDeckLoaded = true;
-      writeLocalJSON(FULL_DECK_STORAGE_KEY, meowTarotCards);
-
+      loadedDeckVariant = variant;
+      writeLocalJSON(storageKey, meowTarotCards);
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
       }
@@ -548,6 +651,7 @@ export function loadTarotData() {
       console.error('Failed to load tarot data (falling back to built-in tarotCards)', err);
       meowTarotCards = normalizeCards(tarotCards);
       fullDeckLoaded = true;
+      loadedDeckVariant = variant;
       if (typeof window !== 'undefined') {
         window.meowTarotCards = meowTarotCards;
       }

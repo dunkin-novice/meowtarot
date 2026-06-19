@@ -6,8 +6,9 @@
  * Self-contained DOM injection; no auto-dismiss (user action required).
  */
 
-import { setActiveDeck, markDeckRewardSeen, hasSeenDeckReward } from './data.js';
+import { markDeckRewardSeen, hasSeenDeckReward } from './data.js';
 import { translations } from './common.js';
+import { getCurrentUserSync, loginWithProvider } from './auth.js';
 
 const STYLE_FLAG = '__mt_deck_reward_styles_injected';
 const POPUP_ID = 'mt-deck-reward-popup';
@@ -228,6 +229,13 @@ export function showDeckRewardPopup(deck, lang = 'en') {
 
   const titleText = fmt(dict.deckRewardTitle, { deck: primaryName });
   const bodyText = fmt(dict.deckRewardBody, { day: dayValue, deck: primaryName });
+  const isAuthed = !!getCurrentUserSync();
+  const primaryCtaText = isAuthed
+    ? dict.deckRewardClaimCta
+    : (dict.deckRewardSignInCta || 'Sign in to claim');
+  const signInNote = isAuthed
+    ? ''
+    : `<p class="mt-dr-subtitle">${escapeHtml(dict.deckRewardSignInBody || 'Sign in to save your deck unlock across devices.')}</p>`;
 
   overlay.innerHTML = `
     <div class="mt-dr-sheet" role="document">
@@ -242,12 +250,17 @@ export function showDeckRewardPopup(deck, lang = 'en') {
       <h2 id="mt-dr-title" class="mt-dr-title">${escapeHtml(titleText)}</h2>
       ${secondaryName ? `<p class="mt-dr-subtitle">${escapeHtml(secondaryName)}</p>` : ''}
       <p class="mt-dr-body">${escapeHtml(bodyText)}</p>
-      <button type="button" class="mt-dr-cta-primary">${escapeHtml(dict.deckRewardClaimCta)}</button>
+      ${signInNote}
+      <button type="button" class="mt-dr-cta-primary">${escapeHtml(primaryCtaText)}</button>
       <button type="button" class="mt-dr-cta-secondary">${escapeHtml(dict.deckRewardLaterCta)}</button>
     </div>
   `;
 
   document.body.appendChild(overlay);
+
+  import('./analytics.js')
+    .then(({ trackPopupShown }) => trackPopupShown({ popup: 'deck_reward', surface: document.body?.dataset?.page || 'page', deckId: deck.id, locale: lang }))
+    .catch(() => {});
 
   requestAnimationFrame(() => {
     overlay.classList.add('mt-dr-active');
@@ -265,11 +278,31 @@ export function showDeckRewardPopup(deck, lang = 'en') {
   const secondaryBtn = overlay.querySelector('.mt-dr-cta-secondary');
 
   if (primaryBtn) {
-    primaryBtn.addEventListener('click', () => {
-      try { setActiveDeck(deck.id); } catch (_) { /* swallow */ }
-      markDeckRewardSeen(deck.id);
-      dismiss();
-    }, { once: true });
+    if (isAuthed) {
+      primaryBtn.addEventListener('click', () => {
+        // BUG-016 #3: defer the active-deck switch instead of flipping it live
+        // on the result page. Switching mid-session desynced the already-
+        // rendered result (drawn deck) from the share poster, which reads the
+        // live active deck at generation time. Routing through the same
+        // pending-claim mechanism the unauth path uses keeps the current
+        // reading + its poster on the deck it was drawn with; auth.js applies
+        // the pending deck on the next page load (onAuthStateChange), so the
+        // new deck takes effect from the user's next reading onward. (Restyling
+        // the on-screen reading on switch is a deferred future feature.)
+        try { localStorage.setItem('meowtarot_pending_deck_claim', deck.id); } catch (_) { /* swallow */ }
+        markDeckRewardSeen(deck.id);
+        dismiss();
+      }, { once: true });
+    } else {
+      primaryBtn.addEventListener('click', async () => {
+        try {
+          localStorage.setItem('meowtarot_pending_deck_claim', deck.id);
+          await loginWithProvider('google');
+        } catch (error) {
+          console.warn('Sign-in for deck claim failed', error);
+        }
+      }, { once: true });
+    }
   }
 
   if (secondaryBtn) {

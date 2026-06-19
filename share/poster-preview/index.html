@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MeowTarot · Daily Share Poster — Option A (built)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Prata&family=Space+Grotesk:wght@400;500;600;700&family=Noto+Serif+Thai:ital,wght@0,500;0,600;1,500;1,600&family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --plum:#3d1a5c; --plumMid:#6a3f8e; --gold:#bf8a20; --goldSoft:rgba(191,138,32,.62);
+    --display:'Cormorant Garamond','Noto Serif Thai',serif;
+    --displayTH:'Noto Serif Thai','Cormorant Garamond',serif;
+    --eyebrow:'Space Grotesk','IBM Plex Sans Thai',sans-serif;
+    --eyebrowTH:'IBM Plex Sans Thai','Space Grotesk',sans-serif;
+    --scale:0.32;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#1b1024;color:#efe4f5;font-family:var(--eyebrow);padding:32px 24px 80px}
+  h1{font-family:var(--display);font-style:italic;font-weight:600;font-size:30px;color:#f3e3ff;margin-bottom:6px}
+  .sub{font-size:13px;color:#b79fce;max-width:860px;line-height:1.55;margin-bottom:6px}
+  .note{font-size:12px;color:#8d77a8;max-width:880px;line-height:1.5;margin-bottom:26px}
+  .flag{font-size:12px;color:#e7b955;max-width:880px;line-height:1.5;margin-bottom:26px}
+  .row{display:flex;gap:48px;flex-wrap:wrap;align-items:flex-start}
+  .col{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .cap{font-size:12px;color:#b79fce;text-align:center;max-width:calc(1080px * var(--scale));line-height:1.5}
+
+  .stage{width:calc(1080px * var(--scale));height:calc(1920px * var(--scale));overflow:hidden;
+    border-radius:calc(40px * var(--scale));box-shadow:0 24px 60px -20px rgba(0,0,0,.7)}
+  .poster{width:1080px;height:1920px;position:relative;overflow:hidden;
+    transform:scale(var(--scale));transform-origin:top left;background:#f4e6ef}
+  .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  .veil{position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg,rgba(255,250,252,.08) 0%,rgba(255,247,251,.0) 42%,rgba(244,222,235,.16) 100%)}
+  .L{position:absolute;left:0;right:0;text-align:center;z-index:3}
+
+  /* exact code constants (1080x1920) — canvas centers all of these */
+  .wordmark,.date,.badge,.name,.tagline{text-align:center}
+  .wordmark{position:absolute;left:0;right:0;top:80px;font-family:var(--display);font-style:italic;font-weight:500;font-size:60px;color:var(--plum);letter-spacing:.05em;z-index:3}
+  .goldline{position:absolute;left:50%;top:164px;transform:translateX(-50%);width:66px;height:3px;background:var(--goldSoft);z-index:3}
+  .date{position:absolute;left:0;right:0;top:205px;font-family:var(--eyebrow);font-size:28px;font-weight:600;letter-spacing:.30em;color:var(--gold);text-transform:uppercase;z-index:3}
+  .cardwrap{position:absolute;left:50%;top:300px;transform:translateX(-50%);z-index:3;width:547px;height:820px}
+  .aura{position:absolute;left:50%;top:50%;width:787px;height:1060px;transform:translate(-50%,-50%);border-radius:50%;
+    background:radial-gradient(ellipse at center, rgba(255,225,180,.55) 0%, rgba(255,223,178,.22) 45%, rgba(255,223,178,0) 70%);z-index:0}
+  .card{position:relative;width:547px;height:820px;object-fit:cover;border-radius:30px;
+    box-shadow:0 30px 60px -10px rgba(42,17,66,.40);z-index:1}
+  .badge{position:absolute;left:0;right:0;top:1186px;font-family:var(--eyebrow);font-size:27px;font-weight:700;letter-spacing:.30em;color:var(--gold);text-transform:uppercase;z-index:3}
+  .name{position:absolute;left:0;right:0;top:1224px;font-family:var(--display);font-style:italic;font-weight:500;font-size:132px;line-height:1.02;color:var(--plum);z-index:3}
+  .ornament{position:absolute;left:0;right:0;top:1384px;height:24px;z-index:3}
+  .ornament .ln{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:133px;height:3px;background:var(--goldSoft)}
+  .ornament .dia{position:absolute;left:50%;top:3px;transform:translateX(-50%) rotate(45deg);width:17px;height:17px;background:var(--gold)}
+  .tagline{position:absolute;left:120px;right:120px;top:1430px;font-family:var(--display);font-style:italic;font-weight:500;font-size:54px;line-height:1.28;color:var(--plum);z-index:3}
+
+  /* TH locale font swaps */
+  .th .name,.th .tagline{font-family:var(--displayTH);font-style:italic}
+  .th .badge,.th .date{font-family:var(--eyebrowTH)}
+  .th .date{text-transform:none;letter-spacing:.18em}
+  .th .badge{text-transform:none;letter-spacing:.16em}
+</style>
+</head>
+<body>
+  <h1>Daily Share Poster — Option A (as built in poster.js)</h1>
+  <p class="sub">Rendered at true story-preset proportions (1080×1920) with the real moonmallow card art + daily background, the exact layout constants now in <code>share/poster.js</code>, and Cormorant Garamond. Dates are <b>live</b> (<code>new Date()</code>). Tagline shows the <b>full</b> reading line, not a shortened one.</p>
+  <p class="note">Single language per locale: the EN poster is English-only; the TH poster is Thai-only (the “MeowTarot” brand wordmark stays Latin in both). Reading text is the real Star <code>reading_summary_preview</code>.</p>
+  <p class="flag">Card name is the <b>English</b> name in both locales (per your direction) — so the TH poster shows “The Star”, not “ดาว”. Everything else on the TH poster (date, position badge, tagline) stays Thai.</p>
+
+  <div class="row">
+
+    <!-- EN -->
+    <div class="col">
+      <span class="tag">English locale</span>
+      <div class="stage"><div class="poster">
+        <img class="bg" src="https://cdn.meowtarot.com/backgrounds/bg-daily-upright-v2.webp?v=2026-03" referrerpolicy="no-referrer" alt="" />
+        <div class="veil"></div>
+        <div class="wordmark">MeowTarot</div>
+        <div class="goldline"></div>
+        <div class="date" id="dateEN">THURSDAY · 28 MAY</div>
+        <div class="cardwrap"><div class="aura"></div>
+          <img class="card" src="https://cdn.meowtarot.com/assets/moonmallow/18-the-star-upright.webp?v=2026-03" referrerpolicy="no-referrer" alt="The Star" /></div>
+        <div class="badge">Today's Card · Upright</div>
+        <div class="name">The Star</div>
+        <div class="ornament"><div class="ln"></div><div class="dia"></div></div>
+        <div class="tagline">“Overcoming past hardships brings present peace. The light of hope guides you toward a future where healing and dreams become reality.”</div>
+      </div></div>
+      <p class="cap">EN — wordmark · gold line · date · card+aura · gold badge · big italic name · gold diamond · full reading tagline.</p>
+    </div>
+
+    <!-- TH -->
+    <div class="col">
+      <span class="tag">Thai locale</span>
+      <div class="stage"><div class="poster th">
+        <img class="bg" src="https://cdn.meowtarot.com/backgrounds/bg-daily-upright-v2.webp?v=2026-03" referrerpolicy="no-referrer" alt="" />
+        <div class="veil"></div>
+        <div class="wordmark">MeowTarot</div>
+        <div class="goldline"></div>
+        <div class="date" id="dateTH">วันพฤหัสบดี · ๒๘ พฤษภาคม</div>
+        <div class="cardwrap"><div class="aura"></div>
+          <img class="card" src="https://cdn.meowtarot.com/assets/moonmallow/18-the-star-upright.webp?v=2026-03" referrerpolicy="no-referrer" alt="ดาว" /></div>
+        <div class="badge">ไพ่ของวันนี้ · ตั้งตรง</div>
+        <div class="name">The Star</div>
+        <div class="ornament"><div class="ln"></div><div class="dia"></div></div>
+        <div class="tagline" style="font-size:50px">“การผ่านพ้นความยากลำบากในอดีตนำมาซึ่งความสงบในปัจจุบัน แสงสว่างแห่งความหวังกำลังนำทางคุณไปสู่อนาคตที่ความฝันและการเยียวยาจะเกิดขึ้นจริง”</div>
+      </div></div>
+      <p class="cap">TH — same layout, Thai-only copy, Noto Serif Thai display + IBM Plex Sans Thai eyebrows.</p>
+    </div>
+
+  </div>
+
+<script>
+  function liveDate(locale, upper){
+    var p = new Intl.DateTimeFormat(locale,{weekday:'long',day:'numeric',month:'long'}).formatToParts(new Date());
+    var g = function(t){var x=p.find(function(e){return e.type===t;});return x?x.value:'';};
+    var s = g('weekday')+' · '+g('day')+' '+g('month');
+    return upper ? s.toUpperCase() : s;
+  }
+  document.getElementById('dateEN').textContent = liveDate('en-US', true);
+  document.getElementById('dateTH').textContent = liveDate('th-TH', false);
+</script>
+</body>
+</html>

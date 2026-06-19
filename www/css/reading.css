@@ -1,0 +1,966 @@
+/*
+ * MeowTarot — Phase 5: Reading Result Page Structural Theme
+ * css/reading.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * Replaces the Phase 4 reading.css with a layout that matches the design
+ * doc's two question-result screens:
+ *   - ScreenQuickPullResult (1 card, big centered card art + lucky chip)
+ *   - ScreenSpread          (3 cards, stacked rows with floating position
+ *                            pills above each card)
+ *
+ * Layout swap is keyed off data-spread-count, set by js/reading.js
+ * renderQuestion() on the readingContent element AND on the spread panel.
+ *
+ * The page also renders extra functional panels (topic-story, takeaway,
+ * energy balance, phase, retention, internal-links) that the design doc
+ * does NOT show. Per the Phase 5 spec, those panels are KEPT and restyled
+ * here with --mt-* tokens and the design's surface treatment.
+ *
+ * REQUIRES: css/theme-tokens.css (--mt-* namespace, Phase 3 + 5).
+ * LOAD ORDER: LAST. After css/phase-3-redesign.css.
+ *
+ * SECTIONS:
+ *   §1  Page background + shell layout
+ *   §2  Reading-intro (visually hidden; SEO-only in question mode)
+ *   §3  Reading content wrapper
+ *   §4  Question recap panel (dashed)
+ *   §5  Spread panel — Quick layout (1 card big centered)
+ *   §6  Spread panel — Story layout (3 cards stacked rows)
+ *   §7  Spread position pill (Story only)
+ *   §8  Card art sizing per layout
+ *   §9  Spread caption (orientation, card name, Thai name)
+ *   §10 Spread lucky color chip (Quick only)
+ *   §11 Spread inline interpretation (EN + TH stacked)
+ *   §12 Topic-story panel (deeper interpretations)
+ *   §13 Other panels (takeaway, energy, phase, retention)
+ *   §14 Internal-links footer panel
+ *   §15 Action row buttons
+ *   §16 Footer nav pills
+ *
+ * The .panel--celtic-cross layout (Full reading) is intentionally NOT
+ * styled here — Full mode keeps its existing styling.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background + shell layout */
+body[data-page='reading'] {
+  background: var(--mt-bg-gradient-daily-after);
+  color: var(--mt-plum);
+  font-family: var(--mt-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body[data-page='reading'] .page-shell {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 8px 24px 110px;
+  min-height: calc(100dvh - 60px);
+}
+
+body[data-page='reading'] .reading-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+body[data-page='reading'] .thai,
+body[data-page='reading'] .thai-serif {
+  font-family: var(--mt-font-thai);
+}
+
+body[data-page='reading'] .thai-serif {
+  font-family: var(--mt-font-display-th);
+}
+
+
+/* §2 — Reading-intro: keep in DOM for SEO, hide visually on question mode.
+ * (For daily / full modes the H1 still renders.) */
+body[data-page='reading'] .reading-content[data-spread-count] ~ .action-row,
+body[data-page='reading'] .reading-content[data-spread-count] {
+  /* spread-count is only set in question mode by renderQuestion. Use it as
+   * a signal to suppress the intro H1 visually while keeping the title for
+   * screen readers / SEO. */
+}
+
+body[data-page='reading'] .reading-content[data-spread-count='1'] ~ .reading-intro,
+body[data-page='reading'] .reading-content[data-spread-count='3'] ~ .reading-intro {
+  /* no-op fallback — reading-intro is a sibling BEFORE reading-content; we
+   * can't reach it via a forward selector. Handled via the parent rule
+   * below using :has() with a question-recap descendant. */
+}
+
+body[data-page='reading'] .reading-card:has(.panel--question-recap) .reading-intro {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* §3 — Reading content wrapper */
+body[data-page='reading'] .reading-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+
+/* §4 — Question recap (dashed panel) */
+body[data-page='reading'] .panel--question-recap {
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 14px;
+  padding: 10px 14px;
+  border: 1px dashed var(--mt-rose-pale);
+  text-align: center;
+  box-shadow: none;
+}
+
+body[data-page='reading'] .question-recap__eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--mt-gold-deep);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+body[data-page='reading'] .question-recap__text {
+  font-family: var(--mt-font-display);
+  font-size: 16px;
+  color: var(--mt-plum);
+  font-style: italic;
+  line-height: 1.3;
+  margin-top: 2px;
+  letter-spacing: -0.01em;
+}
+
+
+/* §5 — Spread panel: Quick layout (1 card big centered) */
+body[data-page='reading'] .panel--spread {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .reading-spread-grid {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .reading-spread-grid::before {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(232, 103, 138, 0.40), transparent 65%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .reading-spread-card {
+  width: 100%;
+  max-width: 320px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .reading-spread-card .spread-position-pill {
+  display: none;
+}
+
+
+/* §6 — Spread panel: Story layout (3 cards stacked rows) */
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .reading-spread-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .reading-spread-card {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 20px;
+  border: none;
+  padding: 14px 16px;
+  box-shadow: var(--mt-soft-shadow);
+  cursor: pointer;
+  text-align: left;
+  align-items: stretch;
+  font-family: inherit;
+  color: var(--mt-plum);
+  margin-top: 4px;
+}
+
+
+/* §7 — Position pill (Story only) */
+body[data-page='reading'] .spread-position-pill {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  font-family: var(--mt-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  background: var(--mt-plum);
+  color: var(--mt-cream);
+  padding: 4px 10px;
+  border-radius: var(--mt-radius-pill);
+  display: inline-flex;
+  align-items: baseline;
+}
+
+body[data-page='reading'] .spread-position-pill__th {
+  font-size: 9.5px;
+  opacity: 0.85;
+  letter-spacing: 0.05em;
+  text-transform: none;
+}
+
+
+/* §8 — Card art sizing per layout */
+body[data-page='reading'] .reading-spread-card .card-art.is-thumb {
+  flex-shrink: 0;
+  border-radius: var(--mt-radius-card);
+  overflow: hidden;
+  box-shadow: 0 20px 40px -16px rgba(61, 26, 92, 0.45);
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .card-art.is-thumb {
+  width: 220px;
+  max-width: 80vw;
+  aspect-ratio: 1568 / 2720;
+  margin: 0 auto;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .card-art.is-thumb {
+  width: 86px;
+  aspect-ratio: 1568 / 2720;
+}
+
+body[data-page='reading'] .card-art.is-thumb .card-art-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Override Phase 4 styles.css `.card-art.is-thumb .card-art-img`
+   * cap (max-width:120px + aspect-ratio:3/5). With the cap in place,
+   * the IMG renders 120px wide × 382px tall inside the 220px Phase 5
+   * container and object-fit:cover crops the card art horizontally
+   * to fill the narrow box — which clips the sides of the
+   * illustration ("card image got cut"). max-width:none + aspect-
+   * ratio:auto let the IMG fill the parent's 220×382 box exactly so
+   * no cropping is needed. */
+  max-width: none;
+  aspect-ratio: auto;
+  object-fit: cover;
+}
+
+
+/* §9 — Spread caption (orientation, card name, Thai name) */
+body[data-page='reading'] .spread-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-caption {
+  align-items: center;
+  margin-top: 14px;
+  gap: 4px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-caption {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+body[data-page='reading'] .spread-orientation {
+  font-family: var(--mt-font-body);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  /* --mt-gold-deep (#d49a2c) on the near-white card is only ~2.5:1 — well
+   * below WCAG AA, the worst-reading text on the result page. Use a deeper
+   * gold scoped to this label (not the shared token) for ~5:1, and ease the
+   * heavy 0.3em tracking a touch for legibility. */
+  color: #8d6a14;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+body[data-page='reading'] .spread-label {
+  font-family: var(--mt-font-body);
+  font-size: 11px;
+  color: var(--mt-plum-mid);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The "Your takeaway" summary-box card names default to #8a719f (~4.25:1 on the
+ * near-white panel) — just under WCAG AA. Deepen the lavender a touch for ~4.8:1
+ * without changing the hue. Same specificity as the styles.css rule; reading.css
+ * loads later so this wins (styles.css stays untouched). */
+body[data-page='reading'][data-reading-mode='full'] .full-integration-box__source {
+  color: #7a6090;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-label {
+  display: none; /* position is in the floating pill on Story */
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-label {
+  display: none; /* position is meaningless for Quick (no position) */
+}
+
+body[data-page='reading'] .spread-card-name {
+  font-family: var(--mt-font-display);
+  font-weight: 600;
+  font-style: italic;
+  color: var(--mt-plum);
+  letter-spacing: -0.01em;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-card-name {
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: 4px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-card-name {
+  font-size: 18px;
+  line-height: 1.05;
+}
+
+body[data-page='reading'] .spread-card-name-th {
+  color: var(--mt-plum-mid);
+  font-weight: 600;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-card-name-th {
+  font-size: 17px;
+  margin-top: 2px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-card-name-th {
+  font-size: 11px;
+  margin-top: 1px;
+}
+
+
+/* §10 — Lucky color chip (Quick only) */
+body[data-page='reading'] .spread-lucky-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  border-radius: var(--mt-radius-pill);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--mt-gold-pale);
+  font-family: var(--mt-font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  margin-top: 10px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-lucky-chip {
+  display: none;
+}
+
+body[data-page='reading'] .spread-lucky-chip__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--mt-rose);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.15);
+}
+
+
+/* §11 — Inline interpretation (EN + TH stacked) */
+body[data-page='reading'] .spread-inline-text {
+  margin: 0;
+  font-family: var(--mt-font-body);
+  line-height: 1.6;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-inline-text {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: var(--mt-soft-shadow);
+  font-size: 13.5px;
+  margin-top: 14px;
+  width: 100%;
+  text-align: left;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-inline-text--en {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-inline-text--th {
+  color: var(--mt-plum-mid);
+  font-size: 12.5px;
+  line-height: 1.7;
+  margin-top: 8px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-inline-text--en {
+  font-size: 12.5px;
+  color: var(--mt-plum);
+  margin-top: 8px;
+}
+
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-inline-text--th {
+  font-size: 11.5px;
+  color: var(--mt-ink-soft);
+  line-height: 1.55;
+  margin-top: 6px;
+}
+
+
+/* §12 — Topic-story panel (deeper interpretations) */
+body[data-page='reading'] .panel--question-story {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+  padding: 16px 18px;
+}
+
+body[data-page='reading'] .deeper-section h3 {
+  font-family: var(--mt-font-display);
+  font-size: 16px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--mt-plum);
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='reading'] .question-story-item {
+  margin-top: 12px;
+}
+
+body[data-page='reading'] .question-story-item__label {
+  font-family: var(--mt-font-body);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--mt-gold-deep);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+body[data-page='reading'] .question-story-item__body {
+  font-family: var(--mt-font-body);
+  font-size: 13.5px;
+  color: var(--mt-plum);
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+
+
+/* §13 — Other panels: takeaway / energy / phase / retention */
+body[data-page='reading'] .panel--question-takeaway,
+body[data-page='reading'] .panel.energy-balance,
+body[data-page='reading'] .panel.phase-panel,
+body[data-page='reading'] .panel.retention-panel,
+body[data-page='reading'] .panel {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-panel);
+  box-shadow: var(--mt-shadow-panel);
+  padding: 16px 18px;
+}
+
+body[data-page='reading'] .panel--question-takeaway {
+  border-color: var(--mt-gold-soft);
+  box-shadow: var(--mt-shadow-glow-gold), var(--mt-shadow-panel);
+}
+
+body[data-page='reading'] .question-takeaway__lead {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .question-takeaway__advice {
+  color: var(--mt-plum-mid);
+}
+
+body[data-page='reading'] .energy-balance__title {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .energy-interpretation {
+  color: var(--mt-plum-mid);
+}
+
+body[data-page='reading'] .phase-panel__label {
+  color: var(--mt-gold-deep);
+}
+
+body[data-page='reading'] .phase-panel__desc {
+  color: var(--mt-plum-mid);
+}
+
+body[data-page='reading'] .retention-panel__stat {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .retention-panel__soft {
+  color: var(--mt-plum-mid);
+}
+
+
+/* §14 — Internal-links panel + footer nav pills */
+body[data-page='reading'] .panel--internal-links {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-gold-soft);
+}
+
+body[data-page='reading'] .card-meaning-footer-nav {
+  margin-top: 14px;
+}
+
+body[data-page='reading'] .reading-cta-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+body[data-page='reading'] .footer-nav-pill {
+  background: var(--mt-surface-card);
+  color: var(--mt-plum);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: var(--mt-radius-pill);
+  box-shadow: var(--mt-shadow-panel);
+  text-decoration: none;
+  font-family: var(--mt-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  text-align: center;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+body[data-page='reading'] .footer-nav-pill:hover {
+  border-color: var(--mt-gold-deep);
+  box-shadow: var(--mt-shadow-glow), var(--mt-shadow-panel);
+  transform: translateY(-1px);
+}
+
+
+/* §15 — Action row buttons */
+body[data-page='reading'] .action-row {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+body[data-page='reading'] .action-row .primary,
+body[data-page='reading'] .action-row .ghost {
+  flex: 1 1 0;
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+body[data-page='reading'] .action-row .primary {
+  border: none;
+  background: var(--mt-cta-grad);
+  color: var(--mt-cream);
+  box-shadow: var(--mt-cta-shadow);
+}
+
+body[data-page='reading'] .action-row .primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 20px 36px -8px rgba(209, 40, 120, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+body[data-page='reading'] .action-row .ghost {
+  background: rgba(255, 255, 255, 0.60);
+  color: var(--mt-plum);
+  border: 1px solid var(--mt-plum);
+}
+
+body[data-page='reading'] .action-row .ghost:hover {
+  background: rgba(255, 255, 255, 0.80);
+  border-color: var(--mt-plum-deep);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §17 — Celtic Cross (mode=full) — design-doc additions
+ *
+ * The cross+staff grid itself lives in css/styles.css under the existing
+ * body[data-page='reading'][data-reading-mode='full'] selectors. This
+ * block adds the design-doc embellishments:
+ *   - Gold number badge top-left of each card (JS-injected
+ *     .celtic-slot__badge inside renderFull).
+ *   - Hide the .spread-label / .spread-orientation inside celtic-cross
+ *     slots — the design's on-card UI shows only the card art + number;
+ *     position / orientation info lives in the summary panel below.
+ *   - Reorder the right-column staff so Self (slot 7) is at the top and
+ *     Outcome (slot 10) is at the bottom (matches design; the original
+ *     styles.css mapping had Outcome at top).
+ *   - New .panel--celtic-summary "Ten cards · ten doors" 2-column grid.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+
+/* Gold number badge */
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot {
+  position: relative; /* anchor the badge */
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot__badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--mt-gold-deep);
+  color: var(--mt-plum-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mt-font-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 11px;
+  border: 1.5px solid var(--mt-cream);
+  box-shadow: 0 2px 5px rgba(61, 26, 92, 0.40);
+  z-index: 3;
+}
+
+/* Hide caption text on celtic-cross slots — only card art + badge show */
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot .spread-caption {
+  display: none;
+}
+
+
+/* Right-column staff: design order is 7-Self (top) → 8 → 9 → 10-Outcome (bottom).
+ * Existing styles.css has Outcome at top; override here. Same specificity as
+ * the existing rule, source order wins (reading.css loads after styles.css). */
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--power       { grid-area: 1 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--environment { grid-area: 2 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--hopes       { grid-area: 3 / 4; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--outcome     { grid-area: 4 / 4; }
+
+
+/* Celtic Cross summary panel ("Ten cards · ten doors") */
+body[data-page='reading'][data-reading-mode='full'] .panel--celtic-summary {
+  background: var(--mt-surface-card);
+  border: 1px solid var(--mt-nav-border);
+  border-radius: 18px;
+  box-shadow: var(--mt-soft-shadow);
+  padding: 14px 16px;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__title {
+  font-family: var(--mt-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--mt-plum);
+  letter-spacing: -0.01em;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__title-alt {
+  font-size: 10px;
+  color: var(--mt-plum-mid);
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+  row-gap: 6px;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--mt-gold-deep);
+  color: var(--mt-plum-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mt-font-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__text {
+  flex: 1;
+  min-width: 0;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__name {
+  font-family: var(--mt-font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--mt-plum);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='reading'][data-reading-mode='full'] .celtic-summary__pos {
+  font-family: var(--mt-font-body);
+  font-size: 9px;
+  color: var(--mt-ink-soft);
+  margin-top: 1px;
+  line-height: 1.2;
+}
+
+/* On smaller viewports, drop to single column for readability */
+@media (max-width: 380px) {
+  body[data-page='reading'][data-reading-mode='full'] .celtic-summary__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * §18 — Daily-result-specific additions
+ *
+ * renderDailyDetails (js/reading.js) emits the Quick-Pull-style
+ * panel--spread[data-spread-count='1'] structure for the single-card
+ * case — most of the layout (card art, orientation eyebrow, name, lucky
+ * chip) is already covered by §3-§11. This block adds the daily-only
+ * extras:
+ *
+ *   - .spread-archetype (italic bilingual line under .spread-card-name-th)
+ *   - .daily-interp-panel ("For today" header + EN+TH body + divider +
+ *     Keyword row), sibling of .panel--spread.
+ *
+ * The data-spread-count='1' attribute is the cascade key — these rules
+ * only render the daily result panel when single-card mode is active.
+ * Quick-Pull question results (also data-spread-count='1') don't render
+ * an archetype or "For today" header because renderQuestion doesn't emit
+ * those elements.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-archetype {
+  font-family: var(--mt-font-display);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--mt-plum-mid);
+  margin-top: 4px;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+body[data-page='reading'] .daily-interp-panel {
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: var(--mt-soft-shadow);
+}
+
+body[data-page='reading'] .daily-interp-panel__header {
+  font-family: var(--mt-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mt-gold-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+body[data-page='reading'] .daily-interp-panel__body {
+  margin: 0;
+  font-family: var(--mt-font-body);
+  line-height: 1.6;
+}
+
+body[data-page='reading'] .daily-interp-panel__body--en {
+  font-size: 13.5px;
+  color: var(--mt-plum);
+  margin-top: 8px;
+}
+
+body[data-page='reading'] .daily-interp-panel__body--th {
+  font-size: 13px;
+  color: var(--mt-plum-mid);
+  line-height: 1.7;
+  margin-top: 10px;
+}
+
+body[data-page='reading'] .daily-interp-panel__divider {
+  height: 1px;
+  background: rgba(201, 147, 58, 0.25);
+  margin: 12px 0;
+}
+
+body[data-page='reading'] .daily-interp-panel__keyword-row {
+  display: flex;
+  gap: 10px;
+  font-family: var(--mt-font-body);
+  font-size: 11px;
+  color: var(--mt-ink-soft);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+body[data-page='reading'] .daily-interp-panel__keyword b {
+  color: var(--mt-plum);
+}
+
+body[data-page='reading'] .daily-interp-panel__keyword-sep {
+  opacity: 0.4;
+}
+
+
+/* §19 — Celtic Cross bilingual hero title (above the cross+staff spread) */
+body[data-page='reading'] .panel--celtic-hero {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 4px 0 10px;
+  text-align: center;
+}
+
+body[data-page='reading'] .celtic-hero__title {
+  font-family: var(--mt-font-display);
+  font-size: 22px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--mt-plum);
+  line-height: 1;
+}
+
+body[data-page='reading'] .celtic-hero__title-th {
+  font-family: var(--mt-font-display-th);
+  font-size: 13px;
+  color: var(--mt-plum-mid);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* §B2-5 — Reversed cards get a distinct cool-violet glow in the result so the
+   orientation reads at a glance (the reversed ART is already drawn upside-down,
+   so no rotation — just the aura). Covers both the daily/question hero and the
+   Celtic thumb slots via .card-art.is-reversed. */
+body[data-page='reading'] .card-art.is-reversed .card-art-img {
+  box-shadow:
+    0 0 0 2px rgba(124, 92, 214, 0.65),
+    0 0 26px 5px rgba(124, 92, 214, 0.55),
+    0 0 58px 14px rgba(99, 102, 241, 0.34);
+  animation: mt-reversed-glow 2.8s ease-in-out infinite;
+}
+@keyframes mt-reversed-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(124, 92, 214, 0.55), 0 0 22px 4px rgba(124, 92, 214, 0.45), 0 0 50px 12px rgba(99, 102, 241, 0.28); }
+  50%      { box-shadow: 0 0 0 2px rgba(124, 92, 214, 0.8),  0 0 30px 7px rgba(124, 92, 214, 0.65), 0 0 66px 16px rgba(99, 102, 241, 0.42); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-page='reading'] .card-art.is-reversed .card-art-img { animation: none; }
+}
+
+/* §B2-5b — Upright cards get a WARM GOLD aura (vs the reversed cool purple) so the
+   orientation reads at a glance. Same structure as the reversed glow, gold palette. */
+body[data-page='reading'] .card-art.is-upright .card-art-img {
+  box-shadow:
+    0 0 0 2px rgba(212, 154, 44, 0.60),
+    0 0 26px 5px rgba(230, 175, 70, 0.50),
+    0 0 58px 14px rgba(245, 200, 110, 0.32);
+  animation: mt-upright-glow 2.8s ease-in-out infinite;
+}
+@keyframes mt-upright-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(212, 154, 44, 0.50), 0 0 22px 4px rgba(230, 175, 70, 0.42), 0 0 50px 12px rgba(245, 200, 110, 0.26); }
+  50%      { box-shadow: 0 0 0 2px rgba(212, 154, 44, 0.78), 0 0 30px 7px rgba(230, 175, 70, 0.62), 0 0 66px 16px rgba(245, 200, 110, 0.42); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-page='reading'] .card-art.is-upright .card-art-img { animation: none; }
+}
+
+/* §B2-8 — Drop the redundant light panel behind the reading result. The content
+   (card art, title, lucky chip) already reads on the page gradient, so the white
+   .panel--spread / #share-poster-root container was a needless "2nd background"
+   layer. Colour only — layout/spacing unchanged. (Poster image is canvas-drawn in
+   poster.js, NOT from this DOM, so transparency here doesn't affect the share image.) */
+body[data-page='reading'] #share-poster-root,
+body[data-page='reading'] .panel--spread,
+body[data-page='reading'] .panel--question-recap {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+/* §B6 — Round Instagram-style "Share story" button, top-left of the result page.
+   Tap → poster/share flow (openSharePage). IG-tinted gradient + glyph signals "story". */
+body[data-page='reading'] .mt-share-fab {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: calc(env(safe-area-inset-left, 0px) + 14px);
+  z-index: 60;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(135deg, #7c5cd6 0%, #d96aa0 55%, #e0a955 100%);
+  box-shadow: 0 7px 18px -6px rgba(61, 26, 92, 0.55);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+body[data-page='reading'] .mt-share-fab:hover { transform: translateY(-1px); }
+body[data-page='reading'] .mt-share-fab:active { transform: scale(0.94); }

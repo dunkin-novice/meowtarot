@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><title>Question poster harness</title>
+<style>body{margin:0;background:#222}#out{color:#fff;font-family:sans-serif;padding:8px}</style></head>
+<body>
+<div id="out">rendering…</div>
+<script type="module">
+  import { buildPoster } from '/share/poster.js';
+  const cards = [
+    { id: '01-the-fool', orientation: 'upright' },
+    { id: '02-the-magician', orientation: 'upright' },
+    { id: '03-the-high-priestess', orientation: 'upright' },
+  ];
+  const payload = { version: 1, lang: 'en', mode: 'question', spread: 'story', topic: 'love', cards, poster: { mode: 'question', footer: 'meowtarot.com' } };
+  try {
+    const { blob, width, height } = await buildPoster(payload, { preset: 'story' });
+    const img = new Image();
+    img.onload = () => { window.__posterReady = true; };
+    img.src = URL.createObjectURL(blob);
+    img.style.width = '620px'; img.style.display = 'block';
+    const out = document.getElementById('out'); out.textContent = `rendered ${width}x${height}`; out.appendChild(img);
+  } catch (e) {
+    document.getElementById('out').textContent = 'ERR: ' + (e && e.message);
+    window.__posterErr = e && e.message;
+  }
+</script>
+</body>
+</html>

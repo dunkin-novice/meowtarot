@@ -1,0 +1,432 @@
+/*
+ * MeowTarot — Phase 5 B1: Full Reading (Celtic Cross) selection board
+ * css/full.css
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * Rebuild of the Phase 4 "deal-board + arrange-list" 2-stage UX into a
+ * single 12-card grid that aligns with the Daily + Ask boards. User
+ * picks 10 cards in order; the result page auto-assigns positions
+ * (1st → The Situation, 2nd → Crossing, … 10th → Outcome) via
+ * js/full-reading-position-order.js.
+ *
+ * Mirrors the css/daily.css layout pattern (topbar, title hero,
+ * shuffle button, 4-col grid, counter, CTA) scoped to data-page='full'.
+ *
+ * REQUIRES: css/theme-tokens.css (--mt-* namespace).
+ * LOAD ORDER: LAST. After css/phase-3-redesign.css.
+ *
+ * SECTIONS:
+ *   §1  Page background + shell layout (mirror daily-shell-active)
+ *   §2  Top bar (deck name + streak chip)
+ *   §3  Board title hero (h1 + th + hint)
+ *   §4  Shuffle button row
+ *   §5  Card-board grid override (4-col, 12 slots)
+ *   §6  Card slot states (unselected / selected / dim / disabled)
+ *   §7  Counter
+ *   §8  Continue CTA row
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* §1 — Page background + shell layout */
+body[data-page='full'] {
+  background: var(--mt-bg-gradient-daily);
+  color: var(--mt-plum);
+  font-family: var(--mt-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body[data-page='full'] .full-shell {
+  max-width: 420px;
+  margin: 0 auto;
+  padding:
+    calc(var(--nav-height, 12px) + 12px) 24px
+    calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 24px);
+  min-height: calc(100dvh - 60px);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+
+/* Mobile Safari overflow fix (mirrors daily-shell-active pattern at
+ * commit 1d3a81a). styles.css pins data-page='full' to 100dvh +
+ * overflow:hidden under @media ≤640px and ≤480px, which would clip
+ * the lower rows of the 12-card grid. body.full-shell-active is
+ * added by main.js renderFullBoard so the cascade has a class hook
+ * every browser honors. */
+@media (max-width: 640px) {
+  body.full-shell-active {
+    height: auto;
+    overflow: visible;
+  }
+  body.full-shell-active .page-shell.board-page {
+    height: auto;
+  }
+  body.full-shell-active .full-shell {
+    min-height: 0;
+  }
+}
+
+body[data-page='full'] .thai      { font-family: var(--mt-font-thai); }
+body[data-page='full'] .thai-serif { font-family: var(--mt-font-display-th); }
+
+
+/* §2 — Top bar (deck name + streak chip) */
+body[data-page='full'] .full-topbar--board {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  gap: 12px;
+}
+
+body[data-page='full'] .full-topbar__deck {
+  text-align: center;
+}
+
+body[data-page='full'] .full-topbar__deck-eyebrow {
+  font-size: 9.5px;
+  letter-spacing: 0.28em;
+  color: var(--mt-gold-deep);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+body[data-page='full'] .full-topbar__deck-name {
+  font-family: var(--mt-font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  font-style: italic;
+  margin-top: 1px;
+  letter-spacing: -0.01em;
+}
+
+body[data-page='full'] .full-topbar__streak-chip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px 5px 5px;
+  border-radius: var(--mt-radius-pill);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--mt-soft-shadow);
+  white-space: nowrap;
+}
+
+body[data-page='full'] .full-topbar__streak-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--mt-rose) 0%, var(--mt-gold-deep) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mt-cream);
+  font-family: var(--mt-font-display);
+  font-weight: 700;
+  font-size: 12px;
+  font-style: italic;
+}
+
+body[data-page='full'] .full-topbar__streak-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mt-plum);
+  letter-spacing: 0.04em;
+}
+
+
+/* §3 — Board title hero */
+body[data-page='full'] .full-board-title {
+  text-align: center;
+  margin-top: 16px;
+}
+
+body[data-page='full'] .full-board-title__en {
+  font-family: var(--mt-font-display);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--mt-plum);
+  font-style: italic;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+body[data-page='full'] .full-board-title__th {
+  font-family: var(--mt-font-display-th);
+  font-size: 16px;
+  color: var(--mt-plum-mid);
+  margin: 3px 0 0;
+  font-weight: 600;
+}
+
+body[data-page='full'] .full-board-title__hint {
+  font-size: 12.5px;
+  color: var(--mt-ink-soft);
+  margin: 8px 0 0;
+  padding: 0 16px;
+  line-height: 1.5;
+}
+
+body[data-page='full'] .full-board-title__hint em {
+  font-family: var(--mt-font-display);
+  font-style: italic;
+  font-weight: 600;
+  color: var(--mt-plum);
+}
+
+
+/* §4 — Shuffle button row (mirrors the Phase 5 daily shuffle pattern) */
+body[data-page='full'] .full-shuffle-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+body[data-page='full'] .full-shuffle-btn {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 17px 9px 14px;
+  border-radius: var(--mt-radius-pill);
+  color: var(--mt-plum);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(212, 154, 44, 0.45);
+  box-shadow:
+    0 6px 16px -8px rgba(61, 26, 92, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.70);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.2s ease;
+}
+
+body[data-page='full'] .full-shuffle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 22px -10px rgba(61, 26, 92, 0.50),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80);
+}
+
+body[data-page='full'] .full-shuffle-btn:active { transform: scale(0.97); }
+body[data-page='full'] .full-shuffle-btn:disabled { cursor: default; opacity: 0.62; }
+
+body[data-page='full'] .full-shuffle-btn__ico {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex: 0 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--mt-gold-deep), var(--mt-rose));
+  color: var(--mt-cream);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+body[data-page='full'] .full-shuffle-btn.is-spinning .full-shuffle-btn__ico {
+  animation: full-shuffle-spin 0.62s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes full-shuffle-spin { to { transform: rotate(360deg); } }
+
+body[data-page='full'] .full-shuffle-btn__sep {
+  opacity: 0.35;
+  font-weight: 400;
+  margin: 0 -2px;
+}
+
+body[data-page='full'] .full-shuffle-btn .thai {
+  font-family: var(--mt-font-thai);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-page='full'] .full-shuffle-btn.is-spinning .full-shuffle-btn__ico {
+    animation: none;
+  }
+}
+
+
+/* §5 — Card-board: 40 cards as a clean 10 × 4 grid (no overlap), bigger even cards.
+   (Was 78 cards overlapped ~20/row with a ragged last row.) Tight gaps so the whole
+   board fits with no scroll. */
+body[data-page='full'] .full-state--board #full-board.card-board--full {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: none;
+  gap: 6px 4px;
+  place-items: center;
+  width: auto;
+  max-width: 360px;
+  max-height: none;
+  margin: 12px auto 0;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+
+/* §6 — Card slot states */
+body[data-page='full'] .full-state--board #full-board .card-slot {
+  position: relative;
+  width: 100%;
+  max-width: 34px;
+  height: auto;
+  max-height: none;
+  margin-right: 0;
+  aspect-ratio: 1568 / 2720;
+  border-radius: 6px;
+  border: 0.5px solid var(--mt-gold-pale);
+  overflow: hidden;
+  background: var(--mt-card-back-deep);
+  box-shadow: 0 6px 12px -6px rgba(61, 26, 92, 0.50);
+  opacity: 1;
+  transform: none;
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+  cursor: pointer;
+  padding: 0;
+}
+
+body[data-page='full'] .full-state--board #full-board .card-slot .card-back {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dim the unpicked cards ONLY once all 10 are chosen (is-complete), not from the first
+   pick — keeps the board vibrant while picking. */
+body[data-page='full'] .full-state--board #full-board.is-complete .card-slot:not(.is-selected) {
+  opacity: 0.55;
+  transform: none;
+}
+
+/* Overlapping cards: lift the hovered/focused one above its right neighbour
+   (later siblings paint on top by default) so the whole card is visible on interaction. */
+body[data-page='full'] .full-state--board #full-board .card-slot:hover,
+body[data-page='full'] .full-state--board #full-board .card-slot:focus-visible {
+  z-index: 4;
+  transform: translateY(-3px);
+}
+
+body[data-page='full'] .full-state--board #full-board .card-slot.is-selected {
+  transform: translateY(-7px);
+  opacity: 1;
+  z-index: 6;
+  border-color: var(--mt-gold-deep);
+  box-shadow:
+    0 8px 18px -6px rgba(201, 147, 58, 0.55),
+    0 0 0 1px rgba(201, 147, 58, 0.45) inset;
+}
+
+body[data-page='full'] .full-state--board #full-board .card-slot:disabled {
+  cursor: default;
+}
+
+/* Selection badge (number 1-10). setupBoard injects a <span
+ * class="selection-badge"> with textContent = pick order. */
+body[data-page='full'] .full-state--board #full-board .card-slot .selection-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mt-gold-deep), var(--mt-rose));
+  color: var(--mt-cream);
+  font-family: var(--mt-font-body);
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-shadow: 0 3px 8px -2px rgba(61, 26, 92, 0.5);
+  animation: full-badge-pop 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes full-badge-pop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+
+
+/* §7 — Counter */
+body[data-page='full'] .full-board-counter {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mt-plum-mid);
+  letter-spacing: 0.06em;
+}
+
+
+/* §8 — Continue CTA row */
+body[data-page='full'] .full-state__cta-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  padding-bottom: 14px;
+}
+
+body[data-page='full'] .full-continue-button {
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 16px 26px;
+  border-radius: var(--mt-radius-pill);
+  border: none;
+  background: var(--mt-cta-grad);
+  color: var(--mt-cream);
+  box-shadow: var(--mt-cta-shadow);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  min-width: 220px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.2s ease;
+}
+
+body[data-page='full'] .full-continue-button:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+body[data-page='full'] .full-continue-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* §B3 — Force-fit on short screens: shrink the chrome so the whole Celtic board
+   (10×4) + Continue fit above the bottom-nav with NO scroll. Tall phones keep the
+   roomier spacing. (Selecting-board "no scrolling at all" request, 2026-06-18.) */
+@media (max-height: 780px) {
+  body[data-page='full'] .full-shell { min-height: 0; padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 8px); }
+  body[data-page='full'] .page-shell.board-page { min-height: 0; }
+  body[data-page='full'] .full-topbar--board { margin-top: 4px; }
+  body[data-page='full'] .full-board-title { margin-top: 6px; }
+  body[data-page='full'] .full-board-title__en { font-size: 21px; }
+  body[data-page='full'] .full-board-title__hint { display: none; }
+  body[data-page='full'] .full-shuffle-row { margin-top: 8px; }
+  body[data-page='full'] .full-state--board #full-board.card-board--full { margin-top: 8px; gap: 5px 3px; }
+  body[data-page='full'] .full-board-counter { margin-top: 6px; }
+  body[data-page='full'] .full-state__cta-row { margin-top: 8px; }
+}

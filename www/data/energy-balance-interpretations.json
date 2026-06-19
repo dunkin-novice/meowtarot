@@ -1,0 +1,283 @@
+{
+  "thresholds": {
+    "BAL": 8,
+    "GAP": 10,
+    "LOW": 30
+  },
+  "conditions": [
+    {
+      "id": "balanced_all",
+      "group": "Balanced",
+      "condition": "All energies balanced",
+      "sentence_en": "Your energies feel balanced at present. You can act, feel, think, and build with equal strength.",
+      "sentence_th": "พลังงานของคุณค่อนข้างสมดุลในช่วงนี้ คุณสามารถลงมือทำ รู้สึก คิด และสร้างความมั่นคงได้อย่างพอๆ กัน",
+      "rule": "max(A,E,T,S) - min(A,E,T,S) <= BAL"
+    },
+
+    {
+      "id": "triple_AET_low_S",
+      "group": "Triple balance",
+      "condition": "Action + Emotion + Thinking balanced, Stability low",
+      "sentence_en": "Your action, emotion, and thinking have been working together well lately. Stability has been the quieter energy in comparison.",
+      "sentence_th": "ช่วงนี้พลังของการลงมือทำ อารมณ์ และความคิดของคุณทำงานประสานกันได้ดี ส่วนพลังด้านความมั่นคงกลับเงียบกว่าด้านอื่นเล็กน้อย",
+      "rule": "abs(A-E)<=BAL && abs(A-T)<=BAL && abs(E-T)<=BAL && ((A+E+T)/3 - S) >= GAP"
+    },
+    {
+      "id": "triple_AES_low_T",
+      "group": "Triple balance",
+      "condition": "Action + Emotion + Stability balanced, Thinking low",
+      "sentence_en": "Your action, emotion, and stability have been aligned recently. Thinking has been softer than the rest.",
+      "sentence_th": "ช่วงนี้พลังของการลงมือทำ อารมณ์ และความมั่นคงของคุณค่อนข้างสอดประสานกันดี ส่วนพลังด้านความคิดกลับเบากว่าด้านอื่นเล็กน้อย",
+      "rule": "abs(A-E)<=BAL && abs(A-S)<=BAL && abs(E-S)<=BAL && ((A+E+S)/3 - T) >= GAP"
+    },
+    {
+      "id": "triple_ATS_low_E",
+      "group": "Triple balance",
+      "condition": "Action + Thinking + Stability balanced, Emotion low",
+      "sentence_en": "Your action, thinking, and stability have been aligned lately. Emotion has been the quieter influence.",
+      "sentence_th": "ช่วงนี้พลังของการลงมือทำ ความคิด และความมั่นคงของคุณไปในทิศทางเดียวกัน ส่วนพลังด้านอารมณ์กลับเป็นด้านที่เงียบกว่า",
+      "rule": "abs(A-T)<=BAL && abs(A-S)<=BAL && abs(T-S)<=BAL && ((A+T+S)/3 - E) >= GAP"
+    },
+    {
+      "id": "triple_ETS_low_A",
+      "group": "Triple balance",
+      "condition": "Emotion + Thinking + Stability balanced, Action low",
+      "sentence_en": "Your emotion, thinking, and stability have been working together recently. Action has been the quietest energy in the mix.",
+      "sentence_th": "ช่วงนี้พลังด้านอารมณ์ ความคิด และความมั่นคงของคุณทำงานร่วมกันได้ดี ส่วนพลังด้านการลงมือทำเป็นด้านที่เบาที่สุดในภาพรวม",
+      "rule": "abs(E-T)<=BAL && abs(E-S)<=BAL && abs(T-S)<=BAL && ((E+T+S)/3 - A) >= GAP"
+    },
+
+    {
+      "id": "pair_AE",
+      "group": "Dual dominant",
+      "condition": "Action + Emotion dominant",
+      "sentence_en": "Your actions and emotions have been moving together lately. This is a meaningful phase for trusting what you feel and acting on it.",
+      "sentence_th": "ช่วงนี้การลงมือทำและอารมณ์ของคุณขยับไปพร้อมกัน นี่เป็นช่วงที่เหมาะกับการเชื่อในสิ่งที่คุณรู้สึกแล้วลงมือทำตามนั้น",
+      "rule": "abs(A-E)<=BAL && A-T>=GAP && A-S>=GAP && E-T>=GAP && E-S>=GAP"
+    },
+    {
+      "id": "pair_AT",
+      "group": "Dual dominant",
+      "condition": "Action + Thinking dominant",
+      "sentence_en": "Your thoughts and actions have been aligned these days. This is a strong period for turning ideas into movement.",
+      "sentence_th": "ช่วงนี้ความคิดและการลงมือทำของคุณสอดคล้องกันดี เป็นจังหวะที่เหมาะกับการเปลี่ยนไอเดียให้กลายเป็นการเคลื่อนไหวจริง",
+      "rule": "abs(A-T)<=BAL && A-E>=GAP && A-S>=GAP && T-E>=GAP && T-S>=GAP"
+    },
+    {
+      "id": "pair_AS",
+      "group": "Dual dominant",
+      "condition": "Action + Stability dominant",
+      "sentence_en": "Your actions have been supported by a steady foundation lately. This is a practical phase for moving forward with confidence.",
+      "sentence_th": "ช่วงนี้การลงมือทำของคุณมีฐานที่มั่นคงรองรับอยู่ เป็นช่วงที่เหมาะกับการก้าวต่อไปอย่างมั่นใจและเป็นรูปธรรม",
+      "rule": "abs(A-S)<=BAL && A-E>=GAP && A-T>=GAP && S-E>=GAP && S-T>=GAP"
+    },
+    {
+      "id": "pair_ET",
+      "group": "Dual dominant",
+      "condition": "Emotion + Thinking dominant",
+      "sentence_en": "Your feelings and thoughts have been speaking equally lately. Reflection can help bring emotional clarity in the present.",
+      "sentence_th": "ช่วงนี้อารมณ์และความคิดของคุณส่งเสียงพอๆ กัน การทบทวนตัวเองจะช่วยให้คุณเห็นความรู้สึกได้ชัดขึ้นในปัจจุบัน",
+      "rule": "abs(E-T)<=BAL && E-A>=GAP && E-S>=GAP && T-A>=GAP && T-S>=GAP"
+    },
+    {
+      "id": "pair_ES",
+      "group": "Dual dominant",
+      "condition": "Emotion + Stability dominant",
+      "sentence_en": "Your emotions have been closely tied to your need for security lately. You may be seeking comfort, care, and steadiness these days.",
+      "sentence_th": "ช่วงนี้อารมณ์ของคุณเชื่อมโยงกับความต้องการความมั่นคงอย่างชัดเจน คุณอาจกำลังมองหาความสบายใจ การดูแล และความนิ่งที่พึ่งพาได้",
+      "rule": "abs(E-S)<=BAL && E-A>=GAP && E-T>=GAP && S-A>=GAP && S-T>=GAP"
+    },
+    {
+      "id": "pair_TS",
+      "group": "Dual dominant",
+      "condition": "Thinking + Stability dominant",
+      "sentence_en": "Your thinking and stability have been strongest recently. Careful planning is likely to serve you better than rushing.",
+      "sentence_th": "ช่วงนี้พลังด้านความคิดและความมั่นคงเด่นที่สุด การวางแผนอย่างรอบคอบน่าจะให้ผลดีกว่าการเร่งรีบ",
+      "rule": "abs(T-S)<=BAL && T-A>=GAP && T-E>=GAP && S-A>=GAP && S-E>=GAP"
+    },
+
+    {
+      "id": "dom_A_weak_E",
+      "group": "Dominant + weak",
+      "condition": "Action dominant, Emotion weakest",
+      "sentence_en": "Your action energy has been leading lately. Emotional awareness may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านการลงมือทำของคุณนำเด่นกว่าเดิม ขณะที่การรับรู้อารมณ์อาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "A>=E && A>=T && A>=S && (A-max(E,T,S))>=BAL && (min(A,E,T,S)==E)"
+    },
+    {
+      "id": "dom_A_weak_T",
+      "group": "Dominant + weak",
+      "condition": "Action dominant, Thinking weakest",
+      "sentence_en": "Your action energy has been leading lately. Clear reflection may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านการลงมือทำของคุณเด่นนำอยู่ ขณะที่การทบทวนอย่างชัดเจนอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "A>=E && A>=T && A>=S && (A-max(E,T,S))>=BAL && (min(A,E,T,S)==T)"
+    },
+    {
+      "id": "dom_A_weak_S",
+      "group": "Dominant + weak",
+      "condition": "Action dominant, Stability weakest",
+      "sentence_en": "Your action energy has been leading lately. Grounding and stability may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านการลงมือทำของคุณนำเด่นอยู่ ขณะที่ความมั่นคงและความนิ่งอาจเบากว่าปกติเล็กน้อย",
+      "rule": "A>=E && A>=T && A>=S && (A-max(E,T,S))>=BAL && (min(A,E,T,S)==S)"
+    },
+
+    {
+      "id": "dom_E_weak_A",
+      "group": "Dominant + weak",
+      "condition": "Emotion dominant, Action weakest",
+      "sentence_en": "Your emotional energy has been strongest lately. Action and momentum may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านอารมณ์ของคุณเด่นที่สุด ขณะที่พลังในการลงมือทำและแรงขับอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "E>=A && E>=T && E>=S && (E-max(A,T,S))>=BAL && (min(A,E,T,S)==A)"
+    },
+    {
+      "id": "dom_E_weak_T",
+      "group": "Dominant + weak",
+      "condition": "Emotion dominant, Thinking weakest",
+      "sentence_en": "Your emotional energy has been strongest lately. Mental clarity may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านอารมณ์ของคุณเด่นที่สุด ขณะที่ความชัดเจนทางความคิดอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "E>=A && E>=T && E>=S && (E-max(A,T,S))>=BAL && (min(A,E,T,S)==T)"
+    },
+    {
+      "id": "dom_E_weak_S",
+      "group": "Dominant + weak",
+      "condition": "Emotion dominant, Stability weakest",
+      "sentence_en": "Your emotional energy has been strongest lately. Stability may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านอารมณ์ของคุณเด่นที่สุด ขณะที่ความมั่นคงอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "E>=A && E>=T && E>=S && (E-max(A,T,S))>=BAL && (min(A,E,T,S)==S)"
+    },
+
+    {
+      "id": "dom_T_weak_A",
+      "group": "Dominant + weak",
+      "condition": "Thinking dominant, Action weakest",
+      "sentence_en": "Your thinking energy has been dominating lately. Action may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านความคิดของคุณนำเด่นอยู่ ขณะที่การลงมือทำอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "T>=A && T>=E && T>=S && (T-max(A,E,S))>=BAL && (min(A,E,T,S)==A)"
+    },
+    {
+      "id": "dom_T_weak_E",
+      "group": "Dominant + weak",
+      "condition": "Thinking dominant, Emotion weakest",
+      "sentence_en": "Your thinking energy has been dominating lately. Emotional openness may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านความคิดของคุณเด่นนำอยู่ ขณะที่การเปิดรับอารมณ์อาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "T>=A && T>=E && T>=S && (T-max(A,E,S))>=BAL && (min(A,E,T,S)==E)"
+    },
+    {
+      "id": "dom_T_weak_S",
+      "group": "Dominant + weak",
+      "condition": "Thinking dominant, Stability weakest",
+      "sentence_en": "Your thinking energy has been dominating lately. Grounding may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านความคิดของคุณนำเด่นอยู่ ขณะที่ความนิ่งและการยึดโยงกับความมั่นคงอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "T>=A && T>=E && T>=S && (T-max(A,E,S))>=BAL && (min(A,E,T,S)==S)"
+    },
+
+    {
+      "id": "dom_S_weak_A",
+      "group": "Dominant + weak",
+      "condition": "Stability dominant, Action weakest",
+      "sentence_en": "Your stability energy has been strongest lately. Action may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านความมั่นคงของคุณเด่นที่สุด ขณะที่การลงมือทำอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "S>=A && S>=E && S>=T && (S-max(A,E,T))>=BAL && (min(A,E,T,S)==A)"
+    },
+    {
+      "id": "dom_S_weak_E",
+      "group": "Dominant + weak",
+      "condition": "Stability dominant, Emotion weakest",
+      "sentence_en": "Your stability energy has been strongest lately. Emotional openness may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านความมั่นคงของคุณเด่นที่สุด ขณะที่การเปิดรับอารมณ์อาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "S>=A && S>=E && S>=T && (S-max(A,E,T))>=BAL && (min(A,E,T,S)==E)"
+    },
+    {
+      "id": "dom_S_weak_T",
+      "group": "Dominant + weak",
+      "condition": "Stability dominant, Thinking weakest",
+      "sentence_en": "Your stability energy has been strongest lately. Flexible thinking may have been quieter than usual.",
+      "sentence_th": "ช่วงนี้พลังด้านความมั่นคงของคุณเด่นที่สุด ขณะที่ความคิดที่ยืดหยุ่นอาจเงียบกว่าปกติเล็กน้อย",
+      "rule": "S>=A && S>=E && S>=T && (S-max(A,E,T))>=BAL && (min(A,E,T,S)==T)"
+    },
+
+    {
+      "id": "dom_A",
+      "group": "Dominant only",
+      "condition": "Action dominant",
+      "sentence_en": "Your action energy has been leading lately. Momentum seems to matter more than hesitation right now.",
+      "sentence_th": "ช่วงนี้พลังด้านการลงมือทำของคุณนำเด่นกว่าเดิม จังหวะของการเคลื่อนไหวดูสำคัญกว่าความลังเลในตอนนี้",
+      "rule": "(A-max(E,T,S))>=GAP && ((max(E,T,S)-min(E,T,S))<BAL)"
+    },
+    {
+      "id": "dom_E",
+      "group": "Dominant only",
+      "condition": "Emotion dominant",
+      "sentence_en": "Your emotional energy has been leading lately. Let your feelings guide your attention more gently in the present.",
+      "sentence_th": "ช่วงนี้พลังด้านอารมณ์ของคุณนำเด่นอยู่ ลองปล่อยให้ความรู้สึกนำทางความสนใจของคุณอย่างอ่อนโยนมากขึ้นในช่วงนี้",
+      "rule": "(E-max(A,T,S))>=GAP && ((max(A,T,S)-min(A,T,S))<BAL)"
+    },
+    {
+      "id": "dom_T",
+      "group": "Dominant only",
+      "condition": "Thinking dominant",
+      "sentence_en": "Your thinking energy has been leading lately. Clarity, patterns, and perspective seem especially important at present.",
+      "sentence_th": "ช่วงนี้พลังด้านความคิดของคุณนำเด่นอยู่ ความชัดเจน แบบแผน และมุมมองดูจะสำคัญเป็นพิเศษในตอนนี้",
+      "rule": "(T-max(A,E,S))>=GAP && ((max(A,E,S)-min(A,E,S))<BAL)"
+    },
+    {
+      "id": "dom_S",
+      "group": "Dominant only",
+      "condition": "Stability dominant",
+      "sentence_en": "Your stability energy has been leading lately. Grounding and security seem especially important at present.",
+      "sentence_th": "ช่วงนี้พลังด้านความมั่นคงของคุณนำเด่นอยู่ การยึดโยงกับความนิ่งและความปลอดภัยดูสำคัญเป็นพิเศษในตอนนี้",
+      "rule": "(S-max(A,E,T))>=GAP && ((max(A,E,T)-min(A,E,T))<BAL)"
+    },
+
+    {
+      "id": "weak_A",
+      "group": "Weakest only",
+      "condition": "Action weakest",
+      "sentence_en": "Action has been the quietest energy lately. This may be a phase for pausing before pushing ahead.",
+      "sentence_th": "ช่วงนี้พลังด้านการลงมือทำเป็นด้านที่เงียบที่สุด อาจเป็นช่วงที่ควรหยุดตั้งหลักก่อนเร่งผลักตัวเองไปข้างหน้า",
+      "rule": "(min(E,T,S)-A)>=GAP && ((max(E,T,S)-min(E,T,S))<BAL)"
+    },
+    {
+      "id": "weak_E",
+      "group": "Weakest only",
+      "condition": "Emotion weakest",
+      "sentence_en": "Emotion has been the quietest energy lately. You may need more softness, empathy, or inner listening in the present.",
+      "sentence_th": "ช่วงนี้พลังด้านอารมณ์เป็นด้านที่เงียบที่สุด คุณอาจต้องการความอ่อนโยน ความเข้าอกเข้าใจ หรือการฟังเสียงข้างในมากขึ้นในช่วงนี้",
+      "rule": "(min(A,T,S)-E)>=GAP && ((max(A,T,S)-min(A,T,S))<BAL)"
+    },
+    {
+      "id": "weak_T",
+      "group": "Weakest only",
+      "condition": "Thinking weakest",
+      "sentence_en": "Thinking has been the quietest energy lately. It may help to step back and clarify your perspective.",
+      "sentence_th": "ช่วงนี้พลังด้านความคิดเป็นด้านที่เงียบที่สุด การถอยออกมามองภาพรวมอาจช่วยให้มุมมองของคุณชัดขึ้น",
+      "rule": "(min(A,E,S)-T)>=GAP && ((max(A,E,S)-min(A,E,S))<BAL)"
+    },
+    {
+      "id": "weak_S",
+      "group": "Weakest only",
+      "condition": "Stability weakest",
+      "sentence_en": "Stability has been the quietest energy lately. Grounding yourself may matter more than usual these days.",
+      "sentence_th": "ช่วงนี้พลังด้านความมั่นคงเป็นด้านที่เงียบที่สุด การกลับมายึดโยงตัวเองให้มั่นคงอาจสำคัญกว่าปกติในช่วงนี้",
+      "rule": "(min(A,E,T)-S)>=GAP && ((max(A,E,T)-min(A,E,T))<BAL)"
+    },
+
+    {
+      "id": "muted_all",
+      "group": "Low / muted",
+      "condition": "All energies low and quiet",
+      "sentence_en": "Your energy has felt soft and quiet lately. This seems to be a gentler phase than a forceful one.",
+      "sentence_th": "ช่วงนี้พลังงานของคุณค่อนข้างนุ่มและเงียบ เป็นช่วงที่เหมาะกับความอ่อนโยนมากกว่าการฝืนผลักอย่างหนัก",
+      "rule": "max(A,E,T,S) <= LOW && (max(A,E,T,S)-min(A,E,T,S)) <= BAL"
+    },
+
+    {
+      "id": "mixed_transition",
+      "group": "Fallback",
+      "condition": "Mixed spread",
+      "sentence_en": "Your energy feels mixed at present. Different parts of you may be asking for different things.",
+      "sentence_th": "พลังงานของคุณในช่วงนี้ค่อนข้างผสมกัน หลายส่วนในตัวคุณอาจกำลังต้องการคนละอย่าง",
+      "rule": "ELSE"
+    }
+  ]
+}

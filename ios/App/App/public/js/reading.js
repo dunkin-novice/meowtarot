@@ -15,7 +15,9 @@ import {
   getCardBackFallbackUrl,
   applyImgFallback,
   DEFAULT_DECK_ID,
+  getActiveDeckId,
   getNewlyUnlockedDecks,
+  getAllDecks,
 } from './data.js';
 import { showDeckRewardPopup } from './deck-reward.js';
 import {
@@ -44,13 +46,15 @@ import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from '
 import { getCanonicalCardUrl } from './canonical-card-routes.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, subscribeAuthState } from './auth.js';
 import { hydrateLocalFromCloud, migrateLocalToAccount, syncLocalProgressIfLoggedIn } from './sync.js';
-import { saveReadingRecord, upsertCanonicalDailyReading } from './reading-history.js';
+import { saveReadingRecord, upsertCanonicalDailyReading, queuePendingReading } from './reading-history.js';
 import {
   trackDailyStreakIncremented,
   trackReadingComplete,
   trackReadingCompletedRaw,
   trackReadingStart,
   trackShareClicked,
+  trackShuffleHit,
+  trackCardRevealed,
 } from './analytics.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -215,7 +219,7 @@ const DAILY_TIMINGS = Object.freeze({
   shuffleMs: 200,
   dealMs: 210,
   staggerMs: 95,
-  revealMs: 180,
+  revealMs: 500,
 });
 const FULL_CELTIC_POSITION_KEYS = FULL_READING_POSITION_KEYS;
 const LEGACY_FULL_POSITION_KEYS = ['past', 'present', 'future'];
@@ -397,6 +401,9 @@ function buildReadingEntryLinks() {
 
 function appendReadingInternalLinks(container, cards = []) {
   if (!container || !Array.isArray(cards) || !cards.length) return;
+  // Celtic Cross (full) reading: omit the "Related Internal Links" section (founder
+  // direction — 10 links cluttered the result). Daily/Question keep it for SEO crawl.
+  if (state.mode === 'full') return;
 
   const panel = document.createElement('section');
   panel.className = 'panel panel--internal-links';
@@ -477,8 +484,15 @@ async function saveCardImageFromSheet() {
   link.remove();
 }
 
-function openCardSheet(card) {
+function openCardSheet(card, opts = {}) {
   if (!card || !cardSheetEls.overlay || !cardSheetEls.image) return;
+
+  // Small position label, top-left of the sheet (e.g. "The Present" on a Celtic slot).
+  if (cardSheetEls.position) {
+    const posLabel = String(opts.positionLabel || '').trim();
+    cardSheetEls.position.textContent = posLabel;
+    cardSheetEls.position.hidden = !posLabel;
+  }
 
   const { src, candidates = [] } = getCardImageUrlWithFallback(card);
   cardSheetState.card = card;
@@ -505,7 +519,13 @@ function openCardSheet(card) {
     ? (state.currentLang === 'th' ? 'หน้านี้เป็นหน้า Canonical แบบเต็ม' : 'This card has a dedicated canonical full page.')
     : (state.currentLang === 'th' ? 'ไปยังหน้าความหมายไพ่แบบมาตรฐาน' : 'Open the standard card meaning page.');
 
-  cardSheetEls.meaningBtn.href = meaningUrl;
+  // Carry the active deck across to the (cross-origin) canonical meaning page so its
+  // card image matches the deck this reading was drawn with, not the default deck.
+  const deckId = getActiveDeckId();
+  const meaningHref = (meaningUrl && meaningUrl !== '#' && deckId)
+    ? `${meaningUrl}${meaningUrl.includes('?') ? '&' : '?'}deck=${encodeURIComponent(deckId)}`
+    : meaningUrl;
+  cardSheetEls.meaningBtn.href = meaningHref;
   cardSheetEls.meaningBtn.target = '_blank';
   cardSheetEls.meaningBtn.rel = 'noopener noreferrer';
   cardSheetEls.meaningBtn.textContent = meaningLabel;
@@ -514,10 +534,34 @@ function openCardSheet(card) {
   cardSheetEls.meaningMeta.textContent = meaningMeta;
   cardSheetEls.meaningMeta.hidden = false;
 
+  if (cardSheetEls.shareLabel) {
+    cardSheetEls.shareLabel.textContent = state.currentLang === 'th' ? 'แชร์สตอรี่' : 'Share Story';
+  }
+  // The meaning button is now the secondary action under Share Story.
+  cardSheetEls.meaningBtn.classList.remove('primary');
+  cardSheetEls.meaningBtn.classList.add('ghost');
+
   cardSheetEls.overlay.classList.add('is-open');
   cardSheetEls.overlay.setAttribute('aria-hidden', 'false');
   setBodyScrollLocked(true);
   cardSheetEls.closeBtn?.focus();
+}
+
+// Round Instagram-style share button, top-left of the result page → poster/story flow.
+function ensureShareFab() {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (document.getElementById('mt-share-fab')) return;
+  const btn = document.createElement('button');
+  btn.id = 'mt-share-fab';
+  btn.type = 'button';
+  btn.className = 'mt-share-fab';
+  btn.setAttribute('aria-label', state.currentLang === 'th' ? 'แชร์สตอรี่' : 'Share story');
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/>
+    </svg>`;
+  btn.addEventListener('click', () => { openSharePage(); });
+  document.body.appendChild(btn);
 }
 
 function ensureCardSheet() {
@@ -528,15 +572,23 @@ function ensureCardSheet() {
   wrap.innerHTML = `
     <div class="card-sheet-backdrop" data-sheet-close></div>
     <section class="card-sheet" role="dialog" aria-modal="true" aria-label="Card details">
-      <button class="card-sheet-close" type="button" aria-label="Close" data-sheet-close>✕</button>
+      <span class="card-sheet-position" id="cardSheetPosition" hidden></span>
+      <button class="card-sheet-close" type="button" aria-label="Close" data-sheet-close>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6 18 18 M18 6 6 18"/></svg>
+      </button>
       <div class="card-sheet-media-wrap">
         <img class="card-sheet-media" alt="" />
       </div>
       <p class="card-sheet-title"></p>
       <p class="card-sheet-meaning-meta" id="cardSheetMeaningMeta"></p>
       <div class="card-sheet-actions">
+        <button class="primary card-sheet-share" type="button" id="cardSheetShareBtn">
+          <svg class="card-sheet-share__ig" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          <span class="card-sheet-share__label">Share Story</span>
+        </button>
         <a class="ghost" id="cardSheetMeaningBtn" href="#">Read Card Meaning</a>
-        <button class="primary" type="button" id="cardSheetSaveBtn">Save Image</button>
       </div>
     </section>
   `;
@@ -546,15 +598,21 @@ function ensureCardSheet() {
   cardSheetEls.closeBtn = wrap.querySelector('.card-sheet-close');
   cardSheetEls.image = wrap.querySelector('.card-sheet-media');
   cardSheetEls.title = wrap.querySelector('.card-sheet-title');
-  cardSheetEls.saveBtn = wrap.querySelector('#cardSheetSaveBtn');
+  cardSheetEls.shareBtn = wrap.querySelector('#cardSheetShareBtn');
+  cardSheetEls.shareLabel = wrap.querySelector('.card-sheet-share__label');
   cardSheetEls.meaningBtn = wrap.querySelector('#cardSheetMeaningBtn');
   cardSheetEls.meaningMeta = wrap.querySelector('#cardSheetMeaningMeta');
+  cardSheetEls.position = wrap.querySelector('#cardSheetPosition');
 
   wrap.addEventListener('click', (event) => {
     if (event.target?.hasAttribute('data-sheet-close')) closeCardSheet();
   });
 
-  cardSheetEls.saveBtn?.addEventListener('click', saveCardImageFromSheet);
+  // Share Story → close the sheet and run the poster/share flow (the IG-story image).
+  cardSheetEls.shareBtn?.addEventListener('click', () => {
+    closeCardSheet();
+    openSharePage();
+  });
   cardSheetEls.closeBtn?.addEventListener('click', closeCardSheet);
 
   let touchStartY = 0;
@@ -801,6 +859,7 @@ function findCard(id) {
 function getExpectedCardCount(mode = 'daily') {
   if (mode === 'daily') return state.spread === 'story' ? 3 : 1;
   if (mode === 'full') return FULL_CELTIC_POSITION_KEYS.length;
+  if (mode === 'question') return state.spread === 'quick' ? 1 : 3;
   return 3;
 }
 
@@ -955,21 +1014,36 @@ function resolveImageIds(card, targetOrientation = toOrientation(card)) {
   };
 }
 
+// BUG-020: a user can be parked on an incomplete deck (e.g. boba-oracle, set
+// anonymously via a deck reward) whose card face 404s. Before falling back to a
+// card *back*, try the same card in the default deck (moonmallow, always
+// complete). asset-resolver.js is off-limits (hard rule #4), so derive the
+// default-deck URL here by swapping the /assets/<activeDeck>/ path segment —
+// both decks share identical nn-slug-orientation.webp filenames.
+function toDefaultDeckFaceUrl(url) {
+  const activeDeck = getActiveDeckId();
+  if (!url || activeDeck === DEFAULT_DECK_ID) return null;
+  const swapped = url.replace(`/assets/${activeDeck}/`, `/assets/${DEFAULT_DECK_ID}/`);
+  return swapped !== url ? swapped : null;
+}
+
 function getCardImageUrlWithFallback(card) {
   const orientation = toOrientation(card);
   const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
   const globalSiteFallbackUrl = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
+  const defaultUpright = toDefaultDeckFaceUrl(uprightUrl);
+  const defaultReversed = toDefaultDeckFaceUrl(reversedUrl);
 
   if (orientation === 'reversed') {
     return {
       src: reversedUrl || uprightUrl || backUrl || globalSiteFallbackUrl,
-      candidates: [uprightUrl, backUrl, globalSiteFallbackUrl].filter(Boolean),
+      candidates: [defaultReversed, uprightUrl, defaultUpright, backUrl, globalSiteFallbackUrl].filter(Boolean),
     };
   }
 
   return {
     src: uprightUrl || backUrl,
-    candidates: [backUrl].filter(Boolean),
+    candidates: [defaultUpright, backUrl].filter(Boolean),
   };
 }
 
@@ -1074,6 +1148,12 @@ function buildCardArt(card, variant = 'hero') {
   img.crossOrigin = 'anonymous';
 
   const orientation = toOrientation(card);
+  // Reversed cards get a distinct glowing aura (B2-5) so orientation reads at a glance.
+  // The reversed ART is already drawn upside-down (separate -reversed asset), so we
+  // DON'T rotate — just flag it for the glow treatment in CSS.
+  // Both orientations glow (so it reads at a glance): reversed = cool purple aura,
+  // upright = warm gold aura (see css/reading.css §B2-5 / §B2-5b).
+  wrap.classList.add(orientation === 'reversed' ? 'is-reversed' : 'is-upright');
   const { src, candidates = [] } = getStableCardImageSources(card);
   const { backUrl } = buildCardImageUrls(card, orientation);
   const webpUrl = src || backUrl;
@@ -1405,6 +1485,7 @@ function getQuestionResultKicker(dict = activeDict) {
 }
 
 function buildQuestionTakeawayPanel(cards = [], dict = activeDict) {
+  if (state.spread === 'quick') return null;
   const orderedCards = orderQuestionCards(cards).slice(0, 3);
   if (!orderedCards.length) return null;
 
@@ -2171,6 +2252,8 @@ function createDailyMotionStage(cards, dict) {
       className: 'card-back',
       alt: '',
     });
+    back.fetchPriority = 'high';
+    back.loading = 'eager';
     applyImgFallback(back, cardBackUrl, [getCardBackFallbackUrl()].filter(Boolean));
     backFace.appendChild(back);
 
@@ -2354,11 +2437,134 @@ function createDailyMultiCardDetails(cards, dict) {
 function renderDailyDetails(cards, dict, stage) {
   const count = cards.length;
   if (count === 1) {
-    stage.appendChild(createDailyCardSummaryPanel(cards[0]));
+    const card = cards[0];
+
+    // Phase 5 daily-result rebuild: signal to css/reading.css that the lean
+    // single-card (Quick-Pull-style) layout should apply. Reuses the
+    // .panel--spread / .reading-spread-card / .spread-caption structure I
+    // built for renderQuestion's Quick branch — §3-§11 of reading.css
+    // cover both modes from the data-spread-count='1' attribute.
+    if (readingContent) readingContent.dataset.spreadCount = '1';
+
+    // §A. Top eyebrow: "Your card · today / ไพ่ของคุณ · วันนี้"
+    const recapPanel = document.createElement('section');
+    recapPanel.className = 'panel panel--question-recap';
+    const recapEyebrow = document.createElement('div');
+    recapEyebrow.className = 'question-recap__eyebrow';
+    recapEyebrow.textContent = state.currentLang === 'th' ? 'ไพ่ของคุณ · วันนี้' : 'Your card · today';
+    recapPanel.appendChild(recapEyebrow);
+    stage.appendChild(recapPanel);
+
+    // §B. Single big card + bilingual name + lucky chip (Quick Pull CSS).
+    const spreadPanel = document.createElement('section');
+    spreadPanel.className = 'panel panel--spread';
+    spreadPanel.dataset.spreadCount = '1';
+
+    const spreadGrid = document.createElement('div');
+    spreadGrid.className = 'reading-spread-grid';
+
+    const cardWrap = document.createElement('button');
+    cardWrap.className = 'reading-spread-card';
+    cardWrap.type = 'button';
+    cardWrap.setAttribute('aria-label', card.card_name_en || '');
+    cardWrap.appendChild(buildCardArt(card, 'thumb'));
+
+    const caption = document.createElement('div');
+    caption.className = 'spread-caption';
+
+    // Orientation eyebrow with optional Roman numeral.
+    const orientation = document.createElement('div');
+    orientation.className = 'spread-orientation';
+    const orientationText = getOrientationLabel(toOrientation(card), state.currentLang);
+    const roman = getMajorArcanaRoman(card);
+    orientation.textContent = roman ? `${orientationText} · ${roman}` : orientationText;
+    caption.appendChild(orientation);
+
+    // Single-language card name + archetype per active locale.
+    const cardName = document.createElement('div');
+    cardName.className = 'spread-card-name';
+    cardName.textContent = state.currentLang === 'th'
+      ? (card.alias_th || card.card_name_en || '')
+      : (card.card_name_en || '');
+    caption.appendChild(cardName);
+
+    const activeArchetype = state.currentLang === 'th'
+      ? (card.archetype_th || card.archetype_en || '')
+      : (card.archetype_en || '');
+    if (activeArchetype) {
+      const archetype = document.createElement('div');
+      archetype.className = 'spread-archetype';
+      archetype.textContent = activeArchetype;
+      caption.appendChild(archetype);
+    }
+
+    const luckyChip = buildLuckyColorChip(card);
+    if (luckyChip) caption.appendChild(luckyChip);
+
+    cardWrap.appendChild(caption);
+    cardWrap.addEventListener('click', () => openCardSheet(card));
+    spreadGrid.appendChild(cardWrap);
+    spreadPanel.appendChild(spreadGrid);
+    stage.appendChild(spreadPanel);
+
+    // §C. "For today" interpretation panel — daily-specific (header +
+    // EN + TH body + hairline divider + Keyword row).
+    const interpPanel = document.createElement('section');
+    interpPanel.className = 'daily-interp-panel';
+
+    const interpHeader = document.createElement('div');
+    interpHeader.className = 'daily-interp-panel__header';
+    interpHeader.textContent = state.currentLang === 'th' ? 'สำหรับวันนี้' : 'For today';
+    interpPanel.appendChild(interpHeader);
+
+    // Single-language interpretation paragraph per active locale.
+    const inlineActive = state.currentLang === 'th'
+      ? (card.tarot_imply_th || card.reading_summary_preview_th || '')
+      : (card.tarot_imply_en || card.reading_summary_preview_en || '');
+    if (inlineActive) {
+      const p = document.createElement('p');
+      p.className = state.currentLang === 'th'
+        ? 'daily-interp-panel__body daily-interp-panel__body--th thai'
+        : 'daily-interp-panel__body daily-interp-panel__body--en';
+      p.textContent = inlineActive;
+      interpPanel.appendChild(p);
+    }
+
+    const keywords = String(card.keywords_light || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const primaryKeyword = keywords[0];
+    if (primaryKeyword) {
+      const divider = document.createElement('div');
+      divider.className = 'daily-interp-panel__divider';
+      interpPanel.appendChild(divider);
+
+      // Single-language keyword row per active locale.
+      const keywordRow = document.createElement('div');
+      keywordRow.className = 'daily-interp-panel__keyword-row';
+
+      const wrap = document.createElement('span');
+      wrap.className = state.currentLang === 'th'
+        ? 'daily-interp-panel__keyword thai'
+        : 'daily-interp-panel__keyword';
+      const label = document.createElement('b');
+      label.textContent = state.currentLang === 'th' ? 'คำสำคัญ' : 'Keyword';
+      wrap.appendChild(label);
+      wrap.appendChild(document.createTextNode(` · ${primaryKeyword}`));
+      keywordRow.appendChild(wrap);
+
+      interpPanel.appendChild(keywordRow);
+    }
+
+    stage.appendChild(interpPanel);
+
+    // §D. Preserved guidance + advice panels (per CLAUDE.md "free reading
+    // result must always feel complete" — they carry per-card hook,
+    // action_prompt, reflection_question, affirmation content). Their CSS
+    // surface restyle from reading.css §13 already applies.
     const detailsWrap = document.createElement('section');
     detailsWrap.className = 'daily-reading-details';
-    detailsWrap.appendChild(createDailyDetails(cards[0]));
+    detailsWrap.appendChild(createDailyDetails(card));
     stage.appendChild(detailsWrap);
+
     appendReadingInternalLinks(stage, cards);
     return;
   }
@@ -2587,6 +2793,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   }
 
   setDailyVisualState(DAILY_VISUAL_STATES.STACKED);
+  try { trackShuffleHit({ mode: 'daily', locale: state.currentLang, source: 'draw' }); } catch (_) {}
   await animateDailyShuffle(stageRefs);
   if (dailyUiState.animationRunId !== runId) return;
 
@@ -2597,8 +2804,14 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   setDailyVisualState(DAILY_VISUAL_STATES.REVEALED);
   await animateDailyReveal(stageRefs);
   if (dailyUiState.animationRunId !== runId) return;
+  try { trackCardRevealed({ mode: 'daily', locale: state.currentLang, cardCount: Array.isArray(cards) ? cards.length : 1 }); } catch (_) {}
 
   stageRefs.deck.remove();
+  // Phase 5: the ceremonial spread panel built by renderDailyDetails
+  // already shows the revealed card with aura / archetype / lucky chip.
+  // Drop the deal-animation board now so we don't render the same card
+  // twice on the result screen.
+  stageRefs.board.remove();
 
   state.selectedIds = cards.map((entryCard) => getCardSelectionId(entryCard)).filter(Boolean);
   dailyUiState.selectedCardId = state.selectedIds[0] || '';
@@ -2639,6 +2852,32 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
         newDecks.forEach((deck) => showDeckRewardPopup(deck, state.currentLang ?? 'th'));
       }, 300);
     }
+
+    // Phase 5: streak-milestone "Halfway · Day N" popup fires when the
+    // user's streak day crosses the midpoint between two consecutive
+    // deck unlocks (e.g. midway between Day 14 and Day 30 → Day 22).
+    // maybeShowStreakMilestonePopup is a no-op if the streak isn't at
+    // a halfway day, if the user has already seen this milestone, or
+    // if the deck-unlock popup is already showing (deck unlock takes
+    // precedence — same day's celebration shouldn't double-fire).
+    setTimeout(async () => {
+      try {
+        const decks = getAllDecks();
+        if (!decks || !decks.length) return;
+        if (document.getElementById('mt-deck-reward-popup')) return;
+        const { maybeShowStreakMilestonePopup } = await import('./streak-milestone.js');
+        maybeShowStreakMilestonePopup({
+          decks,
+          progress: dailyUiState.retention.progress,
+          lang: state.currentLang ?? 'th',
+        });
+      } catch (_) { /* non-fatal — popup is a celebration, not a feature */ }
+    }, 1400);
+
+    setTimeout(async () => {
+      const { hasBeenAsked, requestAndSchedule } = await import('./notifications.js');
+      if (!hasBeenAsked()) requestAndSchedule(activeDict);
+    }, 3000);
   }
 }
 
@@ -2672,6 +2911,13 @@ function getFullPositionMeta(cards = []) {
 
 function getFullInterpretationText(card, topicConfig = null) {
   if (!card) return '';
+  if (state.mode === 'question' && state.spread === 'quick' && topicConfig?.spreadKeys?.[1]) {
+    return getText(card, topicConfig.spreadKeys[1])
+      || getText(card, 'general_meaning')
+      || getText(card, 'tarot_imply')
+      || getText(card, 'card_desc')
+      || '';
+  }
   if (topicConfig?.singleKey) {
     return getText(card, topicConfig.singleKey)
       || getText(card, 'general_meaning')
@@ -2764,15 +3010,26 @@ function shouldDeferNonDailyHistorySave({ userId, rendered, mode, selectedIds })
 }
 
 function persistReadingHistory(mode = 'daily', cards = [], options = {}) {
+  if (!Array.isArray(cards) || !cards.length) return;
+
+  const normalizedCards = buildNormalizedReadingCards(mode, cards);
+  if (!normalizedCards.length) return;
+
   const userId = options.userId || authUiState.user?.id;
-  if (!userId || !Array.isArray(cards) || !cards.length) return;
+  // Logged out: queue the reading so it's saved once the user signs in (#5).
+  if (!userId) {
+    queuePendingReading({
+      mode,
+      spread: state.spread,
+      topic: mode === 'question' ? state.topic : null,
+      lang: state.currentLang,
+      cards: normalizedCards,
+    });
+    return;
+  }
 
   const sessionKey = options.sessionKey || getReadingSessionKey(mode, cards);
   if (!sessionKey || persistedReadingSessionKeys.has(sessionKey) || inFlightReadingSessionKeys.has(sessionKey)) return;
-
-  const normalizedCards = buildNormalizedReadingCards(mode, cards);
-
-  if (!normalizedCards.length) return;
 
   inFlightReadingSessionKeys.add(sessionKey);
 
@@ -2911,6 +3168,22 @@ function renderFull(cards, dict) {
   const positions = getFullPositionMeta(cards);
   const isCelticCross = cards.length >= 10;
 
+  // Phase 5: bilingual ceremonial hero title above the cross+staff
+  // spread. Matches the design doc's "Your full reading / ดวงเต็ม
+  // สำรับของคุณ" pair shown at the top of ScreenCelticCross. Gated
+  // on isCelticCross so the (rare) non-celtic full-mode path stays
+  // unaffected.
+  if (isCelticCross) {
+    const heroTitle = document.createElement('section');
+    heroTitle.className = 'panel panel--celtic-hero';
+    const titleEn = document.createElement('div');
+    titleEn.className = 'celtic-hero__title';
+    titleEn.textContent = state.currentLang === 'th' ? 'ดวงเต็มสำรับของคุณ' : 'Your full reading';
+    heroTitle.appendChild(titleEn);
+    // EN-only on EN / TH-only on TH — drop the bilingual alt line.
+    readingContent.appendChild(heroTitle);
+  }
+
   const spreadPanel = document.createElement('div');
   spreadPanel.className = 'panel panel--spread panel--celtic-cross';
 
@@ -2934,7 +3207,7 @@ function renderFull(cards, dict) {
     outcome: 'outcome',
   };
 
-  positions.forEach(({ card, position }) => {
+  positions.forEach(({ card, position }, slotIdx) => {
     const layoutSlot = layoutSlotByPosition[position] || 'situation';
     const slot = document.createElement('button');
     slot.className = `reading-spread-card celtic-cross-slot celtic-slot celtic-slot--${layoutSlot} card-slot--${position}`;
@@ -2942,6 +3215,16 @@ function renderFull(cards, dict) {
     slot.dataset.position = position;
     slot.dataset.layoutSlot = layoutSlot;
     slot.setAttribute('aria-label', getFullPositionLabel(dict, position));
+
+    // Phase 5: gold number badge (1-10) top-left of each card — matches
+    // design. positions[] iteration order follows the celtic-cross sequence
+    // (situation, challenge, focus, recentpast, past, nearfuture,
+    // power, environment, hopes, outcome).
+    const badge = document.createElement('span');
+    badge.className = 'celtic-slot__badge';
+    badge.textContent = String(slotIdx + 1);
+    badge.setAttribute('aria-hidden', 'true');
+    slot.appendChild(badge);
 
     slot.appendChild(buildCardArt(card, 'thumb'));
 
@@ -2959,7 +3242,7 @@ function renderFull(cards, dict) {
     caption.appendChild(orientation);
 
     slot.appendChild(caption);
-    slot.addEventListener('click', () => openCardSheet(card));
+    slot.addEventListener('click', () => openCardSheet(card, { positionLabel: getFullPositionLabel(dict, position) }));
 
     if (position === 'present' || position === 'challenge') {
       centerSlot.appendChild(slot);
@@ -2970,6 +3253,56 @@ function renderFull(cards, dict) {
   });
   spreadPanel.appendChild(spreadLayout);
   readingContent.appendChild(spreadPanel);
+
+  // Phase 5: Celtic Cross summary panel — "Ten cards · ten doors / สิบใบ · สิบประตู"
+  // 2-column grid of all 10 cards with number badge + italic card name +
+  // bilingual position label. Sits between the cross spread and the
+  // per-position interpretation panel.
+  if (isCelticCross) {
+    const summaryPanel = document.createElement('section');
+    summaryPanel.className = 'panel panel--celtic-summary';
+
+    const header = document.createElement('div');
+    header.className = 'celtic-summary__header';
+    const titlePrimary = document.createElement('div');
+    titlePrimary.className = 'celtic-summary__title';
+    titlePrimary.textContent = state.currentLang === 'th' ? 'สิบใบ · สิบประตู' : 'Ten cards · ten doors';
+    header.appendChild(titlePrimary);
+    // EN-only on EN / TH-only on TH — drop the bilingual alt title.
+    summaryPanel.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.className = 'celtic-summary__grid';
+
+    positions.forEach(({ card, position }, idx) => {
+      const item = document.createElement('div');
+      item.className = 'celtic-summary__item';
+
+      const num = document.createElement('span');
+      num.className = 'celtic-summary__num';
+      num.textContent = String(idx + 1);
+      item.appendChild(num);
+
+      const text = document.createElement('div');
+      text.className = 'celtic-summary__text';
+
+      const name = document.createElement('div');
+      name.className = 'celtic-summary__name';
+      name.textContent = card.card_name_en || '';
+      text.appendChild(name);
+
+      const posLabel = document.createElement('div');
+      posLabel.className = 'celtic-summary__pos';
+      posLabel.textContent = getFullPositionLabel(dict, position);
+      text.appendChild(posLabel);
+
+      item.appendChild(text);
+      grid.appendChild(item);
+    });
+
+    summaryPanel.appendChild(grid);
+    readingContent.appendChild(summaryPanel);
+  }
 
   const interpretationPanel = document.createElement('div');
   interpretationPanel.className = 'panel full-interpretation-panel';
@@ -3093,6 +3426,50 @@ function renderFull(cards, dict) {
   appendReadingInternalLinks(readingContent, cards);
 }
 
+// Phase 5: Roman numeral for Major Arcana only.
+// card_id pattern is "NN-name-orientation" (e.g. "01-the-fool-upright").
+// Minor Arcana have "-of-" in the id (e.g. "ace-of-cups-upright"); we skip those.
+const ROMAN_BY_NUMEROLOGY = {
+  0: '0', 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII',
+  8: 'VIII', 9: 'IX', 10: 'X', 11: 'XI', 12: 'XII', 13: 'XIII', 14: 'XIV',
+  15: 'XV', 16: 'XVI', 17: 'XVII', 18: 'XVIII', 19: 'XIX', 20: 'XX', 21: 'XXI',
+};
+
+function getMajorArcanaRoman(card) {
+  const id = String(card?.card_id || '').toLowerCase();
+  if (id.includes('-of-')) return '';
+  const num = Number(card?.numerology_value);
+  if (!Number.isInteger(num) || num < 0 || num > 21) return '';
+  return ROMAN_BY_NUMEROLOGY[num] || '';
+}
+
+// Phase 5: lucky color chip shown on Quick (1-card) question result.
+// CSS hides this on Story (3-card) layout via [data-spread-count='3'].
+function buildLuckyColorChip(card) {
+  const colors = normalizeColorArray(card?.color_palette).filter(Boolean);
+  if (!colors.length) return null;
+  const primary = colors[0];
+  const cssColor = resolveCssColor(primary);
+  const label = isHexColor(primary)
+    ? hexToName(primary, state.currentLang === 'th' ? 'th' : 'en')
+    : primary;
+
+  const chip = document.createElement('div');
+  chip.className = 'spread-lucky-chip';
+
+  const swatch = document.createElement('span');
+  swatch.className = 'spread-lucky-chip__swatch';
+  if (cssColor) swatch.style.background = cssColor;
+  chip.appendChild(swatch);
+
+  const text = document.createElement('span');
+  text.className = 'spread-lucky-chip__text';
+  text.textContent = `${state.currentLang === 'th' ? 'สีมงคล' : 'Lucky color'} · ${label}`;
+  chip.appendChild(text);
+
+  return chip;
+}
+
 function renderQuestion(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
@@ -3111,32 +3488,119 @@ function renderQuestion(cards, dict) {
   const topicConfig = getTopicConfig().find((item) => item.key === topic);
   const isGeneric = topic === 'generic' || topic === 'other';
 
+  // Phase 5: data-spread-count on the result wrapper drives CSS layout swap
+  // between Quick (1 card big centered) and Story (3 cards stacked rows).
+  readingContent.dataset.spreadCount = String(orderedCards.length);
+
+  // Phase 5: dashed question-recap panel at top, showing topic title for now.
+  // Future: when #question-text-input value is wired, show the typed question.
+  const recapPanel = document.createElement('section');
+  recapPanel.className = 'panel panel--question-recap';
+  const recapEyebrow = document.createElement('div');
+  recapEyebrow.className = 'question-recap__eyebrow';
+  recapEyebrow.textContent = state.currentLang === 'th' ? 'คำถามของคุณ' : 'Your question';
+  recapPanel.appendChild(recapEyebrow);
+  const recapText = document.createElement('div');
+  recapText.className = 'question-recap__text';
+  const recapLabel = topicConfig
+    ? getTopicTitle(dict, topicConfig.titleKey)
+    : (dict.topicGeneric || (state.currentLang === 'th' ? 'คำถามทั่วไป' : 'Any question'));
+  recapText.textContent = recapLabel;
+  recapPanel.appendChild(recapText);
+  readingContent.appendChild(recapPanel);
+
   const spreadPanel = document.createElement('section');
   spreadPanel.className = 'panel panel--spread';
+  spreadPanel.dataset.spreadCount = String(orderedCards.length);
 
   const spreadGrid = document.createElement('div');
   spreadGrid.className = 'reading-spread-grid';
 
   orderedCards.forEach((card, idx) => {
+    const positionStr = card.position || positions[idx];
+    const positionLabelEn = (translations.en && translations.en[positionStr]) || positionStr;
+    const positionLabelTh = (translations.th && translations.th[positionStr]) || positionStr;
+
     const cardWrap = document.createElement('button');
     cardWrap.className = 'reading-spread-card';
     cardWrap.type = 'button';
-    cardWrap.setAttribute('aria-label', `${dict[positions[idx]] || positions[idx]}`);
+    cardWrap.setAttribute('aria-label', `${dict[positionStr] || positionStr}`);
+
+    // Phase 5: floating bilingual position pill above each card (Story layout
+    // only — CSS hides it for data-spread-count='1').
+    const positionPill = document.createElement('div');
+    positionPill.className = 'spread-position-pill';
+    const pillEn = document.createElement('span');
+    pillEn.className = 'spread-position-pill__en';
+    pillEn.textContent = positionLabelEn;
+    positionPill.appendChild(pillEn);
+    const pillTh = document.createElement('span');
+    pillTh.className = 'spread-position-pill__th thai';
+    pillTh.textContent = ` · ${positionLabelTh}`;
+    positionPill.appendChild(pillTh);
+    cardWrap.appendChild(positionPill);
 
     cardWrap.appendChild(buildCardArt(card, 'thumb'));
 
     const caption = document.createElement('div');
     caption.className = 'spread-caption';
 
-    const label = document.createElement('div');
-    label.className = 'spread-label';
-    label.textContent = dict[positions[idx]] || positions[idx];
-    caption.appendChild(label);
-
+    // Orientation eyebrow with optional Roman numeral (Major Arcana only).
     const orientation = document.createElement('div');
     orientation.className = 'spread-orientation';
-    orientation.textContent = getOrientationLabel(toOrientation(card), state.currentLang);
+    const orientationText = getOrientationLabel(toOrientation(card), state.currentLang);
+    const roman = getMajorArcanaRoman(card);
+    orientation.textContent = roman ? `${orientationText} · ${roman}` : orientationText;
     caption.appendChild(orientation);
+
+    // Preserve existing .spread-label (position name) — CSS now hides it
+    // on both Quick and Story layouts because the position is conveyed by
+    // the floating pill (Story) or by the recap context (Quick).
+    const label = document.createElement('div');
+    label.className = 'spread-label';
+    label.textContent = dict[positionStr] || positionStr;
+    caption.appendChild(label);
+
+    // Single-language card name per active locale (drops the bilingual
+    // EN serif + TH alias stack from the Phase 5 design — the EN site
+    // is EN-only, TH site TH-only).
+    const cardName = document.createElement('div');
+    cardName.className = 'spread-card-name';
+    cardName.textContent = state.currentLang === 'th'
+      ? (card.alias_th || card.card_name_en || '')
+      : (card.card_name_en || '');
+    caption.appendChild(cardName);
+
+    // Lucky color chip — Quick only.
+    if (orderedCards.length === 1) {
+      const luckyChip = buildLuckyColorChip(card);
+      if (luckyChip) caption.appendChild(luckyChip);
+    }
+
+    // Single-language inline interpretation paragraph per active locale.
+    // Quick uses tarot_imply_*; Story uses standalone_{position}_*.
+    let inlineActive = '';
+    if (orderedCards.length === 1) {
+      // Quick Pull = the "present" answer. Lead with the standalone present-position
+      // interpretation (a real answer, topic-agnostic so it complements the topic
+      // panel below), never the reflection question. Falls back to the keyword line.
+      inlineActive = state.currentLang === 'th'
+        ? (card.standalone_present_th || card.tarot_imply_th || card.reading_summary_preview_th
+           || card.standalone_present_en || card.tarot_imply_en || '')
+        : (card.standalone_present_en || card.tarot_imply_en || card.reading_summary_preview_en || '');
+    } else {
+      inlineActive = state.currentLang === 'th'
+        ? (card[`standalone_${positionStr}_th`] || '')
+        : (card[`standalone_${positionStr}_en`] || '');
+    }
+    if (inlineActive) {
+      const p = document.createElement('p');
+      p.className = state.currentLang === 'th'
+        ? 'spread-inline-text spread-inline-text--th thai'
+        : 'spread-inline-text spread-inline-text--en';
+      p.textContent = inlineActive;
+      caption.appendChild(p);
+    }
 
     cardWrap.appendChild(caption);
     cardWrap.addEventListener('click', () => openCardSheet(card));
@@ -3147,10 +3611,15 @@ function renderQuestion(cards, dict) {
   readingContent.appendChild(spreadPanel);
 
   if (topicConfig && !isGeneric) {
-    const texts = orderedCards.map((card, idx) => ({
-      label: dict[positions[idx]] || positions[idx],
-      text: getText(card, topicConfig.spreadKeys[idx]),
-    })).filter((item) => item.text);
+    const texts = orderedCards.map((card, idx) => {
+      const positionStr = card.position || positions[idx];
+      const positionIdx = QUESTION_CARD_POSITIONS.indexOf(positionStr);
+      const keyIdx = positionIdx >= 0 ? positionIdx : idx;
+      return {
+        label: dict[positionStr] || positionStr,
+        text: getText(card, topicConfig.spreadKeys[keyIdx]),
+      };
+    }).filter((item) => item.text);
 
     const topicPanel = document.createElement('section');
     topicPanel.className = 'panel panel--question-story';
@@ -3194,10 +3663,14 @@ function renderQuestion(cards, dict) {
   const takeawayPanel = buildQuestionTakeawayPanel(orderedCards, dict);
   if (takeawayPanel) readingContent.appendChild(takeawayPanel);
 
-  const energyPanel = buildEnergyPanel(cards, dict);
-  if (energyPanel) {
-    energyPanel.classList.add('energy-panel--subtle');
-    readingContent.appendChild(energyPanel);
+  // Energy balance is a 3-card Story feature. Quick Pull (single card) mirrors the
+  // Daily result — big card + reading, no radar.
+  if (state.spread !== 'quick') {
+    const energyPanel = buildEnergyPanel(cards, dict);
+    if (energyPanel) {
+      energyPanel.classList.add('energy-panel--subtle');
+      readingContent.appendChild(energyPanel);
+    }
   }
 
   appendReadingInternalLinks(readingContent, orderedCards);
@@ -3330,7 +3803,9 @@ function buildSharePayload() {
         : dict.dailyTitle;
   const modeSubtitle =
     state.mode === 'question'
-      ? (dict.questionShareSubtitle || dict.questionSpreadNote)
+      ? (state.spread === 'quick'
+          ? (dict.spreadQuick || 'Quick Answer (1 card)')
+          : (dict.questionShareSubtitle || dict.questionSpreadNote))
       : state.mode === 'full'
         ? dict.readingSubtitle
         : (state.spread === 'story' ? dict.spreadStory : dict.spreadQuick);
@@ -3393,6 +3868,7 @@ function buildSharePayload() {
     version: 1,
     lang: state.currentLang,
     mode: state.mode,
+    deck: getActiveDeckId(),
     spread: state.spread,
     topic: state.topic,
     cards: orderedCards.map((card) => ({ id: card.id, orientation: card.orientation, position: card.position })),
@@ -3548,9 +4024,14 @@ async function openSharePage({ action } = {}) {
       } catch (_) {
         // ignore clipboard errors
       }
-      alert(state.currentLang === 'th'
-        ? `ข้อมูลแชร์ยาวเกินไป (${encodedLength} ตัวอักษร) ระบบจะใช้ลิงก์สำรองและคัดลอกลิงก์ให้แล้ว`
-        : `Share data is too large (${encodedLength} chars). Using fallback link and copying it for you.`);
+      // Non-blocking: the oversized-payload fallback fires on every large
+      // reading (e.g. the 10-card Celtic Cross). A blocking alert() interrupted
+      // every such share; a toast informs without stopping the flow into the
+      // share page. (encodedLength intentionally dropped from the user-facing
+      // copy — it was developer detail.)
+      showTemporaryToast(state.currentLang === 'th'
+        ? 'ลิงก์ยาวเกินไป ใช้ลิงก์สำรองและคัดลอกให้แล้ว'
+        : 'Long reading — using a backup share link (copied for you).');
     }
     window.location.href = shareUrl;
   } catch (error) {
@@ -3702,7 +4183,12 @@ function configureSaveButton(dict = translations[state.currentLang]) {
     saveBtn.removeEventListener('click', saveButtonHandler);
   }
 
-  if (state.mode === 'daily' || state.mode === 'question') {
+  if (state.mode === 'daily' || state.mode === 'question' || state.mode === 'full') {
+    // Full (Celtic Cross) now shares via the poster flow like daily/question —
+    // the share/poster pipeline fully supports the celtic payload
+    // (isCelticCrossPosterPayload / renderCelticCrossPoster). It used to fall
+    // through to the bare canvas "Save image" download, which skipped the
+    // reading-specific og:image poster (hard rule #8).
     saveBtn.textContent = state.currentLang === 'th' ? 'แชร์' : 'Share';
     saveButtonHandler = () => openSharePage();
   } else if (isMobile()) {
@@ -3744,6 +4230,10 @@ function configureActionButtons(dict = translations[state.currentLang]) {
         ? 'เปิดไพ่อีกครั้ง'
         : 'Re-draw'
       : (dict.newReading || newReadingBtn.textContent);
+    // Phase 5: full-mode Celtic Cross design ends with a 2-button
+    // action row (Save + Share). Hide the third Re-draw button on
+    // full mode only; daily and question keep all three buttons.
+    newReadingBtn.hidden = state.mode === 'full';
   }
 
   configureSaveButton(dict);
@@ -3752,6 +4242,17 @@ function configureActionButtons(dict = translations[state.currentLang]) {
     shareReadingLink();
   };
   shareBtn?.addEventListener('click', shareButtonHandler);
+
+  if (typeof window !== 'undefined' && !window._meowShareListenerBound) {
+    window._meowShareListenerBound = true;
+    document.addEventListener('meow:request-share', () => {
+      try {
+        openSharePage();
+      } catch (err) {
+        console.error('[meow] request-share failed:', err);
+      }
+    });
+  }
 
   newReadingButtonHandler = () => {
     if (state.mode === 'daily') {
@@ -3828,11 +4329,14 @@ function init() {
     onLangToggle: switchLanguageInPlace,
   });
 
+  import('./notifications.js').then(({ initDeepLink }) => initDeepLink());
+
   if (document.body) {
     document.body.setAttribute('data-reading-mode', state.mode || 'daily');
   }
 
   ensureCardSheet();
+  ensureShareFab();
 
   backLink?.addEventListener('click', (event) => {
     if (window.history.length > 1) {
@@ -3854,11 +4358,13 @@ function init() {
     }
   });
 
+  const MIGRATION_DONE_KEY = 'meowtarot_migration_done';
+
   if (isAuthConfigured()) {
     getCurrentUser()
       .then(async (user) => {
         authUiState.user = user || null;
-        if (user) {
+        if (user && !sessionStorage.getItem(MIGRATION_DONE_KEY)) {
           const migrationResult = await migrateLocalToAccount(user);
           if (!migrationResult?.ok) {
             const hydrateResult = await hydrateLocalFromCloud();
@@ -3866,6 +4372,7 @@ function init() {
               showTemporaryToast(buildRetentionText(activeDict, 'retentionSyncFailed', state.currentLang === 'th' ? 'ซิงก์ไม่สำเร็จตอนนี้ แต่ข้อมูลในเครื่องยังปลอดภัย' : 'Could not sync now. Your local journey is still safe.'));
             }
           }
+          sessionStorage.setItem(MIGRATION_DONE_KEY, '1');
         }
       })
       .catch((error) => {

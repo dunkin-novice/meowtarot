@@ -6,12 +6,12 @@ import {
   pathHasThaiPrefix,
   translations,
 } from './common.js';
-import { loadTarotManifest, normalizeId } from './data.js';
+import { getAllDecks, loadTarotManifest, normalizeId } from './data.js';
 import { computePhase } from './phase.js';
-import { getUserProgress } from './progress.js';
-import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, subscribeAuthState } from './auth.js';
+import { getUserProgress, getNextStreakMilestone } from './progress.js';
+import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
-import { trackProfileRevisit } from './analytics.js';
+import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
 import { renderDeckInventory } from './deck-inventory.js';
 import { renderAchievementsPanel } from './achievements-panel.js';
 
@@ -89,6 +89,19 @@ function renderIdentity(dict) {
       }
     });
     card.appendChild(logoutBtn);
+
+    const th = state.currentLang === 'th';
+
+    // Privacy policy link.
+    const privacyLink = document.createElement('a');
+    privacyLink.className = 'profile-privacy-link';
+    privacyLink.href = th ? '/th/privacy.html' : '/privacy.html';
+    privacyLink.textContent = dict.profilePrivacyLink || (th ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy');
+    card.appendChild(privacyLink);
+
+    // Account deletion (Guideline 5.1.1(v)) lives at the very bottom of the page,
+    // tucked under the collapsed "Other" disclosure — see renderOther(). Kept out
+    // of the identity card so it can't be tapped by accident.
   } else {
     const loginBtn = document.createElement('button');
     loginBtn.type = 'button';
@@ -107,48 +120,195 @@ function renderIdentity(dict) {
   els.identity.appendChild(card);
 }
 
+const THAI_NUMBER_WORDS = [
+  'ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า',
+  'สิบ', 'สิบเอ็ด', 'สิบสอง', 'สิบสาม', 'สิบสี่', 'สิบห้า', 'สิบหก', 'สิบเจ็ด', 'สิบแปด', 'สิบเก้า', 'ยี่สิบ',
+];
+
+function thaiNumberWord(n) {
+  const num = Math.max(0, Number(n) || 0);
+  if (num <= 20) return `${THAI_NUMBER_WORDS[num]}วัน`;
+  if (num < 30) {
+    // Thai uses "เอ็ด" (not "หนึ่ง") for the ones-digit 1 in 21/31/41...
+    const ones = num - 20;
+    return ones === 1 ? 'ยี่สิบเอ็ดวัน' : `ยี่สิบ${THAI_NUMBER_WORDS[ones]}วัน`;
+  }
+  return `${num} วัน`;
+}
+
 function renderStreak(dict) {
   if (!els.streak) return;
   els.streak.innerHTML = '';
   const progress = getUserProgress();
 
-  const card = document.createElement('section');
-  card.className = 'panel';
+  // Top eyebrow row: "Your practice · บันทึกการเดินทาง"
+  const topRow = document.createElement('div');
+  topRow.className = 'profile-top-row';
 
-  const title = document.createElement('h2');
-  title.textContent = dict.profileStreakTitle || (state.currentLang === 'th' ? 'สรุปการเดินทาง' : 'Journey summary');
-  card.appendChild(title);
+  const eyebrowGroup = document.createElement('div');
+  const eyebrowEn = document.createElement('div');
+  eyebrowEn.className = 'profile-top-row__eyebrow';
+  eyebrowEn.textContent = state.currentLang === 'th' ? 'บันทึกการเดินทาง' : 'Your practice';
+  eyebrowGroup.appendChild(eyebrowEn);
 
-  const streak = document.createElement('p');
-  streak.textContent = (dict.profileStreakCurrent || (state.currentLang === 'th' ? 'สตรีคปัจจุบัน: {count} วัน' : 'Current streak: {count} days'))
-    .replace('{count}', String(progress.streak_current || 0));
-  card.appendChild(streak);
+  // Single-language per locale — no bilingual alt eyebrow.
 
-  const total = document.createElement('p');
-  total.textContent = (dict.profileReadingsTotal || (state.currentLang === 'th' ? 'อ่านรายวันทั้งหมด: {count}' : 'Total daily readings: {count}'))
-    .replace('{count}', String(progress.total_daily_reads || 0));
-  card.appendChild(total);
+  topRow.appendChild(eyebrowGroup);
 
-  const phase = computePhase(progress, translations[state.currentLang] || translations.en, translations.en);
-  if (phase?.label) {
-    const phaseLine = document.createElement('p');
-    phaseLine.textContent = (dict.profilePhaseLine || (state.currentLang === 'th' ? 'ช่วงพลัง: {label}' : 'Current phase: {label}'))
-      .replace('{label}', phase.label);
-    card.appendChild(phaseLine);
+  // Language toggle pill on the right of the top row. Replaces the
+  // global navbar's EN/TH toggle — language switching is now profile-
+  // only per the Phase 5 navbar removal pass. Clicking either side
+  // calls switchLanguageInPlace which re-applies translations and
+  // re-runs renderAll (so the toggle itself re-renders with the new
+  // language selected).
+  const langPill = document.createElement('div');
+  langPill.className = 'profile-lang-pill';
+  langPill.setAttribute('role', 'group');
+  langPill.setAttribute('aria-label', 'Language');
+  ['en', 'th'].forEach((lang) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'profile-lang-pill__btn';
+    btn.dataset.lang = lang;
+    btn.textContent = lang === 'en' ? 'EN' : 'TH';
+    btn.setAttribute('aria-pressed', String(state.currentLang === lang));
+    if (state.currentLang === lang) {
+      btn.classList.add('is-active');
+    }
+    btn.addEventListener('click', () => {
+      if (state.currentLang === lang) return;
+      switchLanguageInPlace(lang);
+    });
+    langPill.appendChild(btn);
+  });
+  topRow.appendChild(langPill);
+
+  els.streak.appendChild(topRow);
+
+  // Streak hero
+  const hero = document.createElement('div');
+  hero.className = 'profile-streak-hero';
+
+  const heroEyebrow = document.createElement('div');
+  heroEyebrow.className = 'profile-streak-hero__eyebrow';
+  heroEyebrow.textContent = state.currentLang === 'th' ? 'สตรีคปัจจุบัน' : 'Current streak';
+  hero.appendChild(heroEyebrow);
+
+  const currentStreak = Math.max(0, Number(progress.streak_current) || 0);
+  const bestStreak = Math.max(0, Number(progress.streak_best) || 0);
+
+  const heroNum = document.createElement('div');
+  heroNum.className = 'profile-streak-hero__number';
+  heroNum.textContent = String(currentStreak);
+  hero.appendChild(heroNum);
+
+  // TH-only secondary line under the big gradient number. The Thai
+  // number-word (e.g. "สิบสี่วัน") only renders on the TH site so EN
+  // doesn't leak Thai script into the streak hero.
+  if (state.currentLang === 'th') {
+    const heroNumTh = document.createElement('div');
+    heroNumTh.className = 'profile-streak-hero__number-th';
+    heroNumTh.textContent = thaiNumberWord(currentStreak);
+    hero.appendChild(heroNumTh);
   }
 
-  const monthlyStreak = document.createElement('p');
-  const monthDays = getMonthlyReadingDays(state.history);
-  monthlyStreak.textContent = (dict.profileMonthlyStreak || (state.currentLang === 'th' ? 'สตรีคเดือนนี้: {count} วัน' : 'Monthly streak: {count} days'))
-    .replace('{count}', String(computeConsecutiveStreak(monthDays)));
-  card.appendChild(monthlyStreak);
+  const heroSubtitle = document.createElement('div');
+  heroSubtitle.className = 'profile-streak-hero__subtitle';
+  const isLongest = currentStreak > 0 && currentStreak >= bestStreak;
+  if (state.currentLang === 'th') {
+    heroSubtitle.textContent = isLongest ? 'วันติดต่อกัน · ยาวที่สุดที่เคย' : `วันติดต่อกัน · สูงสุด ${bestStreak} วัน`;
+  } else {
+    heroSubtitle.textContent = isLongest ? 'days in a row · longest yet' : `days in a row · best ${bestStreak}`;
+  }
+  hero.appendChild(heroSubtitle);
 
-  const energy = document.createElement('p');
-  energy.textContent = (dict.profileMostCommonEnergy || (state.currentLang === 'th' ? 'พลังที่พบบ่อยที่สุด: {label}' : 'Most common energy: {label}'))
-    .replace('{label}', getMostCommonEnergyLabel(dict, state.history));
-  card.appendChild(energy);
+  els.streak.appendChild(hero);
 
-  els.streak.appendChild(card);
+  // Progress panel (Next: deck + bar + Moonveil-style info box)
+  const nextMilestone = getNextStreakMilestone(progress);
+  if (nextMilestone) {
+    const { target, current, remaining } = nextMilestone;
+    const fillPct = Math.max(0, Math.min(100, Math.round((current / target) * 100)));
+    const targetDeck = getAllDecks().find((d) => d.unlock_day === target);
+    const deckNameEn = targetDeck?.name || '';
+    const deckNameTh = targetDeck?.name_th || deckNameEn;
+    const deckBlurbEn = targetDeck?.blurb_en || targetDeck?.tagline_en || '';
+    const deckBlurbTh = targetDeck?.blurb_th || targetDeck?.tagline_th || '';
+
+    const panel = document.createElement('div');
+    panel.className = 'profile-progress-panel';
+
+    const head = document.createElement('div');
+    head.className = 'profile-progress-panel__head';
+
+    const headLeft = document.createElement('div');
+    const titleEn = document.createElement('div');
+    titleEn.className = 'profile-progress-panel__title';
+    titleEn.textContent = state.currentLang === 'th'
+      ? `สำรับถัดไป · ${deckNameTh}`
+      : `Next: ${deckNameEn}`;
+    headLeft.appendChild(titleEn);
+    // Single-language per locale — no bilingual alt title-th line.
+    head.appendChild(headLeft);
+
+    const headRight = document.createElement('div');
+    headRight.className = 'profile-progress-panel__remaining';
+    const remNum = document.createElement('div');
+    remNum.className = 'profile-progress-panel__remaining-num';
+    remNum.textContent = String(remaining);
+    headRight.appendChild(remNum);
+    const remLabel = document.createElement('div');
+    remLabel.className = 'profile-progress-panel__remaining-label';
+    remLabel.textContent = state.currentLang === 'th' ? 'วันที่เหลือ' : 'days to go';
+    headRight.appendChild(remLabel);
+    head.appendChild(headRight);
+
+    panel.appendChild(head);
+
+    const bar = document.createElement('div');
+    bar.className = 'profile-progress-bar';
+    const track = document.createElement('div');
+    track.className = 'profile-progress-bar__track';
+    const fill = document.createElement('div');
+    fill.className = 'profile-progress-bar__fill';
+    fill.style.width = `${fillPct}%`;
+    const pearl = document.createElement('div');
+    pearl.className = 'profile-progress-bar__pearl';
+    fill.appendChild(pearl);
+    track.appendChild(fill);
+    bar.appendChild(track);
+
+    const labels = document.createElement('div');
+    labels.className = 'profile-progress-bar__labels';
+    const dayCurr = document.createElement('span');
+    dayCurr.textContent = state.currentLang === 'th' ? `วันที่ ${current}` : `Day ${current}`;
+    labels.appendChild(dayCurr);
+    const dayTarget = document.createElement('span');
+    dayTarget.textContent = state.currentLang === 'th' ? `วันที่ ${target} · ปลดล็อก` : `Day ${target} · unlock`;
+    labels.appendChild(dayTarget);
+    bar.appendChild(labels);
+
+    panel.appendChild(bar);
+
+    if (deckBlurbEn || deckBlurbTh) {
+      const blurb = document.createElement('div');
+      blurb.className = 'profile-progress-panel__blurb';
+      const bName = document.createElement('b');
+      bName.textContent = state.currentLang === 'th' ? deckNameTh : deckNameEn;
+      blurb.appendChild(bName);
+      const blurbText = document.createTextNode(' ' + (state.currentLang === 'th' ? (deckBlurbTh || deckBlurbEn) : (deckBlurbEn || deckBlurbTh)));
+      blurb.appendChild(blurbText);
+      if (deckBlurbTh && state.currentLang !== 'th') {
+        const th = document.createElement('div');
+        th.className = 'profile-progress-panel__blurb-th';
+        th.textContent = deckBlurbTh;
+        blurb.appendChild(th);
+      }
+      panel.appendChild(blurb);
+    }
+
+    els.streak.appendChild(panel);
+  }
 }
 
 function getMonthlyReadingDays(history = []) {
@@ -279,6 +439,25 @@ function renderHistory(dict) {
     emptyBody.textContent = dict.profileHistoryLoginBody || (state.currentLang === 'th' ? 'เมื่อเข้าสู่ระบบ คุณจะย้อนดูผลเดิมและติดตามพลังที่เด่นได้ง่ายขึ้น' : 'When signed in, you can revisit past readings and track your dominant energy.');
     empty.appendChild(emptyBody);
 
+    // Phase 5: opening the sign-in gate from the history empty state
+    // surfaces the same Continue-with-Google CTA as the design's
+    // ScreenPopupSignIn. The inline "Sign in with Google" button in
+    // renderIdentity stays as a separate entry point — both call
+    // loginWithProvider('google').
+    const cta = document.createElement('button');
+    cta.type = 'button';
+    cta.className = 'ghost profile-empty-state__cta';
+    cta.textContent = dict.profileSignInCta || (state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Google' : 'Sign in to continue');
+    cta.addEventListener('click', () => {
+      import('./sign-in-gate.js').then(({ showSignInGate }) => {
+        showSignInGate({
+          lang: state.currentLang,
+          onSignIn: () => loginWithProvider('google').catch(() => {}),
+        });
+      }).catch(() => {});
+    });
+    empty.appendChild(cta);
+
     card.appendChild(empty);
     els.history.appendChild(card);
     return;
@@ -351,24 +530,67 @@ function renderHistory(dict) {
   els.history.appendChild(card);
 }
 
-function renderLoginCta(dict) {
-  if (!els.cta) return;
-  els.cta.innerHTML = '';
-  if (state.user || !isAuthConfigured()) return;
+function renderLifetimeStats(dict) {
+  const host = document.getElementById('profile-lifetime-stats');
+  if (!host) return;
+  host.innerHTML = '';
 
-  const panel = document.createElement('section');
-  panel.className = 'panel';
-  const title = document.createElement('h2');
-  title.textContent = dict.profileLoginTitle || (state.currentLang === 'th' ? 'บันทึกการเดินทางของคุณ' : 'Save your journey');
-  panel.appendChild(title);
+  const history = Array.isArray(state.history) ? state.history : [];
+  const cardsDrawn = history.reduce((acc, entry) => acc + (Array.isArray(entry?.reading_cards) ? entry.reading_cards.length : 0), 0);
+  const questionsAsked = history.filter((entry) => entry?.mode === 'question').length;
+  let sharesTotal = 0;
+  try {
+    const raw = window.localStorage?.getItem('_mt_shares_total');
+    sharesTotal = Math.max(0, Number(raw) || 0);
+  } catch (_) { /* sandbox */ }
 
-  const body = document.createElement('p');
-  body.textContent = dict.profileLoginBody || (state.currentLang === 'th'
-    ? 'เข้าสู่ระบบเพื่อเก็บประวัติการเปิดไพ่ล่าสุดของคุณ'
-    : 'Sign in to keep your recent reading history.');
-  panel.appendChild(body);
+  const panel = document.createElement('div');
+  panel.className = 'profile-lifetime-stats';
 
-  els.cta.appendChild(panel);
+  const stats = [
+    {
+      n: cardsDrawn,
+      en: 'Cards drawn',
+      th: 'ไพ่ที่เปิด',
+    },
+    {
+      n: questionsAsked,
+      en: 'Questions asked',
+      th: 'คำถาม',
+    },
+    {
+      n: sharesTotal,
+      en: 'Times shared',
+      th: 'จำนวนแชร์',
+    },
+  ];
+
+  stats.forEach((s) => {
+    const col = document.createElement('div');
+    col.className = 'profile-lifetime-stat';
+    const num = document.createElement('div');
+    num.className = 'profile-lifetime-stat__num';
+    num.textContent = String(s.n);
+    col.appendChild(num);
+    const label = document.createElement('div');
+    label.className = 'profile-lifetime-stat__label';
+    label.textContent = state.currentLang === 'th' ? s.th : s.en;
+    col.appendChild(label);
+    const labelAlt = document.createElement('div');
+    labelAlt.className = 'profile-lifetime-stat__label-th';
+    labelAlt.textContent = state.currentLang === 'th' ? s.en : s.th;
+    col.appendChild(labelAlt);
+    panel.appendChild(col);
+  });
+
+  host.appendChild(panel);
+}
+
+function renderLoginCta() {
+  // The bottom "Save your journey" sign-in CTA was removed as redundant — the
+  // identity card and the history empty-state already surface sign-in. Hide the
+  // (now empty) host so it leaves no gap above the bottom nav.
+  if (els.cta) { els.cta.innerHTML = ''; els.cta.hidden = true; }
 }
 
 async function refreshHistory() {
@@ -404,6 +626,161 @@ async function refreshCardNameMap() {
   }
 }
 
+// "Contact us" — Instagram + email (moved out of the footer).
+function renderContact(dict) {
+  const host = document.getElementById('profile-contact');
+  if (!host) return;
+  host.innerHTML = '';
+  const th = state.currentLang === 'th';
+
+  const card = document.createElement('section');
+  card.className = 'panel profile-contact';
+
+  const title = document.createElement('h2');
+  title.textContent = dict.profileContactTitle || (th ? 'ติดต่อเรา' : 'Contact us');
+  card.appendChild(title);
+
+  const row = document.createElement('div');
+  row.className = 'profile-contact__links';
+  row.innerHTML = `
+    <a class="profile-contact__link" href="https://www.instagram.com/meowtarotcom/" target="_blank" rel="noopener noreferrer">Instagram</a>
+    <a class="profile-contact__link" href="mailto:hello@meowtarot.com">hello@meowtarot.com</a>
+  `;
+  card.appendChild(row);
+  host.appendChild(card);
+}
+
+// "Other" — collapsed disclosure at the very bottom (Guideline 5.1.1(v)). Tap
+// "Other" to reveal a "Delete account" button; tapping THAT opens a centered
+// confirmation modal (warning + checkbox-gated delete). Signed-in users only.
+function renderOther(dict) {
+  const host = document.getElementById('profile-other');
+  if (!host) return;
+  host.innerHTML = '';
+  if (!state.user) { host.hidden = true; return; }
+  host.hidden = false;
+
+  const th = state.currentLang === 'th';
+
+  const card = document.createElement('section');
+  card.className = 'panel profile-other';
+
+  const details = document.createElement('details');
+  details.className = 'profile-other-disclosure';
+
+  const summary = document.createElement('summary');
+  summary.className = 'profile-other-disclosure__summary';
+  summary.textContent = dict.profileOtherTitle || (th ? 'อื่น ๆ' : 'Other');
+  details.appendChild(summary);
+
+  const body = document.createElement('div');
+  body.className = 'profile-other-disclosure__body';
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'profile-delete-trigger';
+  trigger.textContent = dict.profileDeleteAccount || (th ? 'ลบบัญชี' : 'Delete account');
+  trigger.addEventListener('click', () => openDeleteModal(dict, th));
+  body.appendChild(trigger);
+
+  details.appendChild(body);
+  card.appendChild(details);
+  host.appendChild(card);
+}
+
+// Centered confirmation modal for account deletion. The destructive call is
+// gated behind an explicit checkbox before "Yes, delete" enables.
+let deleteModalOpen = false;
+function openDeleteModal(dict, th) {
+  if (deleteModalOpen) return;
+  deleteModalOpen = true;
+
+  const ov = document.createElement('div');
+  ov.className = 'profile-delete-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+
+  const card = document.createElement('div');
+  card.className = 'profile-delete-modal';
+
+  const close = () => {
+    deleteModalOpen = false;
+    ov.classList.remove('in');
+    setTimeout(() => ov.remove(), 200);
+  };
+
+  const warn = document.createElement('p');
+  warn.className = 'profile-delete-modal__warn';
+  warn.textContent = dict.profileDeleteFinalBody
+    || (th
+      ? 'คุณกำลังลบบัญชี สำรับและการดูไพ่ที่บันทึกไว้ทั้งหมดจะหายไปอย่างถาวร และย้อนกลับไม่ได้'
+      : "You're deleting your account. All your decks and saved readings will be gone for good. This can't be undone.");
+  card.appendChild(warn);
+
+  const checkLabel = document.createElement('label');
+  checkLabel.className = 'profile-delete-checkbox';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  const checkText = document.createElement('span');
+  checkText.textContent = dict.profileDeleteCheckbox
+    || (th
+      ? 'ฉันเข้าใจว่าสำรับและการดูไพ่ของฉันจะถูกลบอย่างถาวร'
+      : 'I understand my decks and readings will be permanently deleted.');
+  checkLabel.appendChild(checkbox);
+  checkLabel.appendChild(checkText);
+  card.appendChild(checkLabel);
+
+  const row = document.createElement('div');
+  row.className = 'profile-delete-actions';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'profile-delete-confirm';
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'ghost';
+  cancelBtn.textContent = dict.profileDeleteCancel || (th ? 'ยกเลิก' : 'Cancel');
+  cancelBtn.addEventListener('click', close);
+
+  checkbox.addEventListener('change', () => {
+    confirmBtn.disabled = !checkbox.checked;
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    if (confirmBtn.disabled) return;
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+    checkbox.disabled = true;
+    confirmBtn.textContent = dict.profileDeleting || (th ? 'กำลังลบ…' : 'Deleting…');
+    try {
+      await deleteAccount();
+      // deleteAccount() signs out → the auth-state listener re-renders to the guest view.
+      close();
+    } catch (_) {
+      confirmBtn.disabled = false;
+      cancelBtn.disabled = false;
+      checkbox.disabled = false;
+      confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
+      warn.textContent = dict.profileDeleteError || (th ? 'ลบไม่สำเร็จ ลองอีกครั้ง' : 'Could not delete your account. Please try again.');
+    }
+  });
+
+  row.appendChild(confirmBtn);
+  row.appendChild(cancelBtn);
+  card.appendChild(row);
+
+  ov.appendChild(card);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+}
+
 async function renderAll(dict = translations[state.currentLang] || translations.en) {
   await refreshCardNameMap();
   await refreshHistory();
@@ -411,10 +788,26 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   renderStreak(dict);
   const progress = getUserProgress();
   const deckInvEl = document.getElementById('profile-deck-inventory');
-  if (deckInvEl) renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
+  if (deckInvEl) {
+    renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
+    // Phase 5: "View all decks" CTA below the horizontal strip routes
+    // to the standalone /decks.html page (ScreenDeckInventory).
+    const seeAll = document.createElement('a');
+    seeAll.className = 'profile-deck-see-all';
+    seeAll.href = localizePath('/decks.html', state.currentLang);
+    // EN-only on EN site / TH-only on TH site — drop the bilingual alt.
+    const seeAllEn = document.createElement('span');
+    seeAllEn.className = 'profile-deck-see-all__en';
+    seeAllEn.textContent = state.currentLang === 'th' ? 'ดูสำรับทั้งหมด' : 'View all decks';
+    seeAll.appendChild(seeAllEn);
+    deckInvEl.appendChild(seeAll);
+  }
+  renderLifetimeStats(dict);
   const achieveEl = document.getElementById('profile-achievements');
   if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);
   renderHistory(dict);
+  renderContact(dict);
+  renderOther(dict);
   renderLoginCta(dict);
 }
 
@@ -424,7 +817,17 @@ function onTranslations(dict) {
 
 function switchLanguageInPlace(nextLang) {
   if (!nextLang || nextLang === state.currentLang) return;
+  const fromLocale = state.currentLang;
   state.currentLang = nextLang;
+  // Mirror the side-effects that used to run on the global navbar's
+  // lang-toggle click (locale_switched GA event, persisted locale, and
+  // daily-reminder reschedule) so the profile-page pill is a drop-in
+  // replacement for the removed top-navbar toggle.
+  try { trackLocaleSwitched({ fromLocale, toLocale: nextLang }); } catch (_) {}
+  try { localStorage.setItem('meowtarot_lang', nextLang); } catch (_) {}
+  import('./notifications.js').then(({ isEnabled, scheduleDailyReminder }) => {
+    if (isEnabled()) scheduleDailyReminder(translations[nextLang]);
+  }).catch(() => {});
   applyTranslations(nextLang, onTranslations);
   applyLocaleMeta(nextLang);
 }

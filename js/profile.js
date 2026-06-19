@@ -99,66 +99,9 @@ function renderIdentity(dict) {
     privacyLink.textContent = dict.profilePrivacyLink || (th ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy');
     card.appendChild(privacyLink);
 
-    // Delete account — App Store Guideline 5.1.1(v). Two-step inline confirm.
-    const deleteWrap = document.createElement('div');
-    deleteWrap.className = 'profile-delete-wrap';
-    card.appendChild(deleteWrap);
-
-    const renderDeleteTrigger = () => {
-      deleteWrap.innerHTML = '';
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'profile-delete-trigger';
-      btn.textContent = dict.profileDeleteAccount || (th ? 'ลบบัญชี' : 'Delete account');
-      btn.addEventListener('click', renderDeleteConfirm);
-      deleteWrap.appendChild(btn);
-    };
-
-    const renderDeleteConfirm = () => {
-      deleteWrap.innerHTML = '';
-      const warn = document.createElement('p');
-      warn.className = 'profile-delete-warn';
-      warn.textContent = dict.profileDeleteConfirmBody
-        || (th
-          ? 'การลบบัญชีจะลบบัญชีและการดูไพ่ที่บันทึกไว้ทั้งหมดอย่างถาวร ย้อนกลับไม่ได้'
-          : 'This permanently deletes your account and all saved readings. This cannot be undone.');
-      deleteWrap.appendChild(warn);
-
-      const row = document.createElement('div');
-      row.className = 'profile-delete-actions';
-
-      const confirmBtn = document.createElement('button');
-      confirmBtn.type = 'button';
-      confirmBtn.className = 'profile-delete-confirm';
-      confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
-
-      const cancelBtn = document.createElement('button');
-      cancelBtn.type = 'button';
-      cancelBtn.className = 'ghost';
-      cancelBtn.textContent = dict.profileDeleteCancel || (th ? 'ยกเลิก' : 'Cancel');
-      cancelBtn.addEventListener('click', renderDeleteTrigger);
-
-      confirmBtn.addEventListener('click', async () => {
-        confirmBtn.disabled = true;
-        cancelBtn.disabled = true;
-        confirmBtn.textContent = dict.profileDeleting || (th ? 'กำลังลบ…' : 'Deleting…');
-        try {
-          await deleteAccount();
-          // deleteAccount() signs out → the auth-state listener re-renders to the guest view.
-        } catch (_) {
-          confirmBtn.disabled = false;
-          cancelBtn.disabled = false;
-          confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
-          warn.textContent = dict.profileDeleteError || (th ? 'ลบไม่สำเร็จ ลองอีกครั้ง' : 'Could not delete your account. Please try again.');
-        }
-      });
-
-      row.appendChild(confirmBtn);
-      row.appendChild(cancelBtn);
-      deleteWrap.appendChild(row);
-    };
-
-    renderDeleteTrigger();
+    // Account deletion (Guideline 5.1.1(v)) lives at the very bottom of the page,
+    // tucked under the collapsed "Other" disclosure — see renderOther(). Kept out
+    // of the identity card so it can't be tapped by accident.
   } else {
     const loginBtn = document.createElement('button');
     loginBtn.type = 'button';
@@ -643,24 +586,11 @@ function renderLifetimeStats(dict) {
   host.appendChild(panel);
 }
 
-function renderLoginCta(dict) {
-  if (!els.cta) return;
-  els.cta.innerHTML = '';
-  if (state.user || !isAuthConfigured()) return;
-
-  const panel = document.createElement('section');
-  panel.className = 'panel';
-  const title = document.createElement('h2');
-  title.textContent = dict.profileLoginTitle || (state.currentLang === 'th' ? 'บันทึกการเดินทางของคุณ' : 'Save your journey');
-  panel.appendChild(title);
-
-  const body = document.createElement('p');
-  body.textContent = dict.profileLoginBody || (state.currentLang === 'th'
-    ? 'เข้าสู่ระบบเพื่อเก็บประวัติการเปิดไพ่ล่าสุดของคุณ'
-    : 'Sign in to keep your recent reading history.');
-  panel.appendChild(body);
-
-  els.cta.appendChild(panel);
+function renderLoginCta() {
+  // The bottom "Save your journey" sign-in CTA was removed as redundant — the
+  // identity card and the history empty-state already surface sign-in. Hide the
+  // (now empty) host so it leaves no gap above the bottom nav.
+  if (els.cta) { els.cta.innerHTML = ''; els.cta.hidden = true; }
 }
 
 async function refreshHistory() {
@@ -720,16 +650,135 @@ function renderContact(dict) {
   host.appendChild(card);
 }
 
-// "Other" — deactivate (local journey reset). Distinct from the account-delete
-// in the identity card: this only clears local streak/progress on this device.
+// "Other" — collapsed disclosure at the very bottom (Guideline 5.1.1(v)). Tap
+// "Other" to reveal a "Delete account" button; tapping THAT opens a centered
+// confirmation modal (warning + checkbox-gated delete). Signed-in users only.
 function renderOther(dict) {
-  // Removed the old "Deactivate account" action: it only called resetLocalProgress()
-  // (a LOCAL streak/progress wipe — nothing server-side), yet rendered alongside the real
-  // "Delete account" (Guideline 5.1.1(v)) for signed-in users, so the two read as
-  // duplicate/conflicting account-removal options. The logged-in "Delete account" is now
-  // the single deletion path. Hide the (now empty) section so it leaves no layout gap.
   const host = document.getElementById('profile-other');
-  if (host) { host.innerHTML = ''; host.hidden = true; }
+  if (!host) return;
+  host.innerHTML = '';
+  if (!state.user) { host.hidden = true; return; }
+  host.hidden = false;
+
+  const th = state.currentLang === 'th';
+
+  const card = document.createElement('section');
+  card.className = 'panel profile-other';
+
+  const details = document.createElement('details');
+  details.className = 'profile-other-disclosure';
+
+  const summary = document.createElement('summary');
+  summary.className = 'profile-other-disclosure__summary';
+  summary.textContent = dict.profileOtherTitle || (th ? 'อื่น ๆ' : 'Other');
+  details.appendChild(summary);
+
+  const body = document.createElement('div');
+  body.className = 'profile-other-disclosure__body';
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'profile-delete-trigger';
+  trigger.textContent = dict.profileDeleteAccount || (th ? 'ลบบัญชี' : 'Delete account');
+  trigger.addEventListener('click', () => openDeleteModal(dict, th));
+  body.appendChild(trigger);
+
+  details.appendChild(body);
+  card.appendChild(details);
+  host.appendChild(card);
+}
+
+// Centered confirmation modal for account deletion. The destructive call is
+// gated behind an explicit checkbox before "Yes, delete" enables.
+let deleteModalOpen = false;
+function openDeleteModal(dict, th) {
+  if (deleteModalOpen) return;
+  deleteModalOpen = true;
+
+  const ov = document.createElement('div');
+  ov.className = 'profile-delete-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+
+  const card = document.createElement('div');
+  card.className = 'profile-delete-modal';
+
+  const close = () => {
+    deleteModalOpen = false;
+    ov.classList.remove('in');
+    setTimeout(() => ov.remove(), 200);
+  };
+
+  const warn = document.createElement('p');
+  warn.className = 'profile-delete-modal__warn';
+  warn.textContent = dict.profileDeleteFinalBody
+    || (th
+      ? 'คุณกำลังลบบัญชี สำรับและการดูไพ่ที่บันทึกไว้ทั้งหมดจะหายไปอย่างถาวร และย้อนกลับไม่ได้'
+      : "You're deleting your account. All your decks and saved readings will be gone for good. This can't be undone.");
+  card.appendChild(warn);
+
+  const checkLabel = document.createElement('label');
+  checkLabel.className = 'profile-delete-checkbox';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  const checkText = document.createElement('span');
+  checkText.textContent = dict.profileDeleteCheckbox
+    || (th
+      ? 'ฉันเข้าใจว่าสำรับและการดูไพ่ของฉันจะถูกลบอย่างถาวร'
+      : 'I understand my decks and readings will be permanently deleted.');
+  checkLabel.appendChild(checkbox);
+  checkLabel.appendChild(checkText);
+  card.appendChild(checkLabel);
+
+  const row = document.createElement('div');
+  row.className = 'profile-delete-actions';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'profile-delete-confirm';
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'ghost';
+  cancelBtn.textContent = dict.profileDeleteCancel || (th ? 'ยกเลิก' : 'Cancel');
+  cancelBtn.addEventListener('click', close);
+
+  checkbox.addEventListener('change', () => {
+    confirmBtn.disabled = !checkbox.checked;
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    if (confirmBtn.disabled) return;
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+    checkbox.disabled = true;
+    confirmBtn.textContent = dict.profileDeleting || (th ? 'กำลังลบ…' : 'Deleting…');
+    try {
+      await deleteAccount();
+      // deleteAccount() signs out → the auth-state listener re-renders to the guest view.
+      close();
+    } catch (_) {
+      confirmBtn.disabled = false;
+      cancelBtn.disabled = false;
+      checkbox.disabled = false;
+      confirmBtn.textContent = dict.profileDeleteConfirmYes || (th ? 'ยืนยันลบบัญชี' : 'Yes, delete');
+      warn.textContent = dict.profileDeleteError || (th ? 'ลบไม่สำเร็จ ลองอีกครั้ง' : 'Could not delete your account. Please try again.');
+    }
+  });
+
+  row.appendChild(confirmBtn);
+  row.appendChild(cancelBtn);
+  card.appendChild(row);
+
+  ov.appendChild(card);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
 }
 
 async function renderAll(dict = translations[state.currentLang] || translations.en) {

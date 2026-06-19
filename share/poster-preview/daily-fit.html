@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Daily board — fit-in-one-screen proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --plum:#3d1a5c; --plumMid:#6a3f8e; --plumSoft:#a487c4; --gold:#bf8a20; --goldPale:#e7cfa0;
+    --cardDeep:#4a3a6b;
+    --bg: radial-gradient(120% 100% at 50% 0%, #f5e6f3 0%, #f0dcec 55%, #ead4e8 100%);
+    --display:'Cormorant Garamond',serif; --body:'DM Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#1b1024;color:#efe4f5;font-family:var(--body);padding:28px 22px 70px}
+  h1{font-family:var(--display);font-style:italic;font-weight:600;font-size:28px;color:#f3e3ff;margin-bottom:6px}
+  .sub{font-size:13px;color:#b79fce;max-width:780px;line-height:1.55;margin-bottom:22px}
+  .row{display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start}
+  .col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .tag{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+  .cap{font-size:12px;color:#b79fce;text-align:center;max-width:300px;line-height:1.5}
+
+  /* iPhone frame: chrome top (status+url) + content + safari toolbar bottom */
+  .phone{position:relative;border-radius:38px;background:#000;padding:10px;box-shadow:0 24px 60px -18px rgba(0,0,0,.7)}
+  .screen{position:relative;width:var(--w);height:var(--h);border-radius:30px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+  .chrome-top{flex:0 0 auto;height:84px;background:#ececf0;display:flex;flex-direction:column;justify-content:flex-end;padding:6px 14px 8px}
+  .chrome-top .status{display:flex;justify-content:space-between;font-size:11px;color:#111;font-weight:600;margin-bottom:6px}
+  .chrome-top .url{background:#fff;border-radius:9px;text-align:center;font-size:13px;color:#333;padding:7px}
+  .chrome-bot{flex:0 0 auto;height:46px;background:#ececf0;display:flex;align-items:center;justify-content:space-around;color:#1a73e8;font-size:18px}
+
+  /* ===== THE ACTUAL DAILY BOARD (proposed fit layout) ===== */
+  .board{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+    padding:14px 22px calc(8px + 64px);  /* bottom clears the floating nav */
+    position:relative;overflow:hidden}    /* no scroll */
+  .topbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between}
+  .deck-eyebrow{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .deck-name{font-family:var(--display);font-style:italic;font-weight:600;font-size:17px;color:var(--plum)}
+  .streak{display:flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--goldPale);border-radius:999px;padding:4px 10px;font-size:11px;color:var(--plum);font-weight:600}
+  .streak .dot{width:16px;height:16px;border-radius:50%;background:var(--gold);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center}
+  .title{flex:0 0 auto;text-align:center;font-family:var(--display);font-style:italic;font-weight:500;font-size:30px;color:var(--plum);margin-top:8px}
+  .shuffle-row{flex:0 0 auto;display:flex;justify-content:center;margin-top:8px}
+  .shuffle{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.85);border:1px solid rgba(212,154,44,.45);border-radius:999px;padding:7px 15px;font-size:12px;font-weight:600;color:var(--plum)}
+
+  /* grid sizes itself to the leftover height — 3 rows always fit */
+  .grid{flex:1 1 auto;min-height:0;display:grid;
+    grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);
+    gap:8px 7px;place-items:center;margin-top:10px;max-width:330px;align-self:center;width:100%}
+  .slot{height:100%;width:auto;aspect-ratio:1568/2720;max-width:64px;border-radius:6px;
+    border:.5px solid var(--goldPale);overflow:hidden;background:var(--cardDeep);
+    box-shadow:0 6px 12px -6px rgba(61,26,92,.5);position:relative}
+  .slot img{width:100%;height:100%;object-fit:cover;display:block}
+  .slot.sel{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 10px 22px -8px rgba(232,103,138,.55)}
+  .slot.sel::after{content:"✓";position:absolute;top:3px;right:4px;font-size:11px;color:var(--gold);font-weight:800}
+
+  .counter{flex:0 0 auto;text-align:center;font-size:12px;color:var(--plumMid);font-weight:600;margin-top:8px}
+  .cta{flex:0 0 auto;display:flex;justify-content:center;margin-top:8px}
+  .continue{min-width:200px;padding:13px 24px;border-radius:999px;border:none;font-weight:600;font-size:15px;
+    color:#fff;background:linear-gradient(180deg,#e8528a,#c92878);box-shadow:0 14px 26px -10px rgba(201,40,120,.6)}
+  .continue.dis{opacity:.5}
+
+  /* floating bottom nav pill */
+  .nav{position:absolute;left:14px;right:14px;bottom:10px;height:54px;background:rgba(255,255,255,.92);
+    border-radius:22px;box-shadow:0 12px 30px -10px rgba(61,26,92,.35);display:flex;align-items:center;justify-content:space-around;z-index:5}
+  .nav span{font-size:10px;color:var(--plumSoft);font-weight:600}
+  .nav .on{color:var(--plum)}
+</style>
+</head>
+<body>
+  <h1>Daily board — fit in one screen (proposal)</h1>
+  <p class="sub">Proposed layout: the 12-card grid sizes itself to the leftover height (3 rows that shrink on short screens), tighter header spacing, and no page scroll — so <b>Continue is always visible above the bottom nav</b>. Shown on a tall phone and a short one (iPhone SE) to prove it adapts. Real card-back art, real proportions.</p>
+
+  <div class="row" id="frames"></div>
+
+<script>
+  const BACK = "https://cdn.meowtarot.com/assets/moonmallow/00-back.webp?v=2026-03";
+  function frame(label, w, h){
+    const slots = Array.from({length:12}, (_,i)=>
+      `<div class="slot ${i===2?'sel':''}"><img src="${BACK}" referrerpolicy="no-referrer" alt=""></div>`).join('');
+    return `<div class="col">
+      <span class="tag">${label}</span>
+      <div class="phone" style="--w:${w}px;--h:${h}px">
+        <div class="screen">
+          <div class="chrome-top">
+            <div class="status"><span>13:57</span><span>📶 🔋</span></div>
+            <div class="url">meowtarot.com</div>
+          </div>
+          <div class="board">
+            <div class="topbar">
+              <div><div class="deck-eyebrow">From the deck</div><div class="deck-name">Velvet Familiar</div></div>
+              <div class="streak"><span class="dot">14</span>Day 14</div>
+            </div>
+            <div class="title">Choose your card</div>
+            <div class="shuffle-row"><div class="shuffle">↻ Shuffle</div></div>
+            <div class="grid">${slots}</div>
+            <div class="counter">1/1</div>
+            <div class="cta"><button class="continue">Continue</button></div>
+            <div class="nav"><span class="on">Today</span><span>Decks</span><span>Ask</span><span>Profile</span></div>
+          </div>
+          <div class="chrome-bot">‹ › <span style="font-size:13px">⊕</span> ⊡ ⋯</div>
+        </div>
+      </div>
+      <p class="cap">${w}×${h} — full board + <b>Continue</b> visible, no scroll.</p>
+    </div>`;
+  }
+  document.getElementById('frames').innerHTML =
+    frame('iPhone 14 · 390×844', 390, 844) +
+    frame('iPhone SE · 375×667', 375, 667);
+</script>
+</body>
+</html>

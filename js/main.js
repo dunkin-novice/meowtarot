@@ -15,7 +15,7 @@ import {
 import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackTopicSelected, trackSpreadSelected, trackShuffleHit } from './analytics.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
-import { getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
+import { getCurrentUser, getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
 
 const BOARD_CARD_COUNT = 12;
 // Phase 5 BUG 3 fix: changed from 6 → 12 to match design doc ScreenCardBoardDaily.
@@ -525,10 +525,41 @@ function renderStreakChip() {
   // reward goal — instead of a bare streak number. Full bar lives on Profile.
   const next = getNextStreakMilestone();
 
+  ensureChipProgressStyles();
+
   chips.forEach((chip) => {
     const numEl = chip.querySelector('.daily-topbar__streak-num, .full-topbar__streak-num');
     const labelEl = chip.querySelector('.daily-topbar__streak-label, .full-topbar__streak-label');
     if (!numEl || !labelEl) return;
+
+    // Bind a SINGLE click handler once and route by LIVE state at click time, so the
+    // chip stays correct across a logged-out → signed-in re-render (binding per-state
+    // would leave a stale "open sign-in gate" listener firing after the user logs in).
+    if (!chip.dataset.chipBound) {
+      chip.dataset.chipBound = '1';
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('tabindex', '0');
+      const onActivate = () => {
+        if (!getCurrentUserSync()) {
+          import('./sign-in-gate.js')
+            .then(({ showSignInGate }) => showSignInGate({
+              lang: state.currentLang,
+              onSignIn: () => loginWithProvider('google').catch(() => {}),
+            }))
+            .catch(() => {});
+          return;
+        }
+        const m = getNextStreakMilestone();
+        if (m) showRewardPopup(m);
+      };
+      chip.addEventListener('click', onActivate);
+      chip.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); }
+      });
+    }
+
+    let bar = chip.querySelector('.mt-chip-bar');
+    const dropBar = () => { if (bar) { bar.remove(); bar = null; } chip.classList.remove('mt-has-progress'); };
 
     if (!signedIn) {
       // Local streaks are fragile (cache-clear / no cross-device). Show the streak the
@@ -537,40 +568,152 @@ function renderStreakChip() {
       labelEl.textContent = dict.dailyStreakSaveCta;
       chip.setAttribute('aria-label', dict.dailyStreakSaveCta);
       chip.classList.add('is-cta');
-      if (!chip.dataset.ctaBound) {
-        chip.dataset.ctaBound = '1';
-        chip.setAttribute('role', 'button');
-        chip.setAttribute('tabindex', '0');
-        const openGate = () => {
-          import('./sign-in-gate.js')
-            .then(({ showSignInGate }) => showSignInGate({
-              lang: state.currentLang,
-              onSignIn: () => loginWithProvider('google').catch(() => {}),
-            }))
-            .catch(() => {});
-        };
-        chip.addEventListener('click', openGate);
-        chip.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGate(); }
-        });
-      }
+      dropBar();
       return;
     }
 
     // Signed in.
     chip.classList.remove('is-cta');
     if (next) {
-      // Progress to the next deck unlock: big number = days remaining.
+      // Progress to the next deck unlock: big number = days remaining, plus a mini
+      // progress bar. Tap opens the reward popup (next deck + full progress).
       numEl.textContent = String(next.remaining);
       labelEl.textContent = dict.deckUnlockProgress || 'to next deck';
       chip.setAttribute('aria-label', `${next.remaining} ${dict.deckUnlockProgress || 'to next deck'} (${next.current}/${next.target})`);
+      if (!bar) {
+        bar = document.createElement('span');
+        bar.className = 'mt-chip-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        const fill = document.createElement('span');
+        fill.className = 'mt-chip-bar__fill';
+        bar.appendChild(fill);
+        chip.appendChild(bar);
+      }
+      chip.classList.add('mt-has-progress');
+      const pct = Math.max(0, Math.min(100, Math.round((next.current / Math.max(1, next.target)) * 100)));
+      bar.querySelector('.mt-chip-bar__fill').style.width = `${pct}%`;
     } else {
       // All decks unlocked — fall back to the streak.
       numEl.textContent = streak >= 1 ? String(streak) : '✦';
       labelEl.textContent = streak >= 1 ? dict.dailyStreakLabel : dict.dailyStreakStart;
       chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
+      dropBar();
     }
   });
+}
+
+// Reward popup — tapping the signed-in streak chip shows the next deck you'll
+// unlock + how far along the streak you are. `next` = { target, current, remaining }.
+let rewardPopupOpen = false;
+function showRewardPopup(next) {
+  if (rewardPopupOpen || !next) return;
+  rewardPopupOpen = true;
+  const dict = translations[state.currentLang] || translations.en;
+  const th = state.currentLang === 'th';
+  ensureChipProgressStyles();
+
+  const deck = getAllDecks().find((d) => d.unlock_day === next.target);
+  const deckName = deck ? (th ? (deck.name_th || deck.name) : deck.name) : '';
+  const pct = Math.max(0, Math.min(100, Math.round((next.current / Math.max(1, next.target)) * 100)));
+
+  const ov = document.createElement('div');
+  ov.className = 'mt-reward-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+
+  const card = document.createElement('div');
+  card.className = 'mt-reward';
+
+  const close = () => {
+    rewardPopupOpen = false;
+    ov.classList.remove('in');
+    setTimeout(() => ov.remove(), 200);
+  };
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'mt-reward__close';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', close);
+  card.appendChild(closeBtn);
+
+  const title = document.createElement('h2');
+  title.className = 'mt-reward__title';
+  title.textContent = dict.rewardPopupTitle || 'Your next reward';
+  card.appendChild(title);
+
+  if (deck) {
+    const img = document.createElement('img');
+    img.className = 'mt-reward__img';
+    img.loading = 'lazy';
+    img.alt = '';
+    img.src = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
+    card.appendChild(img);
+
+    const name = document.createElement('div');
+    name.className = 'mt-reward__deck';
+    name.textContent = deckName;
+    card.appendChild(name);
+  }
+
+  const bar = document.createElement('div');
+  bar.className = 'mt-reward__bar';
+  const fill = document.createElement('div');
+  fill.className = 'mt-reward__bar-fill';
+  fill.style.width = `${pct}%`;
+  bar.appendChild(fill);
+  card.appendChild(bar);
+
+  const dayline = document.createElement('div');
+  dayline.className = 'mt-reward__days';
+  dayline.textContent = th ? `วันที่ ${next.current} จาก ${next.target}` : `Day ${next.current} of ${next.target}`;
+  card.appendChild(dayline);
+
+  const remain = document.createElement('div');
+  remain.className = 'mt-reward__remain';
+  remain.innerHTML = `<b>${next.remaining}</b> ${dict.rewardDaysToGo || 'days to go'}`;
+  card.appendChild(remain);
+
+  const keep = document.createElement('p');
+  keep.className = 'mt-reward__keep';
+  keep.textContent = dict.rewardKeepGoing || '';
+  card.appendChild(keep);
+
+  ov.appendChild(card);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+}
+
+function ensureChipProgressStyles() {
+  if (document.getElementById('mt-chip-progress-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'mt-chip-progress-styles';
+  s.textContent = `
+    .daily-topbar__streak-chip,.full-topbar__streak-chip{position:relative;}
+    .daily-topbar__streak-chip.mt-has-progress,.full-topbar__streak-chip.mt-has-progress{padding-bottom:9px;cursor:pointer;}
+    .mt-chip-bar{position:absolute;left:8px;right:8px;bottom:3px;height:3px;border-radius:2px;background:rgba(61,26,92,.14);overflow:hidden;}
+    .mt-chip-bar__fill{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--mt-rose,#e89bc0),var(--mt-gold-deep,#c9933a));transition:width .45s ease;}
+    .mt-reward-overlay{position:fixed;inset:0;z-index:1320;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(28,12,52,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s ease;}
+    .mt-reward-overlay.in{opacity:1;}
+    .mt-reward{position:relative;width:100%;max-width:320px;background:linear-gradient(180deg,#fbf6ff,#f3ecfc);border-radius:22px;padding:24px 22px 22px;text-align:center;box-shadow:0 18px 50px rgba(28,12,52,.35);transform:translateY(10px) scale(.98);transition:transform .22s ease;}
+    .mt-reward-overlay.in .mt-reward{transform:none;}
+    .mt-reward__close{position:absolute;top:12px;right:14px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(61,26,92,.08);color:#3d1a5c;font-size:14px;line-height:1;cursor:pointer;}
+    .mt-reward__title{margin:0 0 14px;font-family:'Playfair Display',serif;font-size:20px;color:#3d1a5c;}
+    .mt-reward__img{width:96px;aspect-ratio:1568/2720;object-fit:cover;border-radius:11px;box-shadow:0 8px 20px -6px rgba(61,26,92,.55);margin:0 auto 10px;display:block;}
+    .mt-reward__deck{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#3d1a5c;margin-bottom:14px;}
+    .mt-reward__bar{height:8px;border-radius:6px;background:rgba(61,26,92,.12);overflow:hidden;margin:0 0 9px;}
+    .mt-reward__bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--mt-rose,#e89bc0),var(--mt-gold-deep,#c9933a));transition:width .5s ease;}
+    .mt-reward__days{font-size:12.5px;font-weight:600;color:#8b6db0;}
+    .mt-reward__remain{margin-top:6px;font-size:13px;color:#3d1a5c;}
+    .mt-reward__remain b{font-size:22px;font-family:'Playfair Display',serif;color:#c9933a;}
+    .mt-reward__keep{margin:12px 0 0;font-size:12px;line-height:1.5;color:#8b6db0;}
+  `;
+  document.head.appendChild(s);
 }
 
 // Daily-board "From the deck" name. The markup hardcodes "Velvet Familiar"; wire it to
@@ -1204,18 +1347,31 @@ function renderHomeDeckStrip() {
   row.replaceChildren(frag);
 }
 
+// Re-render the auth-dependent board UI once the session settles. Nothing else
+// creates the Supabase client on the board/home pages, so getCurrentUserSync()
+// stays null on load even for a logged-in user — which made the deck switcher
+// show the sign-in gate and the streak chip show "Save your fortune" to people
+// who were already signed in. We trigger getCurrentUser() (restores the session +
+// creates the client, which fires onAuthStateChange) and re-render here.
+function onAuthSettled() {
+  renderStreakChip();
+  renderDeckName();
+  if (document.body.dataset.page === 'home') renderHomeDeckStrip();
+}
+
 function init() {
   const page = document.body.dataset.page;
   const navPage = page === 'question-draw' ? 'question' : page;
   initShell(state, (dict) => { void renderPage(dict); }, navPage);
 
+  // Restore any saved Supabase session so getCurrentUserSync() is populated for
+  // the deck switcher + streak chip. subscribeAuthState catches the async settle;
+  // getCurrentUser() kicks off client creation (otherwise the listener never fires).
+  subscribeAuthState(onAuthSettled);
+  getCurrentUser().then(onAuthSettled).catch(() => {});
+
   if (page === 'home') {
     renderHomeDeckStrip();
-    // Auth resolves async — the first paint can run before getCurrentUserSync() is
-    // populated, which made the home strip show decks LOCKED while /profile (which
-    // re-renders on auth) showed them UNLOCKED (#3). Re-render the strip when auth
-    // state settles/changes so the two surfaces agree.
-    subscribeAuthState(() => renderHomeDeckStrip());
     void renderPage(translations[state.currentLang] || translations.en);
     return;
   }

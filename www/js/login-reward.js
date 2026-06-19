@@ -2,11 +2,12 @@
  * login-reward.js — First-sign-in welcome popup
  *
  * Triggered once per user (per device) when they first sign in.
- * Centered modal showing the Moonmallow starter deck. Single CTA.
+ * Centered modal showing the Veila Tarot starter deck. Single CTA
+ * grants the deck by setting it as the active deck.
  * Gated by localStorage flag 'meowtarot_login_reward_seen'.
  */
 
-import { DECKS } from './data.js';
+import { DECKS, setActiveDeck } from './data.js';
 import { translations } from './common.js';
 
 const STYLE_FLAG = '__mt_login_reward_styles_injected';
@@ -126,6 +127,25 @@ const STYLES = `
   .mt-lr-card { transition: none !important; }
   .mt-lr-sparkles span { animation: none !important; opacity: 0.5; }
 }
+.mt-welcome-toast {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top, 0px) + 18px);
+  transform: translate(-50%, -14px);
+  z-index: 9999;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(61, 26, 92, 0.92);
+  color: #fff;
+  font-family: var(--mt-font-body, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(31, 21, 52, 0.34);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.mt-welcome-toast.in { opacity: 1; transform: translate(-50%, 0); }
 `;
 
 function injectStylesOnce() {
@@ -202,27 +222,60 @@ function buildPopup(deckBackUrl, dict) {
  * @param {object|null} user - Supabase auth user (or null for guest)
  * @param {string} lang - 'en' | 'th'
  */
-export function maybeShowLoginReward(user, lang) {
+function showWelcomeToast(lang) {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (document.getElementById('mt-welcome-toast')) return;
+  injectStylesOnce();
+  const dict = getDict(lang);
+  const toast = document.createElement('div');
+  toast.id = 'mt-welcome-toast';
+  toast.className = 'mt-welcome-toast';
+  toast.setAttribute('role', 'status');
+  toast.textContent = dict.loginWelcomeBack || 'Welcome back!';
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('in'));
+  setTimeout(() => {
+    toast.classList.remove('in');
+    setTimeout(() => toast.remove(), 320);
+  }, 2200);
+}
+
+export function maybeShowLoginReward(user, lang, opts = {}) {
   if (typeof document === 'undefined') return;
   if (!user) return;
   if (pending) return;
-  if (readSeen()) return;
+
+  // First-EVER login = account just created (≈ within 5 min) AND the reward hasn't shown.
+  // Anything else is a returning login → no deck reward; a light "welcome back" toast on a
+  // genuine fresh sign-in only (not on every page-load session restore).
+  const createdMs = user.created_at ? Date.parse(user.created_at) : 0;
+  const isFirstEver = createdMs > 0 && (Date.now() - createdMs) < 5 * 60 * 1000 && !readSeen();
+
+  if (!isFirstEver) {
+    markSeen(); // never re-trigger the deck reward for returning users
+    if (opts.fresh) showWelcomeToast(lang);
+    return;
+  }
 
   pending = true;
   setTimeout(() => {
     pending = false;
 
     if (!document.body) return;
-    if (readSeen()) return;
     if (document.getElementById(POPUP_ID)) return;
+    markSeen(); // mark on SHOW (was only on claim → re-showed if dismissed/reloaded)
 
     injectStylesOnce();
 
     const dict = getDict(lang);
-    const deckBackUrl = DECKS && DECKS.moonmallow ? DECKS.moonmallow.backImage : '';
+    const deckBackUrl = DECKS && DECKS['veila-tarot'] ? DECKS['veila-tarot'].backImage : '';
 
     const overlay = buildPopup(deckBackUrl, dict);
     document.body.appendChild(overlay);
+
+    import('./analytics.js')
+      .then(({ trackPopupShown }) => trackPopupShown({ popup: 'login_reward', surface: document.body?.dataset?.page || 'page', deckId: 'veila-tarot', locale: lang }))
+      .catch(() => {});
 
     requestAnimationFrame(() => {
       overlay.classList.add('mt-lr-active');
@@ -239,6 +292,7 @@ export function maybeShowLoginReward(user, lang) {
     const cta = overlay.querySelector('.mt-lr-cta');
     if (cta) {
       cta.addEventListener('click', () => {
+        setActiveDeck('veila-tarot');
         markSeen();
         dismiss();
       }, { once: true });

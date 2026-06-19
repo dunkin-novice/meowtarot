@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><title>Question poster harness (single / quick pull)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&display=swap" />
+<style>body{margin:0;background:#222}#out{color:#fff;font-family:sans-serif;padding:8px}</style></head>
+<body>
+<div id="out">rendering…</div>
+<script type="module">
+  const { buildPoster } = await import('/share/poster.js?b=' + Date.now());
+  const lang = new URLSearchParams(location.search).get('lang') || 'en';
+  const cards = [ { id: '39-three-of-cups', orientation: (new URLSearchParams(location.search).get('o') || 'reversed') } ];
+  const payload = { version: 1, lang, mode: 'question', spread: 'quick', topic: 'love', cards, poster: { mode: 'question', footer: 'meowtarot.com' } };
+  try {
+    const { blob, width, height } = await buildPoster(payload, { preset: 'story' });
+    const img = new Image();
+    img.onload = () => { window.__posterReady = true; };
+    img.src = URL.createObjectURL(blob);
+    img.style.width = '620px'; img.style.display = 'block';
+    const out = document.getElementById('out'); out.textContent = `rendered ${width}x${height}`; out.appendChild(img);
+  } catch (e) {
+    document.getElementById('out').textContent = 'ERR: ' + (e && e.message);
+    window.__posterErr = e && e.message;
+  }
+</script>
+</body>
+</html>

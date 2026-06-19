@@ -1,19 +1,30 @@
 import { initShell, localizePath, translations } from './common.js';
 import {
   loadTarotManifest,
+  loadTarotData,
   getCardBackUrl,
   getCardBackFallbackUrl,
   getCardImageUrl,
   applyImageFallback,
   normalizeId,
+  getAllDecks,
+  getActiveDeckId,
+  setActiveDeck,
+  canUnlockDeck,
 } from './data.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
-import { trackTopicSelected } from './analytics.js';
+import { trackTopicSelected, trackSpreadSelected, trackShuffleHit } from './analytics.js';
+import { getUserProgress, getNextStreakMilestone } from './progress.js';
+import { getCurrentUser, getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
 
 const BOARD_CARD_COUNT = 12;
-const DAILY_BOARD_COUNT = 6;
+// Phase 5 BUG 3 fix: changed from 6 → 12 to match design doc ScreenCardBoardDaily.
+// The 12-card spread matches what the question-draw board already renders
+// (BOARD_CARD_COUNT = 12 above). Selection still = 1 of N (DAILY_SELECTION_MAX = 1).
+const DAILY_BOARD_COUNT = 12;
 const CELTIC_CROSS_COUNT = 10;
-const QUESTION_SELECTION_COUNT = 3;
+const QUESTION_SELECTION_COUNTS = { story: 3, quick: 1 };
+let questionSpread = 'quick';
 const FULL_POOL_SIZE = 50;
 const ORIENTATION_REVERSED_PROBABILITY = 0.5;
 const STORAGE_KEY = 'meowtarot_selection';
@@ -53,18 +64,20 @@ let questionTopicsModulePromise = null;
 
 const staticCardBacks = document.querySelectorAll('.card-back');
 
-function applyCardBackBackground(el) {
+function applyCardBackBackground(el, { thumb = false } = {}) {
   if (!el) return;
+  const backUrl = getCardBackUrl({ thumb });
   if (el.tagName === 'IMG') {
-    applyImageFallback(el, getCardBackUrl(), [CARD_BACK_FALLBACK_URL]);
+    applyImageFallback(el, backUrl, [CARD_BACK_FALLBACK_URL]);
     el.loading = el.loading || 'eager';
     el.alt = '';
     return;
   }
-  el.style.backgroundImage = `url('${getCardBackUrl()}')`;
+  el.style.backgroundImage = `url('${backUrl}')`;
 }
 
-staticCardBacks.forEach(applyCardBackBackground);
+// Board backs render tiny (~40-64px), so use the lightweight 200px thumbnail.
+staticCardBacks.forEach((el) => applyCardBackBackground(el, { thumb: true }));
 
 const stripOrientation = (value = '') => String(value || '').replace(/-(upright|reversed)$/i, '');
 
@@ -207,6 +220,12 @@ function animateDealSlots(boardEl, slots, onDone) {
     slot.style.opacity = '0';
   });
 
+  // Cap the cumulative stagger on big boards: the 78-card Celtic deck at the full
+  // 160ms/card stagger took ~12s to deal. For >24 slots, shrink the per-card delay so
+  // the whole deal lands in ~0.8s; small boards (daily/question = 12) keep the original
+  // ceremonial stagger.
+  const stagger = slots.length > 24 ? Math.max(4, Math.floor(700 / slots.length)) : DEAL_STAGGER;
+
   requestAnimationFrame(() => {
     slots.forEach((slot, idx) => {
       slot.classList.add('card-visible');
@@ -214,10 +233,10 @@ function animateDealSlots(boardEl, slots, onDone) {
       setTimeout(() => {
         slot.style.opacity = '1';
         slot.style.transform = 'translate(0, 0) scale(1)';
-      }, idx * DEAL_STAGGER);
+      }, idx * stagger);
     });
 
-    const total = 350 + slots.length * DEAL_STAGGER + 120;
+    const total = 350 + slots.length * stagger + 120;
     setTimeout(() => {
       slots.forEach((slot) => {
         slot.style.transition = '';
@@ -226,6 +245,43 @@ function animateDealSlots(boardEl, slots, onDone) {
       });
       onDone?.();
     }, total);
+  });
+}
+
+// Celtic 78-card board deal: simple, jank-free reveal — every card fades + scales in
+// together (so all 4 rows and both sides appear at the same time), then inline styles are
+// cleared. No per-card translate / getBoundingClientRect / staggered timers (those were
+// fragile and could leave cards stuck invisible). ~0.3s vs the old multi-second sweep.
+function animateFullDeal(boardEl, slots, onDone) {
+  // Query the LIVE board nodes (not the passed array) so the reveal always lands on what's
+  // actually on screen — the collect faded the on-screen cards to opacity 0, and these are
+  // the nodes that must be brought back.
+  const live = Array.from(boardEl.querySelectorAll('.card-slot'));
+  requestAnimationFrame(() => {
+    live.forEach((slot) => {
+      slot.classList.add('card-visible');
+      slot.style.transition = 'opacity .28s ease, transform .28s ease';
+      slot.style.opacity = '1';
+      slot.style.transform = 'none';
+    });
+    setTimeout(() => {
+      live.forEach((slot) => {
+        slot.style.transition = '';
+        slot.style.transform = '';
+        slot.style.opacity = '';
+      });
+      onDone?.();
+    }, 340);
+  });
+}
+
+// Simple, jank-free collect for the 78-card board: fade + slight shrink in place, all at
+// once (no fly-to-centre transforms that thrashed layout on overlapping cards).
+function animateSimpleCollect(boardEl, slots) {
+  slots.forEach((slot) => {
+    slot.style.transition = 'opacity .16s ease, transform .16s ease';
+    slot.style.opacity = '0';
+    slot.style.transform = 'scale(0.92)';
   });
 }
 
@@ -288,20 +344,22 @@ function animateDailyShuffleSlots(boardEl, slots, onDone) {
   };
 
   const phaseTwoSpread = () => {
-    const spread = [
-      { x: -1, y: 0.35, r: -5 },
-      { x: 0, y: 0.6, r: 3 },
-      { x: 1, y: 0.35, r: 5 },
-      { x: -0.78, y: -0.28, r: -3 },
-      { x: 0, y: -0.5, r: 0 },
-      { x: 0.78, y: -0.28, r: 3 },
-    ];
+    // Phase 5 fix: generate spread vectors algorithmically so the animation
+    // scales to any board count. The previous version was hardcoded to 6
+    // entries; when DAILY_BOARD_COUNT moved from 6 → 12 in commit 5929448,
+    // cards 7-12 fell back to {x:0, y:0, r:0} and sat motionless at center
+    // while cards 1-6 fanned out — the "animation only applies to 6 cards"
+    // bug. Circular fan with slight vertical flattening (×0.5) so it fits
+    // a wider-than-tall daily board; per-card rotation drifts -15° → +15°
+    // for variety.
+    const count = slots.length;
     slots.forEach((slot, idx) => {
-      const vector = spread[idx] || { x: 0, y: 0, r: 0 };
-      const x = Math.round(vector.x * spreadRange);
-      const y = Math.round(vector.y * spreadRange);
+      const angle = (idx / count) * 2 * Math.PI - Math.PI / 2; // start at top
+      const x = Math.round(Math.cos(angle) * spreadRange);
+      const y = Math.round(Math.sin(angle) * spreadRange * 0.5);
+      const r = Math.round((idx / count) * 30 - 15);
       slot.style.transition = `transform 400ms ${SHUFFLE_EASE}`;
-      slot.style.transform = `translate(${x}px, ${y}px) rotate(${vector.r}deg) scale(1.03)`;
+      slot.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg) scale(1.03)`;
     });
   };
 
@@ -348,6 +406,9 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       });
     }
     boardEl.classList.toggle('has-selection', selected.length > 0);
+    // is-complete = all required cards picked. The full board only dims the unpicked cards
+    // once the selection is COMPLETE (not from the first pick) — see full.css.
+    boardEl.classList.toggle('is-complete', selectionGoal > 1 && selected.length >= selectionGoal);
     onSelectionChange(selected.map((idx) => cards[idx]).filter(Boolean));
   };
 
@@ -360,9 +421,22 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       slot.type = 'button';
       slot.className = 'card-slot';
       const cardBack = Object.assign(document.createElement('img'), { className: 'card-back' });
-      applyCardBackBackground(cardBack);
+      if (i === 0) {
+        cardBack.fetchPriority = 'high';
+        cardBack.loading = 'eager';
+      }
+      applyCardBackBackground(cardBack, { thumb: true });
       slot.appendChild(cardBack);
       slot.onclick = () => {
+        // BUG-021 tail: ignore taps on slots with no card behind them yet.
+        // On a cold/slow load the daily board renders once before card data
+        // arrives (all slots is-hidden / cardless), then renderDaily runs a
+        // second time with data and rebuilds the board from scratch. A tap in
+        // that first window toggled is-selected on a cardless slot — visible
+        // for a frame, contributing nothing real (cards[i] is undefined), then
+        // silently discarded by the rebuild, so the tap "missed". Guarding on
+        // cards[i] makes the early tap a clean no-op until the card is dealt.
+        if (!cards[i]) return;
         if (selected.includes(i)) {
           selected = selected.filter((idx) => idx !== i);
         } else if (selectionGoal === 1) {
@@ -392,7 +466,9 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     if (withAnimation) {
       boardEl.classList.add('is-locked');
       requestAnimationFrame(() => {
-        const animate = animationProfile === 'daily' ? animateDailyShuffleSlots : animateDealSlots;
+        const animate = animationProfile === 'daily' ? animateDailyShuffleSlots
+          : animationProfile === 'full' ? animateFullDeal
+          : animateDealSlots;
         animate(boardEl, slots, () => {
           boardEl.classList.remove('is-locked');
           refreshBadges();
@@ -413,8 +489,15 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
 
     if (withAnimation && previousSlots.length) {
       boardEl.classList.add('is-locked');
-      animateCollectSlots(boardEl, previousSlots);
-      setTimeout(proceed, STACK_DURATION);
+      if (animationProfile === 'full') {
+        // 78 overlapping cards flying to centre (getBoundingClientRect per card) thrashed
+        // layout and looked buggy. Simple in-place fade-out instead, then re-deal.
+        animateSimpleCollect(boardEl, previousSlots);
+        setTimeout(proceed, 190);
+      } else {
+        animateCollectSlots(boardEl, previousSlots);
+        setTimeout(proceed, STACK_DURATION);
+      }
     } else {
       proceed();
     }
@@ -428,18 +511,423 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
   };
 }
 
+// Daily-board top-right streak chip. The markup ships a hardcoded "14"/"Day 14"
+// placeholder; wire it to the real local streak (progress is tracked in localStorage
+// for everyone, signed in or not). No-op on surfaces without the chip (e.g. /today/).
+function renderStreakChip() {
+  // Covers both the daily AND full/Celtic topbar chips (full's was hardcoded "Day 14").
+  const chips = document.querySelectorAll('.daily-topbar__streak-chip, .full-topbar__streak-chip');
+  if (!chips.length) return;
+  const dict = translations[state.currentLang] || translations.en;
+  const signedIn = Boolean(getCurrentUserSync());
+  const streak = Math.max(0, Number(getUserProgress().streak_current) || 0);
+  // Logged-in chip shows progress to the NEXT deck unlock (accumulated days) — the
+  // reward goal — instead of a bare streak number. Full bar lives on Profile.
+  const next = getNextStreakMilestone();
+
+  ensureChipProgressStyles();
+
+  chips.forEach((chip) => {
+    const numEl = chip.querySelector('.daily-topbar__streak-num, .full-topbar__streak-num');
+    const labelEl = chip.querySelector('.daily-topbar__streak-label, .full-topbar__streak-label');
+    if (!numEl || !labelEl) return;
+
+    // Bind a SINGLE click handler once and route by LIVE state at click time, so the
+    // chip stays correct across a logged-out → signed-in re-render (binding per-state
+    // would leave a stale "open sign-in gate" listener firing after the user logs in).
+    if (!chip.dataset.chipBound) {
+      chip.dataset.chipBound = '1';
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('tabindex', '0');
+      const onActivate = () => {
+        if (!getCurrentUserSync()) {
+          import('./sign-in-gate.js')
+            .then(({ showSignInGate }) => showSignInGate({
+              lang: state.currentLang,
+              onSignIn: () => loginWithProvider('google').catch(() => {}),
+            }))
+            .catch(() => {});
+          return;
+        }
+        const m = getNextStreakMilestone();
+        if (m) showRewardPopup(m);
+      };
+      chip.addEventListener('click', onActivate);
+      chip.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); }
+      });
+    }
+
+    let bar = chip.querySelector('.mt-chip-bar');
+    const dropBar = () => { if (bar) { bar.remove(); bar = null; } chip.classList.remove('mt-has-progress'); };
+
+    if (!signedIn) {
+      // Local streaks are fragile (cache-clear / no cross-device). Show the streak the
+      // user has built AND nudge sign-in to save it — tap opens the sign-in gate.
+      numEl.textContent = streak >= 1 ? String(streak) : '✦';
+      labelEl.textContent = dict.dailyStreakSaveCta;
+      chip.setAttribute('aria-label', dict.dailyStreakSaveCta);
+      chip.classList.add('is-cta');
+      dropBar();
+      return;
+    }
+
+    // Signed in.
+    chip.classList.remove('is-cta');
+    if (next) {
+      // Progress to the next deck unlock: big number = days remaining, plus a mini
+      // progress bar. Tap opens the reward popup (next deck + full progress).
+      numEl.textContent = String(next.remaining);
+      labelEl.textContent = dict.deckUnlockProgress || 'to next deck';
+      chip.setAttribute('aria-label', `${next.remaining} ${dict.deckUnlockProgress || 'to next deck'} (${next.current}/${next.target})`);
+      if (!bar) {
+        bar = document.createElement('span');
+        bar.className = 'mt-chip-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        const fill = document.createElement('span');
+        fill.className = 'mt-chip-bar__fill';
+        bar.appendChild(fill);
+        chip.appendChild(bar);
+      }
+      chip.classList.add('mt-has-progress');
+      const pct = Math.max(0, Math.min(100, Math.round((next.current / Math.max(1, next.target)) * 100)));
+      bar.querySelector('.mt-chip-bar__fill').style.width = `${pct}%`;
+    } else {
+      // All decks unlocked — fall back to the streak.
+      numEl.textContent = streak >= 1 ? String(streak) : '✦';
+      labelEl.textContent = streak >= 1 ? dict.dailyStreakLabel : dict.dailyStreakStart;
+      chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
+      dropBar();
+    }
+  });
+}
+
+// Reward popup — tapping the signed-in streak chip shows the next deck you'll
+// unlock + how far along the streak you are. `next` = { target, current, remaining }.
+let rewardPopupOpen = false;
+function showRewardPopup(next) {
+  if (rewardPopupOpen || !next) return;
+  rewardPopupOpen = true;
+  const dict = translations[state.currentLang] || translations.en;
+  const th = state.currentLang === 'th';
+  ensureChipProgressStyles();
+
+  const deck = getAllDecks().find((d) => d.unlock_day === next.target);
+  const deckName = deck ? (th ? (deck.name_th || deck.name) : deck.name) : '';
+  const pct = Math.max(0, Math.min(100, Math.round((next.current / Math.max(1, next.target)) * 100)));
+
+  const ov = document.createElement('div');
+  ov.className = 'mt-reward-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+
+  const card = document.createElement('div');
+  card.className = 'mt-reward';
+
+  const close = () => {
+    rewardPopupOpen = false;
+    ov.classList.remove('in');
+    setTimeout(() => ov.remove(), 200);
+  };
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'mt-reward__close';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', close);
+  card.appendChild(closeBtn);
+
+  const title = document.createElement('h2');
+  title.className = 'mt-reward__title';
+  title.textContent = dict.rewardPopupTitle || 'Your next reward';
+  card.appendChild(title);
+
+  if (deck) {
+    const img = document.createElement('img');
+    img.className = 'mt-reward__img';
+    img.loading = 'lazy';
+    img.alt = '';
+    img.src = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
+    card.appendChild(img);
+
+    const name = document.createElement('div');
+    name.className = 'mt-reward__deck';
+    name.textContent = deckName;
+    card.appendChild(name);
+  }
+
+  const bar = document.createElement('div');
+  bar.className = 'mt-reward__bar';
+  const fill = document.createElement('div');
+  fill.className = 'mt-reward__bar-fill';
+  fill.style.width = `${pct}%`;
+  bar.appendChild(fill);
+  card.appendChild(bar);
+
+  const dayline = document.createElement('div');
+  dayline.className = 'mt-reward__days';
+  dayline.textContent = th ? `วันที่ ${next.current} จาก ${next.target}` : `Day ${next.current} of ${next.target}`;
+  card.appendChild(dayline);
+
+  const remain = document.createElement('div');
+  remain.className = 'mt-reward__remain';
+  remain.innerHTML = `<b>${next.remaining}</b> ${dict.rewardDaysToGo || 'days to go'}`;
+  card.appendChild(remain);
+
+  const keep = document.createElement('p');
+  keep.className = 'mt-reward__keep';
+  keep.textContent = dict.rewardKeepGoing || '';
+  card.appendChild(keep);
+
+  ov.appendChild(card);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+}
+
+function ensureChipProgressStyles() {
+  if (document.getElementById('mt-chip-progress-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'mt-chip-progress-styles';
+  s.textContent = `
+    .daily-topbar__streak-chip,.full-topbar__streak-chip{position:relative;}
+    .daily-topbar__streak-chip.mt-has-progress,.full-topbar__streak-chip.mt-has-progress{padding-bottom:9px;cursor:pointer;}
+    .mt-chip-bar{position:absolute;left:8px;right:8px;bottom:3px;height:3px;border-radius:2px;background:rgba(61,26,92,.14);overflow:hidden;}
+    .mt-chip-bar__fill{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--mt-rose,#e89bc0),var(--mt-gold-deep,#c9933a));transition:width .45s ease;}
+    .mt-reward-overlay{position:fixed;inset:0;z-index:1320;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(28,12,52,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s ease;}
+    .mt-reward-overlay.in{opacity:1;}
+    .mt-reward{position:relative;width:100%;max-width:320px;background:linear-gradient(180deg,#fbf6ff,#f3ecfc);border-radius:22px;padding:24px 22px 22px;text-align:center;box-shadow:0 18px 50px rgba(28,12,52,.35);transform:translateY(10px) scale(.98);transition:transform .22s ease;}
+    .mt-reward-overlay.in .mt-reward{transform:none;}
+    .mt-reward__close{position:absolute;top:12px;right:14px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(61,26,92,.08);color:#3d1a5c;font-size:14px;line-height:1;cursor:pointer;}
+    .mt-reward__title{margin:0 0 14px;font-family:'Playfair Display',serif;font-size:20px;color:#3d1a5c;}
+    .mt-reward__img{width:96px;aspect-ratio:1568/2720;object-fit:cover;border-radius:11px;box-shadow:0 8px 20px -6px rgba(61,26,92,.55);margin:0 auto 10px;display:block;}
+    .mt-reward__deck{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#3d1a5c;margin-bottom:14px;}
+    .mt-reward__bar{height:8px;border-radius:6px;background:rgba(61,26,92,.12);overflow:hidden;margin:0 0 9px;}
+    .mt-reward__bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--mt-rose,#e89bc0),var(--mt-gold-deep,#c9933a));transition:width .5s ease;}
+    .mt-reward__days{font-size:12.5px;font-weight:600;color:#8b6db0;}
+    .mt-reward__remain{margin-top:6px;font-size:13px;color:#3d1a5c;}
+    .mt-reward__remain b{font-size:22px;font-family:'Playfair Display',serif;color:#c9933a;}
+    .mt-reward__keep{margin:12px 0 0;font-size:12px;line-height:1.5;color:#8b6db0;}
+  `;
+  document.head.appendChild(s);
+}
+
+// Daily-board "From the deck" name. The markup hardcodes "Velvet Familiar"; wire it to
+// the active deck (localized — deck names ARE translated, unlike card names) so it matches
+// the board's card backs. No-op where the element is absent.
+function renderDeckName() {
+  // Covers both the daily AND full/Celtic topbars (both hardcoded "Velvet Familiar"
+  // in markup — not a real deck). Wire to the active deck, localized.
+  const nameEls = document.querySelectorAll('.daily-topbar__deck-name, .full-topbar__deck-name');
+  if (!nameEls.length) return;
+  const deck = getAllDecks().find((d) => d.id === getActiveDeckId());
+  if (!deck) return;
+  const name = state.currentLang === 'th' ? (deck.name_th || deck.name) : deck.name;
+  nameEls.forEach((el) => { el.textContent = name; });
+  wireDeckSwitcher();
+}
+
+// Re-point every rendered .card-back to the ACTIVE deck's back. Needed after a deck
+// switch from the board picker — the slots were painted once at deal time, so without
+// this they'd keep showing the old deck (the repaint requirement noted in CLAUDE.md).
+function repaintCardBacks() {
+  document.querySelectorAll('.card-back').forEach((el) => applyCardBackBackground(el, { thumb: true }));
+}
+
+// Make the board's "From the deck <name>" label a tappable deck switcher.
+function wireDeckSwitcher() {
+  document.querySelectorAll('.daily-topbar__deck, .full-topbar__deck').forEach((host) => {
+    if (host.dataset.deckSwitch === '1') return;
+    host.dataset.deckSwitch = '1';
+    host.classList.add('mt-deck-switch');
+    host.setAttribute('role', 'button');
+    host.setAttribute('tabindex', '0');
+    const dict = translations[state.currentLang] || translations.en;
+    host.setAttribute('aria-label', dict.deckSwitchAria || 'Change deck');
+    if (!host.querySelector('.mt-deck-switch__caret')) {
+      const caret = document.createElement('span');
+      caret.className = 'mt-deck-switch__caret';
+      caret.setAttribute('aria-hidden', 'true');
+      caret.textContent = '▾';
+      host.appendChild(caret);
+    }
+    const open = () => {
+      // Logged out you can only own the default deck, so the picker is a dead end — nudge
+      // sign-in instead ("sign in to get new decks").
+      if (!getCurrentUserSync()) {
+        const d = translations[state.currentLang] || translations.en;
+        import('./sign-in-gate.js')
+          .then(({ showSignInGate }) => showSignInGate({
+            lang: state.currentLang,
+            title: d.deckGateTitle,
+            body: d.deckGateBody,
+            onSignIn: () => loginWithProvider('google').catch(() => {}),
+          }))
+          .catch(() => {});
+        return;
+      }
+      showDeckPicker();
+    };
+    host.addEventListener('click', open);
+    host.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
+}
+
+let deckPickerOpen = false;
+function showDeckPicker() {
+  if (deckPickerOpen) return;
+  deckPickerOpen = true;
+  const dict = translations[state.currentLang] || translations.en;
+  const th = state.currentLang === 'th';
+  ensureDeckPickerStyles();
+
+  const ov = document.createElement('div');
+  ov.className = 'mt-deckpick-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+
+  const card = document.createElement('div');
+  card.className = 'mt-deckpick';
+
+  const title = document.createElement('h2');
+  title.className = 'mt-deckpick__title';
+  title.textContent = dict.deckPickerTitle || 'Your deck';
+  card.appendChild(title);
+
+  const hint = document.createElement('p');
+  hint.className = 'mt-deckpick__hint';
+  hint.textContent = dict.deckPickerHint || '';
+  card.appendChild(hint);
+
+  const grid = document.createElement('div');
+  grid.className = 'mt-deckpick__grid';
+  const activeId = getActiveDeckId();
+
+  const close = () => {
+    deckPickerOpen = false;
+    ov.classList.remove('in');
+    setTimeout(() => ov.remove(), 200);
+  };
+
+  getAllDecks().forEach((deck) => {
+    const owned = canUnlockDeck(deck.id);
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.className = 'mt-deckpick__cell'
+      + (deck.id === activeId ? ' is-active' : '')
+      + (owned ? '' : ' is-locked');
+    const img = document.createElement('img');
+    img.className = 'mt-deckpick__img';
+    img.loading = 'lazy';
+    img.alt = '';
+    img.src = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
+    cell.appendChild(img);
+    const label = document.createElement('span');
+    label.className = 'mt-deckpick__name';
+    label.textContent = th ? (deck.name_th || deck.name) : deck.name;
+    cell.appendChild(label);
+    if (!owned) {
+      const lock = document.createElement('span');
+      lock.className = 'mt-deckpick__lock';
+      lock.setAttribute('aria-hidden', 'true');
+      lock.textContent = '🔒';
+      cell.appendChild(lock);
+      cell.disabled = true;
+    } else {
+      cell.addEventListener('click', () => {
+        try { setActiveDeck(deck.id); } catch (_) {}
+        repaintCardBacks();
+        renderDeckName();
+        close();
+      });
+    }
+    grid.appendChild(cell);
+  });
+  card.appendChild(grid);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'mt-deckpick__close';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', close);
+  card.appendChild(closeBtn);
+
+  ov.appendChild(card);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+}
+
+function ensureDeckPickerStyles() {
+  if (document.getElementById('mt-deckpick-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'mt-deckpick-styles';
+  s.textContent = `
+    .mt-deck-switch{position:relative;cursor:pointer;}
+    .mt-deck-switch__caret{margin-left:6px;font-size:11px;opacity:.7;vertical-align:middle;}
+    .mt-deckpick-overlay{position:fixed;inset:0;z-index:1300;display:flex;align-items:flex-end;justify-content:center;padding:0;background:rgba(28,12,52,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s ease;}
+    .mt-deckpick-overlay.in{opacity:1;}
+    .mt-deckpick{position:relative;width:100%;max-width:520px;max-height:78vh;overflow-y:auto;background:linear-gradient(180deg,#fbf6ff,#f3ecfc);border-radius:22px 22px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(28,12,52,.3);transform:translateY(16px);transition:transform .22s ease;}
+    .mt-deckpick-overlay.in .mt-deckpick{transform:none;}
+    .mt-deckpick__title{margin:0 0 2px;font-family:'Playfair Display',serif;font-size:22px;color:#3d1a5c;text-align:center;}
+    .mt-deckpick__hint{margin:0 0 16px;font-size:12.5px;color:#8b6db0;text-align:center;}
+    .mt-deckpick__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 10px;}
+    .mt-deckpick__cell{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border:none;background:transparent;cursor:pointer;border-radius:12px;}
+    .mt-deckpick__cell .mt-deckpick__img{width:100%;max-width:88px;aspect-ratio:1568/2720;object-fit:cover;border-radius:9px;border:1.5px solid transparent;box-shadow:0 5px 12px -5px rgba(61,26,92,.5);transition:transform .15s ease,border-color .15s ease;}
+    .mt-deckpick__cell.is-active .mt-deckpick__img{border-color:var(--mt-gold-deep,#c9933a);box-shadow:0 6px 16px -5px rgba(201,147,58,.6);}
+    .mt-deckpick__cell:not(.is-locked):active .mt-deckpick__img{transform:scale(.95);}
+    .mt-deckpick__name{font-size:11.5px;font-weight:600;color:#3d1a5c;text-align:center;line-height:1.2;}
+    .mt-deckpick__cell.is-locked{position:relative;cursor:default;}
+    .mt-deckpick__cell.is-locked .mt-deckpick__img{filter:grayscale(.85) brightness(.9);opacity:.6;}
+    .mt-deckpick__cell.is-locked .mt-deckpick__name{opacity:.6;}
+    .mt-deckpick__lock{position:absolute;top:6px;right:10px;font-size:15px;}
+    .mt-deckpick__close{position:absolute;top:12px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(61,26,92,.08);color:#3d1a5c;font-size:15px;cursor:pointer;line-height:1;}
+  `;
+  document.head.appendChild(s);
+}
+
 function renderDaily() {
+  // Phase 5 review pass: dealShuffleBtn (the "Draw card · เปิดไพ่" button on
+  // the removed Before-Draw state) no longer exists on daily.html/th/daily.html.
+  // We still look it up for /today/ and other legacy data-page='daily' surfaces
+  // that may still ship a Deal button; the handler is gated below.
   const dealShuffleBtn = document.getElementById('daily-deal-shuffle');
   const board = document.getElementById('daily-board');
   const counter = document.getElementById('daily-counter');
   const continueBtn = document.getElementById('daily-continue');
-  if (!dealShuffleBtn || !board || !continueBtn || !counter) return;
+  if (!board || !counter) return;
+
+  renderStreakChip();
+  renderDeckName();
+
+  // Phase 5 mobile review fix: signal to CSS that the new daily-shell layout
+  // is active. A real body class gives the cascade a hook every browser
+  // honors (the :has(.daily-shell) approach in commit 1d3a81a was unreliable
+  // for body-level overflow on mobile Safari — cards 7-12 stayed clipped
+  // below the fold). /today/ and other legacy data-page='daily' surfaces
+  // without .daily-shell don't carry this class, so their existing fixed-
+  // height behavior is preserved.
+  if (document.querySelector('.daily-shell')) {
+    document.body.classList.add('daily-shell-active');
+  }
 
   let selectedCards = [];
   const updateDailySelectionUi = (cards) => {
     selectedCards = cards;
     counter.textContent = `${cards.length}/${DAILY_SELECTION_MAX}`;
-    continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX;
+    if (continueBtn) {
+      continueBtn.disabled = cards.length !== DAILY_SELECTION_MAX;
+    }
   };
 
   const dailyBoard = setupBoard(
@@ -450,16 +938,44 @@ function renderDaily() {
     { animated: true, animationProfile: 'daily' }
   );
 
-  setRitualCtaLabel(dealShuffleBtn, true);
   counter.textContent = `0/${DAILY_SELECTION_MAX}`;
-  continueBtn.disabled = true;
+  if (continueBtn) {
+    continueBtn.disabled = true;
+  }
 
-  dealShuffleBtn.onclick = () => {
-    dailyBoard.render();
-    updateDailySelectionUi([]);
-  };
+  // Phase 5 review: auto-deal on init. The ceremonial Before-Draw state was
+  // removed; users land directly on the selection board, so we render the
+  // 12 cards immediately instead of waiting for a Draw-button click.
+  dailyBoard.render();
+  updateDailySelectionUi([]);
 
-  continueBtn.onclick = () => {
+  // Warm the full deck in the background while the user is choosing a card, so
+  // the reading result page (which needs the heavy reading text from the full
+  // cards.json) loads from cache instead of a cold ~1.15MB fetch after Continue.
+  // The board itself only needs the tiny manifest, so this never blocks it
+  // (BUG-021). Fire-and-forget, idle-scheduled.
+  const prefetchFullDeck = () => { loadTarotData().catch(() => {}); };
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(prefetchFullDeck, { timeout: 2500 });
+  } else {
+    setTimeout(prefetchFullDeck, 1200);
+  }
+
+  // Legacy dealShuffleBtn handler — preserved for /today/ and other pre-
+  // Phase-5 data-page='daily' surfaces that still ship a Deal/Shuffle
+  // button. On daily.html / th/daily.html (Phase 5 markup) this button
+  // is gone, so the block is a no-op.
+  if (dealShuffleBtn) {
+    if (!dealShuffleBtn.closest('.daily-shell')) {
+      setRitualCtaLabel(dealShuffleBtn, true);
+    }
+    dealShuffleBtn.onclick = () => {
+      dailyBoard.render();
+      updateDailySelectionUi([]);
+    };
+  }
+
+  const commitDailySelection = () => {
     const pickedCards = selectedCards.length ? selectedCards : dailyBoard.getSelectedCards();
     if (pickedCards.length !== DAILY_SELECTION_MAX) return;
     const selectedIds = pickedCards
@@ -469,602 +985,229 @@ function renderDaily() {
 
     saveSelectionAndGo({ mode: 'daily', spread: 'quick', topic: 'generic', cards: selectedIds });
   };
+
+  if (continueBtn) {
+    continueBtn.onclick = commitDailySelection;
+  }
+
+  // Phase 5: shuffle button above the board re-deals a fresh 12-card
+  // spread and clears the current pick. dailyBoard.render() already
+  // animates the deal and resets selection state; we just guard against
+  // double-taps while the board is mid-animation and spin the icon
+  // during the redraw.
+  const shuffleBtn = document.getElementById('daily-shuffle');
+  if (shuffleBtn) {
+    // onclick (not addEventListener) so a re-bind replaces rather than stacks.
+    shuffleBtn.onclick = () => {
+      if (board.classList.contains('is-locked')) return;
+      try { trackShuffleHit({ mode: 'daily', locale: state.currentLang, source: 'board' }); } catch (_) {}
+      shuffleBtn.classList.add('is-spinning');
+      if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+      dailyBoard.render();
+      updateDailySelectionUi([]);
+      window.setTimeout(() => shuffleBtn.classList.remove('is-spinning'), 1500);
+    };
+  }
 }
 
-async function renderOverall() {
-  const toolbar = document.getElementById('overall-toolbar');
-  const shuffleBtn = document.getElementById('overall-shuffle');
-  const counter = document.getElementById('overall-counter');
-  const continueBtn = document.getElementById('overall-continue');
-  const actions = document.getElementById('overall-actions');
-  const stageEyebrow = document.getElementById('overall-stage-eyebrow');
-  const stageTitle = document.getElementById('overall-stage-title');
-  const stageDescription = document.getElementById('overall-stage-description');
-  const dealOrbit = document.getElementById('overall-deal-orbit');
-  const drawDeck = document.getElementById('overall-draw-deck');
-  const drawSummary = document.getElementById('overall-draw-summary');
-  const selectionShell = document.getElementById('overall-selection-shell');
-  const dealStage = document.getElementById('overall-deal-stage');
-  const arrangeStage = document.getElementById('overall-arrange-stage');
-  const arrangeList = document.getElementById('overall-arrange-list');
-  if (
-    !toolbar
-    || !shuffleBtn
-    || !counter
-    || !continueBtn
-    || !actions
-    || !stageEyebrow
-    || !stageTitle
-    || !stageDescription
-    || !dealOrbit
-    || !drawDeck
-    || !drawSummary
-    || !selectionShell
-    || !dealStage
-    || !arrangeStage
-    || !arrangeList
-  ) return null;
+if (typeof window !== 'undefined' && !window._meowContinueListenerBound) {
+  window._meowContinueListenerBound = true;
+  document.addEventListener('meow:request-continue', () => {
+    const btn =
+      document.getElementById('daily-continue') ||
+      document.getElementById('question-continue') ||
+      document.getElementById('overall-continue');
+    if (btn && !btn.disabled) btn.click();
+  });
+}
 
-  const { applyTapSwap, buildNextDrawBoard } = await getFullReadingFlowModule();
+// Celtic Cross: pick 10 from the FULL 78-card deck (was 12 → "pick 10 of 12" felt
+// pointless). All slots show the same deck-back image, so 78 is cheap to render. B2-4.
+const FULL_BOARD_COUNT = 40;
+const FULL_SELECTION_MAX = 10;
 
-  const dict = translations[state.currentLang] || translations.en;
-  const DRAW_BOARD_SIZE = 10;
-  let stage = 'deal';
-  let pool = [];
-  let drawBoardCards = [];
+function renderFullBoard() {
+  // Phase 5 B1 rebuild: 12-card grid, pick 10 in order, no arrange step.
+  // Positions get auto-assigned by pick order on the result page via
+  // js/full-reading-position-order.js getFullReadingPositionMeta —
+  // first picked card → present (The Situation), second → challenge
+  // (What Crosses), … tenth → outcome. Drops the legacy ~540-line
+  // renderOverall (deal-board with swap + arrange-list with tap-swap).
+  const board = document.getElementById('full-board');
+  const counter = document.getElementById('full-counter');
+  const continueBtn = document.getElementById('full-continue');
+  if (!board || !counter) return null;
+
+  // Wire the Celtic topbar (deck name + chip) — both were hardcoded "Velvet
+  // Familiar"/"Day 14" in full.html markup.
+  renderStreakChip();
+  renderDeckName();
+
+  // Phase 5 mobile review pattern: same body class signal daily uses to
+  // hand mobile Safari a viewport-sized scrollable shell instead of
+  // letting cards 7-12 clip below the fold.
+  if (document.querySelector('.full-shell')) {
+    document.body.classList.add('full-shell-active');
+  }
+
   let selectedCards = [];
-  let selectedSwapIndex = -1;
-  let dealTimer = null;
-  let pickAnimationTimer = null;
-  let activePickAnimationCleanup = null;
-  let pickAnimationRunId = 0;
-  let boardShuffleTimer = null;
-  let activeBoardShuffleCleanup = null;
-  let boardShuffleRunId = 0;
-  let isBoardShuffleAnimating = false;
-  let isDisposed = false;
-  let isPickAnimating = false;
-  const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-  const clearDealTimer = () => {
-    if (!dealTimer) return;
-    window.clearTimeout(dealTimer);
-    dealTimer = null;
+  const updateFullSelectionUi = (cards) => {
+    selectedCards = cards;
+    counter.textContent = `${cards.length}/${FULL_SELECTION_MAX}`;
+    if (continueBtn) {
+      continueBtn.disabled = cards.length !== FULL_SELECTION_MAX;
+    }
   };
 
-  const clearPickAnimation = ({ unlock = true } = {}) => {
-    if (pickAnimationTimer) {
-      window.clearTimeout(pickAnimationTimer);
-      pickAnimationTimer = null;
-    }
-    if (typeof activePickAnimationCleanup === 'function') {
-      activePickAnimationCleanup();
-      activePickAnimationCleanup = null;
-    }
-    pickAnimationRunId += 1;
-    if (unlock) isPickAnimating = false;
+  const fullBoard = setupBoard(
+    board,
+    FULL_BOARD_COUNT,
+    FULL_SELECTION_MAX,
+    updateFullSelectionUi,
+    // 78-card board: 'full' profile = symmetric center-out reveal (rows in lockstep,
+    // L/R mirrored) + a simple in-place fade collect on shuffle (no buggy fly-to-centre).
+    { animated: false, animationProfile: 'full' }
+  );
+
+  counter.textContent = `0/${FULL_SELECTION_MAX}`;
+  if (continueBtn) continueBtn.disabled = true;
+  fullBoard.render();
+  updateFullSelectionUi([]);
+
+  const commitFullSelection = () => {
+    const pickedCards = selectedCards.length ? selectedCards : fullBoard.getSelectedCards();
+    if (pickedCards.length !== FULL_SELECTION_MAX) return;
+    const selectedIds = pickedCards
+      .map((card) => card?.id || card?.card_id)
+      .filter(Boolean);
+    if (selectedIds.length !== FULL_SELECTION_MAX) return;
+    saveSelectionAndGo({ mode: 'full', spread: 'celtic', topic: 'generic', cards: selectedIds });
   };
 
-  const clearBoardShuffleAnimation = ({ unlock = true } = {}) => {
-    if (boardShuffleTimer) {
-      window.clearTimeout(boardShuffleTimer);
-      boardShuffleTimer = null;
-    }
-    if (typeof activeBoardShuffleCleanup === 'function') {
-      activeBoardShuffleCleanup();
-      activeBoardShuffleCleanup = null;
-    }
-    boardShuffleRunId += 1;
-    if (unlock) isBoardShuffleAnimating = false;
-  };
+  if (continueBtn) {
+    continueBtn.onclick = commitFullSelection;
+  }
 
-  const isPoolReady = () => pool.length >= CELTIC_CROSS_COUNT;
-
-  const buildDrawBoardCards = () => buildNextDrawBoard(pool, selectedCards, DRAW_BOARD_SIZE);
-
-  const setStageCopy = (mode) => {
-    if (mode === 'arrange') {
-      stageEyebrow.textContent = dict.fullReadingStageArrangeEyebrow;
-      stageTitle.textContent = dict.fullReadingStageArrangeTitle;
-      stageDescription.textContent = dict.fullReadingStageArrangeBody;
-      return;
-    }
-
-    if (mode === 'draw') {
-      stageEyebrow.textContent = '';
-      stageTitle.textContent = dict.fullReadingStageDrawTitle;
-      stageDescription.textContent = '';
-      return;
-    }
-
-    stageEyebrow.textContent = dict.fullReadingStageDealEyebrow;
-    stageTitle.textContent = dict.fullReadingStageDealTitle;
-    stageDescription.textContent = dict.fullReadingStageDealBody;
-  };
-
-  const updateCounter = () => {
-    counter.textContent = `${selectedCards.length} / ${CELTIC_CROSS_COUNT}`;
-  };
-
-  const updateContinue = () => {
-    continueBtn.disabled = stage !== 'arrange' || selectedCards.length !== CELTIC_CROSS_COUNT;
-  };
-
-  const renderDealOrbit = () => {
-    dealOrbit.innerHTML = '';
-    if (stage !== 'draw') return;
-    const board = document.createElement('div');
-    board.className = 'full-draw-board';
-    drawBoardCards.forEach((_, idx) => {
-      const slot = document.createElement('button');
-      slot.type = 'button';
-      slot.className = 'full-draw-board__slot';
-      slot.dataset.drawBoardIndex = String(idx);
-      slot.setAttribute('aria-label', formatCopy(dict.fullReadingDrawCardLabel, { index: idx + 1 }));
-      slot.appendChild(createCardArt(null, 'full-draw-board__img', { useBack: true }));
-      slot.onclick = () => {
-        const picked = drawBoardCards[idx];
-        if (!picked || stage !== 'draw' || isPickAnimating || isBoardShuffleAnimating) return;
-
-        isPickAnimating = true;
-        board.classList.add('is-picking');
-
-        const commitPick = () => {
-          if (isDisposed || stage !== 'draw') {
-            isPickAnimating = false;
-            return;
-          }
-          selectedCards = [...selectedCards, picked];
-          drawBoardCards = buildDrawBoardCards();
-          isPickAnimating = false;
-
-          if (selectedCards.length >= CELTIC_CROSS_COUNT) {
-            goToArrangeStage();
-            return;
-          }
-          syncUi();
-        };
-
-        const targetIndex = selectedCards.length;
-        runPickAnimation({ board, slot, slotIndex: idx, targetIndex, onDone: commitPick });
-      };
-      board.appendChild(slot);
+  // Same shuffle pattern as the daily board: spin the icon, light haptic,
+  // redeal a fresh 12-card spread, reset selection. Guarded against
+  // double-taps via the is-locked class setupBoard adds during animation.
+  const shuffleBtn = document.getElementById('full-shuffle');
+  if (shuffleBtn) {
+    shuffleBtn.addEventListener('click', () => {
+      if (board.classList.contains('is-locked')) return;
+      try { trackShuffleHit({ mode: 'full', locale: state.currentLang, source: 'board' }); } catch (_) {}
+      shuffleBtn.classList.add('is-spinning');
+      if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+      fullBoard.render();
+      updateFullSelectionUi([]);
+      window.setTimeout(() => shuffleBtn.classList.remove('is-spinning'), 1500);
     });
-    dealOrbit.appendChild(board);
-  };
+  }
 
-  const runPickAnimation = ({
-    board, slot, slotIndex, targetIndex, onDone,
-  }) => {
-    clearPickAnimation({ unlock: false });
-    const runId = pickAnimationRunId;
-    const targetSlot = drawSummary.querySelector(`[data-draw-target-index="${targetIndex}"]`);
-    const finalize = () => {
-      if (runId !== pickAnimationRunId) return;
-      pickAnimationTimer = null;
-      activePickAnimationCleanup = null;
-      board.classList.remove('is-picking');
-      board.classList.remove('is-clearing-spread');
-      board.classList.remove('is-redealing-spread');
-      slot.classList.remove('is-picked-confirm');
-      if (isDisposed || stage !== 'draw') {
-        isPickAnimating = false;
-        return;
-      }
-      onDone?.();
-    };
-
-    if (!board?.isConnected || !slot?.isConnected) {
-      pickAnimationTimer = window.setTimeout(finalize, 0);
-      return;
-    }
-    const slots = Array.from(board.querySelectorAll('.full-draw-board__slot'));
-
-    const reducedMotion = reducedMotionQuery.matches;
-    const clearDuration = reducedMotion ? FULL_PICK_REDUCED_CLEAR_DURATION : FULL_PICK_CLEAR_DURATION;
-    const redealDuration = reducedMotion ? FULL_PICK_REDUCED_REDEAL_DURATION : FULL_PICK_REDEAL_ONLY_DURATION;
-    const confirmDuration = reducedMotion ? FULL_PICK_REDUCED_CONFIRM_DURATION : FULL_PICK_CONFIRM_DURATION;
-
-    const slotCount = Math.max(slots.length, 1);
-    const perSlotDelay = slotCount > 1 ? redealDuration / (slotCount - 1) : 0;
-    const columns = 5;
-    const selectedCol = slotIndex % columns;
-    const selectedRow = Math.floor(slotIndex / columns);
-
-    slots.forEach((candidate, index) => {
-      const clearDelay = Math.abs(slotIndex - index) * (reducedMotion ? 6 : 10);
-      const col = index % columns;
-      const row = Math.floor(index / columns);
-      const driftX = (col - selectedCol) * (reducedMotion ? 4 : 10);
-      const driftY = (row - selectedRow) * (reducedMotion ? 2 : 8) + (reducedMotion ? 8 : 18);
-      candidate.style.setProperty('--clear-delay', `${Math.round(clearDelay)}ms`);
-      candidate.style.setProperty('--clear-shift-x', `${Math.round(driftX)}px`);
-      candidate.style.setProperty('--clear-shift-y', `${Math.round(driftY)}px`);
-      candidate.style.setProperty('--redeal-delay', `${Math.round(index * perSlotDelay)}ms`);
-      candidate.style.setProperty('--redeal-duration', `${Math.round(Math.max(130, redealDuration * 0.34))}ms`);
-      candidate.style.setProperty('--redeal-lift', `${Math.round(reducedMotion ? 6 : 16 + ((row % 2) * 3))}px`);
-    });
-
-    activePickAnimationCleanup = () => {
-      board.classList.remove('is-clearing-spread');
-      board.classList.remove('is-redealing-spread');
-      board.classList.remove('is-picking');
-      slot.classList.remove('is-picked-confirm');
-      if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
-      slots.forEach((candidate) => {
-        candidate.style.removeProperty('--clear-delay');
-        candidate.style.removeProperty('--clear-shift-x');
-        candidate.style.removeProperty('--clear-shift-y');
-        candidate.style.removeProperty('--redeal-delay');
-        candidate.style.removeProperty('--redeal-duration');
-        candidate.style.removeProperty('--redeal-lift');
-      });
-    };
-
-    slot.classList.add('is-picked-confirm');
-
-    pickAnimationTimer = window.setTimeout(() => {
-      if (runId !== pickAnimationRunId) return;
-      slot.classList.remove('is-picked-confirm');
-      board.classList.add('is-clearing-spread');
-      if (targetSlot) targetSlot.classList.add('is-awaiting-card');
-
-      pickAnimationTimer = window.setTimeout(() => {
-        if (runId !== pickAnimationRunId) return;
-        board.classList.remove('is-clearing-spread');
-        board.classList.add('is-redealing-spread');
-
-        pickAnimationTimer = window.setTimeout(() => {
-          if (runId !== pickAnimationRunId) return;
-          board.classList.remove('is-redealing-spread');
-          if (targetSlot) targetSlot.classList.remove('is-awaiting-card');
-          finalize();
-        }, redealDuration);
-      }, clearDuration);
-    }, confirmDuration);
-  };
-
-  const runBoardShuffleAnimation = ({ board, onDone }) => {
-    clearBoardShuffleAnimation({ unlock: false });
-    const runId = boardShuffleRunId;
-    const slots = Array.from(board.querySelectorAll('.full-draw-board__slot'));
-    const reducedMotion = reducedMotionQuery.matches;
-    const clearDuration = reducedMotion ? FULL_PICK_REDUCED_CLEAR_DURATION : FULL_PICK_CLEAR_DURATION;
-    const redealDuration = reducedMotion ? FULL_PICK_REDUCED_REDEAL_DURATION : FULL_PICK_REDEAL_ONLY_DURATION;
-    const slotCount = Math.max(slots.length, 1);
-    const perSlotDelay = slotCount > 1 ? redealDuration / (slotCount - 1) : 0;
-    const columns = 5;
-    const centerIndex = Math.floor(slots.length / 2);
-    const centerCol = centerIndex % columns;
-    const centerRow = Math.floor(centerIndex / columns);
-
-    if (!slots.length) {
-      boardShuffleTimer = window.setTimeout(() => {
-        if (runId !== boardShuffleRunId) return;
-        boardShuffleTimer = null;
-        activeBoardShuffleCleanup = null;
-        onDone?.();
-      }, 0);
-      return;
-    }
-
-    slots.forEach((candidate, index) => {
-      const clearDelay = Math.abs(centerIndex - index) * (reducedMotion ? 5 : 9);
-      const col = index % columns;
-      const row = Math.floor(index / columns);
-      const driftX = (col - centerCol) * (reducedMotion ? 4 : 10);
-      const driftY = (row - centerRow) * (reducedMotion ? 2 : 7) + (reducedMotion ? 7 : 16);
-      candidate.style.setProperty('--clear-delay', `${Math.round(clearDelay)}ms`);
-      candidate.style.setProperty('--clear-shift-x', `${Math.round(driftX)}px`);
-      candidate.style.setProperty('--clear-shift-y', `${Math.round(driftY)}px`);
-      candidate.style.setProperty('--redeal-delay', `${Math.round(index * perSlotDelay)}ms`);
-      candidate.style.setProperty('--redeal-duration', `${Math.round(Math.max(120, redealDuration * 0.34))}ms`);
-      candidate.style.setProperty('--redeal-lift', `${Math.round(reducedMotion ? 6 : 16 + ((row % 2) * 3))}px`);
-    });
-
-    activeBoardShuffleCleanup = () => {
-      board.classList.remove('is-shuffling');
-      board.classList.remove('is-clearing-spread');
-      board.classList.remove('is-redealing-spread');
-      slots.forEach((candidate) => {
-        candidate.style.removeProperty('--clear-delay');
-        candidate.style.removeProperty('--clear-shift-x');
-        candidate.style.removeProperty('--clear-shift-y');
-        candidate.style.removeProperty('--redeal-delay');
-        candidate.style.removeProperty('--redeal-duration');
-        candidate.style.removeProperty('--redeal-lift');
-      });
-    };
-
-    board.classList.add('is-shuffling');
-    board.classList.add('is-clearing-spread');
-
-    boardShuffleTimer = window.setTimeout(() => {
-      if (runId !== boardShuffleRunId) return;
-      board.classList.remove('is-clearing-spread');
-      board.classList.add('is-redealing-spread');
-
-      boardShuffleTimer = window.setTimeout(() => {
-        if (runId !== boardShuffleRunId) return;
-        boardShuffleTimer = null;
-        activeBoardShuffleCleanup = null;
-        board.classList.remove('is-redealing-spread');
-        board.classList.remove('is-shuffling');
-        slots.forEach((candidate) => {
-          candidate.style.removeProperty('--clear-delay');
-          candidate.style.removeProperty('--clear-shift-x');
-          candidate.style.removeProperty('--clear-shift-y');
-          candidate.style.removeProperty('--redeal-delay');
-          candidate.style.removeProperty('--redeal-duration');
-          candidate.style.removeProperty('--redeal-lift');
-        });
-        onDone?.();
-      }, redealDuration);
-    }, clearDuration);
-  };
-
-  const renderDrawSummary = () => {
-    drawSummary.hidden = false;
-    drawSummary.innerHTML = '';
-
-    const preview = document.createElement('div');
-    preview.className = 'full-celtic-preview';
-    preview.setAttribute('aria-hidden', 'true');
-    CELTIC_CROSS_POSITIONS.forEach((position, idx) => {
-      const slot = document.createElement('div');
-      slot.className = `full-celtic-preview__slot full-celtic-preview__slot--${position.key}`;
-      slot.dataset.drawTargetIndex = String(idx);
-      if (idx < selectedCards.length) slot.classList.add('is-filled');
-      if (idx === selectedCards.length - 1) slot.classList.add('is-latest');
-      if (idx === selectedCards.length && selectedCards.length < CELTIC_CROSS_COUNT) slot.classList.add('is-next');
-      const order = document.createElement('span');
-      order.className = 'full-celtic-preview__order';
-      order.textContent = String(idx + 1);
-      slot.appendChild(order);
-      preview.appendChild(slot);
-    });
-    drawSummary.appendChild(preview);
-  };
-
-  const captureArrangeRects = () => {
-    const rects = new Map();
-    arrangeList.querySelectorAll('.full-arrange-item').forEach((item) => {
-      const cardId = item.dataset.cardId;
-      if (!cardId) return;
-      rects.set(cardId, item.getBoundingClientRect());
-    });
-    return rects;
-  };
-
-  const animateArrangeListSwap = (previousRects) => {
-    const items = arrangeList.querySelectorAll('.full-arrange-item');
-    items.forEach((item) => {
-      const cardId = item.dataset.cardId;
-      if (!cardId) return;
-      const previousRect = previousRects.get(cardId);
-      if (!previousRect) return;
-      const nextRect = item.getBoundingClientRect();
-      const deltaX = previousRect.left - nextRect.left;
-      const deltaY = previousRect.top - nextRect.top;
-      if (!deltaX && !deltaY) return;
-
-      if (typeof item.animate === 'function') {
-        item.animate(
-          [
-            { transform: `translate(${deltaX}px, ${deltaY}px)` },
-            { transform: 'translate(0, 0)' },
-          ],
-          {
-            duration: 320,
-            easing: 'cubic-bezier(0.22, 0.68, 0.2, 1)',
-          },
-        );
-        return;
-      }
-
-      item.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-      window.requestAnimationFrame(() => {
-        item.style.transition = 'transform 320ms cubic-bezier(0.22, 0.68, 0.2, 1)';
-        item.style.transform = 'translate(0, 0)';
-        window.setTimeout(() => {
-          item.style.transition = '';
-          item.style.transform = '';
-        }, 320);
-      });
-    });
-  };
-
-  const rerenderArrangeList = (activeIndex = -1, { previousRects = null, animateSwap = false } = {}) => {
-    arrangeList.innerHTML = '';
-
-    selectedCards.forEach((card, idx) => {
-      const item = document.createElement('article');
-      item.className = 'full-arrange-item';
-      item.dataset.index = String(idx);
-      item.dataset.cardId = String(card?.id || card?.card_id || '');
-      item.setAttribute('role', 'listitem');
-      if (idx === activeIndex) item.classList.add('is-dragging');
-
-      const order = document.createElement('div');
-      order.className = 'full-arrange-item__order';
-      order.innerHTML = `<span class="full-arrange-item__order-index">${idx + 1}</span>`;
-      item.appendChild(order);
-
-      item.appendChild(createCardArt(null, 'full-arrange-item__img', { useBack: true }));
-
-      const meta = document.createElement('div');
-      meta.className = 'full-arrange-item__meta';
-
-      const position = document.createElement('p');
-      position.className = 'full-arrange-item__position';
-      position.textContent = dict[CELTIC_CROSS_POSITIONS[idx]?.labelKey] || '';
-      meta.appendChild(position);
-      item.appendChild(meta);
-      item.tabIndex = 0;
-      item.setAttribute('aria-label', formatCopy(dict.fullReadingSwapCardLabel, { index: idx + 1 }));
-      item.onclick = () => {
-        const previousRects = captureArrangeRects();
-        const next = applyTapSwap(selectedCards, selectedSwapIndex, idx);
-        selectedCards = next.cards;
-        selectedSwapIndex = next.selectedIndex;
-        rerenderArrangeList(selectedSwapIndex, { previousRects, animateSwap: next.swapped });
-      };
-      item.onkeydown = (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          item.click();
-        }
-      };
-      arrangeList.appendChild(item);
-    });
-
-    updateContinue();
-    if (animateSwap && previousRects?.size) {
-      window.requestAnimationFrame(() => animateArrangeListSwap(previousRects));
-    }
-  };
-
-  const syncUi = () => {
-    setStageCopy(stage);
-    updateCounter();
-    updateContinue();
-    drawDeck.disabled = true;
-    dealStage.hidden = stage === 'arrange';
-    dealOrbit.hidden = stage !== 'draw';
-    arrangeStage.hidden = stage !== 'arrange';
-    renderDealOrbit();
-    renderDrawSummary();
-    if (stage === 'arrange') rerenderArrangeList(selectedSwapIndex);
-  };
-
-  const goToArrangeStage = () => {
-    clearPickAnimation();
-    stage = 'arrange';
-    requestAnimationFrame(() => {
-      syncUi();
-    });
-  };
-
-  const resetFullFlow = () => {
-    clearDealTimer();
-    clearPickAnimation();
-    clearBoardShuffleAnimation();
-    isPickAnimating = false;
-    isBoardShuffleAnimating = false;
-    stage = 'deal';
-    pool = getDrawableCards(FULL_POOL_SIZE);
-    drawBoardCards = [];
-    selectedCards = [];
-    selectedSwapIndex = -1;
-    syncUi();
-    if (!isPoolReady()) return;
-    dealTimer = window.setTimeout(() => {
-      if (isDisposed) return;
-      stage = 'draw';
-      drawBoardCards = buildDrawBoardCards();
-      syncUi();
-    }, FULL_DEAL_ANIMATION_DURATION);
-  };
-
-  const handleShuffle = () => {
-    if (stage === 'draw') {
-      if (isBoardShuffleAnimating) return;
-      clearPickAnimation();
-      isPickAnimating = false;
-      const activeBoard = dealOrbit.querySelector('.full-draw-board');
-      if (!activeBoard) {
-        drawBoardCards = buildDrawBoardCards();
-        syncUi();
-        return;
-      }
-      isBoardShuffleAnimating = true;
-      runBoardShuffleAnimation({
-        board: activeBoard,
-        onDone: () => {
-          if (isDisposed || stage !== 'draw') {
-            isBoardShuffleAnimating = false;
-            return;
-          }
-          drawBoardCards = buildDrawBoardCards();
-          isBoardShuffleAnimating = false;
-          syncUi();
-        },
-      });
-      return;
-    }
-
-    if (stage === 'deal') {
-      resetFullFlow();
-    }
-  };
-
-  toolbar.hidden = false;
-  actions.hidden = false;
-  continueBtn.disabled = true;
-  shuffleBtn.onclick = () => handleShuffle();
-  drawDeck.onclick = null;
-  continueBtn.onclick = () => {
-    if (selectedCards.length !== CELTIC_CROSS_COUNT) return;
-    saveSelectionAndGo({
-      mode: 'full',
-      spread: 'story',
-      topic: 'generic',
-      cards: selectedCards.map((card) => card.id),
-    });
-  };
-
-  resetFullFlow();
-
-  return () => {
-    if (isDisposed) return;
-    isDisposed = true;
-    clearDealTimer();
-    clearPickAnimation();
-    clearBoardShuffleAnimation();
-    shuffleBtn.onclick = null;
-    drawDeck.onclick = null;
-    continueBtn.onclick = null;
-  };
+  return null;
 }
 
 async function renderQuestion(dict = translations[state.currentLang] || translations.en) {
   const topicGrid = document.getElementById('question-topic-grid');
+  const continueBtn = document.getElementById('question-continue');
   if (!topicGrid) return;
   const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
 
-  const buildTopicCard = (topic) => {
+  // Phase 5 ask flow: explicit Continue tap. Topic-chip click selects only;
+  // navigation happens on Continue. Bilingual chip rendering (EN + Thai title
+  // visible on every chip) matches the design doc's chip pattern.
+  let selectedTopic = state.questionTopic || '';
+
+  const updateContinueState = () => {
+    if (continueBtn) continueBtn.disabled = !selectedTopic;
+  };
+
+  const setActiveChip = (topicKey) => {
+    selectedTopic = topicKey;
+    state.questionTopic = topicKey;
+    topicGrid.querySelectorAll('.question-topic-chip').forEach((chip) => {
+      const isActive = chip.dataset.topic === topicKey;
+      chip.classList.toggle('is-active', isActive);
+      chip.setAttribute('aria-pressed', String(isActive));
+    });
+    updateContinueState();
+  };
+
+  const buildTopicChip = (topic) => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'topic-card';
+    button.className = 'question-topic-chip';
     button.dataset.topic = topic.key;
+    button.setAttribute('aria-pressed', 'false');
 
-    const icon = document.createElement('span');
-    icon.className = 'topic-card__icon';
+    const enTitle = (translations.en && translations.en[topic.titleKey]) || topic.key;
+    const thTitle = (translations.th && translations.th[topic.titleKey]) || null;
 
-    icon.textContent = topic.emoji || '🔮';
-    icon.setAttribute('aria-hidden', 'true');
+    const enSpan = document.createElement('span');
+    enSpan.className = 'question-topic-chip__en';
+    enSpan.textContent = enTitle;
+    button.appendChild(enSpan);
 
-    button.appendChild(icon);
-
-    const title = document.createElement('span');
-    title.className = 'topic-card__title';
-    title.textContent = dict[topic.titleKey] || topic.key;
-    button.appendChild(title);
+    if (thTitle && thTitle !== enTitle) {
+      const thSpan = document.createElement('span');
+      thSpan.className = 'question-topic-chip__th thai';
+      thSpan.textContent = `· ${thTitle}`;
+      button.appendChild(thSpan);
+    }
 
     button.addEventListener('click', () => {
-      state.questionTopic = topic.key;
       trackTopicSelected({ locale: state.currentLang, mode: 'question', topic: topic.key });
-      const destination = localizePath('/question-draw.html', state.currentLang);
-      const params = new URLSearchParams({ topic: topic.key });
-      window.location.href = `${destination}?${params.toString()}`;
+      setActiveChip(topic.key);
     });
 
     return button;
   };
 
   topicGrid.innerHTML = '';
-  topics.forEach((topic) => topicGrid.appendChild(buildTopicCard(topic)));
+  topics.forEach((topic) => topicGrid.appendChild(buildTopicChip(topic)));
+
+  if (selectedTopic) setActiveChip(selectedTopic);
+  updateContinueState();
+
+  if (continueBtn) {
+    continueBtn.onclick = () => {
+      if (!selectedTopic) return;
+      const destination = localizePath('/question-draw.html', state.currentLang);
+      const params = new URLSearchParams({ topic: selectedTopic, spread: questionSpread });
+      window.location.href = `${destination}?${params.toString()}`;
+    };
+  }
+
+  const spreadBtns = document.querySelectorAll('.question-spread-btn');
+  spreadBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      questionSpread = btn.dataset.spread || 'story';
+      try { trackSpreadSelected({ locale: state.currentLang, spread: questionSpread }); } catch (_) {}
+      spreadBtns.forEach((b) => {
+        const active = b === btn;
+        b.classList.toggle('question-spread-btn--active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+    });
+  });
+
+  // Phase 5: live char counter on the question textarea. Updates the
+  // `#question-text-counter` span as the user types; flips to
+  // .is-near-limit (gold tint) when within 20 chars of the 180-char
+  // maxlength to nudge the user before they're cut off.
+  const questionInput = document.getElementById('question-text-input');
+  const questionCounter = document.getElementById('question-text-counter');
+  if (questionInput && questionCounter) {
+    const max = Number(questionInput.getAttribute('maxlength')) || 180;
+    const updateCounter = () => {
+      const len = questionInput.value.length;
+      questionCounter.textContent = `${len} / ${max}`;
+      questionCounter.classList.toggle('is-near-limit', len >= max - 20);
+    };
+    questionInput.addEventListener('input', updateCounter);
+    updateCounter();
+  }
 }
 
 async function renderQuestionDraw(dict = translations[state.currentLang] || translations.en) {
@@ -1078,9 +1221,18 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
   let latestSelection = [];
   const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
-  const queryTopic = new URLSearchParams(window.location.search).get('topic') || '';
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryTopic = urlParams.get('topic') || '';
   const isKnownTopic = topics.some((item) => item.key === queryTopic);
   state.questionTopic = isKnownTopic ? queryTopic : state.questionTopic;
+
+  const querySpread = urlParams.get('spread') || 'story';
+  const spread = QUESTION_SELECTION_COUNTS[querySpread] ? querySpread : 'story';
+  const selectionCount = QUESTION_SELECTION_COUNTS[spread];
+
+  // Phase 5 ask flow: CSS swaps title / legend / button-label off this attr.
+  const drawShell = board.closest('.question-draw-shell');
+  if (drawShell) drawShell.setAttribute('data-question-spread', spread);
 
   const selectedTopic = topics.find((item) => item.key === state.questionTopic);
   selectedTopicTitle.textContent = selectedTopic
@@ -1089,17 +1241,30 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
 
   const updateContinue = (cards) => {
     latestSelection = cards;
-    continueBtn.disabled = cards.length !== QUESTION_SELECTION_COUNT;
-    counter.textContent = `${cards.length}/${QUESTION_SELECTION_COUNT}`;
+    continueBtn.disabled = cards.length !== selectionCount;
+    counter.textContent = `${cards.length}/${selectionCount}`;
   };
 
-  const boardApi = setupBoard(board, BOARD_CARD_COUNT, QUESTION_SELECTION_COUNT, updateContinue);
-  shuffleBtn.onclick = () => boardApi.render();
+  const boardApi = setupBoard(board, BOARD_CARD_COUNT, selectionCount, updateContinue, { animated: true, animationProfile: 'daily' });
+  // Match the Daily board: animated initial deal, then a shuffle button above the
+  // board that spins + light-haptics, re-deals a fresh spread and clears the pick.
+  // Guarded against double-taps via the is-locked class setupBoard adds mid-animation.
+  boardApi.render();
+  updateContinue([]);
+  shuffleBtn.onclick = () => {
+    if (board.classList.contains('is-locked')) return;
+    try { trackShuffleHit({ mode: 'question', locale: state.currentLang, source: 'board' }); } catch (_) {}
+    shuffleBtn.classList.add('is-spinning');
+    if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+    boardApi.render();
+    updateContinue([]);
+    window.setTimeout(() => shuffleBtn.classList.remove('is-spinning'), 1500);
+  };
   continueBtn.onclick = () => {
-    if (latestSelection.length !== QUESTION_SELECTION_COUNT) return;
+    if (latestSelection.length !== selectionCount) return;
     saveSelectionAndGo({
       mode: 'question',
-      spread: 'story',
+      spread,
       topic: state.questionTopic,
       cards: latestSelection.map((c) => c.id),
     });
@@ -1111,9 +1276,87 @@ async function renderPage(dict) {
   overallFlowCleanup?.();
   overallFlowCleanup = null;
   if (page === 'daily') renderDaily(dict);
-  if (page === 'overall' || page === 'full') overallFlowCleanup = await renderOverall(dict) || null;
+  if (page === 'overall' || page === 'full') overallFlowCleanup = renderFullBoard() || null;
   if (page === 'question') await renderQuestion(dict);
   if (page === 'question-draw') await renderQuestionDraw(dict);
+}
+
+// Populate the homepage "Your decks" strip with real decks. The static markup
+// was a redesign placeholder (gradient + "M" monogram, fake names); this renders
+// each deck's actual back using the lightweight 00-back-200 thumbnail, with the
+// deck's real EN/TH name and locked/active state. Display-only: each tile links
+// to the decks page (profile.html), which owns the switch flow — so this avoids
+// the deck-switch repaint requirement (see CLAUDE.md backlog).
+function renderHomeDeckStrip() {
+  const row = document.querySelector('.home-deck-strip__row');
+  if (!row) return;
+  const activeId = getActiveDeckId();
+  const isThai = state.currentLang === 'th';
+  const frag = document.createDocumentFragment();
+
+  getAllDecks().forEach((deck) => {
+    const unlocked = canUnlockDeck(deck.id);
+    const active = deck.id === activeId;
+
+    const tile = document.createElement('a');
+    tile.className = `home-deck-thumb${unlocked ? '' : ' is-locked'}${active ? ' is-active' : ''}`;
+    tile.href = 'profile.html';
+    tile.style.cssText = 'text-decoration: none; color: inherit;';
+    tile.setAttribute('aria-label', deck.name || deck.id);
+
+    const card = document.createElement('div');
+    card.className = 'home-deck-thumb__card';
+
+    const img = document.createElement('img');
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;';
+    // 00-back-200 thumbnail (~12-20KB), graceful fallback to the full 00-back.
+    const thumb = String(deck.backImage || '').replace('00-back.webp', '00-back-200.webp');
+    applyImageFallback(img, thumb, [deck.backImage].filter(Boolean));
+    card.appendChild(img);
+
+    if (active) {
+      const badge = document.createElement('span');
+      badge.textContent = isThai ? 'ใช้อยู่' : 'Active';
+      badge.style.cssText = 'position: absolute; top: 6px; left: 6px; z-index: 2; background: #9270d0; color: #fff; font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: 6px;';
+      card.appendChild(badge);
+    }
+    if (!unlocked) {
+      const lock = document.createElement('span');
+      lock.textContent = '🔒';
+      lock.style.cssText = 'position: absolute; top: 6px; right: 6px; z-index: 2; font-size: 13px;';
+      card.appendChild(lock);
+    }
+    tile.appendChild(card);
+
+    const nameEn = document.createElement('div');
+    nameEn.className = 'home-deck-thumb__name';
+    nameEn.textContent = deck.name || '';
+    tile.appendChild(nameEn);
+
+    const nameTh = document.createElement('div');
+    nameTh.className = 'home-deck-thumb__name-th';
+    nameTh.textContent = deck.name_th || '';
+    tile.appendChild(nameTh);
+
+    frag.appendChild(tile);
+  });
+
+  row.replaceChildren(frag);
+}
+
+// Re-render the auth-dependent board UI once the session settles. Nothing else
+// creates the Supabase client on the board/home pages, so getCurrentUserSync()
+// stays null on load even for a logged-in user — which made the deck switcher
+// show the sign-in gate and the streak chip show "Save your fortune" to people
+// who were already signed in. We trigger getCurrentUser() (restores the session +
+// creates the client, which fires onAuthStateChange) and re-render here.
+function onAuthSettled() {
+  renderStreakChip();
+  renderDeckName();
+  if (document.body.dataset.page === 'home') renderHomeDeckStrip();
 }
 
 function init() {
@@ -1121,7 +1364,14 @@ function init() {
   const navPage = page === 'question-draw' ? 'question' : page;
   initShell(state, (dict) => { void renderPage(dict); }, navPage);
 
+  // Restore any saved Supabase session so getCurrentUserSync() is populated for
+  // the deck switcher + streak chip. subscribeAuthState catches the async settle;
+  // getCurrentUser() kicks off client creation (otherwise the listener never fires).
+  subscribeAuthState(onAuthSettled);
+  getCurrentUser().then(onAuthSettled).catch(() => {});
+
   if (page === 'home') {
+    renderHomeDeckStrip();
     void renderPage(translations[state.currentLang] || translations.en);
     return;
   }

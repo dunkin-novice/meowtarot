@@ -1,0 +1,15 @@
+{
+  "appId": "com.meowtarot.app",
+  "appName": "MeowTarot",
+  "webDir": "www",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#b48be4",
+      "sound": "default"
+    }
+  }
+}

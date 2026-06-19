@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5FLMLJ6R');</script>
+  <!-- End Google Tag Manager -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <title>Share Poster – MeowTarot</title>
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="Share your MeowTarot reading as a poster you can save or share." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Noto+Serif+Thai:wght@500;600&family=Poppins:wght@500;600;700&family=Prata&family=Space+Grotesk:wght@400;500;600&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Noto+Serif+Thai:wght@500;600&family=Poppins:wght@500;600;700&family=Prata&family=Space+Grotesk:wght@400;500;600&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Noto+Serif+Thai:wght@500;600&family=Poppins:wght@500;600;700&family=Prata&family=Space+Grotesk:wght@400;500;600&display=swap"
+    />
+  </noscript>
+  <link rel="stylesheet" href="/share/share.css" />
+</head>
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5FLMLJ6R"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  <main class="share-root">
+    <section class="poster-section">
+      <div class="share-intro">
+        <p class="share-intro__eyebrow" id="sharePromptTitle">Your shareable poster is ready</p>
+        <p class="share-intro__body" id="sharePromptBody">Save it for yourself or post it while the message still feels fresh.</p>
+      </div>
+      <div class="poster-frame" aria-live="polite">
+        <img id="posterPreview" alt="MeowTarot poster preview" />
+      </div>
+    </section>
+
+    <div class="poster-loading" id="posterLoading" aria-live="polite" hidden>Generating poster…</div>
+    <div class="sr-only" id="posterHint">กดค้างที่รูปเพื่อบันทึก</div>
+    <div class="share-toast" id="shareStatus" aria-live="polite" hidden></div>
+    <div class="ig-open-banner" id="igOpenBanner" hidden>
+      <span id="igOpenText">For best sharing results, open in Safari/Chrome.</span>
+      <button class="action-btn ghost ig-open-btn" id="igOpenBtn" type="button">Open in browser</button>
+    </div>
+
+    <nav class="action-bar" aria-label="Share actions">
+      <button class="action-btn primary" id="shareAction">Share</button>
+      <button class="action-btn" id="retryPoster" type="button" hidden>Retry</button>
+      <a class="action-link" id="backToReading" href="/">Back to Homepage</a>
+      <a class="action-link" id="openPosterLink" href="#" target="_blank" rel="noopener" hidden>Open poster image</a>
+    </nav>
+  </main>
+
+  <script type="module" src="/share/share.js"></script>
+</body>
+</html>

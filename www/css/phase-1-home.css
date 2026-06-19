@@ -1,0 +1,365 @@
+/*
+ * MeowTarot — Phase 1: Homepage Only
+ * css/phase-1-home.css
+ * ─────────────────────────────────────────────────────────────────────────
+ * RISK LEVEL: Low
+ * SCOPE: body[data-page='home'] — zero bleed to other pages
+ *
+ * WHAT THIS DELIBERATELY DOES NOT TOUCH:
+ *   - .board-inner, .card-slot, .card .back/.front — reading boards
+ *   - .result-card, .summary, .reading-content — result pages
+ *   - .chip, .chip.active — question / full reading controls
+ *   - .panel, .section-block — shared layout utilities
+ *   - .deck-stack-card — full reading visual
+ *   - Any Thai page (/th/)
+ *   - Share/poster flows
+ *
+ * REQUIRES: css/theme-tokens.css loaded first
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* 1. PAGE BACKGROUND — homepage only */
+body[data-page='home'] {
+  background:
+    radial-gradient(ellipse at 12%  8%,  rgba(196, 168, 240, 0.22) 0%, transparent 38%),
+    radial-gradient(ellipse at 88%  6%,  rgba(240, 168, 200, 0.18) 0%, transparent 35%),
+    radial-gradient(ellipse at 50%  85%, rgba(148, 204, 248, 0.15) 0%, transparent 42%),
+    linear-gradient(165deg, #fcf5ff 0%, #fff5fb 45%, #f0f8ff 100%);
+  color: var(--color-plum, #3d2c58);
+}
+
+
+/* 2. SITE HEADER — homepage scope only */
+body[data-page='home'] .site-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(172, 130, 210, 0.15);
+  box-shadow: 0 2px 20px rgba(120, 80, 180, 0.07);
+}
+
+body[data-page='home'] .logo-text { color: #3d2c58; }
+body[data-page='home'] .nav-link  { color: #7a5f99; }
+
+body[data-page='home'] .nav-link.active,
+body[data-page='home'] .nav-link:hover {
+  background: rgba(181, 154, 232, 0.12);
+  color: #6b4faa;
+}
+
+body[data-page='home'] .lang-btn         { color: #3d2c58; }
+body[data-page='home'] .lang-btn.active  { color: #6b4faa; }
+
+body[data-page='home'] .language-toggle {
+  border-left-color: rgba(172, 130, 210, 0.20);
+}
+
+body[data-page='home'] .mobile-menu-toggle {
+  background: rgba(181, 154, 232, 0.12);
+  border-color: rgba(181, 154, 232, 0.25);
+}
+
+body[data-page='home'] .mobile-menu-toggle .bar {
+  background: #3d2c58;
+}
+
+@media (max-width: 900px) {
+  body[data-page='home'] .nav-panel {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(172, 130, 210, 0.20);
+    box-shadow: 0 14px 40px rgba(120, 80, 180, 0.14);
+  }
+  body[data-page='home'] .nav-link {
+    border-color: rgba(172, 130, 210, 0.15);
+    background: rgba(181, 154, 232, 0.06);
+    color: #3d2c58;
+  }
+  body[data-page='home'] .nav-meta {
+    border-top-color: rgba(172, 130, 210, 0.20);
+  }
+}
+
+
+/* 3. HERO COPY — homepage only */
+body[data-page='home'] .eyebrow { color: #9270d0; }
+
+body[data-page='home'] .home-hero-title,
+body[data-page='home'] .home-hero-copy h1,
+body[data-page='home'] h1 {
+  color: #3d2c58;
+}
+
+body[data-page='home'] p { color: #7a5f99; }
+
+
+/* 4. READING PATH CARDS */
+body[data-page='home'] .reading-path-card {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1.5px solid rgba(172, 130, 210, 0.18);
+  border-radius: 24px;
+  box-shadow:
+    0 6px 24px rgba(120, 80, 180, 0.09),
+    0 2px 8px  rgba(120, 80, 180, 0.05);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+body[data-page='home'] .reading-path-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 14px 40px rgba(120, 80, 180, 0.14),
+    0 0 36px rgba(181, 154, 232, 0.22);
+  border-color: rgba(181, 154, 232, 0.38);
+}
+
+body[data-page='home'] .reading-path-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    108deg,
+    transparent 38%,
+    rgba(196, 168, 240, 0.12) 50%,
+    transparent 62%
+  );
+  background-size: 250% 100%;
+  background-position: -250% 0;
+  pointer-events: none;
+  transition: background-position 0.8s ease;
+}
+
+body[data-page='home'] .reading-path-card:hover::after {
+  background-position: 250% 0;
+}
+
+body[data-page='home'] .reading-path-card__label {
+  color: #3d2c58;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+body[data-page='home'] .reading-path-card__meta {
+  color: #9270d0;
+}
+
+
+/* 5. HOMEPAGE CTA BUTTONS */
+body[data-page='home'] .home-secondary-cta,
+body[data-page='home'] .home-hero-actions .btn,
+body[data-page='home'] .home-hero-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.82);
+  color: #6b4faa;
+  border: 1.5px solid rgba(172, 130, 210, 0.30);
+  box-shadow: 0 2px 12px rgba(120, 80, 180, 0.07);
+}
+
+body[data-page='home'] .home-secondary-cta:hover,
+body[data-page='home'] .home-hero-actions .btn:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(181, 154, 232, 0.55);
+  box-shadow: 0 0 28px rgba(181, 154, 232, 0.22), 0 4px 20px rgba(120, 80, 180, 0.10);
+  transform: translateY(-1px);
+}
+
+
+/* 6. HOME GRID CONTAINER — strip dark chooser shell */
+body[data-page='home'] .home-hero-card,
+body[data-page='home'] .home-hero-card--chooser {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+
+/* 7. FOOTER — homepage only */
+body[data-page='home'] .site-footer {
+  color: #9270d0;
+  border-top: 1px solid rgba(172, 130, 210, 0.15);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+
+/* 8. SCROLLBAR — homepage only */
+body[data-page='home'] ::-webkit-scrollbar-thumb {
+  background: rgba(172, 130, 210, 0.28);
+}
+
+body[data-page='home'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(172, 130, 210, 0.45);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 9. HERO TYPOGRAPHY REFINEMENT (homepage chooser only)
+ *
+ * Bumps Playfair Display h1 weight from default 400 to 700, tightens
+ * letter-spacing for elegance, and refines the eyebrow pill for
+ * stronger hierarchy. Specificity (0,3,1) beats styles.css's plain
+ * .home-hero-copy--centered .home-hero-title at (0,2,0).
+ * ───────────────────────────────────────────────────────────────────────── */
+
+body[data-page='home'] .home-hero-copy--centered .home-hero-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.94;
+}
+
+body[data-page='home'] .home-hero-copy--centered .eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  padding: 7px 16px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * 10. HERO REDESIGN — large CTA + 2x2 reading-type tile grid
+ * Replaces the 3-card chooser + secondary CTAs with a single big draw
+ * action and a tile-style mode picker. Footer slim included here because
+ * the footer content is JS-injected by common.js — descendant selectors
+ * here are the only legitimate way to tighten the rendered height.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+body[data-page='home'] .home-hero-card {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 160px);
+}
+
+body[data-page='home'] .home-hero-card--chooser {
+  gap: 8px;
+}
+
+body[data-page='home'] .page-shell {
+  padding-bottom: 0;
+}
+
+body[data-page='home'] .home-hero-cta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  background: linear-gradient(135deg, var(--color-lavender-soft), var(--color-blush-soft));
+  border-radius: 24px;
+  padding: 22px 20px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+body[data-page='home'] .home-hero-cta__btn {
+  display: inline-block;
+  background: var(--color-plum);
+  color: #fff;
+  border-radius: 999px;
+  padding: 13px 28px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+body[data-page='home'] .home-hero-cta h1 {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--color-plum);
+  margin-bottom: 8px;
+}
+
+body[data-page='home'] .home-hero-cta p {
+  font-size: 0.85rem;
+  color: var(--color-plum-mid);
+  margin-bottom: 20px;
+}
+
+body[data-page='home'] .home-readings-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-plum-soft);
+  margin: 0 4px 8px;
+  flex-shrink: 0;
+}
+
+body[data-page='home'] .home-reading-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+body[data-page='home'] .home-reading-tile {
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 18px;
+  padding: 16px;
+  cursor: pointer;
+  border: 1px solid rgba(172, 130, 210, 0.18);
+  box-shadow: 0 2px 12px rgba(61, 44, 88, 0.07);
+  text-decoration: none;
+  display: block;
+  color: inherit;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+body[data-page='home'] .home-reading-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(61, 44, 88, 0.12);
+}
+
+body[data-page='home'] .home-reading-tile__icon {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+body[data-page='home'] .home-reading-tile__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-plum);
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+
+body[data-page='home'] .home-reading-tile__sub {
+  font-size: 0.7rem;
+  color: var(--color-plum-soft);
+  line-height: 1.4;
+}
+
+/* Footer slim — common.js injects children inside #site-footer; tighten
+ * their effective space without touching the JS-rendered markup. */
+body[data-page='home'] #site-footer,
+body[data-page='home'] .site-footer {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+body[data-page='home'] #site-footer > *,
+body[data-page='home'] .site-footer > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+body[data-page='home'] #site-footer > .site-footer {
+  padding: 8px 0;
+  margin: 0;
+}
+
+body[data-page='home'] #site-footer p {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+body[data-page='home'] #site-footer {
+  display: none;
+}
