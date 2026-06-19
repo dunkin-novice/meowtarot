@@ -127,6 +127,25 @@ const STYLES = `
   .mt-lr-card { transition: none !important; }
   .mt-lr-sparkles span { animation: none !important; opacity: 0.5; }
 }
+.mt-welcome-toast {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top, 0px) + 18px);
+  transform: translate(-50%, -14px);
+  z-index: 9999;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(61, 26, 92, 0.92);
+  color: #fff;
+  font-family: var(--mt-font-body, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(31, 21, 52, 0.34);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.mt-welcome-toast.in { opacity: 1; transform: translate(-50%, 0); }
 `;
 
 function injectStylesOnce() {
@@ -203,19 +222,48 @@ function buildPopup(deckBackUrl, dict) {
  * @param {object|null} user - Supabase auth user (or null for guest)
  * @param {string} lang - 'en' | 'th'
  */
-export function maybeShowLoginReward(user, lang) {
+function showWelcomeToast(lang) {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (document.getElementById('mt-welcome-toast')) return;
+  injectStylesOnce();
+  const dict = getDict(lang);
+  const toast = document.createElement('div');
+  toast.id = 'mt-welcome-toast';
+  toast.className = 'mt-welcome-toast';
+  toast.setAttribute('role', 'status');
+  toast.textContent = dict.loginWelcomeBack || 'Welcome back!';
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('in'));
+  setTimeout(() => {
+    toast.classList.remove('in');
+    setTimeout(() => toast.remove(), 320);
+  }, 2200);
+}
+
+export function maybeShowLoginReward(user, lang, opts = {}) {
   if (typeof document === 'undefined') return;
   if (!user) return;
   if (pending) return;
-  if (readSeen()) return;
+
+  // First-EVER login = account just created (≈ within 5 min) AND the reward hasn't shown.
+  // Anything else is a returning login → no deck reward; a light "welcome back" toast on a
+  // genuine fresh sign-in only (not on every page-load session restore).
+  const createdMs = user.created_at ? Date.parse(user.created_at) : 0;
+  const isFirstEver = createdMs > 0 && (Date.now() - createdMs) < 5 * 60 * 1000 && !readSeen();
+
+  if (!isFirstEver) {
+    markSeen(); // never re-trigger the deck reward for returning users
+    if (opts.fresh) showWelcomeToast(lang);
+    return;
+  }
 
   pending = true;
   setTimeout(() => {
     pending = false;
 
     if (!document.body) return;
-    if (readSeen()) return;
     if (document.getElementById(POPUP_ID)) return;
+    markSeen(); // mark on SHOW (was only on claim → re-showed if dismissed/reloaded)
 
     injectStylesOnce();
 

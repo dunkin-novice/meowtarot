@@ -401,6 +401,9 @@ function buildReadingEntryLinks() {
 
 function appendReadingInternalLinks(container, cards = []) {
   if (!container || !Array.isArray(cards) || !cards.length) return;
+  // Celtic Cross (full) reading: omit the "Related Internal Links" section (founder
+  // direction — 10 links cluttered the result). Daily/Question keep it for SEO crawl.
+  if (state.mode === 'full') return;
 
   const panel = document.createElement('section');
   panel.className = 'panel panel--internal-links';

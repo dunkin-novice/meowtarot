@@ -89,7 +89,9 @@ async function createClient() {
     if (_event === 'SIGNED_OUT') {
       resetActiveDeck();
     }
-    maybeShowLoginReward(session?.user, window.location.pathname.startsWith('/th/') ? 'th' : 'en');
+    maybeShowLoginReward(session?.user, window.location.pathname.startsWith('/th/') ? 'th' : 'en', {
+      fresh: _event === 'SIGNED_IN' && !prevUser, // true only on a genuine new sign-in (not a page-load session restore)
+    });
     try {
       const pendingClaim = localStorage.getItem('meowtarot_pending_deck_claim');
       if (pendingClaim && session?.user) {
