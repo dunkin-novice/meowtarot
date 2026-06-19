@@ -135,11 +135,27 @@ export function getActiveDeck() {
   return DECKS[activeDeckId];
 }
 
+// One-off deck gifts by account email — bypasses the streak unlock_day for a
+// specific signed-in account (a personal gift, not a purchasable entitlement).
+const DECK_GIFTS = {
+  'krs.socialngame@gmail.com': ['pawbit'],
+};
+
+function isGiftedDeck(id) {
+  try {
+    const email = String(getCurrentUserSync()?.email || '').trim().toLowerCase();
+    return Boolean(email && DECK_GIFTS[email] && DECK_GIFTS[email].includes(id));
+  } catch (_) {
+    return false;
+  }
+}
+
 export function canUnlockDeck(id) {
   const deck = DECKS[id];
   if (!deck) return false;
   if (id === 'moonmallow') return true;
   if (!getCurrentUserSync()) return false;
+  if (isGiftedDeck(id)) return true;
   if (deck.role === 'default') return true;
   if (!deck.unlock_day) return true;
   if (typeof localStorage === 'undefined') return false;

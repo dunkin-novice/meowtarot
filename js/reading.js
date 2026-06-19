@@ -1981,9 +1981,11 @@ function buildDailyGuidancePanel(card, hook = '') {
 function buildDailyAdvicePanel(card) {
   if (!card) return null;
 
+  // Lucky colours now live ONLY on the card's lucky-colour chip (see
+  // buildLuckyColorChip) — the duplicate "Today's lucky colors" block that used
+  // to render here was removed. This panel is just the 2-minute ritual advice.
   const ritual = getText(card, 'ritual_2min');
-  const luckyPalette = normalizeColorArray(card.color_palette).filter(Boolean).slice(0, 6);
-  if (!ritual && !luckyPalette.length) return null;
+  if (!ritual) return null;
 
   const panel = document.createElement('div');
   panel.className = 'panel';
@@ -1994,46 +1996,10 @@ function buildDailyAdvicePanel(card) {
   title.style.textAlign = 'center';
   panel.appendChild(title);
 
-  if (ritual) {
-    const ritualText = document.createElement('p');
-    ritualText.className = 'topic-copy';
-    ritualText.textContent = ritual;
-    panel.appendChild(ritualText);
-  }
-
-  if (luckyPalette.length) {
-    const luckyLabel = document.createElement('p');
-    luckyLabel.className = 'meta-badge';
-    luckyLabel.style.display = 'inline-flex';
-    luckyLabel.style.justifyContent = 'center';
-    luckyLabel.style.width = '100%';
-    luckyLabel.style.textAlign = 'center';
-    luckyLabel.style.marginTop = ritual ? '6px' : '0';
-    luckyLabel.textContent = state.currentLang === 'th' ? 'สีมงคลวันนี้' : "Today's lucky colors";
-    panel.appendChild(luckyLabel);
-
-    const circles = document.createElement('div');
-    circles.style.display = 'flex';
-    circles.style.justifyContent = 'center';
-    circles.style.gap = '10px';
-    circles.style.marginTop = '4px';
-    const panelSurface = window.getComputedStyle(panel).backgroundColor || 'rgba(255, 255, 255, 0.05)';
-
-    luckyPalette.forEach((c) => {
-      const swatch = document.createElement('span');
-      swatch.className = 'swatch';
-      const cssColor = resolveCssColor(c);
-      if (cssColor) swatch.style.background = cssColor;
-      const visibility = getLuckyColorVisibilityStyle(cssColor, panelSurface);
-      swatch.style.width = '16px';
-      swatch.style.height = '16px';
-      swatch.style.borderRadius = '999px';
-      swatch.style.border = `${visibility.ringWidth}px solid ${visibility.ringColor}`;
-      circles.appendChild(swatch);
-    });
-
-    panel.appendChild(circles);
-  }
+  const ritualText = document.createElement('p');
+  ritualText.className = 'topic-copy';
+  ritualText.textContent = ritual;
+  panel.appendChild(ritualText);
 
   return panel;
 }
@@ -3446,26 +3412,29 @@ function getMajorArcanaRoman(card) {
 // Phase 5: lucky color chip shown on Quick (1-card) question result.
 // CSS hides this on Story (3-card) layout via [data-spread-count='3'].
 function buildLuckyColorChip(card) {
-  const colors = normalizeColorArray(card?.color_palette).filter(Boolean);
+  // Show up to 3 lucky colors as round swatches (not a single colour + text name).
+  const colors = normalizeColorArray(card?.color_palette).filter(Boolean).slice(0, 3);
   if (!colors.length) return null;
-  const primary = colors[0];
-  const cssColor = resolveCssColor(primary);
-  const label = isHexColor(primary)
-    ? hexToName(primary, state.currentLang === 'th' ? 'th' : 'en')
-    : primary;
 
   const chip = document.createElement('div');
   chip.className = 'spread-lucky-chip';
 
-  const swatch = document.createElement('span');
-  swatch.className = 'spread-lucky-chip__swatch';
-  if (cssColor) swatch.style.background = cssColor;
-  chip.appendChild(swatch);
-
   const text = document.createElement('span');
   text.className = 'spread-lucky-chip__text';
-  text.textContent = `${state.currentLang === 'th' ? 'สีมงคล' : 'Lucky color'} · ${label}`;
+  text.textContent = state.currentLang === 'th' ? 'สีมงคล' : 'Lucky colors';
   chip.appendChild(text);
+
+  const dots = document.createElement('span');
+  dots.className = 'spread-lucky-chip__dots';
+  colors.forEach((c) => {
+    const swatch = document.createElement('span');
+    swatch.className = 'spread-lucky-chip__swatch';
+    const cssColor = resolveCssColor(c);
+    if (cssColor) swatch.style.background = cssColor;
+    swatch.title = isHexColor(c) ? hexToName(c, state.currentLang === 'th' ? 'th' : 'en') : String(c);
+    dots.appendChild(swatch);
+  });
+  chip.appendChild(dots);
 
   return chip;
 }
@@ -4230,10 +4199,9 @@ function configureActionButtons(dict = translations[state.currentLang]) {
         ? 'เปิดไพ่อีกครั้ง'
         : 'Re-draw'
       : (dict.newReading || newReadingBtn.textContent);
-    // Phase 5: full-mode Celtic Cross design ends with a 2-button
-    // action row (Save + Share). Hide the third Re-draw button on
-    // full mode only; daily and question keep all three buttons.
-    newReadingBtn.hidden = state.mode === 'full';
+    // Re-draw button removed from ALL reading results (daily / question / full)
+    // per founder request — the result row is now just Save + Share.
+    newReadingBtn.hidden = true;
   }
 
   configureSaveButton(dict);
