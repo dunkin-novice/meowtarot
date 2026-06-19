@@ -16,10 +16,17 @@ let authState = {
 };
 const authListeners = new Set();
 
+// Public Supabase project config. Safe to ship in client JS — the anon key is RLS-gated
+// and is ALREADY inlined in profile.html / reading.html. Hardcoded as a fallback so EVERY
+// page can start auth, not only the few that include an inline window.__MEOWTAROT_SUPABASE__
+// script: the daily/home/decks sign-in gates were silently failing (no client) without it.
+const SUPABASE_URL_FALLBACK = 'https://dzgjjvuiliickdgzshjr.supabase.co';
+const SUPABASE_ANON_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6Z2pqdnVpbGlpY2tkZ3pzaGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTUyMjMsImV4cCI6MjA5MjI3MTIyM30.dZMHmPe_BdLoDGbwUqLByFx9WYAzP1aCrIw3f2XjSNk';
+
 function readSupabaseConfig() {
   const scoped = window.__MEOWTAROT_SUPABASE__ || {};
-  const url = scoped.url || window.MEOWTAROT_SUPABASE_URL || '';
-  const anonKey = scoped.anonKey || window.MEOWTAROT_SUPABASE_ANON_KEY || '';
+  const url = scoped.url || window.MEOWTAROT_SUPABASE_URL || SUPABASE_URL_FALLBACK;
+  const anonKey = scoped.anonKey || window.MEOWTAROT_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY_FALLBACK;
   return {
     url: String(url || '').trim(),
     anonKey: String(anonKey || '').trim(),
