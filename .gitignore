@@ -7,3 +7,4 @@ cowork-scratch/
 
 # Agent worktrees (transient, never commit)
 .claude/worktrees/
+tools/card-thumbs/
