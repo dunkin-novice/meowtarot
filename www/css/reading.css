@@ -904,41 +904,10 @@ body[data-page='reading'] .celtic-hero__title-th {
   font-weight: 600;
 }
 
-/* §B2-5 — Reversed cards get a distinct cool-violet glow in the result so the
-   orientation reads at a glance (the reversed ART is already drawn upside-down,
-   so no rotation — just the aura). Covers both the daily/question hero and the
-   Celtic thumb slots via .card-art.is-reversed. */
-body[data-page='reading'] .card-art.is-reversed .card-art-img {
-  box-shadow:
-    0 0 0 2px rgba(124, 92, 214, 0.65),
-    0 0 26px 5px rgba(124, 92, 214, 0.55),
-    0 0 58px 14px rgba(99, 102, 241, 0.34);
-  animation: mt-reversed-glow 2.8s ease-in-out infinite;
-}
-@keyframes mt-reversed-glow {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(124, 92, 214, 0.55), 0 0 22px 4px rgba(124, 92, 214, 0.45), 0 0 50px 12px rgba(99, 102, 241, 0.28); }
-  50%      { box-shadow: 0 0 0 2px rgba(124, 92, 214, 0.8),  0 0 30px 7px rgba(124, 92, 214, 0.65), 0 0 66px 16px rgba(99, 102, 241, 0.42); }
-}
-@media (prefers-reduced-motion: reduce) {
-  body[data-page='reading'] .card-art.is-reversed .card-art-img { animation: none; }
-}
-
-/* §B2-5b — Upright cards get a WARM GOLD aura (vs the reversed cool purple) so the
-   orientation reads at a glance. Same structure as the reversed glow, gold palette. */
-body[data-page='reading'] .card-art.is-upright .card-art-img {
-  box-shadow:
-    0 0 0 2px rgba(212, 154, 44, 0.60),
-    0 0 26px 5px rgba(230, 175, 70, 0.50),
-    0 0 58px 14px rgba(245, 200, 110, 0.32);
-  animation: mt-upright-glow 2.8s ease-in-out infinite;
-}
-@keyframes mt-upright-glow {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(212, 154, 44, 0.50), 0 0 22px 4px rgba(230, 175, 70, 0.42), 0 0 50px 12px rgba(245, 200, 110, 0.26); }
-  50%      { box-shadow: 0 0 0 2px rgba(212, 154, 44, 0.78), 0 0 30px 7px rgba(230, 175, 70, 0.62), 0 0 66px 16px rgba(245, 200, 110, 0.42); }
-}
-@media (prefers-reduced-motion: reduce) {
-  body[data-page='reading'] .card-art.is-upright .card-art-img { animation: none; }
-}
+/* §B2-5 — Card 'glow' aura (cool-violet for reversed, warm-gold for upright) was
+   REMOVED per founder request 2026-06-20. Orientation now reads from the label
+   (and, once the reversed-art retirement ships, a 180° flip of the upright art).
+   The card keeps its base drop-shadow from the .card-art container rules above. */
 
 /* §B2-8 — Drop the redundant light panel behind the reading result. The content
    (card art, title, lucky chip) already reads on the page gradient, so the white
