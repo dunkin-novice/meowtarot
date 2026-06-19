@@ -1305,10 +1305,12 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     const label = getFullPosterPositionLabel(item.position, lang);
     const cardName = resolveLocalizedCardName(item.card, item.entry?.name || item.payloadCard?.name || '', lang);
     const orientationLabel = getOrientationLabel(item.orientation, lang);
-    const pillPaddingX = preset === 'square' ? 13 : 16;
-    const pillHeight = preset === 'square' ? 22 : 24;
-    const pillFontSize = preset === 'square' ? 11 : 12;
-    const labelY = layoutBox.y + spread.cardH / 2 + spread.labelGap;
+    const pillPaddingX = preset === 'square' ? 12 : 14;
+    const pillHeight = preset === 'square' ? 17 : 18;
+    const pillFontSize = preset === 'square' ? 10 : 11;
+    // Sit the pill tight under the card (small fixed gap) so it fits the ~14-20px row gap
+    // instead of spilling onto the card below.
+    const labelY = layoutBox.y + spread.cardH / 2 + 1;
     ctx.save();
     ctx.font = `600 ${pillFontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     const pillWidth = Math.min(spread.cardW + 18, Math.max(70, ctx.measureText(label).width + pillPaddingX * 2));
@@ -1322,14 +1324,9 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.fillStyle = 'rgba(255,255,255,0.82)';
     ctx.font = `600 ${pillFontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     ctx.fillText(label, layoutBox.x, labelY + pillHeight - 8);
-
-    ctx.fillStyle = '#f7f4ee';
-    ctx.font = `${isHeroPosition ? 600 : 500} ${preset === 'square' ? 11 : 12}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
-    wrapText(ctx, cardName, layoutBox.x, labelY + pillHeight + spread.nameGap + 10, spread.cardW + 24, 15, 2);
-
-    ctx.fillStyle = 'rgba(255,255,255,0.56)';
-    ctx.font = `500 ${preset === 'square' ? 9 : 10}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
-    wrapText(ctx, orientationLabel, layoutBox.x, labelY + pillHeight + spread.nameGap + 41, spread.cardW + 24, 13, 1);
+    // Card name + orientation per card were drawn here but the ~50px block overlapped the
+    // next (vertically-stacked) card — the cross gaps are only ~20px and the canvas height
+    // is fixed. Dropped to a pill-only label; card names live in the reading narration.
     ctx.restore();
   };
 
