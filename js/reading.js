@@ -481,8 +481,15 @@ async function saveCardImageFromSheet() {
   link.remove();
 }
 
-function openCardSheet(card) {
+function openCardSheet(card, opts = {}) {
   if (!card || !cardSheetEls.overlay || !cardSheetEls.image) return;
+
+  // Small position label, top-left of the sheet (e.g. "The Present" on a Celtic slot).
+  if (cardSheetEls.position) {
+    const posLabel = String(opts.positionLabel || '').trim();
+    cardSheetEls.position.textContent = posLabel;
+    cardSheetEls.position.hidden = !posLabel;
+  }
 
   const { src, candidates = [] } = getCardImageUrlWithFallback(card);
   cardSheetState.card = card;
@@ -562,6 +569,7 @@ function ensureCardSheet() {
   wrap.innerHTML = `
     <div class="card-sheet-backdrop" data-sheet-close></div>
     <section class="card-sheet" role="dialog" aria-modal="true" aria-label="Card details">
+      <span class="card-sheet-position" id="cardSheetPosition" hidden></span>
       <button class="card-sheet-close" type="button" aria-label="Close" data-sheet-close>✕</button>
       <div class="card-sheet-media-wrap">
         <img class="card-sheet-media" alt="" />
@@ -589,6 +597,7 @@ function ensureCardSheet() {
   cardSheetEls.shareLabel = wrap.querySelector('.card-sheet-share__label');
   cardSheetEls.meaningBtn = wrap.querySelector('#cardSheetMeaningBtn');
   cardSheetEls.meaningMeta = wrap.querySelector('#cardSheetMeaningMeta');
+  cardSheetEls.position = wrap.querySelector('#cardSheetPosition');
 
   wrap.addEventListener('click', (event) => {
     if (event.target?.hasAttribute('data-sheet-close')) closeCardSheet();
@@ -3228,7 +3237,7 @@ function renderFull(cards, dict) {
     caption.appendChild(orientation);
 
     slot.appendChild(caption);
-    slot.addEventListener('click', () => openCardSheet(card));
+    slot.addEventListener('click', () => openCardSheet(card, { positionLabel: getFullPositionLabel(dict, position) }));
 
     if (position === 'present' || position === 'challenge') {
       centerSlot.appendChild(slot);

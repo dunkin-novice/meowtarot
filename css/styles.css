@@ -6994,31 +6994,23 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
 }
 
 @media (max-width: 640px) {
+  /* Show the actual Celtic Cross SHAPE on mobile too — minimized cards, all at once
+     (was a column stack of big cards). The crossing (challenge) card keeps its rotated
+     overlap. Tap any card to enlarge it in the sheet. */
   body[data-page='reading'][data-reading-mode='full'] .celtic-cross-layout {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px 4px;
+    max-width: 360px;
+    margin: 0 auto;
   }
-
-  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center {
-    min-height: 0;
-  }
-
-  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--challenge {
-    position: static;
-    /* Base rule pins this slot at top/left:50% to cross over the center card.
-       The mobile column stack drops that overlap, so the inset must be reset too
-       — otherwise the leftover left:50% shoves the card off the right edge. */
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    transform: none;
-  }
-
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center { min-height: 0; }
   body[data-page='reading'][data-reading-mode='full'] .celtic-cross-slot,
   body[data-page='reading'][data-reading-mode='full'] .celtic-slot {
-    max-width: 220px;
+    max-width: 80px;
+  }
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center .card-art.is-thumb .card-art-img,
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--challenge .card-art.is-thumb .card-art-img {
+    max-width: 74px;
   }
 
   body[data-page='reading'][data-reading-mode='full'] .full-interpretation-grid {
@@ -8752,3 +8744,23 @@ body[data-page='home'] .reading-path-card:focus-visible {
   font-size: 10px;
   opacity: 0.6;
 }
+
+/* Position label (e.g. "The Present") top-left of the card-tap sheet — set by
+   openCardSheet({positionLabel}) from the Celtic Cross slots. */
+.card-sheet-position {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 2;
+  font-family: var(--mt-font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mt-gold-deep, #c9933a);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 4px 11px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(61, 26, 92, 0.12);
+}
+.card-sheet-position[hidden] { display: none; }
