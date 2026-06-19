@@ -406,6 +406,9 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       });
     }
     boardEl.classList.toggle('has-selection', selected.length > 0);
+    // is-complete = all required cards picked. The full board only dims the unpicked cards
+    // once the selection is COMPLETE (not from the first pick) — see full.css.
+    boardEl.classList.toggle('is-complete', selectionGoal > 1 && selected.length >= selectionGoal);
     onSelectionChange(selected.map((idx) => cards[idx]).filter(Boolean));
   };
 

@@ -75,15 +75,14 @@ body[data-page='full'] .thai-serif { font-family: var(--mt-font-display-th); }
 
 /* §2 — Top bar (deck name + streak chip) */
 body[data-page='full'] .full-topbar--board {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   margin-top: 6px;
   gap: 12px;
 }
 
 body[data-page='full'] .full-topbar__deck {
-  grid-column: 2;
   text-align: center;
 }
 
@@ -106,8 +105,7 @@ body[data-page='full'] .full-topbar__deck-name {
 }
 
 body[data-page='full'] .full-topbar__streak-chip {
-  grid-column: 3;
-  justify-self: end;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -115,6 +113,7 @@ body[data-page='full'] .full-topbar__streak-chip {
   border-radius: var(--mt-radius-pill);
   background: rgba(255, 255, 255, 0.78);
   box-shadow: var(--mt-soft-shadow);
+  white-space: nowrap;
 }
 
 body[data-page='full'] .full-topbar__streak-num {
@@ -310,7 +309,9 @@ body[data-page='full'] .full-state--board #full-board .card-slot .card-back {
   object-fit: cover;
 }
 
-body[data-page='full'] .full-state--board #full-board.has-selection .card-slot:not(.is-selected) {
+/* Dim the unpicked cards ONLY once all 10 are chosen (is-complete), not from the first
+   pick — keeps the board vibrant while picking. */
+body[data-page='full'] .full-state--board #full-board.is-complete .card-slot:not(.is-selected) {
   opacity: 0.55;
   transform: none;
 }
