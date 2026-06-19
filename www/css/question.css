@@ -657,23 +657,38 @@ body[data-page='question-draw'] .question-draw-button__label { display: none; }
 body[data-page='question-draw'] .question-draw-shell[data-question-spread='quick'] .question-draw-button__label--quick { display: inline; }
 body[data-page='question-draw'] .question-draw-shell[data-question-spread='story'] .question-draw-button__label--story { display: inline; }
 
-/* Force-fit on short screens: compact the chrome so the question board + Continue
-   fit above the bottom-nav with no scroll (matches the daily/full boards). */
-@media (max-height: 780px) {
+/* Fit the question board + Continue in ONE screen above the bottom-nav on phones
+   (mirrors the daily/full boards). Triggered by WIDTH (≤640px) — the old
+   max-height:780px never matched a standard tall iPhone (~844–932 CSS px), so the
+   board overflowed and Continue overlapped the fixed bottom-nav. The shell becomes
+   a 100dvh flex column; the 3-card board flexes to fill the leftover height (cards
+   shrink to fit) so nothing scrolls and Continue stays clear of the nav. */
+@media (max-width: 640px) {
   body[data-page='question-draw'] .question-draw-shell {
-    min-height: 0;
-    padding-top: 4px;
-    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 8px);
+    min-height: 100dvh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 8px;
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 12px);
   }
   body[data-page='question-draw'] .question-draw-topbar { margin-top: 2px; }
   body[data-page='question-draw'] .question-draw-recap { margin-top: 8px; }
-  body[data-page='question-draw'] .question-draw-title { margin-top: 8px; }
+  body[data-page='question-draw'] .question-draw-title { margin-top: 6px; }
   body[data-page='question-draw'] .question-draw-title__en { font-size: 20px; }
   body[data-page='question-draw'] .question-shuffle-row { margin-top: 8px; }
-  body[data-page='question-draw'] #question-card-board.card-board--three { margin-top: 8px !important; gap: 7px 6px !important; }
+  /* Board fills the leftover height; the cards shrink so the whole flow fits. */
+  body[data-page='question-draw'] #question-card-board.card-board--three {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 8px !important;
+    gap: 7px 6px !important;
+    align-content: center;
+  }
   body[data-page='question-draw'] #question-card-board.card-board--three .card-slot { max-width: 52px; }
   body[data-page='question-draw'] .question-draw-counter { margin-top: 6px; }
-  body[data-page='question-draw'] .question-draw-cta-row { margin-top: 8px; }
-  /* Footer isn't needed during card selection — hide it so it doesn't force scroll. */
+  /* Continue pinned to the bottom of the column, clear of the bottom-nav. */
+  body[data-page='question-draw'] .question-draw-cta-row { margin-top: auto; padding-top: 8px; }
+  /* Footer isn't needed during card selection — hide it so it can't force scroll. */
   body[data-page='question-draw'] #site-footer { display: none; }
 }
