@@ -1865,19 +1865,21 @@ body[data-page='home'] .section-block {
      override the scatter placement. */
   position: absolute !important;
   width: clamp(40px, 11vw, 60px) !important;
-  height: clamp(62px, 17vw, 92px) !important;
-  aspect-ratio: auto !important;
+  height: auto !important;
+  /* Match the deck's BACK ratio so object-fit:cover fills the card-back with no crop
+     (fixed w×h didn't match the art ratio → the edges got cut). */
+  aspect-ratio: var(--mt-card-ratio, 848 / 1264) !important;
   margin: 0 !important;
   inset: auto;
+  /* The base .card-slot is opacity:0 (revealed by the grid deal animation, which scatter
+     skips) — force it visible so scatter cards always show. */
+  opacity: 1 !important;
   transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+  /* Cards GLIDE to new positions on shuffle (the left/top transition) — that glide IS the
+     shuffle motion. */
   transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.22s ease,
-              left 0.34s ease, top 0.34s ease;
+              left 0.38s cubic-bezier(0.4, 0, 0.2, 1), top 0.38s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform, left, top;
-  animation: scatterCardIn 0.4s ease both;
-}
-@keyframes scatterCardIn {
-  from { opacity: 0; transform: translate(-50%, -42%) rotate(var(--rot, 0deg)) scale(0.9); }
-  to   { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)); }
 }
 .card-board.card-board--scatter .card-slot:hover:not(:disabled) {
   transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) translateY(-6px);

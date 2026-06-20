@@ -407,6 +407,9 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       slot.style.top = ((r + 0.5) / rows * 100 + jy).toFixed(2) + '%';
       slot.style.setProperty('--rot', ((Math.random() - 0.5) * 22).toFixed(2) + 'deg');
     });
+    // On a re-shuffle the cards GLIDE to their new spots (the left/top transition) — that glide
+    // IS the shuffle motion. (A staggered re-deal cascade fought the absolute placement
+    // transform / left cards invisible, so it was dropped — see [[Scatter Board + Flip Feature]].)
   };
 
   const refreshBadges = () => {
