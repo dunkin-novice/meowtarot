@@ -1,4 +1,11 @@
-import { buildPoster } from './poster.js';
+// Load the poster module with a cache-bust version threaded from share/index.html's
+// <script src="/share/share.js?v=…"> via import.meta.url. The long /share/* edge cache
+// otherwise serves a stale poster.js for HOURS after a deploy (unhashed URL); bumping the
+// version in the FRESH index.html delivers a fresh poster.js immediately — no manual purge.
+const POSTER_V = (() => { try { return new URL(import.meta.url).searchParams.get('v') || ''; } catch (_) { return ''; } })();
+let _buildPosterPromise = null;
+const getBuildPoster = () => (_buildPosterPromise
+  || (_buildPosterPromise = import(`./poster.js${POSTER_V ? `?v=${POSTER_V}` : ''}`).then((m) => m.buildPoster)));
 import { trackSharePosterGenerated, trackSharePosterDownloaded, trackShareClicked } from '../js/analytics.js';
 import { normalizePayload } from './normalize-payload.js';
 import { getCanonicalCardPath, normalizeCanonicalSlug } from '../js/canonical-card-routes.js';
@@ -600,6 +607,7 @@ async function ensurePoster() {
       currentPayload = normalizedPayload;
       const timeoutMs = 15000;
       updatePipelineStage('rendering');
+      const buildPoster = await getBuildPoster();
       const posterPromiseOp = buildPoster(normalizedPayload, { preset: 'story' });
       const stageWatcher = setInterval(() => {
         if (window.__MEOW_POSTER_STAGE === 'exporting' && pipelineStage !== 'exporting') {

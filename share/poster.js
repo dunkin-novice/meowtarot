@@ -936,20 +936,31 @@ function ellipsizeText(ctx, text, maxWidth) {
   return truncated ? `${truncated}…` : '…';
 }
 
+// Split a string into break-units (grapheme-ish): a base character + any following Thai
+// above/below vowels & tone marks, so a wrap never orphans a combining mark onto the next
+// line. Falls back to code points for everything else.
+function toBreakUnits(value) {
+  const m = String(value).match(/[\s\S][ัิ-ฺ็-๎]*/gu);
+  return m || Array.from(value);
+}
+
 function tokenizeText(ctx, text, maxWidth) {
   const value = String(text || '');
   if (!value) return { tokens: [], sep: ' ' };
+  // No-space scripts (Thai/Lao/CJK/Khmer): ALWAYS character/cluster-flow — these have no
+  // reliable word spaces, so word-tokenizing leaves a clause wider than maxWidth as one
+  // unbreakable over-wide line that overflows + clips ("not centred"). Cluster-flow makes
+  // every wrapped line ≤ maxWidth by construction → impossible to overflow. Spaces are
+  // kept as breakable units. (Attempt 2, 2026-06-20 — replaces the everyWordFits heuristic
+  // which could still mis-detect and clip.)
+  if (/[฀-๿຀-໿ក-៿぀-ヿ㐀-鿿가-힯]/.test(value)) {
+    return { tokens: toBreakUnits(value), sep: '' };
+  }
+  // Latin etc: word-tokenize, but never leave an over-wide single word unbroken.
   const words = value.split(/\s+/).filter(Boolean);
-  // Space-tokenize ONLY when every word fits the line width. Thai puts no spaces inside
-  // a clause, so a single "word" is often wider than maxWidth — space-tokenizing then
-  // leaves an unbreakable over-wide line that overflows + clips on BOTH edges (looks
-  // "not centred"). When any word is over-wide, fall back to character flow so the long
-  // run wraps cleanly into centred lines. (Daily-poster TH tagline fix, 2026-06-20.)
   const everyWordFits = words.every((w) => ctx.measureText(w).width <= maxWidth);
   if (words.length > 1 && everyWordFits) return { tokens: words, sep: ' ' };
   if (ctx.measureText(value).width <= maxWidth) return { tokens: [value], sep: ' ' };
-  // No-space script (Thai/CJK) or an over-wide word: break by character (spaces kept as
-  // breakable chars) so it wraps into clean centred lines instead of overflowing.
   return { tokens: Array.from(value), sep: '' };
 }
 
@@ -1034,7 +1045,10 @@ function fitDailyQuoteText(ctx, text, maxWidth, maxHeight, opts = {}) {
     const { ascent, descent, lineHeight } = measureQuoteMetrics(fontSize);
     const lines = wrapTextLines(ctx, quote, maxWidth, Number.POSITIVE_INFINITY);
     const occupiedHeight = ascent + descent + Math.max(0, lines.length - 1) * lineHeight + quoteRenderSafety;
-    if (occupiedHeight <= maxHeight) {
+    // Belt-and-suspenders: also require EVERY line to fit the width at this (draw) font, so
+    // a line can never overflow + clip even if wrapping under-measured. (Attempt 2.)
+    const widest = lines.reduce((m, ln) => Math.max(m, ctx.measureText(ln).width), 0);
+    if (occupiedHeight <= maxHeight && widest <= maxWidth) {
       return {
         fontSize,
         lineHeight,

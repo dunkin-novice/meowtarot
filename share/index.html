@@ -67,6 +67,9 @@
     </nav>
   </main>
 
-  <script type="module" src="/share/share.js"></script>
+  <!-- Cache-bust version: this HTML is served fresh, so bumping ?v= here delivers a fresh
+       share.js + poster.js immediately (they sit behind a multi-hour edge cache otherwise).
+       BUMP THIS on any change to share.js or poster.js. -->
+  <script type="module" src="/share/share.js?v=20260620g"></script>
 </body>
 </html>
