@@ -940,10 +940,16 @@ function tokenizeText(ctx, text, maxWidth) {
   const value = String(text || '');
   if (!value) return { tokens: [], sep: ' ' };
   const words = value.split(/\s+/).filter(Boolean);
-  if (words.length > 1) return { tokens: words, sep: ' ' };
+  // Space-tokenize ONLY when every word fits the line width. Thai puts no spaces inside
+  // a clause, so a single "word" is often wider than maxWidth — space-tokenizing then
+  // leaves an unbreakable over-wide line that overflows + clips on BOTH edges (looks
+  // "not centred"). When any word is over-wide, fall back to character flow so the long
+  // run wraps cleanly into centred lines. (Daily-poster TH tagline fix, 2026-06-20.)
+  const everyWordFits = words.every((w) => ctx.measureText(w).width <= maxWidth);
+  if (words.length > 1 && everyWordFits) return { tokens: words, sep: ' ' };
   if (ctx.measureText(value).width <= maxWidth) return { tokens: [value], sep: ' ' };
-  // No-space script (Thai/CJK): break by character and join WITHOUT spaces, so a long
-  // Thai reading wraps into clean centred lines instead of space-separated glyphs.
+  // No-space script (Thai/CJK) or an over-wide word: break by character (spaces kept as
+  // breakable chars) so it wraps into clean centred lines instead of overflowing.
   return { tokens: Array.from(value), sep: '' };
 }
 
