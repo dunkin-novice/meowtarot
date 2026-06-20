@@ -89,8 +89,11 @@ function applySeo(template, card, slug, lang) {
     ? card.meta_description_th || card.meta_description_en || ''
     : card.meta_description_en || card.meta_description_th || '';
 
+  // TH SEO term rule (2026-06-20): brand = เหมียวทาโร่ต์ (already carries the ทาโร่ต์
+  // token) → use ไพ่ยิปซี for the GENERIC noun (the term most Thai users search). No
+  // redundant ทาโรต์+ไพ่ยิปซี pairing; the brand covers ทาโร่ต์.
   const title = isThai
-    ? `${card.alias_th || card.card_name_en || 'ไพ่ทาโรต์'} ความหมายไพ่ทาโรต์ | MeowTarot`
+    ? `${card.alias_th || card.card_name_en || 'ไพ่ยิปซี'} ความหมายไพ่ยิปซี | เหมียวทาโร่ต์`
     : `${card.card_name_en || 'Tarot Card'} Tarot Meaning | MeowTarot`;
 
   let html = template;

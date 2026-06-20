@@ -95,9 +95,9 @@ function setNextLink(html, { href, text }) {
 function buildTitles(card, lang) {
   const isThai = lang === 'th';
   const enName = card.card_name_en || 'Tarot Card';
-  const thName = card.alias_th || card.name_th || enName || 'ไพ่ทาโรต์';
+  const thName = card.alias_th || card.name_th || enName || 'ไพ่ยิปซี';
   return isThai
-    ? `ความหมายไพ่ ${thName} (ไพ่ตั้งตรงและกลับหัว) | MeowTarot`
+    ? `ความหมายไพ่ยิปซี ${thName} (ไพ่ตั้งตรงและกลับหัว) | เหมียวทาโร่ต์`
     : `${enName} Meaning (Upright & Reversed) | MeowTarot`;
 }
 

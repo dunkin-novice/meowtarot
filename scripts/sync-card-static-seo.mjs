@@ -68,9 +68,10 @@ function replaceTitleText(html, value) {
 }
 
 function buildThaiSeoTitle(card, mode = 'both') {
-  const displayName = card.alias_th || card.card_name_en || 'ไพ่ทาโรต์';
+  const displayName = card.alias_th || card.card_name_en || 'ไพ่ยิปซี';
   const suffix = mode === 'single' ? 'ไพ่ตั้งตรง' : 'ไพ่ตั้งตรงและกลับหัว';
-  return `ความหมายไพ่ ${displayName} (${suffix}) | MeowTarot`;
+  // TH SEO term rule: brand เหมียวทาโร่ต์ carries ทาโร่ต์; generic noun = ไพ่ยิปซี.
+  return `ความหมายไพ่ยิปซี ${displayName} (${suffix}) | เหมียวทาโร่ต์`;
 }
 function injectFaqSection(html, lang, card) {
   if (html.includes('id="seoFaqSection"')) return html;
