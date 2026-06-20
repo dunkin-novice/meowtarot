@@ -1,0 +1,176 @@
+// Meow Coin Shop — spend coins to unlock AI decks (founder 2026-06-21). Each deck = 100 coins.
+// SHOP_DECKS is the list of decks that exist on Cloudflare but aren't part of the free rotation;
+// it's populated once their art + -200 thumbs are confirmed. Until then the shop shows the
+// balance + an honest "coming soon" state (the page is live + the chip link works).
+import { applyLocaleMeta, applyTranslations, initShell, pathHasThaiPrefix } from './common.js';
+import { getMeowCoins, spendMeowCoins, onMeowCoinsChange, DECK_PRICE_COINS } from './meow-coin.js';
+import { trackLocaleSwitched } from './analytics.js';
+
+const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en' };
+const pick = (en, th) => (state.currentLang === 'th' ? th : en);
+const CDN = 'https://cdn.meowtarot.com/assets';
+
+// Each: { id, nameEn, nameTh } — back art resolved from `${CDN}/${id}/00-back-200.webp`.
+// TODO(founder deck list): add the not-live deck slugs here once confirmed.
+const SHOP_DECKS = [];
+
+const OWNED_KEY = 'meowtarot_shop_decks';
+function ownedDecks() {
+  try { const v = JSON.parse(localStorage.getItem(OWNED_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch (_) { return []; }
+}
+function isOwned(id) { return ownedDecks().includes(id); }
+function markOwned(id) {
+  const o = ownedDecks();
+  if (!o.includes(id)) { o.push(id); try { localStorage.setItem(OWNED_KEY, JSON.stringify(o)); } catch (_) {} }
+}
+
+let toastTimer = null;
+function showToast(message) {
+  let toast = document.querySelector('.shop-toast');
+  if (toastTimer) { window.clearTimeout(toastTimer); toastTimer = null; }
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'shop-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('is-visible');
+  toastTimer = window.setTimeout(() => { toast.classList.remove('is-visible'); }, 2600);
+}
+
+function buyDeck(deck) {
+  if (isOwned(deck.id)) return;
+  const res = spendMeowCoins(DECK_PRICE_COINS, `shop_deck:${deck.id}`);
+  if (!res.ok) {
+    showToast(pick('Not enough Meow Coins yet — keep earning!', 'เหรียญเหมียวยังไม่พอ — สะสมต่อได้เลย!'));
+    return;
+  }
+  markOwned(deck.id);
+  showToast(pick(`Unlocked ${deck.nameEn}!`, `ปลดล็อก ${deck.nameTh} แล้ว!`));
+  renderAll();
+}
+
+function buildHero() {
+  const wrap = document.createElement('section');
+  wrap.className = 'decks-hero';
+
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'decks-top-row__eyebrow';
+  const eyebrowSpan = document.createElement('span');
+  eyebrowSpan.textContent = pick('Shop', 'ร้านค้า');
+  eyebrow.appendChild(eyebrowSpan);
+  wrap.appendChild(eyebrow);
+
+  const heading = document.createElement('h1');
+  heading.className = 'decks-heading__en';
+  heading.textContent = pick('Meow Coin Shop', 'ร้านค้าเหรียญเหมียว');
+  wrap.appendChild(heading);
+
+  const sub = document.createElement('p');
+  sub.className = 'shop-sub';
+  sub.textContent = pick(
+    'Spend your Meow Coins to unlock new decks — 100 coins each.',
+    'ใช้เหรียญเหมียวปลดล็อกสำรับใหม่ — สำรับละ 100 เหรียญ',
+  );
+  wrap.appendChild(sub);
+
+  // Live balance pill
+  const balance = document.createElement('div');
+  balance.className = 'shop-balance';
+  balance.innerHTML = '<img src="/assets/meow-coin.svg" alt="" class="shop-balance__icon" aria-hidden="true" />'
+    + '<span class="shop-balance__num">0</span>'
+    + `<span class="shop-balance__label">${pick('Meow Coins', 'เหรียญเหมียว')}</span>`;
+  wrap.appendChild(balance);
+  onMeowCoinsChange((bal) => {
+    const n = balance.querySelector('.shop-balance__num');
+    if (n) n.textContent = String(bal);
+  });
+
+  return wrap;
+}
+
+function buildDeckCell(deck) {
+  const owned = isOwned(deck.id);
+  const affordable = getMeowCoins() >= DECK_PRICE_COINS;
+  const cell = document.createElement('div');
+  cell.className = 'shop-deck-cell' + (owned ? ' is-owned' : '');
+
+  const art = document.createElement('img');
+  art.className = 'shop-deck-cell__art';
+  art.loading = 'lazy';
+  art.alt = pick(deck.nameEn, deck.nameTh);
+  art.src = `${CDN}/${deck.id}/00-back-200.webp`;
+  cell.appendChild(art);
+
+  const name = document.createElement('div');
+  name.className = 'shop-deck-cell__name';
+  name.textContent = pick(deck.nameEn, deck.nameTh);
+  cell.appendChild(name);
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'shop-deck-cell__buy';
+  if (owned) {
+    btn.disabled = true;
+    btn.textContent = pick('Owned', 'เป็นเจ้าของแล้ว');
+  } else {
+    btn.classList.toggle('is-disabled', !affordable);
+    btn.innerHTML = `<img src="/assets/meow-coin.svg" alt="" aria-hidden="true" />${DECK_PRICE_COINS}`;
+    btn.addEventListener('click', () => buyDeck(deck));
+  }
+  cell.appendChild(btn);
+  return cell;
+}
+
+function buildComingSoon() {
+  const wrap = document.createElement('div');
+  wrap.className = 'shop-empty';
+  const h = document.createElement('p');
+  h.className = 'shop-empty__title';
+  h.textContent = pick('New decks are on the way 🐾', 'สำรับใหม่กำลังจะมา 🐾');
+  const p = document.createElement('p');
+  p.className = 'shop-empty__body';
+  p.textContent = pick(
+    'Keep doing your daily readings to stack up Meow Coins — you earn +5 each day you visit, +5 per daily reading, and +20 for every milestone you unlock. They\'ll be ready to spend here soon.',
+    'เปิดไพ่รายวันต่อไปเพื่อสะสมเหรียญเหมียว — รับ +5 ทุกวันที่เข้ามา, +5 ต่อการเปิดไพ่รายวัน และ +20 ทุกครั้งที่ปลดล็อกความสำเร็จ ไว้ใช้ช้อปที่นี่เร็ว ๆ นี้',
+  );
+  wrap.appendChild(h);
+  wrap.appendChild(p);
+  return wrap;
+}
+
+function renderAll() {
+  const content = document.getElementById('shop-content');
+  if (!content) return;
+  content.textContent = '';
+  content.appendChild(buildHero());
+
+  if (SHOP_DECKS.length) {
+    const grid = document.createElement('div');
+    grid.className = 'decks-grid shop-grid';
+    SHOP_DECKS.forEach((deck) => grid.appendChild(buildDeckCell(deck)));
+    content.appendChild(grid);
+  } else {
+    content.appendChild(buildComingSoon());
+  }
+}
+
+function onTranslations() { renderAll(); }
+
+function switchLanguageInPlace(nextLang) {
+  if (!nextLang || nextLang === state.currentLang) return;
+  const fromLocale = state.currentLang;
+  state.currentLang = nextLang;
+  try { trackLocaleSwitched({ fromLocale, toLocale: nextLang }); } catch (_) {}
+  try { localStorage.setItem('meowtarot_lang', nextLang); } catch (_) {}
+  applyTranslations(nextLang, onTranslations);
+  applyLocaleMeta(nextLang);
+}
+
+function init() {
+  initShell(state, onTranslations, 'shop', { onLangToggle: switchLanguageInPlace });
+  renderAll();
+}
+
+document.addEventListener('DOMContentLoaded', init);

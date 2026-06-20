@@ -1,4 +1,5 @@
 import { getNewlyUnlockedDecks, getUnlockMilestones, normalizeId } from './data.js';
+import { grantDailyReading, grantAchievementCoins, grantDeckUnlockCoins } from './meow-coin.js';
 
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
 const PROGRESS_VERSION = 2;
@@ -300,6 +301,14 @@ export function trackCompletedDailyReading(card = null) {
       progress.achievement_dates[key] = today;
     }
   });
+
+  // Meow Coin earns (idempotent, best-effort — never block the reading): +5 for the daily
+  // reading, +20 per newly-unlocked achievement, +20 per newly-unlocked deck.
+  try {
+    grantDailyReading();
+    newlyUnlocked.forEach((key) => grantAchievementCoins(key));
+    newlyUnlockedDecks.forEach((deck) => grantDeckUnlockCoins(deck.id));
+  } catch (_) { /* coins are non-critical */ }
 
   persistProgress(progress);
 

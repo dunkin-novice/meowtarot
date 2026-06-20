@@ -1,5 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
+import { grantDailyLogin, renderMeowCoinChip } from './meow-coin.js';
 import { trackLocaleSwitched, trackMeaningViewed, trackCtaClicked, trackOrientationToggled } from './analytics.js';
 import { renderBottomNav } from './bottom-nav.js';
 
@@ -741,6 +742,9 @@ export function initShell(state, afterApply, activePage, options = {}) {
   const pathIsThai = pathHasThaiPrefix(window.location.pathname || '/');
   state.currentLang = explicitParam || (pathIsThai ? 'th' : 'en');
   localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
+
+  // Meow Coin: +5 daily-login (idempotent per day) + the top-right balance chip. Best-effort.
+  try { grantDailyLogin(); renderMeowCoinChip(); } catch (_) { /* coins non-critical */ }
 
   // Phase 5: global top navbar removed. The hamburger nav + brand text
   // + EN/TH lang toggle that used to render here are replaced by the
