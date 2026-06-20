@@ -18,6 +18,7 @@ import {
   getActiveDeckId,
   getNewlyUnlockedDecks,
   getAllDecks,
+  getReversedMode,
 } from './data.js';
 import { showDeckRewardPopup } from './deck-reward.js';
 import {
@@ -530,9 +531,11 @@ function openCardSheet(card, opts = {}) {
   cardSheetState.src = src;
 
   applyImgFallback(cardSheetEls.image, src, candidates);
-  // Source the UPRIGHT art for both orientations; reversed is rotated 180° via the
-  // .is-reversed class on the sheet image (set below). Never request a -reversed asset.
-  resolveCardImageUrl(card, 'upright').then((resolvedSrc) => {
+  // 'flip' (default): source UPRIGHT art; reversed rotates 180° via the .is-reversed
+  // class (CSS gated by data-reversed-mode). 'art': source the real orientation's
+  // *-reversed.webp; the CSS rotation is suppressed in that mode.
+  const sheetOrientation = getReversedMode() === 'art' ? toOrientation(card) : 'upright';
+  resolveCardImageUrl(card, sheetOrientation).then((resolvedSrc) => {
     if (resolvedSrc && resolvedSrc !== cardSheetEls.image.src) {
       cardSheetEls.image.src = resolvedSrc;
       cardSheetState.src = resolvedSrc;
@@ -594,7 +597,7 @@ function ensureShareFab() {
   btn.className = 'mt-share-fab';
   btn.setAttribute('aria-label', state.currentLang === 'th' ? 'แชร์สตอรี่' : 'Share story');
   btn.innerHTML = `
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/>
     </svg>`;
   btn.addEventListener('click', () => { openSharePage(); });
@@ -1064,24 +1067,30 @@ function toDefaultDeckFaceUrl(url) {
 }
 
 function getCardImageUrlWithFallback(card) {
-  // Reversed cards now SOURCE the upright art and are rotated 180° visually
-  // (.card-art.is-reversed in CSS). The *-reversed.webp asset is retired, so we
-  // always request the upright URL here regardless of the card's real orientation.
-  const { uprightUrl, backUrl } = buildCardImageUrls(card, 'upright');
+  // Reversed-card render mode (hidden Profile toggle):
+  //   'flip' (default) — source the UPRIGHT art; reversed is rotated 180° in CSS.
+  //   'art'            — source the dedicated *-reversed.webp; no rotation.
+  // In either mode, fall back to upright → back → site logo so a missing reversed
+  // asset never breaks the image.
+  const useArt = getReversedMode() === 'art';
+  const orientation = useArt && toOrientation(card) === 'reversed' ? 'reversed' : 'upright';
+  const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
+  const primaryUrl = (orientation === 'reversed' ? reversedUrl : uprightUrl) || uprightUrl;
   const globalSiteFallbackUrl = getCardImageFallbackUrl() || getCardBackFallbackUrl() || getCardBackUrl();
-  const defaultUpright = toDefaultDeckFaceUrl(uprightUrl);
+  const defaultPrimary = toDefaultDeckFaceUrl(primaryUrl);
 
   return {
-    src: uprightUrl || backUrl || globalSiteFallbackUrl,
-    candidates: [defaultUpright, backUrl, globalSiteFallbackUrl].filter(Boolean),
+    src: primaryUrl || backUrl || globalSiteFallbackUrl,
+    candidates: [defaultPrimary, uprightUrl, backUrl, globalSiteFallbackUrl].filter(Boolean),
   };
 }
 
 async function resolveReadingResultRuntimeImageUrl(card) {
-  // Both orientations source the UPRIGHT art now (reversed is rotated 180° in
-  // CSS, not loaded from a separate -reversed asset). Resolve as upright so we
-  // never probe for the retired *-reversed.webp file.
-  return resolveCardImageUrl(card, 'upright');
+  // 'flip' (default) resolves upright (rotated in CSS); 'art' resolves the real
+  // orientation so reversed cards load *-reversed.webp. resolveCardImageUrl already
+  // falls back reversed → upright → back when an asset is missing.
+  const orientation = getReversedMode() === 'art' ? toOrientation(card) : 'upright';
+  return resolveCardImageUrl(card, orientation);
 }
 
 function getStableCardImageSources(card) {

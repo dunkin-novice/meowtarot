@@ -6,7 +6,7 @@ import {
   pathHasThaiPrefix,
   translations,
 } from './common.js';
-import { getAllDecks, loadTarotManifest, normalizeId } from './data.js';
+import { getAllDecks, loadTarotManifest, normalizeId, getReversedMode, setReversedMode } from './data.js';
 import { computePhase } from './phase.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
@@ -682,6 +682,47 @@ function renderOther(dict) {
   trigger.textContent = dict.profileDeleteAccount || (th ? 'ลบบัญชี' : 'Delete account');
   trigger.addEventListener('click', () => openDeleteModal(dict, th));
   body.appendChild(trigger);
+
+  // Hidden dev toggle — reversed-card render mode. Revealed by tapping the "Other"
+  // header 5× (founder 2026-06-20). Default 'flip' (rotate upright art); 'art' uses
+  // the separate *-reversed.webp. Persists via setReversedMode → localStorage.
+  const devRow = document.createElement('div');
+  devRow.className = 'profile-reversed-mode';
+  devRow.hidden = true;
+  devRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:12px;';
+  const devLabel = document.createElement('span');
+  devLabel.textContent = th ? 'ไพ่กลับหัว' : 'Reversed cards';
+  devLabel.style.cssText = 'opacity:0.75;';
+  const seg = document.createElement('div');
+  seg.style.cssText = 'display:inline-flex;border:1px solid rgba(61,26,92,0.3);border-radius:9px;overflow:hidden;';
+  const restyle = (mode) => seg.querySelectorAll('button').forEach((x) => {
+    const on = x.dataset.mode === mode;
+    x.setAttribute('aria-pressed', String(on));
+    x.style.cssText = `border:none;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;background:${on ? '#3d1a5c' : 'transparent'};color:${on ? '#fff' : '#3d1a5c'};`;
+  });
+  const mkBtn = (mode, en, thLabel) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.mode = mode;
+    b.textContent = th ? thLabel : en;
+    b.addEventListener('click', () => { setReversedMode(mode); restyle(mode); });
+    return b;
+  };
+  seg.appendChild(mkBtn('flip', 'Flip', 'พลิก'));
+  seg.appendChild(mkBtn('art', 'Art', 'รูปแยก'));
+  devRow.appendChild(devLabel);
+  devRow.appendChild(seg);
+  restyle(getReversedMode());
+  body.appendChild(devRow);
+
+  let taps = 0;
+  let tapTimer = null;
+  summary.addEventListener('click', () => {
+    taps += 1;
+    if (tapTimer) clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 1200);
+    if (taps >= 5) { devRow.hidden = false; taps = 0; }
+  });
 
   details.appendChild(body);
   card.appendChild(details);

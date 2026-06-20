@@ -285,7 +285,7 @@ body[data-page='full'] .full-state--board #full-board .card-slot {
   height: auto;
   max-height: none;
   margin-right: 0;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   border-radius: 6px;
   border: 0.5px solid var(--mt-gold-pale);
   overflow: hidden;

@@ -847,7 +847,7 @@ button,
 .card {
   position: relative;
   width: 100%;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   border-radius: 14px;
   transform-style: preserve-3d;
   transition:
@@ -1685,7 +1685,7 @@ body[data-page='home'] .section-block {
 .card-slot {
   width: 96px;
   height: 146px;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
@@ -1849,7 +1849,7 @@ body[data-page='home'] .section-block {
 .deck-stack {
   position: relative;
   width: clamp(112px, 15vw, 156px);
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   isolation: isolate;
 }
 
@@ -5487,7 +5487,7 @@ body[data-page='overall'] #overall-counter {
 body[data-page='reading'][data-reading-mode='daily'] .daily-deck-stack {
   position: relative;
   width: min(44vw, 190px);
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   min-width: 118px;
 }
 
@@ -5591,7 +5591,7 @@ body[data-page='reading'][data-reading-mode='daily'] .daily-motion-layout--tripl
 
 body[data-page='reading'][data-reading-mode='daily'] .daily-motion-slot {
   position: relative;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   width: 100%;
 }
 
@@ -5698,7 +5698,7 @@ body[data-page='reading'][data-reading-mode='daily'] .daily-board-panel .daily-r
 
 body[data-page='reading'][data-reading-mode='daily'] .daily-board-panel .daily-result-art .card-art-img {
   width: min(320px, 100%);
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-face-ratio, 1568 / 2720);
   object-fit: cover;
   background: rgba(26, 33, 67, 0.12);
 }
@@ -6076,7 +6076,7 @@ body[data-page='full'] .full-draw-board__slot {
   padding: 4px;
   background: rgba(15, 22, 52, 0.68);
   width: 100%;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   min-height: 0;
   display: block;
 }
@@ -6129,7 +6129,7 @@ body[data-page='full'] .full-draw-board__img,
 body[data-page='full'] .full-arrange-item__img {
   width: 100%;
   height: auto;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-face-ratio, 1568 / 2720);
   object-fit: contain;
   display: block;
 }
@@ -6406,7 +6406,7 @@ body[data-page='full'] .full-arrange-item__order-index {
 body[data-page='full'] .full-arrange-item__img {
   grid-area: image;
   width: 100%;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-face-ratio, 1568 / 2720);
 }
 
 body[data-page='full'] .full-arrange-item__meta {
@@ -6448,7 +6448,7 @@ body[data-page='full'] #overall-continue:disabled {
 /* Keep board card backs uncropped by preserving the source back-art aspect ratio. */
 body[data-page='daily'] #daily-board .card-slot {
   height: auto;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
 }
 
 body[data-page='daily'] #daily-board .card-back {
@@ -6629,7 +6629,7 @@ body[data-page='daily'] #daily-board .card-back {
     width: min(100%, 108px);
     height: 100%;
     max-height: calc((var(--daily-mobile-board-max-height) - (2 * clamp(8px, 1.4dvh, 12px))) / 3);
-    aspect-ratio: 1568 / 2720;
+    aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   }
 
   body[data-page='daily'] #daily-board .card-slot:not(.is-selected) {

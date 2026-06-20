@@ -347,7 +347,7 @@ body[data-page='daily'] .daily-bigcard__card:has(.daily-bigcard__img) {
   background: transparent;
   border: none;
   height: auto;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-face-ratio, 1568 / 2720);
   box-shadow:
     0 26px 56px -18px rgba(61, 26, 92, 0.60),
     0 6px 14px -6px rgba(61, 26, 92, 0.40);
@@ -664,7 +664,7 @@ body[data-page='daily'] .daily-state--board #daily-board .card-slot {
   max-width: clamp(38px, calc((100dvh - 384px) / 6), 64px);
   height: auto;
   max-height: none;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-ratio, 1568 / 2720);
   border-radius: 6px;
   border: 0.5px solid var(--mt-gold-pale);
   overflow: hidden;

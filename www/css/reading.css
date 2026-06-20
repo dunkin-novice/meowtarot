@@ -261,7 +261,7 @@ body[data-page='reading'] .panel--spread[data-spread-count='1'] .card-art.is-thu
 
 body[data-page='reading'] .panel--spread[data-spread-count='3'] .card-art.is-thumb {
   width: 86px;
-  aspect-ratio: 1568 / 2720;
+  aspect-ratio: var(--mt-card-face-ratio, 1568 / 2720);
 }
 
 body[data-page='reading'] .card-art.is-thumb .card-art-img {
@@ -945,8 +945,8 @@ body[data-page='reading'] .mt-share-fab {
   bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bottom-nav-height, 64px) + 70px);
   right: calc(env(safe-area-inset-right, 0px) + 14px);
   z-index: 60;
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   border: none;
   display: flex;
@@ -962,6 +962,25 @@ body[data-page='reading'] .mt-share-fab {
 body[data-page='reading'] .mt-share-fab:hover { transform: translateY(-1px); }
 body[data-page='reading'] .mt-share-fab:active { transform: scale(0.94); }
 
+/* §B6b — Instagram glyph on the bottom "Share" action button (founder 2026-06-20).
+   Added as a ::before so the JS `textContent` label re-writes don't wipe it; masked
+   to currentColor so it matches the button text in either locale. */
+body[data-page='reading'] #shareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+body[data-page='reading'] #shareBtn::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='2.5'%20y='2.5'%20width='19'%20height='19'%20rx='5.5'/%3E%3Ccircle%20cx='12'%20cy='12'%20r='4.2'/%3E%3Ccircle%20cx='17.6'%20cy='6.4'%20r='1.2'%20fill='black'%20stroke='none'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='2.5'%20y='2.5'%20width='19'%20height='19'%20rx='5.5'/%3E%3Ccircle%20cx='12'%20cy='12'%20r='4.2'/%3E%3Ccircle%20cx='17.6'%20cy='6.4'%20r='1.2'%20fill='black'%20stroke='none'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 /* §B7 — Reversed-card artwork = UPRIGHT art rotated 180° (2026-06-20).
  * Reversed cards no longer load a separate *-reversed.webp asset; they SOURCE
  * the upright art and are flipped visually here. The orientation LABEL still
@@ -969,9 +988,12 @@ body[data-page='reading'] .mt-share-fab:active { transform: scale(0.94); }
  * BACK (.card-back) is never rotated — only the face image. Applies to the
  * result face (.card-art .card-art-img) and the tapped card sheet
  * (.card-sheet-media), both rendered on reading.html. */
-body[data-page='reading'] .card-art.is-reversed .card-art-img {
+/* Rotation applies only in 'flip' mode (the default). In 'art' mode the image is
+ * already the reversed asset, so the html[data-reversed-mode='art'] guard skips it.
+ * :not(...='art') keeps flip the default even before the attr is set by JS. */
+html:not([data-reversed-mode='art']) body[data-page='reading'] .card-art.is-reversed .card-art-img {
   transform: rotate(180deg);
 }
-body[data-page='reading'] .card-sheet-media.is-reversed {
+html:not([data-reversed-mode='art']) body[data-page='reading'] .card-sheet-media.is-reversed {
   transform: rotate(180deg);
 }

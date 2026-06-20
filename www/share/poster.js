@@ -7,6 +7,7 @@ import {
   getCardImageFallbackUrl,
   getActiveDeckId,
   DEFAULT_DECK_ID,
+  getReversedMode,
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { normalizePayload } from './normalize-payload.js';
@@ -22,6 +23,26 @@ import {
 import { translations } from '../js/common.js';
 import { orderQuestionCards } from '../js/question-card-order.js';
 
+
+// Reversed-card render mode (hidden Profile toggle, founder 2026-06-20). 'flip'
+// (DEFAULT) sources the upright art and rotates 180° on the canvas; 'art' sources
+// the dedicated *-reversed.webp and does NOT rotate. These helpers keep the default
+// path byte-identical to before (flip → upright + rotate).
+const isPosterArtMode = () => getReversedMode() === 'art';
+const posterImageOrientation = (realOrientation) =>
+  (isPosterArtMode() && toOrientation(realOrientation) === 'reversed') ? 'reversed' : 'upright';
+const posterShouldRotateReversed = (realOrientation) =>
+  toOrientation(realOrientation) === 'reversed' && !isPosterArtMode();
+
+// Prefer the 200px thumbnail for SMALL multi-card posters (Celtic Cross + the
+// 3-card Question spread). Returns the -200 variant URL, or null when the URL
+// isn't a face asset. The full-res URL is kept as the first fallback, so a missing
+// thumbnail (or a reversed -200 in art mode) degrades gracefully.
+const POSTER_FACE_200_RE = /-(upright|reversed)\.webp/;
+const toPosterThumb200 = (url) =>
+  (typeof url === 'string' && POSTER_FACE_200_RE.test(url))
+    ? url.replace(POSTER_FACE_200_RE, '-$1-200.webp')
+    : null;
 
 const PRESETS = {
   story: { width: 1080, height: 1920 },
@@ -1242,9 +1263,11 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.42)';
     ctx.shadowBlur = 16;
-    ctx.fillStyle = '#c9933a';
+    ctx.fillStyle = '#bf8a20';
     // Brand title in the loaded Cormorant Garamond serif (Poppins isn't preloaded → it
     // fell back to a blocky sans). Matches the Daily poster's elegant serif style.
+    // Wordmark deepened from #c9933a → #bf8a20 (founder 2026-06-20) — old gold read muddy/
+    // washed-out on the pastel poster background.
     ctx.font = `italic 700 ${header.brandSize}px "Cormorant Garamond", "Noto Serif Thai", serif`;
     ctx.fillText('MeowTarot', width / 2, header.top);
     ctx.shadowBlur = 0;
@@ -1338,7 +1361,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     // draw time (item.orientation === 'reversed' rotation below). So coerce the
     // image sourcing to 'upright' here — never request a *-reversed.webp asset.
     // item.orientation keeps the REAL orientation for the rotate + label/meaning.
-    const imageOrientation = 'upright';
+    const imageOrientation = posterImageOrientation(item.orientation);
     const orientedId = `${baseId}-${imageOrientation}`;
     const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
     const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
@@ -1351,7 +1374,9 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
       lang,
     });
     try {
-      return await loadPosterCardImageWithTimeout(primary, fallbackChain);
+      // Small Celtic cards: prefer the 200px thumbnail, full-res as first fallback.
+      const thumb = toPosterThumb200(primary);
+      return await loadPosterCardImageWithTimeout(thumb || primary, thumb ? [primary, ...fallbackChain] : fallbackChain);
     } catch (error) {
       console.warn('[Poster] celtic cross card image failed', { position: item.position, url: primary || backUrl, reason: error?.message || String(error) });
       return null;
@@ -1386,7 +1411,7 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     drawRoundedRect(ctx, -spread.cardW / 2, -spread.cardH / 2, spread.cardW, spread.cardH, frameRadius);
     ctx.clip();
     if (image) {
-      if (item.orientation === 'reversed') {
+      if (posterShouldRotateReversed(item.orientation)) {
         ctx.translate(0, 0);
         ctx.rotate(Math.PI);
       }
@@ -1917,7 +1942,7 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
     // (see the `orientation === 'reversed'` rotate below). Coerce sourcing to
     // 'upright' so we never request a *-reversed.webp; `orientation` keeps the
     // real value for the orientation LABEL.
-    const imageOrientation = 'upright';
+    const imageOrientation = posterImageOrientation(orientation);
     const uprightOrientedId = baseId ? `${baseId}-${imageOrientation}` : '';
     const cardIdentity = uprightOrientedId
       ? { ...sourceCard, id: uprightOrientedId, card_id: uprightOrientedId, image_id: uprightOrientedId }
@@ -1969,7 +1994,7 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
       ctx.save();
       drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
       ctx.clip();
-      if (orientation === 'reversed') {
+      if (posterShouldRotateReversed(orientation)) {
         // Reversed = upright art rotated 180° about the card center (mirrors the
         // celtic poster's reversed rotation). Clip rect is unrotated, image is.
         ctx.translate(cardX + cardW / 2, cardYPos + cardH / 2);
@@ -2246,7 +2271,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const orientation = toOrientation(entry?.orientation || payloadCard?.orientation || sourceCard?.orientation || 'upright');
       // Reversed cards SOURCE upright art and rotate 180° at draw time. Coerce
       // sourcing to upright; `orientation` stays real for the label + rotation.
-      const imageOrientation = 'upright';
+      const imageOrientation = posterImageOrientation(orientation);
       const orientedId = `${baseId}-${imageOrientation}`;
       const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
       const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
@@ -2265,8 +2290,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       drawCardShadow(layout.x, layout.y, Boolean(layout.rotated));
 
       try {
-        const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
-        drawCardImage(img, layout.x, layout.y, Boolean(layout.rotated), orientation === 'reversed');
+        const thumb = toPosterThumb200(selectedUrl);
+        const img = await loadPosterCardImageWithTimeout(thumb || selectedUrl, thumb ? [selectedUrl, ...fallbackChain] : fallbackChain);
+        drawCardImage(img, layout.x, layout.y, Boolean(layout.rotated), posterShouldRotateReversed(orientation));
       } catch (error) {
         console.warn('[Poster] full card image failed', { url: resolvedPrimary || reversedUrl || uprightUrl || backUrl, reason: error?.message || String(error) });
         drawFallbackCardArt(ctx, layout.x - cardW / 2, layout.y - cardH / 2, cardW, cardH, { radius: 18, label: 'MEOW TAROT' });
@@ -2380,7 +2406,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const orientation = toOrientation(entry?.orientation || payloadCard?.orientation || sourceCard?.orientation || 'upright');
       // Reversed cards SOURCE upright art and rotate 180° at draw time. Coerce
       // sourcing to upright; `orientation` stays real for label + rotation.
-      const imageOrientation = 'upright';
+      const imageOrientation = posterImageOrientation(orientation);
       const orientedId = `${baseId}-${imageOrientation}`;
       const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
       const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
@@ -2405,8 +2431,9 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
           backUrl,
           lang: payload?.lang || 'en',
         });
-        const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
-        if (orientation === 'reversed') {
+        const thumb = toPosterThumb200(selectedUrl);
+        const img = await loadPosterCardImageWithTimeout(thumb || selectedUrl, thumb ? [selectedUrl, ...fallbackChain] : fallbackChain);
+        if (posterShouldRotateReversed(orientation)) {
           // Reversed = upright art rotated 180° about the card center.
           ctx.save();
           ctx.translate(x + cardW / 2, y + cardH / 2);
@@ -2657,7 +2684,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       // Reversed cards SOURCE upright art and rotate 180° at draw time
       // (drawCardWithAura uses resolvedOrientation). Coerce all sourcing to
       // 'upright' here so we never request a *-reversed.webp fixture/asset.
-      const imageOrientation = 'upright';
+      const imageOrientation = posterImageOrientation(resolvedOrientation);
       const orientedId = baseId ? `${baseId}-${imageOrientation}` : '';
       const localPrimary = cardEntry?.card ? resolveLocalPosterFixtureUrl('card', imageOrientation) : '';
       const localUpright = cardEntry?.card ? resolveLocalPosterFixtureUrl('card', 'upright') : '';
@@ -2745,7 +2772,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         ctx.save();
         drawRoundedRect(ctx, cardX, cardYPos, cardW, cardH, cardRadius);
         ctx.clip();
-        if (resolvedOrientation === 'reversed') {
+        if (posterShouldRotateReversed(resolvedOrientation)) {
           // Reversed = upright art rotated 180° about the card center.
           ctx.translate(cardX + cardW / 2, cardYPos + cardH / 2);
           ctx.rotate(Math.PI);
@@ -2928,7 +2955,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       // Reversed cards SOURCE upright art and rotate 180° at draw time. Coerce
       // sourcing to upright; entry.orientation stays real for the rotation.
       const realOrientation = toOrientation(entry.orientation);
-      const imageOrientation = 'upright';
+      const imageOrientation = posterImageOrientation(realOrientation);
       const orientedId = `${baseId}-${imageOrientation}`;
       const cardIdentity = { ...entry.card, id: orientedId, card_id: orientedId, image_id: orientedId };
       const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
@@ -2944,7 +2971,7 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         emitPosterDebug('waiting_for_card', { url: selectedUrl });
         const img = await loadPosterCardImageWithTimeout(selectedUrl, fallbackChain);
         emitLegacyCardProbe({ ok: true, url: img?.currentSrc || img?.src || resolvedPrimary || reversedUrl || uprightUrl || backUrl, w: img?.naturalWidth || cardWidth, h: img?.naturalHeight || cardHeight });
-        if (realOrientation === 'reversed') {
+        if (posterShouldRotateReversed(realOrientation)) {
           // Reversed = upright art rotated 180° about the card center.
           ctx.save();
           ctx.translate(x + cardWidth / 2, y + cardHeight / 2);

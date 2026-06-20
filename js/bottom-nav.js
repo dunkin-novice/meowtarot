@@ -27,13 +27,13 @@ function getLocaleConfig(pathname) {
     prefix,
     labels: isThai
       ? {
-        today: 'วันนี้',
+        today: 'หน้าแรก',
         decks: 'สำรับ',
         ask: 'ถาม',
         profile: 'โปรไฟล์',
       }
       : {
-        today: 'Today',
+        today: 'Home',
         decks: 'Decks',
         ask: 'Ask',
         profile: 'Profile',
