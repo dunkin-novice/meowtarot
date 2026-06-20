@@ -19,6 +19,9 @@ import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
 
 const BOARD_CARD_COUNT = 12;
+// Scatter board card counts (VeilaTarot-style jittered board): Daily/Ask = 30, Celtic = 78.
+const SCATTER_BOARD_COUNT = 30;
+const SCATTER_CELTIC_COUNT = 78;
 // Phase 5 BUG 3 fix: changed from 6 → 12 to match design doc ScreenCardBoardDaily.
 // The 12-card spread matches what the question-draw board already renders
 // (BOARD_CARD_COUNT = 12 above). Selection still = 1 of N (DAILY_SELECTION_MAX = 1).
@@ -377,10 +380,34 @@ function animateDailyShuffleSlots(boardEl, slots, onDone) {
   setTimeout(finalize, 1260);
 }
 
-function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { animated = false, animationProfile = 'default' } = {}) {
+function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { animated = false, animationProfile = 'default', scatter = false } = {}) {
   let cards = [];
   let selected = [];
   let slots = [];
+
+  // VeilaTarot-style "scattered" board (founder 2026-06-20): place the face-down cards in a
+  // JITTERED GRID — each card at its cell centre + a small random offset + a random tilt — so
+  // the board looks pleasantly messy (รกๆ) instead of a rigid grid. %-based so it stays
+  // responsive; re-randomised on every deal/shuffle. The selection contract is unchanged.
+  const applyScatterLayout = () => {
+    if (!scatter || !slots.length) return;
+    // Drop the grid-modifier classes so their (id-specificity) grid/width rules don't fight
+    // the absolute scatter layout; add the scatter class.
+    boardEl.classList.remove('card-board--three', 'card-board--daily', 'card-board--full');
+    boardEl.classList.add('card-board--scatter');
+    const cols = (typeof window !== 'undefined' && window.innerWidth < 600) ? 8 : 13;
+    const rows = Math.max(1, Math.ceil(slots.length / cols));
+    boardEl.style.setProperty('--scatter-rows', String(rows));
+    slots.forEach((slot, k) => {
+      const c = k % cols;
+      const r = Math.floor(k / cols);
+      const jx = (Math.random() - 0.5) * (100 / cols) * 0.5;
+      const jy = (Math.random() - 0.5) * (100 / rows) * 0.4;
+      slot.style.left = ((c + 0.5) / cols * 100 + jx).toFixed(2) + '%';
+      slot.style.top = ((r + 0.5) / rows * 100 + jy).toFixed(2) + '%';
+      slot.style.setProperty('--rot', ((Math.random() - 0.5) * 22).toFixed(2) + 'deg');
+    });
+  };
 
   const refreshBadges = () => {
     slots.forEach((slot) => {
@@ -464,6 +491,12 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     ensureSlots();
     updateSlots();
     refreshBadges();
+    if (scatter) {
+      // Scatter board handles its own appearance (absolute jittered placement + CSS fade-in);
+      // re-randomise the layout on each deal/shuffle and skip the grid fly-in animations.
+      applyScatterLayout();
+      return;
+    }
     if (withAnimation) {
       boardEl.classList.add('is-locked');
       requestAnimationFrame(() => {
@@ -488,7 +521,11 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
       performDeal(withAnimation);
     };
 
-    if (withAnimation && previousSlots.length) {
+    if (scatter) {
+      // Scatter re-deal: no grid collect animation — just re-randomise the layout (the CSS
+      // transitions left/top so cards glide to their new spots).
+      proceed();
+    } else if (withAnimation && previousSlots.length) {
       boardEl.classList.add('is-locked');
       if (animationProfile === 'full') {
         // 78 overlapping cards flying to centre (getBoundingClientRect per card) thrashed
@@ -941,10 +978,10 @@ function renderDaily() {
 
   const dailyBoard = setupBoard(
     board,
-    DAILY_BOARD_COUNT,
+    SCATTER_BOARD_COUNT,
     DAILY_SELECTION_MAX,
     updateDailySelectionUi,
-    { animated: true, animationProfile: 'daily' }
+    { scatter: true }
   );
 
   counter.textContent = `0/${DAILY_SELECTION_MAX}`;
@@ -1070,12 +1107,11 @@ function renderFullBoard() {
 
   const fullBoard = setupBoard(
     board,
-    FULL_BOARD_COUNT,
+    SCATTER_CELTIC_COUNT,
     FULL_SELECTION_MAX,
     updateFullSelectionUi,
-    // 78-card board: 'full' profile = symmetric center-out reveal (rows in lockstep,
-    // L/R mirrored) + a simple in-place fade collect on shuffle (no buggy fly-to-centre).
-    { animated: false, animationProfile: 'full' }
+    // Celtic Cross: 78-card scattered (VeilaTarot-style) board, pick 10.
+    { scatter: true }
   );
 
   counter.textContent = `0/${FULL_SELECTION_MAX}`;
@@ -1254,7 +1290,8 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
     counter.textContent = `${cards.length}/${selectionCount}`;
   };
 
-  const boardApi = setupBoard(board, BOARD_CARD_COUNT, selectionCount, updateContinue, { animated: true, animationProfile: 'daily' });
+  // Scatter board (VeilaTarot-style): 30 face-down cards jittered across the board, pick N.
+  const boardApi = setupBoard(board, SCATTER_BOARD_COUNT, selectionCount, updateContinue, { scatter: true });
   // Match the Daily board: animated initial deal, then a shuffle button above the
   // board that spins + light-haptics, re-deals a fresh spread and clears the pick.
   // Guarded against double-taps via the is-locked class setupBoard adds mid-animation.
