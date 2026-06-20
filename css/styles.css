@@ -6458,6 +6458,18 @@ body[data-page='daily'] #daily-board .card-back {
   object-position: center;
 }
 
+/* Make the Ask-a-Question (+ Celtic) selection cards match the DAILY board's edge: a 6px
+   radius + thin gold frame, instead of the over-rounded 16px white-rimmed look. (2026-06-21) */
+body[data-page='question-draw'] #question-card-board .card-slot,
+body[data-page='full'] #full-board .card-slot {
+  border-radius: 6px;
+  border: 1px solid var(--mt-gold-pale, #e8c478);
+}
+body[data-page='question-draw'] #question-card-board .card-back,
+body[data-page='full'] #full-board .card-back {
+  border-radius: 5px;
+}
+
 
 .card-slot.is-clearing .selection-badge {
   opacity: 0;
