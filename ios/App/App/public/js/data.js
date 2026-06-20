@@ -135,6 +135,72 @@ export function getActiveDeck() {
   return DECKS[activeDeckId];
 }
 
+// Card art was hard-locked to one ratio (1568×2720) on every slot/thumb, so
+// object-fit:cover cropped any deck whose art is a different shape ("card cut
+// weirdly" on the selection board + reading result). The real art ships at THREE
+// ratios, and a deck's BACK and FACE can differ:
+//   back: moonmallow/veila = 1568×2720 (0.577), every other deck = 848×1264 (0.671)
+//   face: most decks = 848×1264 / 1696×2528 (0.671); boba/overtime = 768×1376 (0.558)
+// So expose two CSS vars — --mt-card-ratio (BACK, for selection/draw boards which
+// show card backs) and --mt-card-face-ratio (FACE, for the reading-result/arrange
+// art which shows card faces) — each set from the active deck. Slots then match
+// their content and fill with no crop and no letterbox. Both default to the old
+// spec, so any rule that doesn't read a var keeps its previous behavior.
+const DECK_CARD_BACK_ASPECT = {
+  'moonmallow': '1568 / 2720',
+  'veila-tarot': '1568 / 2720',
+};
+const DECK_CARD_FACE_ASPECT = {
+  'boba-oracle': '768 / 1376',
+  'overtime-oracle': '768 / 1376',
+};
+export function getActiveDeckCardAspect(deckId = getActiveDeckId()) {
+  return DECK_CARD_BACK_ASPECT[deckId] || '848 / 1264';
+}
+export function getActiveDeckFaceAspect(deckId = getActiveDeckId()) {
+  return DECK_CARD_FACE_ASPECT[deckId] || '848 / 1264';
+}
+
+export function applyActiveDeckCardAspect() {
+  if (typeof document === 'undefined' || !document.documentElement) return;
+  const root = document.documentElement.style;
+  root.setProperty('--mt-card-ratio', getActiveDeckCardAspect());
+  root.setProperty('--mt-card-face-ratio', getActiveDeckFaceAspect());
+}
+
+// Set it as early as this module evaluates (before first paint on the card pages)
+// so off-ratio decks never flash the cropped spec frame.
+applyActiveDeckCardAspect();
+
+// Reversed-card render mode (hidden Profile toggle, founder 2026-06-20):
+//   'flip' (DEFAULT) — reversed cards SOURCE the upright art and are rotated 180°
+//                      (CSS on reading surfaces, canvas rotate on posters). No
+//                      -reversed.webp asset is ever requested.
+//   'art'            — reversed cards load the dedicated *-reversed.webp asset and
+//                      are NOT rotated.
+// Either way the orientation LABEL + reversed MEANINGS are unchanged — only the
+// IMAGE sourcing/rotation differs. Mirrored to a <html data-reversed-mode> attr so
+// CSS can gate the rotation without reading storage.
+const REVERSED_MODE_STORAGE_KEY = 'meowtarot_reversed_mode';
+export function getReversedMode() {
+  try {
+    return localStorage.getItem(REVERSED_MODE_STORAGE_KEY) === 'art' ? 'art' : 'flip';
+  } catch (_) {
+    return 'flip';
+  }
+}
+export function setReversedMode(mode) {
+  const normalized = mode === 'art' ? 'art' : 'flip';
+  try { localStorage.setItem(REVERSED_MODE_STORAGE_KEY, normalized); } catch (_) { /* ignore */ }
+  applyReversedModeAttr();
+  return normalized;
+}
+export function applyReversedModeAttr() {
+  if (typeof document === 'undefined' || !document.documentElement) return;
+  document.documentElement.setAttribute('data-reversed-mode', getReversedMode());
+}
+applyReversedModeAttr();
+
 // One-off deck gifts by account email — bypasses the streak unlock_day for a
 // specific signed-in account (a personal gift, not a purchasable entitlement).
 const DECK_GIFTS = {
@@ -183,10 +249,12 @@ export function setActiveDeck(id) {
     localStorage.setItem(ACTIVE_DECK_STORAGE_KEY, id);
   }
   activeDeckId = id;
+  applyActiveDeckCardAspect();
 }
 
 export function resetActiveDeck() {
   activeDeckId = DEFAULT_DECK_ID;
+  applyActiveDeckCardAspect();
 }
 
 export function getAllDecks() {
