@@ -575,14 +575,15 @@ function ensureShareFab() {
 
 function ensureCardSheet() {
   if (cardSheetEls.overlay) return;
+  const th = state.currentLang === 'th';
   const wrap = document.createElement('div');
   wrap.className = 'card-sheet-overlay';
   wrap.setAttribute('aria-hidden', 'true');
   wrap.innerHTML = `
     <div class="card-sheet-backdrop" data-sheet-close></div>
-    <section class="card-sheet" role="dialog" aria-modal="true" aria-label="Card details">
+    <section class="card-sheet" role="dialog" aria-modal="true" aria-label="${th ? 'ข้อมูลไพ่' : 'Card details'}">
       <span class="card-sheet-position" id="cardSheetPosition" hidden></span>
-      <button class="card-sheet-close" type="button" aria-label="Close" data-sheet-close>
+      <button class="card-sheet-close" type="button" aria-label="${th ? 'ปิด' : 'Close'}" data-sheet-close>
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6 18 18 M18 6 6 18"/></svg>
       </button>
       <div class="card-sheet-media-wrap">
@@ -1708,7 +1709,7 @@ function buildEnergyPanel(cards, dict) {
   const chartWrap = document.createElement('div');
   chartWrap.className = 'energy-balance__chart-wrap';
   chartWrap.innerHTML = `
-    <svg class="energy-radar" viewBox="0 0 400 400" aria-label="Energy balance radar chart" role="img">
+    <svg class="energy-radar" viewBox="0 0 400 400" aria-label="${th ? 'แผนภูมิเรดาร์สมดุลพลังงาน' : 'Energy balance radar chart'}" role="img">
       <defs>
         <linearGradient id="energyRadarFillGradient" x1="20%" y1="15%" x2="86%" y2="88%">
           <stop offset="0%" stop-color="#d8fff2" stop-opacity="0.9"></stop>
