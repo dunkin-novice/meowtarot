@@ -6787,7 +6787,7 @@ body[data-page='reading'][data-reading-mode='full'] .celtic-cross-layout {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(4, auto);
-  gap: 8px;
+  gap: 14px; /* was 8px — a touch roomier between cards (founder 2026-06-20) */
   position: relative;
   align-items: center;
   justify-items: center;
@@ -7001,7 +7001,7 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
      The crossing (challenge) card keeps its rotated overlap. Tap to enlarge. */
   body[data-page='reading'][data-reading-mode='full'] .celtic-cross-layout {
     grid-template-columns: repeat(5, 60px);
-    gap: 8px 3px;
+    gap: 12px 12px; /* was 8px 3px — roomier so the center cross isn't cramped (founder 2026-06-20) */
     width: max-content;
     max-width: 100%;
     margin: 0 auto;
