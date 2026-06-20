@@ -695,6 +695,19 @@ body[data-page='reading'][data-reading-mode='full'] .celtic-slot--environment { 
 body[data-page='reading'][data-reading-mode='full'] .celtic-slot--hopes       { grid-area: 3 / 4; }
 body[data-page='reading'][data-reading-mode='full'] .celtic-slot--outcome     { grid-area: 4 / 4; }
 
+/* FIX (2026-06-20): the two center-cross cards (#1 situation + #2 challenge) were
+ * rendering at ~half the size of the other 8. They live inside .celtic-slot--center,
+ * which was display:flex — as flex children their width:100% didn't resolve to the
+ * cell width and the cards collapsed (height-driven by the tall flex row). Make the
+ * center slot a normal block so the situation card fills the cell like every other
+ * slot, and make BOTH center card images width-driven (height:auto, not 100%) so
+ * they match. (#2 stays absolutely positioned + rotated 90° as the crossing card.)
+ * Verified uniform at 390px and 900px via chrome. */
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center { display: block; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--situation { width: 100%; max-width: 100%; }
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--center .card-art.is-thumb .card-art-img,
+body[data-page='reading'][data-reading-mode='full'] .celtic-slot--challenge .card-art.is-thumb .card-art-img { width: 100%; height: auto; }
+
 
 /* Celtic Cross summary panel ("Ten cards · ten doors") */
 body[data-page='reading'][data-reading-mode='full'] .panel--celtic-summary {
