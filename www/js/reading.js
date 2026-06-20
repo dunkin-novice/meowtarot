@@ -4250,6 +4250,10 @@ function configureActionButtons(dict = translations[state.currentLang]) {
   }
 
   if (shareBtn) {
+    // Daily result row keeps only the Share button (#saveBtn, with the IG glyph) —
+    // hide the secondary "Copy reading link" button (founder 2026-06-20). Question /
+    // Full results still show it (mode-scoped, hard rule #6).
+    shareBtn.hidden = state.mode === 'daily';
     shareBtn.textContent = mobile
       ? state.currentLang === 'th'
         ? 'คัดลอกลิงก์คำทำนาย'

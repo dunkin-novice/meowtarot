@@ -962,16 +962,17 @@ body[data-page='reading'] .mt-share-fab {
 body[data-page='reading'] .mt-share-fab:hover { transform: translateY(-1px); }
 body[data-page='reading'] .mt-share-fab:active { transform: scale(0.94); }
 
-/* §B6b — Instagram glyph on the bottom "Share" action button (founder 2026-06-20).
-   Added as a ::before so the JS `textContent` label re-writes don't wipe it; masked
-   to currentColor so it matches the button text in either locale. */
-body[data-page='reading'] #shareBtn {
+/* §B6b — Instagram glyph on the bottom "Share" action button (#saveBtn → openSharePage;
+   founder 2026-06-20, moved off the copy-link #shareBtn 2026-06-20). Added as a ::before
+   so the JS `textContent` label re-writes don't wipe it; masked to currentColor so it
+   matches the button text (cream on the primary button). */
+body[data-page='reading'] #saveBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
 }
-body[data-page='reading'] #shareBtn::before {
+body[data-page='reading'] #saveBtn::before {
   content: '';
   flex: 0 0 auto;
   width: 18px;
