@@ -998,3 +998,29 @@ html:not([data-reversed-mode='art']) body[data-page='reading'] .card-art.is-reve
 html:not([data-reversed-mode='art']) body[data-page='reading'] .card-sheet-media.is-reversed {
   transform: rotate(180deg);
 }
+
+/* §B8 — Sequential flip-reveal on the multi-card result (VeilaTarot-style, 2026-06-21).
+   Each thumb renders with a card-back overlay (.card-art-back) that crossfades OUT via a CSS
+   animation, staggered by --reveal-i, so the cards "flip" back→face one-by-one. Pure CSS, so
+   the face always ends visible even if the JS stagger hook never runs. */
+body[data-page='reading'] .card-art.will-flip { position: relative; }
+body[data-page='reading'] .card-art-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 1;
+  animation: mtCardFlipReveal 0.55s ease forwards;
+  animation-delay: calc(var(--reveal-i, 0) * 0.16s);
+}
+@keyframes mtCardFlipReveal {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-page='reading'] .card-art-back { animation: none; opacity: 0; }
+}
