@@ -1176,9 +1176,14 @@ function drawTrackingText(ctx, text, x, y, tracking = 0) {
   // Letter-spacing isn't idiomatic for Thai anyway, so draw it as one centred run
   // (the per-char path below also centres around x).
   if (/[฀-๿]/.test(value)) {
+    // EXPLICIT centring: measure + draw left-aligned at x − w/2 instead of relying on
+    // ctx.textAlign='center', which mis-centres Thai on some canvas impls (iOS Safari) →
+    // text drifts to the right edge. Latin is unaffected, which is why only the Thai
+    // date/orientation/reading looked off. (2026-06-20)
     const prevAlign = ctx.textAlign;
-    ctx.textAlign = 'center';
-    ctx.fillText(value, x, y);
+    ctx.textAlign = 'left';
+    const w = ctx.measureText(value).width;
+    ctx.fillText(value, x - w / 2, y);
     ctx.textAlign = prevAlign;
     return;
   }
@@ -2088,13 +2093,17 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
       addQuotes: true,
     });
     ctx.save();
-    ctx.textAlign = 'center';
+    // EXPLICIT centring (vs textAlign='center', which mis-centres Thai on iOS Safari).
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     // Deep plum for contrast against the pale lower background (ivory was too faint).
     ctx.fillStyle = palette.reading;
     ctx.font = `italic 500 ${fit.fontSize}px ${displayFont}`;
     const firstBaseline = taglineTop + fit.ascent;
-    fit.lines.forEach((line, i) => ctx.fillText(line, width / 2, firstBaseline + i * fit.lineHeight));
+    fit.lines.forEach((line, i) => {
+      const lw = ctx.measureText(line).width;
+      ctx.fillText(line, width / 2 - lw / 2, firstBaseline + i * fit.lineHeight);
+    });
     ctx.restore();
   }
 
@@ -2841,12 +2850,17 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
         addQuotes: true,
       });
       ctx.save();
-      ctx.textAlign = 'center';
+      // EXPLICIT centring (left-align + x − lineWidth/2) instead of textAlign='center',
+      // which mis-centres Thai on iOS Safari canvas → tagline drifts to the right edge.
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = textPalette.primary;
       ctx.font = `italic 500 ${fit.fontSize}px ${displayFont}`;
       const firstBaseline = startTop + fit.ascent;
-      fit.lines.forEach((line, i) => ctx.fillText(line, width / 2, firstBaseline + i * fit.lineHeight));
+      fit.lines.forEach((line, i) => {
+        const lw = ctx.measureText(line).width;
+        ctx.fillText(line, width / 2 - lw / 2, firstBaseline + i * fit.lineHeight);
+      });
       ctx.restore();
     };
 
