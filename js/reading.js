@@ -1246,31 +1246,7 @@ function buildCardArt(card, variant = 'hero') {
   }
 
   wrap.appendChild(img);
-
-  // Sequential flip-reveal (VeilaTarot-style, founder 2026-06-21): on the multi-card result
-  // each card "flips" from its back to the face via a card-back overlay that crossfades out.
-  // It's a pure-CSS animation (staggered by --reveal-i, set after render) so the face ALWAYS
-  // ends up visible even if no JS reveal hook runs — only the timing depends on the stagger.
-  if (variant === 'thumb') {
-    const back = document.createElement('img');
-    back.className = 'card-art-back';
-    back.alt = '';
-    back.setAttribute('aria-hidden', 'true');
-    back.loading = 'eager';
-    back.src = backUrl || getCardBackUrl();
-    wrap.appendChild(back);
-    wrap.classList.add('will-flip');
-  }
   return wrap;
-}
-
-// Stagger the flip-reveal: give each .card-art.will-flip an index so the CSS animation-delay
-// reveals them one-by-one. Safe no-op if called with no container / no flip cards.
-function applyFlipStagger(container) {
-  if (!container || typeof container.querySelectorAll !== 'function') return;
-  container.querySelectorAll('.card-art.will-flip').forEach((el, i) => {
-    el.style.setProperty('--reveal-i', String(i));
-  });
 }
 
 function buildSuggestionPanel(card, dict, headingText) {
@@ -3296,7 +3272,6 @@ function renderFull(cards, dict) {
   });
   spreadPanel.appendChild(spreadLayout);
   readingContent.appendChild(spreadPanel);
-  applyFlipStagger(spreadPanel);
 
   // Phase 5: Celtic Cross summary panel — "Ten cards · ten doors / สิบใบ · สิบประตู"
   // 2-column grid of all 10 cards with number badge + italic card name +
@@ -3659,7 +3634,6 @@ function renderQuestion(cards, dict) {
 
   spreadPanel.appendChild(spreadGrid);
   readingContent.appendChild(spreadPanel);
-  applyFlipStagger(spreadPanel);
 
   if (topicConfig && !isGeneric) {
     const texts = orderedCards.map((card, idx) => {

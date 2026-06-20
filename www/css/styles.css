@@ -1846,63 +1846,6 @@ body[data-page='home'] .section-block {
 
 .card-board { overflow: visible; }
 
-/* ── VeilaTarot-style scatter board (founder 2026-06-20) ──────────────────────
-   Face-down cards placed in a jittered grid (JS sets each slot's left%/top%/--rot).
-   Container is relative + height scales with --scatter-rows; slots are absolute. */
-.card-board.card-board--scatter {
-  display: block;
-  position: relative;
-  width: 100%;
-  max-width: 1180px;
-  height: calc(var(--scatter-rows, 5) * clamp(54px, 13.5vw, 70px) + 24px);
-  margin: 6px auto 4px;
-  padding: 0;
-  grid-template-columns: none;
-  grid-template-rows: none;
-}
-.card-board.card-board--scatter .card-slot {
-  /* !important so the per-board id rules (#daily-board/#full-board .card-slot sizing) don't
-     override the scatter placement. */
-  position: absolute !important;
-  width: clamp(40px, 11vw, 60px) !important;
-  height: auto !important;
-  /* Match the deck's BACK ratio so object-fit:cover fills the card-back with no crop
-     (fixed w×h didn't match the art ratio → the edges got cut). */
-  aspect-ratio: var(--mt-card-ratio, 848 / 1264) !important;
-  margin: 0 !important;
-  inset: auto;
-  /* The base .card-slot is opacity:0 (revealed by the grid deal animation, which scatter
-     skips) — force it visible so scatter cards always show. */
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
-  /* Cards GLIDE to new positions on shuffle (the left/top transition) — that glide IS the
-     shuffle motion. */
-  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.22s ease,
-              left 0.38s cubic-bezier(0.4, 0, 0.2, 1), top 0.38s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, left, top;
-}
-.card-board.card-board--scatter .card-slot:hover:not(:disabled) {
-  transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) translateY(-6px);
-  z-index: 6;
-}
-.card-board.card-board--scatter .card-slot.is-selected {
-  transform: translate(-50%, -50%) rotate(0deg) translateY(-12px) scale(1.12);
-  z-index: 8;
-  filter: drop-shadow(0 10px 18px rgba(61, 26, 92, 0.45));
-}
-.card-board.card-board--scatter .card-slot .card-back {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 7px;
-  box-shadow: 0 3px 8px -3px rgba(26, 16, 46, 0.5);
-}
-.card-board.card-board--scatter .card-slot.is-hidden { display: none; }
-.card-board.card-board--scatter .selection-badge {
-  top: -6px;
-  right: -6px;
-}
-
 .deck-stack {
   position: relative;
   width: clamp(112px, 15vw, 156px);
