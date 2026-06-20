@@ -926,9 +926,10 @@ body[data-page='reading'] .panel--question-recap {
    Tap → poster/share flow (openSharePage). IG-tinted gradient + glyph signals "story". */
 body[data-page='reading'] .mt-share-fab {
   position: fixed;
-  /* Bottom-right corner, lifted above the fixed bottom-nav + iOS safe area so it
-   * never overlaps the nav (founder request 2026-06-20; was top-left). */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bottom-nav-height, 64px) + 14px);
+  /* Bottom-right corner, stacked ABOVE the .mt-report-fab "Report a bug" pill
+   * (bottom: nav + safe + 14px, ~42px tall) so the two don't overlap — lift this
+   * one ~56px higher (founder request 2026-06-20; was top-left). */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bottom-nav-height, 64px) + 70px);
   right: calc(env(safe-area-inset-right, 0px) + 14px);
   z-index: 60;
   width: 44px;

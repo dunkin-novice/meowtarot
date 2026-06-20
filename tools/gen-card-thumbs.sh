@@ -31,7 +31,7 @@ OUT="$ROOT/tools/card-thumbs"
 command -v cwebp >/dev/null || { echo "ERROR: cwebp not found (brew install webp)"; exit 1; }
 
 # Deck ids from js/data.js
-mapfile -t DECKS < <(python3 - "$ROOT" <<'PY'
+DECKS=(); while IFS= read -r _l; do [ -n "$_l" ] && DECKS+=("$_l"); done < <(python3 - "$ROOT" <<'PY'
 import re,sys
 src=open(sys.argv[1]+"/js/data.js").read()
 ids=re.findall(r"id:\s*'([a-z0-9-]+)'", src)
@@ -47,11 +47,12 @@ if [ "$#" -gt 0 ]; then DECKS=("$@"); fi
 
 # Card ids (nn-slug-orientation) from cards.json
 CARDS_JSON="$ROOT/data/cards.json"; [ -f "$CARDS_JSON" ] || CARDS_JSON="$ROOT/cards.json"
-mapfile -t CARDS < <(python3 - "$CARDS_JSON" <<'PY'
+CARDS=(); while IFS= read -r _l; do [ -n "$_l" ] && CARDS+=("$_l"); done < <(python3 - "$CARDS_JSON" <<'PY'
 import json,sys
 d=json.load(open(sys.argv[1]))
 cards=d if isinstance(d,list) else d.get("cards",[])
-ids=[c.get("card_id") for c in cards if c.get("card_id")]
+# Upright only — reversed artwork is retired (cards now render upright+rotate).
+ids=[c.get("card_id") for c in cards if c.get("card_id") and c.get("card_id").endswith("-upright")]
 print("\n".join(sorted(set(ids))))
 PY
 )
