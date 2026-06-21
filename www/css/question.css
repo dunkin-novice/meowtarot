@@ -677,15 +677,23 @@ body[data-page='question-draw'] .question-draw-shell[data-question-spread='story
   body[data-page='question-draw'] .question-draw-title { margin-top: 6px; }
   body[data-page='question-draw'] .question-draw-title__en { font-size: 20px; }
   body[data-page='question-draw'] .question-shuffle-row { margin-top: 8px; }
-  /* Board fills the leftover height; the cards shrink so the whole flow fits. */
+  /* Mirror the DAILY board: a COMPACT 4-col grid that sits right under the shuffle row
+     with full-size cards (clamp matches daily's #daily-board card-slot), NOT a flex-grow
+     board that balloons to fill the column and centres tiny cards in a halo of empty space
+     (the "cards packed in the middle, space all around" bug). Continue is pushed to the
+     bottom by the cta-row's margin-top:auto below — same as daily. (2026-06-21) */
   body[data-page='question-draw'] #question-card-board.card-board--three {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 0;
-    margin-top: 8px !important;
-    gap: 7px 6px !important;
-    align-content: center;
+    width: auto;
+    max-width: 320px;
+    margin: 12px auto 0 !important;
+    gap: 14px 6px !important;
+    align-content: start;
   }
-  body[data-page='question-draw'] #question-card-board.card-board--three .card-slot { max-width: 52px; }
+  body[data-page='question-draw'] #question-card-board.card-board--three .card-slot {
+    max-width: clamp(40px, calc((100dvh - 420px) / 6), 64px);
+  }
   body[data-page='question-draw'] .question-draw-counter { margin-top: 6px; }
   /* Continue pinned to the bottom of the column, clear of the bottom-nav. */
   body[data-page='question-draw'] .question-draw-cta-row { margin-top: auto; padding-top: 8px; }

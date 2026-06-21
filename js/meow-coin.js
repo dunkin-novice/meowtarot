@@ -54,6 +54,75 @@ export function getMeowCoins() {
   return readWallet().balance;
 }
 
+// --- coin-earned popup ------------------------------------------------------------------
+// Celebratory pop-up shown whenever coins are actually minted (founder 2026-06-21: "when you
+// get coin → please have pop up window"). Fired from grantMeowCoins on a real grant only
+// (idempotent no-ops stay silent). Queued so back-to-back earns (e.g. +5 reading then +20
+// achievement) play one after another instead of stacking.
+const COIN_POPUP_QUEUE = [];
+let coinPopupShowing = false;
+
+function isThaiLocale() {
+  try {
+    return (document.documentElement.lang === 'th')
+      || (window.location.pathname || '').startsWith('/th/');
+  } catch (_) { return false; }
+}
+
+function coinReasonLabel(reason) {
+  const th = isThaiLocale();
+  const r = String(reason || '');
+  if (r === 'daily_login') return th ? 'โบนัสเข้าระบบรายวัน' : 'Daily login bonus';
+  if (r === 'daily_reading') return th ? 'เปิดไพ่รายวัน' : 'Daily reading';
+  if (r.startsWith('achievement:')) return th ? 'ปลดล็อกความสำเร็จ!' : 'Achievement unlocked!';
+  if (r.startsWith('deck_unlock:')) return th ? 'ปลดล็อกสำรับใหม่!' : 'New deck unlocked!';
+  return th ? 'ได้รับเหรียญเหมียว' : 'Meow Coins earned';
+}
+
+function playNextCoinPopup() {
+  if (coinPopupShowing) return;
+  const next = COIN_POPUP_QUEUE.shift();
+  if (!next) return;
+  if (typeof document === 'undefined' || !document.body) return;
+  coinPopupShowing = true;
+
+  const th = isThaiLocale();
+  const overlay = document.createElement('div');
+  overlay.className = 'mt-coin-pop-overlay';
+  overlay.setAttribute('role', 'status');
+  overlay.setAttribute('aria-live', 'polite');
+  overlay.innerHTML =
+    '<div class="mt-coin-pop">'
+    + '<img class="mt-coin-pop__icon" src="/assets/meow-coin.svg" alt="" aria-hidden="true" />'
+    + `<div class="mt-coin-pop__amount">+${next.amount}</div>`
+    + `<div class="mt-coin-pop__unit">${th ? 'เหรียญเหมียว' : 'Meow Coins'}</div>`
+    + `<div class="mt-coin-pop__reason">${coinReasonLabel(next.reason)}</div>`
+    + '</div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-visible'));
+
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    overlay.classList.remove('is-visible');
+    window.setTimeout(() => {
+      overlay.remove();
+      coinPopupShowing = false;
+      playNextCoinPopup();
+    }, 260);
+  };
+  overlay.addEventListener('click', close);
+  window.setTimeout(close, 2200);
+}
+
+export function showCoinPopup(amount, reason) {
+  const amt = Math.max(0, Math.floor(Number(amount) || 0));
+  if (!amt) return;
+  COIN_POPUP_QUEUE.push({ amount: amt, reason });
+  playNextCoinPopup();
+}
+
 // Idempotent credit: when `key` is given the amount is granted at most ONCE for that key
 // (e.g. 'login-2026-06-21', 'ach-streak_7', 'deck-unlock-pawbit') — enforces the daily cap and
 // stops double-minting. Returns the new balance.
@@ -68,6 +137,7 @@ export function grantMeowCoins(amount, reason, key) {
   w.balance += amt;
   writeWallet(w);
   trackCoin('earn', amt, reason || 'grant');
+  try { showCoinPopup(amt, reason); } catch (_) { /* popup is non-critical */ }
   return w.balance;
 }
 

@@ -216,10 +216,40 @@ export function isGiftedDeck(id) {
   }
 }
 
+// Decks bought with Meow Coins in the Shop (client-side MVP, mirrors the coin wallet's
+// localStorage model). A purchase unlocks the deck immediately, with no sign-in or streak
+// requirement — the coin spend IS the entitlement. Server-authoritative ownership is the
+// planned hardening. (founder 2026-06-21 — wires the Shop into the real unlock truth.)
+const PURCHASED_DECKS_KEY = 'meowtarot_purchased_decks';
+
+export function getPurchasedDecks() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PURCHASED_DECKS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+export function isPurchasedDeck(id) {
+  return getPurchasedDecks().includes(id);
+}
+
+export function purchaseDeck(id) {
+  if (!DECKS[id]) return false;
+  const owned = getPurchasedDecks();
+  if (!owned.includes(id)) {
+    owned.push(id);
+    try { localStorage.setItem(PURCHASED_DECKS_KEY, JSON.stringify(owned)); } catch (_) { /* ignore */ }
+  }
+  return true;
+}
+
 export function canUnlockDeck(id) {
   const deck = DECKS[id];
   if (!deck) return false;
   if (id === 'moonmallow') return true;
+  if (isPurchasedDeck(id)) return true;
   if (!getCurrentUserSync()) return false;
   if (isGiftedDeck(id)) return true;
   if (deck.role === 'default') return true;

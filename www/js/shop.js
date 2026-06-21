@@ -4,26 +4,24 @@
 // balance + an honest "coming soon" state (the page is live + the chip link works).
 import { applyLocaleMeta, applyTranslations, initShell, pathHasThaiPrefix } from './common.js';
 import { getMeowCoins, spendMeowCoins, onMeowCoinsChange, DECK_PRICE_COINS } from './meow-coin.js';
+import { DECKS, canUnlockDeck, purchaseDeck } from './data.js';
 import { trackLocaleSwitched } from './analytics.js';
 
 const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en' };
 const pick = (en, th) => (state.currentLang === 'th' ? th : en);
 const CDN = 'https://cdn.meowtarot.com/assets';
 
-// Each: { id, nameEn, nameTh } — back art resolved from `${CDN}/${id}/00-back-200.webp`.
-// TODO(founder deck list): add the not-live deck slugs here once confirmed.
-const SHOP_DECKS = [];
+// Every deck except the free default (moonmallow) is a Shop entitlement — buy it with coins
+// instead of grinding the streak/gift ladders. Back art = `${CDN}/${id}/00-back-200.webp`
+// (the 200px thumbnail the selection boards already use, so it's guaranteed on the CDN).
+const SHOP_DECKS = Object.values(DECKS)
+  .filter((deck) => deck.id !== 'moonmallow')
+  .map((deck) => ({ id: deck.id, nameEn: deck.name, nameTh: deck.name_th }));
 
-const OWNED_KEY = 'meowtarot_shop_decks';
-function ownedDecks() {
-  try { const v = JSON.parse(localStorage.getItem(OWNED_KEY) || '[]'); return Array.isArray(v) ? v : []; }
-  catch (_) { return []; }
-}
-function isOwned(id) { return ownedDecks().includes(id); }
-function markOwned(id) {
-  const o = ownedDecks();
-  if (!o.includes(id)) { o.push(id); try { localStorage.setItem(OWNED_KEY, JSON.stringify(o)); } catch (_) {} }
-}
+// A deck reads as "owned" if it's unlocked by ANY path — streak, gift, or a Shop purchase
+// (canUnlockDeck honours all three, including the meowtarot_purchased_decks store the Shop
+// writes). So already-unlocked decks show "Owned", only locked ones are buyable.
+function isOwned(id) { return canUnlockDeck(id); }
 
 let toastTimer = null;
 function showToast(message) {
@@ -46,8 +44,8 @@ function buyDeck(deck) {
     showToast(pick('Not enough Meow Coins yet — keep earning!', 'เหรียญเหมียวยังไม่พอ — สะสมต่อได้เลย!'));
     return;
   }
-  markOwned(deck.id);
-  showToast(pick(`Unlocked ${deck.nameEn}!`, `ปลดล็อก ${deck.nameTh} แล้ว!`));
+  purchaseDeck(deck.id); // writes meowtarot_purchased_decks → canUnlockDeck now returns true
+  showToast(pick(`Unlocked ${deck.nameEn}! Pick it in Your Deck.`, `ปลดล็อก ${deck.nameTh} แล้ว! เลือกใช้ได้ที่ “สำรับของคุณ”`));
   renderAll();
 }
 
