@@ -1,6 +1,6 @@
 # MeowTarot — Session Handoff / Where We Left Off
 
-**Last updated:** 2026-06-16
+**Last updated:** 2026-06-21
 **Branch:** `main` (in sync with `origin/main`, everything below is pushed & live)
 **Deploy:** web = GitHub Pages from **canonical repo root** (`CNAME` present). `www/` + `ios/` are the Capacitor iOS mirrors only — the web does NOT serve from them.
 
@@ -11,6 +11,16 @@ redesign reference) — still useful background, but this file is current.
 ---
 
 ## 1. What shipped — recent sessions (all pushed to `main`, live)
+
+### 2026-06-21 — Meow Coin + Shop, poster TH, scatter revert (Claude Code)
+
+| Area | What |
+|---|---|
+| **Meow Coin + Shop** | **NEW currency, client-side MVP** (`1e5463d`). `js/meow-coin.js` wallet (localStorage, idempotent grants). Earns: **+5 daily-login** (common.js initShell), **+5 daily-reading**, **+20/achievement**, **+20/deck-unlock** (progress.js). Top-right **balance chip** (links to Shop). **Shop** page (`shop.html`+`th/shop.html`+`js/shop.js`): balance + deck grid (buy @100 coins → owned in localStorage) + "coming soon" state. EN/TH verified. **🔲 OPEN: `SHOP_DECKS` empty → need the not-live Cloudflare deck slugs** (can't list R2 here) to fill it + run their `-200` thumbs. Server-auth Supabase wallet = later. Spec → `~/Brain/MeowTarot/MeowTarot Meow Coin.md`. |
+| **Poster TH** | Thai date/orientation/reading were drifting to the right edge (iOS Safari `textAlign='center'` mis-centres Thai) → **explicit centring** (`measureText`+`x-w/2`) + char-flow wrap + `?v=` cache-bust (`f62a1da`). Founder confirmed good. |
+| **Scatter board + flip** | Built VeilaTarot-style scatter selection board + flip-reveal, then **REVERTED** (`4a4e7e2`) — founder: "not MeowTarot's style." Reference: `~/Brain/MeowTarot/Scatter Board + Flip Feature.md`. |
+| **Ask-Q card edge** | Q selection slots looked different from Daily (16px radius + white border vs Daily's 6px + gold) → matched to **6px + gold border** (`a612c29`). |
+| **⚠️ Cache delivery** | Founder "still saw old version": HTML `?v=20260619c` was never bumped on changes → cached old `main.js`/`styles.css`. Bumped `→20260621a` across 32 HTML files (`62a169a`). **RULE: bump `?v=` on every versioned `/js`·`/css` change.** Open caveat: JS module *imports* are unversioned → shared-module changes propagate within the `/js` edge-cache window (durable fix = hashed imports — filed). |
 
 ### 2026-06-18 — in-app bug batches (see `docs/log.jsonl` for full entries)
 
