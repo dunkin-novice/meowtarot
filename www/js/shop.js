@@ -11,14 +11,14 @@ const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' 
 const pick = (en, th) => (state.currentLang === 'th' ? th : en);
 const CDN = 'https://cdn.meowtarot.com/assets';
 
-// Shop = SHOP-EXCLUSIVE decks only — ones you can ONLY get by spending coins. The decks in the
-// DECKS registry are all already obtainable for free via other paths (moonmallow = default,
-// veila-tarot = sign-in reward, the rest = streak/day-milestone rewards), so NONE of them belong
-// in the shop — selling those would be selling what players already earn. Until brand-new decks
-// that aren't on any free ladder exist on the CDN AND are wired into the app, the shop stays
-// CLOSED (empty → honest "coming soon"). Each entry when populated: { id, nameEn, nameTh } with
-// back art `${CDN}/${id}/00-back-200.webp`. (founder 2026-06-21: "close the shop for now".)
-const SHOP_DECKS = [];
+// Shop = SHOP-EXCLUSIVE decks only — ones you can ONLY get by spending coins, never via the
+// free streak/sign-in ladders. Each: { id, nameEn, nameTh }, back art
+// `${CDN}/${id}/00-back-200.webp`. Decks here MUST have role 'shop' in data.js DECKS so
+// canUnlockDeck gates them on purchase. (founder 2026-06-21: reopened with Siam Paws — a
+// 'cold-storage' deck not on any free ladder — as the first exclusive deck @100 coins.)
+const SHOP_DECKS = [
+  { id: 'siam-paws', nameEn: 'Siam Paws', nameTh: 'เหมียวสยาม' },
+];
 
 // A deck reads as "owned" if it's unlocked by ANY path — streak, gift, or a Shop purchase
 // (canUnlockDeck honours all three, including the meowtarot_purchased_decks store the Shop
@@ -41,6 +41,14 @@ function showToast(message) {
 
 function buyDeck(deck) {
   if (isOwned(deck.id)) return;
+  // Safety net: data.js is an unversioned import (1h edge cache), so a returning browser
+  // could load a fresh shop.js (deck listed) before a fresh data.js (deck in DECKS). Don't
+  // spend coins if the deck isn't in the registry yet — purchaseDeck would no-op and the
+  // coins would be lost. Bail with a gentle nudge instead.
+  if (!DECKS[deck.id]) {
+    showToast(pick('One moment — refresh and try again.', 'รอสักครู่ — รีเฟรชหน้าแล้วลองใหม่อีกครั้ง'));
+    return;
+  }
   const res = spendMeowCoins(DECK_PRICE_COINS, `shop_deck:${deck.id}`);
   if (!res.ok) {
     showToast(pick('Not enough Meow Coins yet — keep earning!', 'เหรียญเหมียวยังไม่พอ — สะสมต่อได้เลย!'));

@@ -107,6 +107,20 @@ export const DECKS = {
     assetsBase: resolveDeckAssetBase('assets/inkmess'),
     backImage: buildAssetUrl('assets/inkmess/00-back.webp'),
   },
+  // SHOP-EXCLUSIVE deck (founder 2026-06-21): not on any free streak/sign-in ladder —
+  // obtainable ONLY by spending Meow Coins in the Shop. role 'shop' + unlock_day null →
+  // canUnlockDeck returns false until purchased (meowtarot_purchased_decks), and
+  // getDecksForDisplay hides it from the streak deck surfaces until then. Art 848×1264
+  // (default ratio, no aspect special-casing). First real shop deck.
+  'siam-paws': {
+    id: 'siam-paws',
+    name: 'Siam Paws',
+    name_th: 'เหมียวสยาม',
+    role: 'shop',
+    unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/siam-paws'),
+    backImage: buildAssetUrl('assets/siam-paws/00-back.webp'),
+  },
 };
 
 export const DEFAULT_DECK_ID = 'moonmallow';
@@ -250,6 +264,9 @@ export function canUnlockDeck(id) {
   if (!deck) return false;
   if (id === 'moonmallow') return true;
   if (isPurchasedDeck(id)) return true;
+  // Shop-exclusive decks unlock ONLY via a coin purchase (handled above) — never by
+  // sign-in or streak day. Without this they'd fall through to `!unlock_day → true`.
+  if (deck.role === 'shop') return false;
   if (!getCurrentUserSync()) return false;
   if (isGiftedDeck(id)) return true;
   if (deck.role === 'default') return true;
@@ -296,7 +313,13 @@ export function getAllDecks() {
 // unlock day. It does NOT move the active deck to the front — active is shown via
 // glow + an "Active" label, not by reordering (founder decision 2026-06-20).
 export function getDecksForDisplay() {
-  return getAllDecks().slice().sort((a, b) => {
+  return getAllDecks()
+    // Hide shop-exclusive decks from the streak deck surfaces (profile "My Decks", home
+    // strip, board picker) until they're actually purchased — they live in the Shop, not
+    // on the day-unlock ladder, so a "Day N locked" cell would be meaningless. Once bought,
+    // canUnlockDeck is true and they appear here like any owned deck.
+    .filter((deck) => deck.role !== 'shop' || canUnlockDeck(deck.id))
+    .slice().sort((a, b) => {
     const ua = canUnlockDeck(a.id) ? 0 : 1;
     const ub = canUnlockDeck(b.id) ? 0 : 1;
     if (ua !== ub) return ua - ub;                        // available before locked
