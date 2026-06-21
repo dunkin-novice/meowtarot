@@ -18,6 +18,18 @@ const CDN = 'https://cdn.meowtarot.com/assets';
 // 'cold-storage' deck not on any free ladder — as the first exclusive deck @100 coins.)
 const SHOP_DECKS = [
   { id: 'siam-paws', nameEn: 'Siam Paws', nameTh: 'เหมียวสยาม' },
+  { id: 'boo-familiar', nameEn: 'Boo Familiar', nameTh: 'แมวคืนหลอน' },
+  { id: 'cats-of-the-ink-peaks', nameEn: 'Cats of the Ink Peaks', nameTh: 'เหมียวภูผาหมึก' },
+  { id: 'chaos-familiar', nameEn: 'Chaos Familiar', nameTh: 'เพี้ยนพยากรณ์' },
+  { id: 'cloudmew', nameEn: 'Cloudmew', nameTh: 'เมฆหวาน' },
+  { id: 'crimson-reverie', nameEn: 'Crimson Reverie', nameTh: 'แมวสุริยา' },
+  { id: 'crumblemew', nameEn: 'Crumblemew', nameTh: 'เหมียวครัมเบิล' },
+  { id: 'meowgame', nameEn: 'Meowgame', nameTh: 'เหมียวลุ้นแมว' },
+  { id: 'mochimew', nameEn: 'Mochimew', nameTh: 'เหมียวจุ๊บจิ๊บ' },
+  { id: 'neopurr', nameEn: 'NeoPurr', nameTh: 'เหมียวโมเดิร์น' },
+  { id: 'night-shift-oracle', nameEn: 'Night Shift Oracle', nameTh: 'แมวเวรดึก' },
+  { id: 'snappaws', nameEn: 'SnapPaws', nameTh: 'เหมียวซ่า' },
+  { id: 'starpaw', nameEn: 'StarPaw', nameTh: 'แมวไอดอล' },
 ];
 
 // A deck reads as "owned" if it's unlocked by ANY path — streak, gift, or a Shop purchase
@@ -108,7 +120,13 @@ function buildDeckCell(deck) {
   art.className = 'shop-deck-cell__art';
   art.loading = 'lazy';
   art.alt = pick(deck.nameEn, deck.nameTh);
+  // Prefer the 200px thumb; fall back to the full-res back if the thumb isn't generated yet
+  // (new shop decks get their -200 thumbs in a background pass after launch).
   art.src = `${CDN}/${deck.id}/00-back-200.webp`;
+  art.addEventListener('error', function onArtError() {
+    art.removeEventListener('error', onArtError);
+    art.src = `${CDN}/${deck.id}/00-back.webp`;
+  });
   cell.appendChild(art);
 
   const name = document.createElement('div');

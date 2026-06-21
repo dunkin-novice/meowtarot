@@ -121,6 +121,57 @@ export const DECKS = {
     assetsBase: resolveDeckAssetBase('assets/siam-paws'),
     backImage: buildAssetUrl('assets/siam-paws/00-back.webp'),
   },
+  // More SHOP-EXCLUSIVE decks (founder 2026-06-22) — full art on the CDN, all role 'shop'
+  // (purchase-only via canUnlockDeck, hidden from streak surfaces until bought). -200 thumbs
+  // generated in a background pass; until they land, the shop cell falls back to full-res back.
+  'boo-familiar': {
+    id: 'boo-familiar', name: 'Boo Familiar', name_th: 'แมวคืนหลอน', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/boo-familiar'), backImage: buildAssetUrl('assets/boo-familiar/00-back.webp'),
+  },
+  'cats-of-the-ink-peaks': {
+    id: 'cats-of-the-ink-peaks', name: 'Cats of the Ink Peaks', name_th: 'เหมียวภูผาหมึก', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/cats-of-the-ink-peaks'), backImage: buildAssetUrl('assets/cats-of-the-ink-peaks/00-back.webp'),
+  },
+  'chaos-familiar': {
+    id: 'chaos-familiar', name: 'Chaos Familiar', name_th: 'เพี้ยนพยากรณ์', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/chaos-familiar'), backImage: buildAssetUrl('assets/chaos-familiar/00-back.webp'),
+  },
+  'cloudmew': {
+    id: 'cloudmew', name: 'Cloudmew', name_th: 'เมฆหวาน', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/cloudmew'), backImage: buildAssetUrl('assets/cloudmew/00-back.webp'),
+  },
+  'crimson-reverie': {
+    id: 'crimson-reverie', name: 'Crimson Reverie', name_th: 'แมวสุริยา', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/crimson-reverie'), backImage: buildAssetUrl('assets/crimson-reverie/00-back.webp'),
+  },
+  'crumblemew': {
+    id: 'crumblemew', name: 'Crumblemew', name_th: 'เหมียวครัมเบิล', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/crumblemew'), backImage: buildAssetUrl('assets/crumblemew/00-back.webp'),
+  },
+  'meowgame': {
+    id: 'meowgame', name: 'Meowgame', name_th: 'เหมียวลุ้นแมว', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/meowgame'), backImage: buildAssetUrl('assets/meowgame/00-back.webp'),
+  },
+  'mochimew': {
+    id: 'mochimew', name: 'Mochimew', name_th: 'เหมียวจุ๊บจิ๊บ', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/mochimew'), backImage: buildAssetUrl('assets/mochimew/00-back.webp'),
+  },
+  'neopurr': {
+    id: 'neopurr', name: 'NeoPurr', name_th: 'เหมียวโมเดิร์น', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/neopurr'), backImage: buildAssetUrl('assets/neopurr/00-back.webp'),
+  },
+  'night-shift-oracle': {
+    id: 'night-shift-oracle', name: 'Night Shift Oracle', name_th: 'แมวเวรดึก', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/night-shift-oracle'), backImage: buildAssetUrl('assets/night-shift-oracle/00-back.webp'),
+  },
+  'snappaws': {
+    id: 'snappaws', name: 'SnapPaws', name_th: 'เหมียวซ่า', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/snappaws'), backImage: buildAssetUrl('assets/snappaws/00-back.webp'),
+  },
+  'starpaw': {
+    id: 'starpaw', name: 'StarPaw', name_th: 'แมวไอดอล', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/starpaw'), backImage: buildAssetUrl('assets/starpaw/00-back.webp'),
+  },
 };
 
 export const DEFAULT_DECK_ID = 'moonmallow';
@@ -167,6 +218,11 @@ const DECK_CARD_BACK_ASPECT = {
 const DECK_CARD_FACE_ASPECT = {
   'boba-oracle': '768 / 1376',
   'overtime-oracle': '768 / 1376',
+  // Shop decks whose FACE art ships at 768×1376 (backs are all 848×1264). (2026-06-22)
+  'crimson-reverie': '768 / 1376',
+  'meowgame': '768 / 1376',
+  'night-shift-oracle': '768 / 1376',
+  'starpaw': '768 / 1376',
 };
 export function getActiveDeckCardAspect(deckId = getActiveDeckId()) {
   return DECK_CARD_BACK_ASPECT[deckId] || '848 / 1264';

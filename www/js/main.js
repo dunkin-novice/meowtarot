@@ -384,39 +384,50 @@ function animateDailyShuffleSlots(boardEl, slots, onDone) {
 // use a tighter stagger so the whole deal still lands in well under 2s. Replaces the old
 // fan-out (animateDailyShuffleSlots) for daily + question + full.
 function animateDealStack(boardEl, slots, onDone) {
+  // CRITICAL: clear any leftover transform first and force a reflow, so getBoundingClientRect
+  // measures each card's TRUE GRID position — not a stale transformed one. Bug (2026-06-22):
+  // on the shuffle button the previous step (animateCollectSlots) leaves every card translated
+  // to the centre; measuring then gave a fly-out distance of ~0, so the "deal" collapsed into
+  // an in-place pulse — i.e. each card just shook. Reset → reflow → measure clean grid coords.
+  slots.forEach((slot) => {
+    slot.classList.add('card-visible');
+    slot.style.transition = 'none';
+    slot.style.transform = 'none';
+    slot.style.opacity = '1';
+  });
+  void boardEl.offsetWidth; // force reflow so the cleared transforms take effect before measuring
+
   const boardRect = boardEl.getBoundingClientRect();
   const centerX = boardRect.left + boardRect.width / 2;
   const centerY = boardRect.top + boardRect.height / 2;
 
-  // 1) Snap every card into a face-down pile at the centre (no transition yet).
+  // 1) Gather every card into a face-down PILE at the centre (slight alternating tilt = a deck).
   slots.forEach((slot, idx) => {
     const rect = slot.getBoundingClientRect();
     const dx = centerX - (rect.left + rect.width / 2);
     const dy = centerY - (rect.top + rect.height / 2);
-    slot.classList.add('card-visible');
     slot.style.transition = 'none';
-    slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.94)`;
-    slot.style.opacity = '1';
+    slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.92) rotate(${idx % 2 ? 2 : -2}deg)`;
     slot.style.zIndex = String(slots.length - idx); // top of the pile deals first
     slot.style.willChange = 'transform';
   });
 
-  // 2) Deal each card out to its slot, staggered. Tighten the stagger on big boards so
-  //    the Celtic 40-card spread still finishes under 2s.
+  // 2) DEAL each card out of the pile to its slot, one after another (staggered). Tighten the
+  //    stagger on big boards so the Celtic 40-card spread still finishes under 2s.
   const stagger = slots.length > 18
     ? Math.max(14, Math.floor(1100 / slots.length))
-    : 70;
-  const flight = 360;
+    : 78;
+  const flight = 380;
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       slots.forEach((slot, idx) => {
         window.setTimeout(() => {
           slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-          slot.style.transform = 'translate(0, 0) scale(1)';
+          slot.style.transform = 'translate(0, 0) scale(1) rotate(0deg)';
         }, idx * stagger);
       });
-      const total = flight + (slots.length - 1) * stagger + 80;
+      const total = flight + (slots.length - 1) * stagger + 90;
       window.setTimeout(() => {
         slots.forEach((slot) => {
           slot.style.transition = '';
