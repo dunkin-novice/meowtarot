@@ -315,25 +315,53 @@ export function purchaseDeck(id) {
   return true;
 }
 
+// Persisted "decks I've ever owned" set. Once a deck is CONFIRMED unlocked while signed in
+// (gift / sign-in-reward / streak-day met), we record it here so it stays visible + usable
+// even when auth is momentarily unresolved, the session is restoring, or the page is on a
+// different origin where the Supabase session isn't visible. Fixes "Your decks showed only
+// Moonmallow" for a signed-in user whose other decks vanished the instant getCurrentUserSync()
+// returned null. (founder 2026-06-22) Mirrors the purchased-decks model.
+const OWNED_DECKS_KEY = 'meowtarot_owned_decks';
+export function getOwnedDecks() {
+  try {
+    const v = JSON.parse(localStorage.getItem(OWNED_DECKS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) {
+    return [];
+  }
+}
+function recordOwnedDeck(id) {
+  if (!id) return;
+  const owned = getOwnedDecks();
+  if (!owned.includes(id)) {
+    owned.push(id);
+    try { localStorage.setItem(OWNED_DECKS_KEY, JSON.stringify(owned)); } catch (_) { /* ignore */ }
+  }
+}
+
 export function canUnlockDeck(id) {
   const deck = DECKS[id];
   if (!deck) return false;
   if (id === 'moonmallow') return true;
   if (isPurchasedDeck(id)) return true;
+  // Sticky ownership: once confirmed (below), a deck stays unlocked across auth/origin blips.
+  if (getOwnedDecks().includes(id)) return true;
   // Shop-exclusive decks unlock ONLY via a coin purchase (handled above) — never by
   // sign-in or streak day. Without this they'd fall through to `!unlock_day → true`.
   if (deck.role === 'shop') return false;
   if (!getCurrentUserSync()) return false;
-  if (isGiftedDeck(id)) return true;
-  if (deck.role === 'default') return true;
-  if (!deck.unlock_day) return true;
+  // Each live-true path records the deck so its ownership persists past this session.
+  if (isGiftedDeck(id)) { recordOwnedDeck(id); return true; }
+  if (deck.role === 'default') { recordOwnedDeck(id); return true; }
+  if (!deck.unlock_day) { recordOwnedDeck(id); return true; }
   if (typeof localStorage === 'undefined') return false;
   try {
     const progress = JSON.parse(localStorage.getItem('meowtarot_user_progress') || '{}');
     // Unlock by ACCUMULATED days drawn (total_daily_reads), not consecutive streak —
     // forgiving: missing a day never sets you back. (User decision 2026-06-18.)
     const daysDrawn = progress.total_daily_reads ?? 0;
-    return daysDrawn >= deck.unlock_day;
+    if (daysDrawn >= deck.unlock_day) { recordOwnedDeck(id); return true; }
+    return false;
   } catch {
     return false;
   }

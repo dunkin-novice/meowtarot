@@ -7,6 +7,7 @@
  */
 
 import { getAllDecks } from './data.js';
+import { showDeckPreview } from './deck-preview.js';
 
 function fmt(template, vars) {
   let result = String(template || '');
@@ -136,6 +137,36 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
     }
 
     row.appendChild(textBlock);
+
+    // Tap a milestone → preview the deck's Fool card + the unlock condition below it.
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => {
+      const th = lang === 'th';
+      showDeckPreview(deck, {
+        lang,
+        buildCondition(cond, { close }) {
+          const text = document.createElement('p');
+          text.className = 'mt-dp-cond-text';
+          if (achieved) {
+            text.innerHTML = dateStr
+              ? `✓ ${fmt(dict.profileAchievementUnlockedDate || (th ? 'ปลดล็อกเมื่อ {date}' : 'Unlocked {date}'), { date: formatDate(dateStr, lang) })}`
+              : (th ? '✓ ปลดล็อกแล้ว' : '✓ Unlocked');
+          } else {
+            const togo = Math.max(0, deck.unlock_day - streak);
+            text.innerHTML = th
+              ? `🔒 ปลดล็อกเมื่อต่อเนื่องครบ <strong>${deck.unlock_day}</strong> วัน<br>ตอนนี้วันที่ ${streak} — อีก ${togo} วัน`
+              : `🔒 Unlocks at a <strong>${deck.unlock_day}</strong>-day streak<br>You're on day ${streak} — ${togo} to go`;
+          }
+          cond.appendChild(text);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'mt-dp-btn mt-dp-btn--close';
+          btn.textContent = th ? 'เข้าใจแล้ว' : 'Got it';
+          btn.addEventListener('click', close);
+          cond.appendChild(btn);
+        },
+      });
+    });
 
     if (isNext) {
       const badge = document.createElement('span');

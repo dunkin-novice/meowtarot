@@ -5,6 +5,7 @@
 import { applyLocaleMeta, applyTranslations, initShell, pathHasThaiPrefix } from './common.js';
 import { getMeowCoins, spendMeowCoins, onMeowCoinsChange, DECK_PRICE_COINS } from './meow-coin.js';
 import { DECKS, canUnlockDeck, purchaseDeck } from './data.js';
+import { showDeckPreview } from './deck-preview.js';
 import { trackLocaleSwitched } from './analytics.js';
 
 const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en' };
@@ -71,6 +72,49 @@ function buyDeck(deck) {
   renderAll();
 }
 
+// Tap a deck → preview popup: the deck's Fool card + (below) the price + an Unlock button.
+function openDeckPreview(deck) {
+  showDeckPreview(deck, {
+    lang: state.currentLang,
+    buildCondition(cond, { close }) {
+      if (isOwned(deck.id)) {
+        const owned = document.createElement('p');
+        owned.className = 'mt-dp-owned';
+        owned.textContent = pick('✓ Owned', '✓ เป็นเจ้าของแล้ว');
+        cond.appendChild(owned);
+        const hint = document.createElement('p');
+        hint.className = 'mt-dp-cond-text';
+        hint.textContent = pick('Pick it in Your Decks.', 'เลือกใช้ได้ที่ “สำรับของคุณ”');
+        cond.appendChild(hint);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mt-dp-btn mt-dp-btn--close';
+        btn.textContent = pick('Close', 'ปิด');
+        btn.addEventListener('click', close);
+        cond.appendChild(btn);
+        return;
+      }
+      const price = document.createElement('p');
+      price.className = 'mt-dp-cond-text';
+      price.innerHTML = pick(
+        `Unlock this deck for <strong>${DECK_PRICE_COINS}</strong> Meow Coins.`,
+        `ปลดล็อกสำรับนี้ด้วย <strong>${DECK_PRICE_COINS}</strong> เหรียญเหมียว`,
+      );
+      cond.appendChild(price);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mt-dp-btn mt-dp-btn--buy';
+      btn.classList.toggle('is-disabled', getMeowCoins() < DECK_PRICE_COINS);
+      btn.innerHTML = `<img src="/assets/meow-coin.svg" alt="" aria-hidden="true" />${pick('Unlock', 'ปลดล็อก')} · ${DECK_PRICE_COINS}`;
+      btn.addEventListener('click', () => {
+        buyDeck(deck); // spend + toast + renderAll (idempotent; no-op if already owned/short)
+        if (isOwned(deck.id)) close();
+      });
+      cond.appendChild(btn);
+    },
+  });
+}
+
 function buildHero() {
   const wrap = document.createElement('section');
   wrap.className = 'decks-hero';
@@ -127,11 +171,15 @@ function buildDeckCell(deck) {
     art.removeEventListener('error', onArtError);
     art.src = `${CDN}/${deck.id}/00-back.webp`;
   });
+  art.style.cursor = 'pointer';
+  art.addEventListener('click', () => openDeckPreview(deck));
   cell.appendChild(art);
 
   const name = document.createElement('div');
   name.className = 'shop-deck-cell__name';
   name.textContent = pick(deck.nameEn, deck.nameTh);
+  name.style.cursor = 'pointer';
+  name.addEventListener('click', () => openDeckPreview(deck));
   cell.appendChild(name);
 
   const btn = document.createElement('button');
