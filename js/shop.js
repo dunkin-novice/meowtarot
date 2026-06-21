@@ -22,7 +22,8 @@ const SHOP_DECKS = [
   { id: 'boo-familiar', nameEn: 'Boo Familiar', nameTh: 'แมวคืนหลอน' },
   { id: 'cats-of-the-ink-peaks', nameEn: 'Cats of the Ink Peaks', nameTh: 'เหมียวภูผาหมึก' },
   { id: 'chaos-familiar', nameEn: 'Chaos Familiar', nameTh: 'เพี้ยนพยากรณ์' },
-  { id: 'cloudmew', nameEn: 'Cloudmew', nameTh: 'เมฆหวาน' },
+  // cloudmew PULLED 2026-06-22 — its full-res art on R2 is incomplete (57 card files 404,
+  // incl. some uprights → broken reading cards in flip mode). Re-add once the art is complete.
   { id: 'crimson-reverie', nameEn: 'Crimson Reverie', nameTh: 'แมวสุริยา' },
   { id: 'crumblemew', nameEn: 'Crumblemew', nameTh: 'เหมียวครัมเบิล' },
   { id: 'meowgame', nameEn: 'Meowgame', nameTh: 'เหมียวลุ้นแมว' },
