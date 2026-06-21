@@ -11,12 +11,14 @@ const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' 
 const pick = (en, th) => (state.currentLang === 'th' ? th : en);
 const CDN = 'https://cdn.meowtarot.com/assets';
 
-// Every deck except the free default (moonmallow) is a Shop entitlement — buy it with coins
-// instead of grinding the streak/gift ladders. Back art = `${CDN}/${id}/00-back-200.webp`
-// (the 200px thumbnail the selection boards already use, so it's guaranteed on the CDN).
-const SHOP_DECKS = Object.values(DECKS)
-  .filter((deck) => deck.id !== 'moonmallow')
-  .map((deck) => ({ id: deck.id, nameEn: deck.name, nameTh: deck.name_th }));
+// Shop = SHOP-EXCLUSIVE decks only — ones you can ONLY get by spending coins. The decks in the
+// DECKS registry are all already obtainable for free via other paths (moonmallow = default,
+// veila-tarot = sign-in reward, the rest = streak/day-milestone rewards), so NONE of them belong
+// in the shop — selling those would be selling what players already earn. Until brand-new decks
+// that aren't on any free ladder exist on the CDN AND are wired into the app, the shop stays
+// CLOSED (empty → honest "coming soon"). Each entry when populated: { id, nameEn, nameTh } with
+// back art `${CDN}/${id}/00-back-200.webp`. (founder 2026-06-21: "close the shop for now".)
+const SHOP_DECKS = [];
 
 // A deck reads as "owned" if it's unlocked by ANY path — streak, gift, or a Shop purchase
 // (canUnlockDeck honours all three, including the meowtarot_purchased_decks store the Shop

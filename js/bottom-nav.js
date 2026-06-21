@@ -1,7 +1,7 @@
 /**
  * bottom-nav.js — Phase 5 floating-pill bottom navigation
  *
- * 4 tabs: Today (index/daily landing) · Decks · Ask · Profile.
+ * 4 tabs: Today (index/daily landing) · Decks · Shop · Profile.
  * No center button — the old contextual Share/Continue/Draw center
  * affordance is gone; Continue/Share live in the page itself, and
  * Draw is reached via the Today tab → daily.html flow.
@@ -29,13 +29,13 @@ function getLocaleConfig(pathname) {
       ? {
         today: 'หน้าแรก',
         decks: 'สำรับ',
-        ask: 'ถาม',
+        shop: 'ร้านค้า',
         profile: 'โปรไฟล์',
       }
       : {
         today: 'Home',
         decks: 'Decks',
-        ask: 'Ask',
+        shop: 'Shop',
         profile: 'Profile',
       },
   };
@@ -60,11 +60,7 @@ function getActiveTab(pathname) {
     normalized.startsWith('/tarot-card-meanings/') ||
     normalized.startsWith('/cards/')
   ) return 'decks';
-  if (
-    normalized.startsWith('/question.html') ||
-    normalized.startsWith('/question/') ||
-    normalized.startsWith('/full.html')
-  ) return 'ask';
+  if (normalized.startsWith('/shop.html')) return 'shop';
   if (normalized.startsWith('/profile.html')) return 'profile';
   return '';
 }
@@ -93,15 +89,12 @@ const ICON_DECKS = `
   </svg>
 `.trim();
 
-const ICON_ASK = `
+const ICON_SHOP = `
   <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-    <path d="M3 11 L4.5 6.5 L7 11 Z"/>
-    <path d="M9 11 L11 7 L13 11 Z"/>
-    <circle cx="8" cy="14" r="4.5"/>
-    <circle cx="18" cy="9" r="3.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
-    <path d="M16.9 8.3 q 0 -1.1 1.1 -1.1 q 1.1 0 1.1 1.1 q 0 0.65 -0.55 0.95 l -0.4 0.35" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
-    <circle cx="18" cy="10.5" r="0.5"/>
-    <circle cx="14" cy="13" r="0.9"/>
+    <path d="M6 8 h12 l-1 11 a1 1 0 0 1 -1 0.9 H8 a1 1 0 0 1 -1 -0.9 Z"/>
+    <path d="M9 8.5 V7 a3 3 0 0 1 6 0 V8.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M9 6 L10 4 L11 5.7" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M13 5.7 L14 4 L15 6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
   </svg>
 `.trim();
 
@@ -115,7 +108,7 @@ const ICON_PROFILE = `
 const ICONS = {
   today: ICON_TODAY,
   decks: ICON_DECKS,
-  ask: ICON_ASK,
+  shop: ICON_SHOP,
   profile: ICON_PROFILE,
 };
 
@@ -126,7 +119,7 @@ function buildNavMarkup(pathname) {
   const tabs = [
     { key: 'today',   href: `${prefix}/index.html`,    label: labels.today },
     { key: 'decks',   href: `${prefix}/decks.html`,    label: labels.decks },
-    { key: 'ask',     href: `${prefix}/question.html`, label: labels.ask },
+    { key: 'shop',    href: `${prefix}/shop.html`,     label: labels.shop },
     { key: 'profile', href: `${prefix}/profile.html`,  label: labels.profile },
   ];
 

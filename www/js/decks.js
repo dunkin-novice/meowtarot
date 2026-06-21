@@ -327,7 +327,11 @@ function renderAll() {
 
   const grid = document.createElement('div');
   grid.className = 'decks-grid';
-  decks.forEach((deck) => {
+  // "Your decks" shows ONLY decks you actually own/unlocked — not the locked ones you
+  // haven't earned yet (founder 2026-06-21: "remove what's not yours"). The status pill
+  // above still counts unlocked/total so progress stays visible. Logged-out users see just
+  // the free default (+ any coin-purchased deck), which is correctly "what's yours".
+  unlockedDecks.forEach((deck) => {
     grid.appendChild(buildDeckCell(deck, { progress, activeId, render: renderAll }));
   });
   els.content.appendChild(grid);
