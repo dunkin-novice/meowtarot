@@ -31,6 +31,7 @@ import {
 import { getUserProgress } from './progress.js';
 import { getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
 import { trackLocaleSwitched, trackDeckSelected, trackDeckUnlockPrompt } from './analytics.js';
+import { showDeckPreview } from './deck-preview.js';
 
 const state = {
   currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
@@ -304,16 +305,41 @@ function buildDeckCell(deck, { progress, activeId, render }) {
 
   cell.addEventListener('click', () => {
     try { trackDeckSelected({ deckId: deck.id, locale: state.currentLang, locked: !unlocked }); } catch (_) {}
-    // Unlocked deck (incl. the free Moonmallow) → activate it, even when logged out.
-    // (Previously a logged-out guard ran FIRST and showed the sign-in gate on EVERY
-    // tap, so you could never select/return to Moonmallow without signing in — B2-2.)
+    // Owned deck → open the deck PREVIEW (the Fool art) with a "Set active" action inside, so
+    // tapping a deck always shows it before switching. (founder 2026-06-22; consistent with the
+    // gacha/shop preview.) The pin star is a separate control (stops propagation).
     if (unlocked) {
-      if (isActive) return;
-      try { setActiveDeck(deck.id); } catch (_) {}
-      showDecksToast(state.currentLang === 'th'
-        ? fmt('เลือก {deck} เป็นสำรับหลักแล้ว', { deck: deck.name_th || deck.name })
-        : fmt('{deck} is now your active deck', { deck: deck.name }));
-      render();
+      showDeckPreview(deck, {
+        lang: state.currentLang,
+        buildCondition(cond, { close }) {
+          const text = document.createElement('p');
+          text.className = 'mt-dp-cond-text';
+          if (isActive) {
+            text.textContent = pickLocalized('✓ This is your active deck.', '✓ นี่คือสำรับที่ใช้อยู่');
+            cond.appendChild(text);
+            const c = document.createElement('button');
+            c.type = 'button'; c.className = 'mt-dp-btn mt-dp-btn--close';
+            c.textContent = pickLocalized('Close', 'ปิด');
+            c.addEventListener('click', close);
+            cond.appendChild(c);
+            return;
+          }
+          text.textContent = pickLocalized('Make this your active deck.', 'ตั้งเป็นสำรับที่ใช้อยู่');
+          cond.appendChild(text);
+          const btn = document.createElement('button');
+          btn.type = 'button'; btn.className = 'mt-dp-btn mt-dp-btn--buy';
+          btn.textContent = pickLocalized('Set active', 'ใช้สำรับนี้');
+          btn.addEventListener('click', () => {
+            try { setActiveDeck(deck.id); } catch (_) {}
+            showDecksToast(state.currentLang === 'th'
+              ? fmt('เลือก {deck} เป็นสำรับหลักแล้ว', { deck: deck.name_th || deck.name })
+              : fmt('{deck} is now your active deck', { deck: deck.name }));
+            close();
+            render();
+          });
+          cond.appendChild(btn);
+        },
+      });
       return;
     }
     // Locked deck: logged out → sign-in gate; logged in → unlock-conditions popup.

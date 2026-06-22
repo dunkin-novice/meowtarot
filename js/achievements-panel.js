@@ -8,6 +8,7 @@
  * the free default (inventory only), so it never appears here.
  */
 import { getAllDecks } from './data.js';
+import { showDeckPreview } from './deck-preview.js';
 
 const CDN = 'https://cdn.meowtarot.com/assets';
 
@@ -117,6 +118,38 @@ function rowEl(it, lang, { next = false } = {}) {
   coin.innerHTML = `<img src="/assets/meow-coin.svg" alt="" aria-hidden="true" />${it.coins}`;
   reward.appendChild(coin);
   row.appendChild(reward);
+
+  // Tap a DECK reward → preview its art (the Fool), with the achievement status below.
+  if (it.kind === 'deck') {
+    row.style.cursor = 'pointer';
+    row.setAttribute('role', 'button');
+    row.addEventListener('click', () => {
+      const deck = getAllDecks().find((d) => d.id === it.id);
+      if (!deck) return;
+      const th = lang === 'th';
+      showDeckPreview(deck, {
+        lang,
+        buildCondition(cond, { close }) {
+          const text = document.createElement('p');
+          text.className = 'mt-dp-cond-text';
+          if (it.done) {
+            text.textContent = th ? '✓ ปลดล็อกแล้ว — เลือกใช้ได้ที่ “สำรับของคุณ”' : '✓ Unlocked — find it in Your Decks.';
+          } else {
+            text.textContent = th
+              ? `${it.req} (ตอนนี้ ${it.cur}/${it.total})`
+              : `${it.req} (${it.cur}/${it.total})`;
+          }
+          cond.appendChild(text);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'mt-dp-btn mt-dp-btn--close';
+          btn.textContent = th ? 'เข้าใจแล้ว' : 'Got it';
+          btn.addEventListener('click', close);
+          cond.appendChild(btn);
+        },
+      });
+    });
+  }
   return row;
 }
 
