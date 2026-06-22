@@ -19,11 +19,15 @@ const CDN = 'https://cdn.meowtarot.com/assets';
 // 'cold-storage' deck not on any free ladder — as the first exclusive deck @100 coins.)
 const SHOP_DECKS = [
   { id: 'siam-paws', nameEn: 'Siam Paws', nameTh: 'เหมียวสยาม' },
-  { id: 'boo-familiar', nameEn: 'Boo Familiar', nameTh: 'แมวคืนหลอน' },
+  // boo-familiar ARCHIVED 2026-06-22 (founder: "remove for now"). Art is complete on R2;
+  // DECKS entry kept (role 'shop', unreachable) — re-add the line below to bring it back.
+  // { id: 'boo-familiar', nameEn: 'Boo Familiar', nameTh: 'แมวคืนหลอน' },
   { id: 'cats-of-the-ink-peaks', nameEn: 'Cats of the Ink Peaks', nameTh: 'เหมียวภูผาหมึก' },
   { id: 'chaos-familiar', nameEn: 'Chaos Familiar', nameTh: 'เพี้ยนพยากรณ์' },
-  // cloudmew PULLED 2026-06-22 — its full-res art on R2 is incomplete (57 card files 404,
-  // incl. some uprights → broken reading cards in flip mode). Re-add once the art is complete.
+  // cloudmew: all 78 UPRIGHT faces present on R2 → renders fine in the default flip mode
+  // (reversed = rotated upright). Only the dedicated -reversed faces are missing, which only
+  // the hidden 'art' reversed-mode would load. Re-added 2026-06-22 after a direct CDN check.
+  { id: 'cloudmew', nameEn: 'Cloudmew', nameTh: 'เมฆหวาน' },
   { id: 'crimson-reverie', nameEn: 'Crimson Reverie', nameTh: 'แมวสุริยา' },
   { id: 'crumblemew', nameEn: 'Crumblemew', nameTh: 'เหมียวครัมเบิล' },
   { id: 'meowgame', nameEn: 'Meowgame', nameTh: 'เหมียวลุ้นแมว' },
