@@ -20,7 +20,7 @@ import {
   getAllDecks,
   getReversedMode,
 } from './data.js';
-import { showDeckRewardPopup } from './deck-reward.js';
+import { showAchievementUnlocked } from './achievement-popup.js';
 import {
   buildQuestionReadingInputPayload,
   findCardById,
@@ -2868,7 +2868,13 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
           dailyUiState.retention.previousStreak,
           dailyUiState.retention.progress.streak_current,
         );
-        newDecks.forEach((deck) => showDeckRewardPopup(deck, state.currentLang ?? 'th'));
+        newDecks.forEach((deck) => showAchievementUnlocked({
+          variant: 'deck', lang: state.currentLang ?? 'th', deckId: deck.id,
+          name: deck.name, nameTh: deck.name_th,
+          subEn: `Drawn on ${deck.unlock_day} different days`,
+          subTh: `เปิดไพ่ครบ ${deck.unlock_day} วัน`,
+          coins: 20,
+        }));
       }, 300);
     }
 

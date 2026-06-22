@@ -828,21 +828,9 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   renderIdentity(dict);
   renderStreak(dict);
   const progress = getUserProgress();
-  const deckInvEl = document.getElementById('profile-deck-inventory');
-  if (deckInvEl) {
-    renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
-    // Phase 5: "View all decks" CTA below the horizontal strip routes
-    // to the standalone /decks.html page (ScreenDeckInventory).
-    const seeAll = document.createElement('a');
-    seeAll.className = 'profile-deck-see-all';
-    seeAll.href = localizePath('/decks.html', state.currentLang);
-    // EN-only on EN site / TH-only on TH site — drop the bilingual alt.
-    const seeAllEn = document.createElement('span');
-    seeAllEn.className = 'profile-deck-see-all__en';
-    seeAllEn.textContent = state.currentLang === 'th' ? 'ดูสำรับทั้งหมด' : 'View all decks';
-    seeAll.appendChild(seeAllEn);
-    deckInvEl.appendChild(seeAll);
-  }
+  // Deck INVENTORY ("My Decks") removed from Profile (founder 2026-06-22): Profile is now the
+  // achievement REWARD board; the deck inventory lives only on "Your Decks" (/decks.html, the
+  // Decks tab). Keeps reward vs inventory cleanly separated. #profile-deck-inventory dropped.
   renderLifetimeStats(dict);
   const achieveEl = document.getElementById('profile-achievements');
   if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);
