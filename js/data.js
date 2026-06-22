@@ -172,6 +172,15 @@ export const DECKS = {
     id: 'starpaw', name: 'StarPaw', name_th: 'แมวไอดอล', role: 'shop', unlock_day: null,
     assetsBase: resolveDeckAssetBase('assets/starpaw'), backImage: buildAssetUrl('assets/starpaw/00-back.webp'),
   },
+  // Uploaded from the local library 2026-06-22 (jpg→webp full-res + -200) — were missing on CDN.
+  'cybermeow': {
+    id: 'cybermeow', name: 'CyberMeow', name_th: 'เหมียวไซเบอร์', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/cybermeow'), backImage: buildAssetUrl('assets/cybermeow/00-back.webp'),
+  },
+  'noir-social': {
+    id: 'noir-social', name: 'Noir Social', name_th: 'วิฬาร์คลับ', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/noir-social'), backImage: buildAssetUrl('assets/noir-social/00-back.webp'),
+  },
 };
 
 export const DEFAULT_DECK_ID = 'moonmallow';
@@ -223,6 +232,7 @@ const DECK_CARD_FACE_ASPECT = {
   'meowgame': '768 / 1376',
   'night-shift-oracle': '768 / 1376',
   'starpaw': '768 / 1376',
+  'cybermeow': '768 / 1376',
 };
 export function getActiveDeckCardAspect(deckId = getActiveDeckId()) {
   return DECK_CARD_BACK_ASPECT[deckId] || '848 / 1264';

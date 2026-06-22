@@ -36,6 +36,8 @@ const SHOP_DECKS = [
   { id: 'night-shift-oracle', nameEn: 'Night Shift Oracle', nameTh: 'แมวเวรดึก' },
   { id: 'snappaws', nameEn: 'SnapPaws', nameTh: 'เหมียวซ่า' },
   { id: 'starpaw', nameEn: 'StarPaw', nameTh: 'แมวไอดอล' },
+  { id: 'cybermeow', nameEn: 'CyberMeow', nameTh: 'เหมียวไซเบอร์' },
+  { id: 'noir-social', nameEn: 'Noir Social', nameTh: 'วิฬาร์คลับ' },
 ];
 
 // A deck reads as "owned" if it's unlocked by ANY path — streak, gift, or a Shop purchase
