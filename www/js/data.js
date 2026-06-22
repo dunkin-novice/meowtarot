@@ -349,6 +349,29 @@ function recordOwnedDeck(id) {
   }
 }
 
+// Pinned / starred decks — the user can star decks to float them to the front of any deck
+// list (Your Decks now; the gacha gallery later). Pure cosmetic ordering, localStorage-backed.
+// (founder 2026-06-22)
+const PINNED_DECKS_KEY = 'meowtarot_pinned_decks';
+export function getPinnedDecks() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PINNED_DECKS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) {
+    return [];
+  }
+}
+export function isPinnedDeck(id) {
+  return getPinnedDecks().includes(id);
+}
+export function togglePinnedDeck(id) {
+  if (!id) return getPinnedDecks();
+  let pins = getPinnedDecks();
+  pins = pins.includes(id) ? pins.filter((p) => p !== id) : [...pins, id];
+  try { localStorage.setItem(PINNED_DECKS_KEY, JSON.stringify(pins)); } catch (_) { /* ignore */ }
+  return pins;
+}
+
 export function canUnlockDeck(id) {
   const deck = DECKS[id];
   if (!deck) return false;

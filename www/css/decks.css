@@ -237,6 +237,29 @@ body[data-page='decks'] .decks-cell__active-badge {
   box-shadow: 0 4px 10px -4px rgba(201, 147, 58, 0.6);
 }
 
+body[data-page='decks'] .decks-cell__pin {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--mt-plum-mid, #9379ad);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 8px -2px rgba(61, 26, 92, 0.4);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease;
+}
+body[data-page='decks'] .decks-cell__pin:active { transform: scale(0.88); }
+body[data-page='decks'] .decks-cell__pin.is-pinned { color: var(--mt-gold-deep, #c08327); background: #fff8e7; }
+
 body[data-page='decks'] .decks-cell__lock {
   position: absolute;
   right: 6px;

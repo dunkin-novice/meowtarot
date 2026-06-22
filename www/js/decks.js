@@ -25,6 +25,8 @@ import {
   getActiveDeckId,
   setActiveDeck,
   canUnlockDeck,
+  isPinnedDeck,
+  togglePinnedDeck,
 } from './data.js';
 import { getUserProgress } from './progress.js';
 import { getCurrentUserSync, loginWithProvider, subscribeAuthState } from './auth.js';
@@ -225,6 +227,28 @@ function buildDeckCell(deck, { progress, activeId, render }) {
     thumb.appendChild(badge);
   }
 
+  // Star/pin toggle (top-right) — pinned decks float to the front of the grid.
+  if (unlocked) {
+    const pinned = isPinnedDeck(deck.id);
+    const pin = document.createElement('span');
+    pin.className = 'decks-cell__pin' + (pinned ? ' is-pinned' : '');
+    pin.setAttribute('role', 'button');
+    pin.setAttribute('tabindex', '0');
+    pin.setAttribute('aria-pressed', pinned ? 'true' : 'false');
+    pin.setAttribute('aria-label', pinned
+      ? pickLocalized('Unpin deck', 'เลิกปักหมุดสำรับ')
+      : pickLocalized('Pin deck to top', 'ปักหมุดสำรับไว้ด้านบน'));
+    pin.textContent = pinned ? '★' : '☆';
+    const toggle = (e) => {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      togglePinnedDeck(deck.id);
+      render();
+    };
+    pin.addEventListener('click', toggle);
+    pin.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') toggle(e); });
+    thumb.appendChild(pin);
+  }
+
   if (!unlocked) {
     const lock = document.createElement('span');
     lock.className = 'decks-cell__lock';
@@ -331,7 +355,12 @@ function renderAll() {
   // haven't earned yet (founder 2026-06-21: "remove what's not yours"). The status pill
   // above still counts unlocked/total so progress stays visible. Logged-out users see just
   // the free default (+ any coin-purchased deck), which is correctly "what's yours".
-  unlockedDecks.forEach((deck) => {
+  // Pinned/starred decks float to the front (stable order otherwise).
+  const orderedDecks = unlockedDecks
+    .map((deck, i) => ({ deck, i, pinned: isPinnedDeck(deck.id) }))
+    .sort((a, b) => (a.pinned === b.pinned ? a.i - b.i : (a.pinned ? -1 : 1)))
+    .map((x) => x.deck);
+  orderedDecks.forEach((deck) => {
     grid.appendChild(buildDeckCell(deck, { progress, activeId, render: renderAll }));
   });
   els.content.appendChild(grid);
