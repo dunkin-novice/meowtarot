@@ -19,6 +19,7 @@ import {
   getNewlyUnlockedDecks,
   getAllDecks,
   getReversedMode,
+  markDeckRewardSeen,
 } from './data.js';
 import { showAchievementUnlocked } from './achievement-popup.js';
 import {
@@ -2864,17 +2865,24 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
     const currentUser = await getCurrentUser();
     if (currentUser) {
       setTimeout(() => {
+        // Decks unlock by ACCUMULATED days drawn (total_daily_reads) — same metric canUnlockDeck
+        // + the +20 coin grant use. (Was passing streak values, which mismatched the real unlock
+        // moment.) markDeckRewardSeen so the auth.js catch-all (maybeShowUnseenDeckRewards) won't
+        // also fire the old deck-reward popup for the same deck → no double celebration.
         const newDecks = getNewlyUnlockedDecks(
-          dailyUiState.retention.previousStreak,
-          dailyUiState.retention.progress.streak_current,
+          dailyUiState.retention.previousTotalReads,
+          dailyUiState.retention.progress.total_daily_reads,
         );
-        newDecks.forEach((deck) => showAchievementUnlocked({
-          variant: 'deck', lang: state.currentLang ?? 'th', deckId: deck.id,
-          name: deck.name, nameTh: deck.name_th,
-          subEn: `Drawn on ${deck.unlock_day} different days`,
-          subTh: `เปิดไพ่ครบ ${deck.unlock_day} วัน`,
-          coins: 20,
-        }));
+        newDecks.forEach((deck) => {
+          try { markDeckRewardSeen(deck.id); } catch (_) {}
+          showAchievementUnlocked({
+            variant: 'deck', lang: state.currentLang ?? 'th', deckId: deck.id,
+            name: deck.name, nameTh: deck.name_th,
+            subEn: `Drawn on ${deck.unlock_day} different days`,
+            subTh: `เปิดไพ่ครบ ${deck.unlock_day} วัน`,
+            coins: 20,
+          });
+        });
       }, 300);
     }
 

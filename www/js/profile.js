@@ -12,7 +12,6 @@ import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
-import { renderDeckInventory } from './deck-inventory.js';
 import { renderAchievementsPanel } from './achievements-panel.js';
 
 const state = {
@@ -224,91 +223,6 @@ function renderStreak(dict) {
 
   els.streak.appendChild(hero);
 
-  // Progress panel (Next: deck + bar + Moonveil-style info box)
-  const nextMilestone = getNextStreakMilestone(progress);
-  if (nextMilestone) {
-    const { target, current, remaining } = nextMilestone;
-    const fillPct = Math.max(0, Math.min(100, Math.round((current / target) * 100)));
-    const targetDeck = getAllDecks().find((d) => d.unlock_day === target);
-    const deckNameEn = targetDeck?.name || '';
-    const deckNameTh = targetDeck?.name_th || deckNameEn;
-    const deckBlurbEn = targetDeck?.blurb_en || targetDeck?.tagline_en || '';
-    const deckBlurbTh = targetDeck?.blurb_th || targetDeck?.tagline_th || '';
-
-    const panel = document.createElement('div');
-    panel.className = 'profile-progress-panel';
-
-    const head = document.createElement('div');
-    head.className = 'profile-progress-panel__head';
-
-    const headLeft = document.createElement('div');
-    const titleEn = document.createElement('div');
-    titleEn.className = 'profile-progress-panel__title';
-    titleEn.textContent = state.currentLang === 'th'
-      ? `สำรับถัดไป · ${deckNameTh}`
-      : `Next: ${deckNameEn}`;
-    headLeft.appendChild(titleEn);
-    // Single-language per locale — no bilingual alt title-th line.
-    head.appendChild(headLeft);
-
-    const headRight = document.createElement('div');
-    headRight.className = 'profile-progress-panel__remaining';
-    const remNum = document.createElement('div');
-    remNum.className = 'profile-progress-panel__remaining-num';
-    remNum.textContent = String(remaining);
-    headRight.appendChild(remNum);
-    const remLabel = document.createElement('div');
-    remLabel.className = 'profile-progress-panel__remaining-label';
-    remLabel.textContent = state.currentLang === 'th' ? 'วันที่เหลือ' : 'days to go';
-    headRight.appendChild(remLabel);
-    head.appendChild(headRight);
-
-    panel.appendChild(head);
-
-    const bar = document.createElement('div');
-    bar.className = 'profile-progress-bar';
-    const track = document.createElement('div');
-    track.className = 'profile-progress-bar__track';
-    const fill = document.createElement('div');
-    fill.className = 'profile-progress-bar__fill';
-    fill.style.width = `${fillPct}%`;
-    const pearl = document.createElement('div');
-    pearl.className = 'profile-progress-bar__pearl';
-    fill.appendChild(pearl);
-    track.appendChild(fill);
-    bar.appendChild(track);
-
-    const labels = document.createElement('div');
-    labels.className = 'profile-progress-bar__labels';
-    const dayCurr = document.createElement('span');
-    dayCurr.textContent = state.currentLang === 'th' ? `วันที่ ${current}` : `Day ${current}`;
-    labels.appendChild(dayCurr);
-    const dayTarget = document.createElement('span');
-    dayTarget.textContent = state.currentLang === 'th' ? `วันที่ ${target} · ปลดล็อก` : `Day ${target} · unlock`;
-    labels.appendChild(dayTarget);
-    bar.appendChild(labels);
-
-    panel.appendChild(bar);
-
-    if (deckBlurbEn || deckBlurbTh) {
-      const blurb = document.createElement('div');
-      blurb.className = 'profile-progress-panel__blurb';
-      const bName = document.createElement('b');
-      bName.textContent = state.currentLang === 'th' ? deckNameTh : deckNameEn;
-      blurb.appendChild(bName);
-      const blurbText = document.createTextNode(' ' + (state.currentLang === 'th' ? (deckBlurbTh || deckBlurbEn) : (deckBlurbEn || deckBlurbTh)));
-      blurb.appendChild(blurbText);
-      if (deckBlurbTh && state.currentLang !== 'th') {
-        const th = document.createElement('div');
-        th.className = 'profile-progress-panel__blurb-th';
-        th.textContent = deckBlurbTh;
-        blurb.appendChild(th);
-      }
-      panel.appendChild(blurb);
-    }
-
-    els.streak.appendChild(panel);
-  }
 }
 
 function getMonthlyReadingDays(history = []) {

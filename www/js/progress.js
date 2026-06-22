@@ -322,6 +322,7 @@ export function trackCompletedDailyReading(card = null) {
     didCount: true,
     newlyUnlocked,
     previousStreak,
+    previousTotalReads,
     firstReversed,
     firstMajorArcana,
     softMessageKey: getSoftMessageKey({
