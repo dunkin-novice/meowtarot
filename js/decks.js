@@ -335,6 +335,19 @@ function renderAll() {
     grid.appendChild(buildDeckCell(deck, { progress, activeId, render: renderAll }));
   });
   els.content.appendChild(grid);
+
+  // "Want more decks?" → Shop nudge (from MeowShop.dc.html). Earn coins, spend in the shop.
+  const nudge = document.createElement('a');
+  nudge.className = 'decks-shop-nudge';
+  nudge.href = localizePath('/shop.html', state.currentLang);
+  nudge.innerHTML =
+    '<span class="decks-shop-nudge__icon"><img src="/assets/meow-coin.svg" alt="" aria-hidden="true" /></span>'
+    + '<span class="decks-shop-nudge__body">'
+    + `<span class="decks-shop-nudge__title">${pickLocalized('Want more decks?', 'อยากได้สำรับเพิ่ม?')}</span>`
+    + `<span class="decks-shop-nudge__sub">${pickLocalized('Earn Meow Coins from daily readings & streaks, then unlock new art styles in the Shop.', 'รับเหรียญเหมียวจากการเปิดไพ่รายวันและสตรีค แล้วปลดล็อกสไตล์ใหม่ในร้านค้า')}</span>`
+    + '</span>'
+    + `<span class="decks-shop-nudge__cta">${pickLocalized('Go to Shop', 'ไปที่ร้านค้า')} →</span>`;
+  els.content.appendChild(nudge);
 }
 
 function onTranslations() {

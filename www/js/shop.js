@@ -124,19 +124,34 @@ function openDeckPreview(deck) {
 
 function buildHero() {
   const wrap = document.createElement('section');
-  wrap.className = 'decks-hero';
+  wrap.className = 'shop-hero';
 
+  const top = document.createElement('div');
+  top.className = 'shop-hero__top';
+
+  const left = document.createElement('div');
   const eyebrow = document.createElement('div');
-  eyebrow.className = 'decks-top-row__eyebrow';
-  const eyebrowSpan = document.createElement('span');
-  eyebrowSpan.textContent = pick('Shop', 'ร้านค้า');
-  eyebrow.appendChild(eyebrowSpan);
-  wrap.appendChild(eyebrow);
-
+  eyebrow.className = 'shop-eyebrow';
+  eyebrow.textContent = pick('Shop', 'ร้านค้า');
+  left.appendChild(eyebrow);
   const heading = document.createElement('h1');
-  heading.className = 'decks-heading__en';
+  heading.className = 'shop-title';
   heading.textContent = pick('Meow Coin Shop', 'ร้านค้าเหรียญเหมียว');
-  wrap.appendChild(heading);
+  left.appendChild(heading);
+  top.appendChild(left);
+
+  // Live balance pill (top-right)
+  const balance = document.createElement('div');
+  balance.className = 'shop-balance';
+  balance.innerHTML = '<img src="/assets/meow-coin.svg" alt="" class="shop-balance__icon" aria-hidden="true" />'
+    + '<span class="shop-balance__num">0</span>'
+    + `<span class="shop-balance__label">${pick('Meow Coins', 'เหรียญเหมียว')}</span>`;
+  top.appendChild(balance);
+  onMeowCoinsChange((bal) => {
+    const n = balance.querySelector('.shop-balance__num');
+    if (n) n.textContent = String(bal);
+  });
+  wrap.appendChild(top);
 
   const sub = document.createElement('p');
   sub.className = 'shop-sub';
@@ -146,61 +161,65 @@ function buildHero() {
   );
   wrap.appendChild(sub);
 
-  // Live balance pill
-  const balance = document.createElement('div');
-  balance.className = 'shop-balance';
-  balance.innerHTML = '<img src="/assets/meow-coin.svg" alt="" class="shop-balance__icon" aria-hidden="true" />'
-    + '<span class="shop-balance__num">0</span>'
-    + `<span class="shop-balance__label">${pick('Meow Coins', 'เหรียญเหมียว')}</span>`;
-  wrap.appendChild(balance);
-  onMeowCoinsChange((bal) => {
-    const n = balance.querySelector('.shop-balance__num');
-    if (n) n.textContent = String(bal);
-  });
-
   return wrap;
 }
 
-function buildDeckCell(deck) {
+function buildDeckCell(deck, index = 0) {
   const owned = isOwned(deck.id);
   const affordable = getMeowCoins() >= DECK_PRICE_COINS;
   const cell = document.createElement('div');
   cell.className = 'shop-deck-cell' + (owned ? ' is-owned' : '');
+  cell.style.animationDelay = `${index * 55}ms`;
 
+  // Art (deck back, cover-cropped in a gold frame) — tap opens the preview.
+  const artWrap = document.createElement('div');
+  artWrap.className = 'shop-deck-cell__art-wrap';
+  artWrap.addEventListener('click', () => openDeckPreview(deck));
   const art = document.createElement('img');
   art.className = 'shop-deck-cell__art';
   art.loading = 'lazy';
   art.alt = pick(deck.nameEn, deck.nameTh);
-  // Prefer the 200px thumb; fall back to the full-res back if the thumb isn't generated yet
-  // (new shop decks get their -200 thumbs in a background pass after launch).
+  // Prefer the 200px thumb; fall back to the full-res back if the thumb isn't up yet.
   art.src = `${CDN}/${deck.id}/00-back-200.webp`;
   art.addEventListener('error', function onArtError() {
     art.removeEventListener('error', onArtError);
     art.src = `${CDN}/${deck.id}/00-back.webp`;
   });
-  art.style.cursor = 'pointer';
-  art.addEventListener('click', () => openDeckPreview(deck));
-  cell.appendChild(art);
+  artWrap.appendChild(art);
+  if (owned) {
+    const badge = document.createElement('span');
+    badge.className = 'shop-deck-cell__owned-badge';
+    badge.setAttribute('aria-label', pick('Owned', 'มีแล้ว'));
+    badge.textContent = '✓';
+    artWrap.appendChild(badge);
+  }
+  cell.appendChild(artWrap);
 
   const name = document.createElement('div');
   name.className = 'shop-deck-cell__name';
   name.textContent = pick(deck.nameEn, deck.nameTh);
-  name.style.cursor = 'pointer';
   name.addEventListener('click', () => openDeckPreview(deck));
   cell.appendChild(name);
 
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'shop-deck-cell__buy';
+  const sub = document.createElement('div');
+  sub.className = 'shop-deck-cell__sub';
+  sub.textContent = pick(deck.nameTh, deck.nameEn); // the other-language name
+  cell.appendChild(sub);
+
   if (owned) {
-    btn.disabled = true;
-    btn.textContent = pick('Owned', 'เป็นเจ้าของแล้ว');
+    const ownedTag = document.createElement('div');
+    ownedTag.className = 'shop-deck-cell__owned';
+    ownedTag.textContent = `✓ ${pick('Owned', 'มีแล้ว')}`;
+    cell.appendChild(ownedTag);
   } else {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'shop-deck-cell__buy';
     btn.classList.toggle('is-disabled', !affordable);
     btn.innerHTML = `<img src="/assets/meow-coin.svg" alt="" aria-hidden="true" />${DECK_PRICE_COINS}`;
     btn.addEventListener('click', () => buyDeck(deck));
+    cell.appendChild(btn);
   }
-  cell.appendChild(btn);
   return cell;
 }
 
@@ -229,8 +248,8 @@ function renderAll() {
 
   if (SHOP_DECKS.length) {
     const grid = document.createElement('div');
-    grid.className = 'decks-grid shop-grid';
-    SHOP_DECKS.forEach((deck) => grid.appendChild(buildDeckCell(deck)));
+    grid.className = 'shop-grid';
+    SHOP_DECKS.forEach((deck, i) => grid.appendChild(buildDeckCell(deck, i)));
     content.appendChild(grid);
   } else {
     content.appendChild(buildComingSoon());
