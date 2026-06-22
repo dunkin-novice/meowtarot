@@ -56,6 +56,7 @@ function getActiveTab(pathname) {
   ) return 'today';
   if (
     normalized.startsWith('/decks.html') ||
+    normalized.startsWith('/deck-detail.html') ||
     normalized.startsWith('/decks/') ||
     normalized.startsWith('/tarot-card-meanings/') ||
     normalized.startsWith('/cards/')

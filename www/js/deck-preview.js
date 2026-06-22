@@ -79,6 +79,14 @@ export function showDeckPreview(deck, { lang = 'en', buildCondition } = {}) {
     card.appendChild(sub);
   }
 
+  // "See all cards" → the full Deck Detail page (browse every card of this deck).
+  const seeAll = document.createElement('a');
+  seeAll.className = 'mt-dp-seeall';
+  seeAll.href = `${lang === 'th' ? '/th' : ''}/deck-detail.html?deck=${encodeURIComponent(id)}`;
+  seeAll.textContent = th ? 'ดูไพ่ทั้งหมด →' : 'See all cards →';
+  seeAll.style.cssText = 'display:inline-block;margin:0 0 12px;font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:12.5px;font-weight:700;color:#d12878;text-decoration:none;';
+  card.appendChild(seeAll);
+
   const cond = document.createElement('div');
   cond.className = 'mt-dp-cond';
   card.appendChild(cond);
