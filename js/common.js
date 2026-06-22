@@ -743,8 +743,16 @@ export function initShell(state, afterApply, activePage, options = {}) {
   state.currentLang = explicitParam || (pathIsThai ? 'th' : 'en');
   localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
 
-  // Meow Coin: +5 daily-login (idempotent per day) + the top-right balance chip. Best-effort.
-  try { grantDailyLogin(); renderMeowCoinChip(); } catch (_) { /* coins non-critical */ }
+  // Meow Coin balance chip always renders. The +5 daily-LOGIN coin is now SIGNED-IN ONLY
+  // (founder 2026-06-22: don't hand signed-out users passive coins — they only earn by playing
+  // the daily reading, then get a sign-in CTA). Dynamic import dodges an auth<->common cycle;
+  // grantDailyLogin is idempotent per day, and we re-check when auth resolves.
+  try { renderMeowCoinChip(); } catch (_) { /* coins non-critical */ }
+  import('./auth.js').then(({ getCurrentUserSync, subscribeAuthState }) => {
+    const grantIfSignedIn = () => { try { if (getCurrentUserSync()) grantDailyLogin(); } catch (_) {} };
+    grantIfSignedIn();
+    if (typeof subscribeAuthState === 'function') subscribeAuthState(grantIfSignedIn);
+  }).catch(() => {});
 
   // Phase 5: global top navbar removed. The hamburger nav + brand text
   // + EN/TH lang toggle that used to render here are replaced by the

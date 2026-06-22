@@ -384,6 +384,7 @@ function animateDailyShuffleSlots(boardEl, slots, onDone) {
 // use a tighter stagger so the whole deal still lands in well under 2s. Replaces the old
 // fan-out (animateDailyShuffleSlots) for daily + question + full.
 function animateDealStack(boardEl, slots, onDone) {
+  if (!slots.length) { onDone?.(); return; }
   // CRITICAL: clear any leftover transform first and force a reflow, so getBoundingClientRect
   // measures each card's TRUE GRID position — not a stale transformed one. Bug (2026-06-22):
   // on the shuffle button the previous step (animateCollectSlots) leaves every card translated
@@ -401,45 +402,48 @@ function animateDealStack(boardEl, slots, onDone) {
   const centerX = boardRect.left + boardRect.width / 2;
   const centerY = boardRect.top + boardRect.height / 2;
 
-  // 1) Gather every card into a face-down PILE at the centre (slight alternating tilt = a deck).
+  // 1) Pull every card to the centre but keep it INVISIBLE — no visible stacked pile sits there
+  //    (founder 2026-06-22: "no need for the stack of deck at the centre"). As the deal begins
+  //    each card fades in while spreading out, so the centre stack just "disappears".
   slots.forEach((slot, idx) => {
     const rect = slot.getBoundingClientRect();
     const dx = centerX - (rect.left + rect.width / 2);
     const dy = centerY - (rect.top + rect.height / 2);
     slot.style.transition = 'none';
-    slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.92) rotate(${idx % 2 ? 2 : -2}deg)`;
-    slot.style.zIndex = String(slots.length - idx); // top of the pile deals first
-    slot.style.willChange = 'transform';
+    slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+    slot.style.opacity = '0';
+    slot.style.zIndex = String(slots.length - idx);
+    slot.style.willChange = 'transform, opacity';
   });
 
-  // 2) DEAL each card out of the pile to its slot, one after another (staggered). Tighten the
-  //    stagger on big boards so the Celtic 40-card spread still finishes under 2s.
-  const stagger = slots.length > 18
-    ? Math.max(14, Math.floor(1100 / slots.length))
-    : 78;
-  const flight = 380;
+  // 2) DEAL out — each card fades in while flying to its slot, staggered (the spread). Tighter
+  //    stagger on big boards so the 40-card Celtic spread still lands well under 2s.
+  const stagger = slots.length > 18 ? Math.max(12, Math.floor(900 / slots.length)) : 60;
+  const flight = 360;
+  const total = flight + (slots.length - 1) * stagger + 140;
 
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      slots.forEach((slot, idx) => {
-        window.setTimeout(() => {
-          slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-          slot.style.transform = 'translate(0, 0) scale(1) rotate(0deg)';
-        }, idx * stagger);
-      });
-      const total = flight + (slots.length - 1) * stagger + 90;
+    slots.forEach((slot, idx) => {
       window.setTimeout(() => {
-        slots.forEach((slot) => {
-          slot.style.transition = '';
-          slot.style.transform = '';
-          slot.style.opacity = '';
-          slot.style.zIndex = '';
-          slot.style.willChange = '';
-        });
-        onDone?.();
-      }, total);
+        slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out`;
+        slot.style.transform = 'translate(0, 0) scale(1)';
+        slot.style.opacity = '1';
+      }, idx * stagger);
     });
   });
+
+  // GUARANTEED cleanup — scheduled OUTSIDE any rAF so cards ALWAYS end visible at their grid slot
+  // even if a frame/timer is dropped (fixes the Celtic shuffle leaving the board blank).
+  window.setTimeout(() => {
+    slots.forEach((slot) => {
+      slot.style.transition = '';
+      slot.style.transform = '';
+      slot.style.opacity = '';
+      slot.style.zIndex = '';
+      slot.style.willChange = '';
+    });
+    onDone?.();
+  }, total);
 }
 
 function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { animated = false, animationProfile = 'default' } = {}) {
@@ -531,16 +535,15 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     refreshBadges();
     if (withAnimation) {
       boardEl.classList.add('is-locked');
-      requestAnimationFrame(() => {
-        // daily + question (profile 'daily') and full all deal one-by-one from a centre
-        // pile now — the founder's "dealing onto the table" animation. (2026-06-21)
-        const animate = (animationProfile === 'daily' || animationProfile === 'full')
-          ? animateDealStack
-          : animateDealSlots;
-        animate(boardEl, slots, () => {
-          boardEl.classList.remove('is-locked');
-          refreshBadges();
-        });
+      // daily + question (profile 'daily') and full all deal one-by-one from the centre.
+      // Call directly (no rAF wrapper) — animateDealStack does its own reflow + a guaranteed
+      // setTimeout cleanup, so it can't get stranded by a dropped frame (Celtic blank-board bug).
+      const animate = (animationProfile === 'daily' || animationProfile === 'full')
+        ? animateDealStack
+        : animateDealSlots;
+      animate(boardEl, slots, () => {
+        boardEl.classList.remove('is-locked');
+        refreshBadges();
       });
     } else {
       animateBoard(boardEl);
@@ -557,15 +560,12 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
 
     if (withAnimation && previousSlots.length) {
       boardEl.classList.add('is-locked');
-      if (animationProfile === 'full') {
-        // 78 overlapping cards flying to centre (getBoundingClientRect per card) thrashed
-        // layout and looked buggy. Simple in-place fade-out instead, then re-deal.
-        animateSimpleCollect(boardEl, previousSlots);
-        setTimeout(proceed, 190);
-      } else {
-        animateCollectSlots(boardEl, previousSlots);
-        setTimeout(proceed, STACK_DURATION);
-      }
+      // Collect the current spread to the centre (visible converge), then re-deal. ALL boards
+      // (incl. the 40-card Celtic, which is a clean non-overlapping grid now) use the same
+      // visible collect — never the opacity:0 fade, which left the board blank if the re-deal
+      // hiccupped. (2026-06-22)
+      animateCollectSlots(boardEl, previousSlots);
+      setTimeout(proceed, STACK_DURATION);
     } else {
       proceed();
     }

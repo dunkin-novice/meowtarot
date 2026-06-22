@@ -2884,6 +2884,25 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
           });
         });
       }, 300);
+    } else {
+      // Signed-out: they just earned the +5 daily-reading coin in the local wallet — nudge them
+      // to sign in to KEEP it (localStorage is per-device). Once per session, after the coin pop.
+      let ctaShown = false;
+      try { ctaShown = sessionStorage.getItem('mt_coin_signin_cta') === '1'; } catch (_) {}
+      if (!ctaShown) {
+        try { sessionStorage.setItem('mt_coin_signin_cta', '1'); } catch (_) {}
+        const lang = state.currentLang ?? 'th';
+        setTimeout(() => {
+          import('./sign-in-gate.js').then(({ showSignInGate }) => showSignInGate({
+            lang,
+            title: lang === 'th' ? 'ลงชื่อเข้าใช้เพื่อเก็บเหรียญเหมียว' : 'Sign in to keep your Meow Coins',
+            body: lang === 'th'
+              ? 'คุณได้รับเหรียญเหมียวแล้ว! ลงชื่อเข้าใช้เพื่อบันทึกเหรียญและสำรับของคุณไว้ข้ามอุปกรณ์'
+              : 'You just earned Meow Coins! Sign in to save your coins & decks across devices.',
+            onSignIn: () => loginWithProvider('google').catch(() => {}),
+          })).catch(() => {});
+        }, 2500);
+      }
     }
 
     // Phase 5: streak-milestone "Halfway · Day N" popup fires when the
