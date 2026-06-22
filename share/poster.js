@@ -944,17 +944,37 @@ function toBreakUnits(value) {
   return m || Array.from(value);
 }
 
+// Segment Thai into WORD units (dictionary-based) so a wrap breaks BETWEEN words, never inside
+// one — fixes e.g. "บาด" splitting into "บา" / "ด" at a line break (founder 2026-06-22). Falls
+// back to cluster units if Intl.Segmenter is unavailable.
+let _thWordSeg = null;
+function toThaiWordUnits(value) {
+  try {
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      if (!_thWordSeg) _thWordSeg = new Intl.Segmenter('th', { granularity: 'word' });
+      const out = Array.from(_thWordSeg.segment(String(value)), (s) => s.segment);
+      if (out.length) return out;
+    }
+  } catch (_) { /* fall through */ }
+  return toBreakUnits(value);
+}
+
 function tokenizeText(ctx, text, maxWidth) {
   const value = String(text || '');
   if (!value) return { tokens: [], sep: ' ' };
-  // No-space scripts (Thai/Lao/CJK/Khmer): ALWAYS character/cluster-flow — these have no
-  // reliable word spaces, so word-tokenizing leaves a clause wider than maxWidth as one
-  // unbreakable over-wide line that overflows + clips ("not centred"). Cluster-flow makes
-  // every wrapped line ≤ maxWidth by construction → impossible to overflow. Spaces are
-  // kept as breakable units. (Attempt 2, 2026-06-20 — replaces the everyWordFits heuristic
-  // which could still mis-detect and clip.)
+  // No-space scripts (Thai/Lao/CJK/Khmer): wrap at WORD boundaries via Intl.Segmenter so a Thai
+  // word never breaks mid-cluster (e.g. "บาด" → "บา"/"ด"). Each word-unit that still exceeds
+  // maxWidth (a very long word) is cluster-split so a line can never overflow/clip — keeping the
+  // old no-overflow guarantee while fixing the mid-word breaks. (2026-06-22, was cluster-only.)
   if (/[฀-๿຀-໿ក-៿぀-ヿ㐀-鿿가-힯]/.test(value)) {
-    return { tokens: toBreakUnits(value), sep: '' };
+    const units = toThaiWordUnits(value);
+    const tokens = [];
+    for (let i = 0; i < units.length; i += 1) {
+      const u = units[i];
+      if (ctx.measureText(u).width <= maxWidth) tokens.push(u);
+      else toBreakUnits(u).forEach((c) => tokens.push(c));
+    }
+    return { tokens, sep: '' };
   }
   // Latin etc: word-tokenize, but never leave an over-wide single word unbroken.
   const words = value.split(/\s+/).filter(Boolean);
