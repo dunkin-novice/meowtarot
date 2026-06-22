@@ -29,13 +29,13 @@ function getLocaleConfig(pathname) {
       ? {
         today: 'หน้าแรก',
         decks: 'สำรับ',
-        shop: 'ร้านค้า',
+        shop: 'กาชา',
         profile: 'โปรไฟล์',
       }
       : {
         today: 'Home',
         decks: 'Decks',
-        shop: 'Shop',
+        shop: 'Gacha',
         profile: 'Profile',
       },
   };
@@ -91,10 +91,9 @@ const ICON_DECKS = `
 
 const ICON_SHOP = `
   <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-    <path d="M6 8 h12 l-1 11 a1 1 0 0 1 -1 0.9 H8 a1 1 0 0 1 -1 -0.9 Z"/>
-    <path d="M9 8.5 V7 a3 3 0 0 1 6 0 V8.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
-    <path d="M9 6 L10 4 L11 5.7" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M13 5.7 L14 4 L15 6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M12 3 l1.8 5.2 L19 10 l-5.2 1.8 L12 17 l-1.8-5.2 L5 10 l5.2-1.8 Z"/>
+    <circle cx="18.5" cy="5" r="1.4"/>
+    <circle cx="6" cy="17" r="1.1"/>
   </svg>
 `.trim();
 
