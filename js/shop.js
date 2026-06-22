@@ -20,6 +20,12 @@ const fmt = (n) => Number(n).toLocaleString('en-US');
 let timers = [];
 const clearTimers = () => { timers.forEach((t) => window.clearTimeout(t)); timers = []; };
 
+// Gacha pool = collectible decks ONLY. Achievement decks (role 'streak-unlock') are EXCLUSIVE
+// to the streak/achievement ladder and never appear in the gacha; the free default (moonmallow)
+// is excluded too. Everything else (veila + the AI 'shop' decks) is gacha. (founder 2026-06-22)
+const isGachaDeck = (d) => d && d.role !== 'streak-unlock' && d.id !== 'moonmallow';
+const gachaDecks = () => getAllDecks().filter(isGachaDeck);
+
 const backThumb = (id) => `${CDN}/${id}/00-back-200.webp`;
 const backFull = (id) => `${CDN}/${id}/00-back.webp`;
 const deckName = (d) => pick(d.name, d.name_th || d.name);
@@ -79,7 +85,7 @@ function buildProgress() {
 }
 
 function refreshHeroStats() {
-  const decks = getAllDecks();
+  const decks = gachaDecks();
   const total = decks.length;
   const owned = decks.filter((d) => canUnlockDeck(d.id)).length;
   const pct = total ? Math.round((owned / total) * 100) : 0;
@@ -121,7 +127,7 @@ function buildSearch() {
 // Sort: pinned → not-owned → owned (founder 2026-06-22). Stable within each bucket.
 function sortedFilteredDecks() {
   const q = state.query.trim().toLowerCase();
-  let decks = getAllDecks().map((d, i) => ({ d, i }));
+  let decks = gachaDecks().map((d, i) => ({ d, i }));
   if (q) decks = decks.filter(({ d }) => (d.name || '').toLowerCase().includes(q) || (d.name_th || '').includes(state.query.trim()));
   const rank = ({ d }) => {
     if (isPinnedDeck(d.id)) return 0;          // pinned first
@@ -270,7 +276,7 @@ function showNotEnough() {
 function doPull() {
   if (state.phase !== 'idle') return;
   if (getMeowCoins() < PULL) { showNotEnough(); return; }
-  const pool = getAllDecks().filter((d) => !canUnlockDeck(d.id));
+  const pool = gachaDecks().filter((d) => !canUnlockDeck(d.id));
   if (!pool.length) { showToast(pick('You’ve collected every deck! 🎉', 'สะสมครบทุกสำรับแล้ว! 🎉')); return; }
   const res = spendMeowCoins(PULL, 'gacha_pull');
   if (!res.ok) { showNotEnough(); return; }
@@ -281,7 +287,7 @@ function doPull() {
 }
 
 function runRoulette(won) {
-  const all = getAllDecks();
+  const all = gachaDecks();
   const LEN = 50;
   const WIN = 45;
   const CARDW = 100;
