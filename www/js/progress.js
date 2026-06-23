@@ -1,5 +1,5 @@
 import { getNewlyUnlockedDecks, getUnlockMilestones, normalizeId } from './data.js';
-import { grantDailyReading, grantDeckUnlockCoins } from './meow-coin.js';
+import { grantDailyReading, grantDeckUnlockCoins, grantWeeklyStreak } from './meow-coin.js';
 
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
 const PROGRESS_VERSION = 2;
@@ -312,6 +312,8 @@ export function trackCompletedDailyReading(card = null) {
   // achievements still exist as badges; they just no longer mint coins.
   try {
     grantDailyReading();
+    // Repeatable 7-day-streak reward: +5 once per calendar week while a 7-day streak is alive.
+    if (progress.streak_current >= 7) grantWeeklyStreak();
     newlyUnlockedDecks.forEach((deck) => grantDeckUnlockCoins(deck.id));
   } catch (_) { /* coins are non-critical */ }
 

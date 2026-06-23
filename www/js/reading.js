@@ -43,6 +43,7 @@ import { getLocalizedField, getOrientationLabel } from './tarot-format.js';
 import { getLuckyColorVisibilityStyle } from './lucky-color-visibility.js';
 import { buildShareUrl, parseReadingStateFromUrl } from './reading-url.js';
 import { getRetentionViewModel, trackCompletedDailyReading } from './progress.js';
+import { grantWeeklyQuestion, grantMonthlyCeltic } from './meow-coin.js';
 import { computePhase } from './phase.js';
 import { normalizeHydratedCardId, shouldUseRecoverableHydrationFallback } from './reading-hydration.js';
 import { getCanonicalCardUrl } from './canonical-card-routes.js';
@@ -3190,6 +3191,8 @@ function persistNonDailyReadingHistoryAfterAuth() {
 function renderFull(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
+  // Monthly Celtic Cross reward: +20 once per calendar month (idempotent). (founder 2026-06-23)
+  try { grantMonthlyCeltic(); } catch (_) {}
   persistReadingHistory('full', cards);
   trackRawCompletion({
     mode: 'full',
@@ -3512,6 +3515,8 @@ function renderQuestion(cards, dict) {
   if (!readingContent || !cards?.length) return;
   readingContent.innerHTML = '';
 
+  // Weekly Ask-a-Question reward: +10 once per calendar week (idempotent). (founder 2026-06-23)
+  try { grantWeeklyQuestion(); } catch (_) {}
   const topic = String(state.topic || 'generic').toLowerCase();
   const positions = QUESTION_CARD_POSITIONS;
   const orderedCards = orderQuestionCards(cards).slice(0, 3);

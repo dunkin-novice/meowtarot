@@ -13,7 +13,7 @@ import { showDeckPreview } from './deck-preview.js';
 import { trackLocaleSwitched } from './analytics.js';
 
 const CDN = 'https://cdn.meowtarot.com/assets';
-const PULL = 120;
+const PULL = 200;
 const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en', query: '', phase: 'idle' };
 const pick = (en, th) => (state.currentLang === 'th' ? th : en);
 const fmt = (n) => Number(n).toLocaleString('en-US');
@@ -51,7 +51,7 @@ function buildHero() {
       <div class="gacha-head__left">
         <div class="gacha-eyebrow">${pick('Gacha', 'กาชา')}</div>
         <h1 class="gacha-title">${pick('Deck Gacha', 'กาชาสำรับ')}</h1>
-        <p class="gacha-sub">${pick('Pull a mystery deck — 120 Meow Coins each. Every pull is a deck you don’t own yet.', 'สุ่มสำรับปริศนา — ครั้งละ 120 เหรียญเหมียว ทุกครั้งได้สำรับที่คุณยังไม่มี')}</p>
+        <p class="gacha-sub">${pick('Pull a mystery deck — 200 Meow Coins each. Every pull is a deck you don’t own yet.', 'สุ่มสำรับปริศนา — ครั้งละ 200 เหรียญเหมียว ทุกครั้งได้สำรับที่คุณยังไม่มี')}</p>
       </div>
       <div class="gacha-balance">
         <img src="/assets/meow-coin-200.webp" alt="" class="gacha-balance__icon" aria-hidden="true" />
@@ -66,7 +66,7 @@ function buildHero() {
     </div>
     <button type="button" class="gacha-pull-btn" id="gacha-pull">
       <span>${pick('Pull', 'สุ่ม')} ·</span>
-      <img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /><span>120</span>
+      <img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /><span>200</span>
     </button>
     <p class="gacha-helper" id="gacha-helper"></p>`;
   return wrap;

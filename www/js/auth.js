@@ -286,9 +286,6 @@ export async function loginWithProvider(provider = 'google') {
   // so common.js can bounce them BACK there once signed in — so they stay on (e.g.) the reading
   // result instead of getting stranded on Profile. (founder 2026-06-23)
   try { localStorage.setItem('mt_signin_return', window.location.href); } catch (_) {}
-  // Mark this as a fresh sign-in so common.js can, on return, tell the user "you've already
-  // received today's quota" if they earned the daily coin before signing in. (founder 2026-06-23)
-  try { sessionStorage.setItem('mt_postsignin_quota', '1'); } catch (_) {}
   const redirectTo = `${window.location.origin}${authLocale() === 'th' ? '/th' : ''}/profile.html`;
   const { error } = await client.auth.signInWithOAuth({
     provider: safeProvider,

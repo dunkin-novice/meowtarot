@@ -9,6 +9,10 @@
  */
 import { getAllDecks } from './data.js';
 import { showDeckPreview } from './deck-preview.js';
+import {
+  isDailyLoginClaimed, isDailyReadingClaimed, isWeeklyQuestionClaimed,
+  isMonthlyCelticClaimed, isWeeklyStreakClaimed,
+} from './meow-coin.js';
 
 const CDN = 'https://cdn.meowtarot.com/assets';
 
@@ -42,26 +46,37 @@ function buildAchievements(progress, lang) {
   const dates = progress?.achievement_dates || {};
 
   const items = [];
-  // Deck-reward milestones (the exclusive streak decks) — NOT moonmallow / not gacha decks.
+
+  // RECURRING earns (reset per period). `done` = claimed for the CURRENT period (from the wallet).
+  // (founder 2026-06-23: Daily / Weekly / Monthly / Repeatable groups + coin-source labels.)
+  const earn = (group, id, en, thName, reqEn, reqTh, done, coins, cur, total, unit) => items.push({
+    group, kind: 'earn', id, name: th ? thName : en, req: th ? reqTh : reqEn,
+    done, coins, cur: cur != null ? cur : (done ? 1 : 0), total: total != null ? total : 1, unit: unit || '',
+  });
+  earn('daily', 'daily_login', 'Daily sign-in', 'เข้าระบบรายวัน', 'Sign in today', 'เข้าระบบวันนี้', isDailyLoginClaimed(), 5);
+  earn('daily', 'daily_reading', 'Daily reading', 'เปิดไพ่รายวัน', "Do today's reading", 'เปิดไพ่วันนี้', isDailyReadingClaimed(), 5);
+  earn('weekly', 'weekly_question', 'Ask a Question', 'ถามไพ่', 'Once this week', 'สัปดาห์ละครั้ง', isWeeklyQuestionClaimed(), 10);
+  earn('monthly', 'monthly_celtic', 'Celtic Cross', 'เซลติกครอส', 'Once this month', 'เดือนละครั้ง', isMonthlyCelticClaimed(), 20);
+  earn('repeatable', 'weekly_streak', '7-day streak', 'สตรีค 7 วัน', 'Keep a 7-day streak · weekly', 'รักษาสตรีค 7 วัน · รายสัปดาห์', isWeeklyStreakClaimed(), 5, Math.min(streak, 7), 7, th ? 'วัน' : 'days');
+
+  // LIFETIME — deck-reward milestones (the exclusive streak decks; "sign in for X days").
   getAllDecks()
     .filter((d) => d.role === 'streak-unlock' && typeof d.unlock_day === 'number')
     .sort((a, b) => a.unlock_day - b.unlock_day)
     .forEach((d) => {
       items.push({
-        kind: 'deck', id: d.id,
+        group: 'lifetime', kind: 'deck', id: d.id,
         name: th ? (d.name_th || d.name) : d.name,
         req: th ? fmt('เปิดไพ่ครบ {n} วัน', { n: d.unlock_day }) : fmt('Draw on {n} different days', { n: d.unlock_day }),
         done: days >= d.unlock_day, cur: Math.min(days, d.unlock_day), total: d.unlock_day,
         unit: th ? 'วัน' : 'days', coins: 20, date: dates[deckDateKey(d.id)] || null,
       });
     });
-  // Badge achievements (keys mirror progress.evaluateAchievements).
+  // LIFETIME — one-time badges. (streak_3/streak_7 dropped: streak is now the Repeatable reward.)
   const badge = (key, en, thName, req, reqTh, cur, total) => items.push({
-    kind: 'badge', id: key, name: th ? thName : en, sym: '✦',
+    group: 'lifetime', kind: 'badge', id: key, name: th ? thName : en, sym: '✦',
     req: th ? reqTh : req, done: !!ach[key], cur, total, coins: 20, date: dates[key] || null,
   });
-  badge('streak_3', '3-Day Streak', 'สตรีค 3 วัน', 'Read 3 days in a row', 'เปิดไพ่ 3 วันติดต่อกัน', Math.min(streak, 3), 3);
-  badge('streak_7', '7-Day Streak', 'สตรีค 7 วัน', 'Read 7 days in a row', 'เปิดไพ่ 7 วันติดต่อกัน', Math.min(streak, 7), 7);
   badge('first_reversed', 'First Reversed', 'ไพ่กลับใบแรก', 'Draw your first reversed card', 'เปิดไพ่กลับใบแรก', 0, 1);
   badge('first_major_arcana', 'First Major Arcana', 'อาร์คานาใหญ่ใบแรก', 'Draw your first Major Arcana', 'เปิดไพ่อาร์คานาใหญ่ใบแรก', 0, 1);
   badge('collect_10', 'Collector I', 'นักสะสม I', 'Collect 10 cards', 'สะสมไพ่ 10 ใบ', Math.min(collected, 10), 10);
@@ -77,7 +92,7 @@ function rowEl(it, lang, { next = false } = {}) {
 
   const marker = document.createElement('span');
   marker.className = 'mt-ach-row__marker';
-  marker.textContent = it.done ? '✓' : (it.kind === 'deck' ? String(it.total) : '✦');
+  marker.textContent = it.done ? '✓' : (it.kind === 'deck' ? String(it.total) : it.kind === 'earn' ? '○' : '✦');
   row.appendChild(marker);
 
   const mid = document.createElement('div');
@@ -110,9 +125,8 @@ function rowEl(it, lang, { next = false } = {}) {
   reward.className = 'mt-ach-row__reward';
   if (it.kind === 'deck') {
     const t = deckThumb(it.id); t.className = 'mt-ach-row__deck'; reward.appendChild(t);
-  } else {
-    const b = document.createElement('span'); b.className = 'mt-ach-row__badge'; b.textContent = it.sym; reward.appendChild(b);
   }
+  // badge + earn rows just show the coin reward (no gold-sphere ✦).
   const coin = document.createElement('span');
   coin.className = 'mt-ach-row__coin';
   coin.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />${it.coins}`;
@@ -158,11 +172,13 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
   container.innerHTML = '';
   const th = lang === 'th';
   const items = buildAchievements(progress, lang);
-  const total = items.length;
-  const unlocked = items.filter((i) => i.done).length;
+  // Summary / next / recent track the LIFETIME (permanent) rewards; the recurring earns reset.
+  const lifetime = items.filter((i) => i.group === 'lifetime');
+  const total = lifetime.length;
+  const unlocked = lifetime.filter((i) => i.done).length;
   const pct = total ? Math.round((unlocked / total) * 100) : 0;
-  const nextItem = items.find((i) => !i.done) || null;
-  const recent = items.filter((i) => i.done && i.date).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 4);
+  const nextItem = lifetime.find((i) => !i.done) || null;
+  const recent = lifetime.filter((i) => i.done && i.date).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 4);
 
   const card = document.createElement('section');
   card.className = 'mt-ach-card panel';
@@ -175,7 +191,29 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
     <button type="button" class="mt-ach-seeall" id="mt-ach-seeall">${th ? 'ดูทั้งหมด →' : 'See all →'}</button>`;
   card.appendChild(head);
 
-  // summary
+  // Group headers (founder 2026-06-23): Daily / Weekly / Monthly / Repeatable shown directly;
+  // Lifetime gets the summary bar + next reward + recently-unlocked + the expandable full ladder.
+  const groupHeader = (label) => {
+    const g = document.createElement('div');
+    g.className = 'mt-ach-group';
+    g.textContent = label;
+    card.appendChild(g);
+  };
+  [
+    ['daily', th ? 'รายวัน' : 'Daily'],
+    ['weekly', th ? 'รายสัปดาห์' : 'Weekly'],
+    ['monthly', th ? 'รายเดือน' : 'Monthly'],
+    ['repeatable', th ? 'ทำซ้ำได้' : 'Repeatable'],
+  ].forEach(([key, label]) => {
+    const groupItems = items.filter((i) => i.group === key);
+    if (!groupItems.length) return;
+    groupHeader(label);
+    groupItems.forEach((it) => card.appendChild(rowEl(it, lang)));
+  });
+
+  groupHeader(th ? 'ตลอดกาล' : 'Lifetime');
+
+  // summary (Lifetime progress)
   const sum = document.createElement('div');
   sum.className = 'mt-ach-summary';
   sum.innerHTML = `
@@ -229,7 +267,7 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
   const all = document.createElement('div');
   all.className = 'mt-ach-all';
   all.hidden = true;
-  items.forEach((it) => all.appendChild(rowEl(it, lang, { next: nextItem && it.id === nextItem.id && it.kind === nextItem.kind })));
+  lifetime.forEach((it) => all.appendChild(rowEl(it, lang, { next: nextItem && it.id === nextItem.id && it.kind === nextItem.kind })));
   card.appendChild(all);
 
   container.appendChild(card);

@@ -41,6 +41,17 @@ function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+// Calendar-week key = the Monday date of the current week (stable per calendar week).
+function weekKey() {
+  const d = new Date();
+  const mondayOffset = (d.getDay() + 6) % 7; // Sun=6 … Mon=0
+  const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - mondayOffset);
+  return `W${mon.getFullYear()}-${String(mon.getMonth() + 1).padStart(2, '0')}-${String(mon.getDate()).padStart(2, '0')}`;
+}
+function monthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
 
 function trackCoin(action, amount, reason) {
   try {
@@ -72,8 +83,11 @@ function isThaiLocale() {
 function coinReasonLabel(reason) {
   const th = isThaiLocale();
   const r = String(reason || '');
-  if (r === 'daily_login') return th ? 'โบนัสเข้าระบบรายวัน' : 'Daily login bonus';
+  if (r === 'daily_login') return th ? 'เข้าระบบรายวัน' : 'Daily sign-in';
   if (r === 'daily_reading') return th ? 'เปิดไพ่รายวัน' : 'Daily reading';
+  if (r === 'weekly_question') return th ? 'ถามไพ่รายสัปดาห์' : 'Weekly question';
+  if (r === 'monthly_celtic') return th ? 'เซลติกครอสรายเดือน' : 'Monthly Celtic Cross';
+  if (r === 'weekly_streak') return th ? 'สตรีค 7 วัน' : '7-day streak';
   if (r.startsWith('achievement:')) return th ? 'ปลดล็อกความสำเร็จ!' : 'Achievement unlocked!';
   if (r.startsWith('deck_unlock:')) return th ? 'ปลดล็อกสำรับใหม่!' : 'New deck unlocked!';
   return th ? 'ได้รับเหรียญเหมียว' : 'Meow Coins earned';
@@ -216,21 +230,44 @@ export function canAfford(amount) {
   return getMeowCoins() >= Math.max(0, Math.floor(Number(amount) || 0));
 }
 
-// --- earn helpers (idempotent per the founder spec) -------------------------------------
-// ONE daily coin per day (founder 2026-06-23): claimed from EITHER opening the app while signed in
-// (login) OR completing the daily reading (play) — whichever happens first, via a SHARED key. The
-// other source then shows "you've already received today's quota" instead of granting again.
-const dailyCoinKey = () => `daily-${todayKey()}`;
-export function isDailyCoinClaimedToday() {
-  try { return !!(readWallet().keys || {})[dailyCoinKey()]; } catch (_) { return false; }
-}
+// --- earn helpers (idempotent per source/period) -----------------------------------------
+// Founder 2026-06-23 economy: DAILY sign-in +5 (signed-in only) and DAILY reading +5 are SEPARATE
+// (≈10/day). WEEKLY Ask-a-Question +10, MONTHLY Celtic Cross +20, and a REPEATABLE 7-day-streak +5
+// once per calendar week. Each is idempotent for its period via a dated key.
+export const WEEKLY_QUESTION_COINS = 10;
+export const MONTHLY_CELTIC_COINS = 20;
+export const WEEKLY_STREAK_COINS = 5;
+
+const hasKey = (key) => { try { return !!(readWallet().keys || {})[key]; } catch (_) { return false; } };
+const LOGIN_KEY = () => `login-${todayKey()}`;
+const READING_KEY = () => `reading-${todayKey()}`;
+const QUESTION_KEY = () => `question-${weekKey()}`;
+const CELTIC_KEY = () => `celtic-${monthKey()}`;
+const STREAKWEEK_KEY = () => `streakweek-${weekKey()}`;
+
+export const isDailyLoginClaimed = () => hasKey(LOGIN_KEY());
+export const isDailyReadingClaimed = () => hasKey(READING_KEY());
+export const isWeeklyQuestionClaimed = () => hasKey(QUESTION_KEY());
+export const isMonthlyCelticClaimed = () => hasKey(CELTIC_KEY());
+export const isWeeklyStreakClaimed = () => hasKey(STREAKWEEK_KEY());
+
 export function grantDailyLogin() {
-  return grantMeowCoins(DAILY_LOGIN_COINS, 'daily_login', dailyCoinKey());
+  return grantMeowCoins(DAILY_LOGIN_COINS, 'daily_login', LOGIN_KEY());
 }
 export function grantDailyReading() {
-  // Playing after today's coin is already claimed → acknowledge, don't silently grant nothing.
-  if (isDailyCoinClaimedToday()) { try { showQuotaReachedPopup(); } catch (_) {} return getMeowCoins(); }
-  return grantMeowCoins(DAILY_READING_COINS, 'daily_reading', dailyCoinKey());
+  return grantMeowCoins(DAILY_READING_COINS, 'daily_reading', READING_KEY());
+}
+// +10 once per calendar week — completing an Ask-a-Question reading.
+export function grantWeeklyQuestion() {
+  return grantMeowCoins(WEEKLY_QUESTION_COINS, 'weekly_question', QUESTION_KEY());
+}
+// +20 once per calendar month — completing a Celtic Cross (full) reading.
+export function grantMonthlyCeltic() {
+  return grantMeowCoins(MONTHLY_CELTIC_COINS, 'monthly_celtic', CELTIC_KEY());
+}
+// +5 once per calendar week — keeping a 7-day streak alive (caller checks streak >= 7).
+export function grantWeeklyStreak() {
+  return grantMeowCoins(WEEKLY_STREAK_COINS, 'weekly_streak', STREAKWEEK_KEY());
 }
 // +20 per achievement / deck unlock — once each (keyed by the achievement/deck id).
 export function grantAchievementCoins(achievementKey) {
