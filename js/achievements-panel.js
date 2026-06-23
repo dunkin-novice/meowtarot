@@ -191,54 +191,56 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
     <button type="button" class="mt-ach-seeall" id="mt-ach-seeall">${th ? 'ดูทั้งหมด →' : 'See all →'}</button>`;
   card.appendChild(head);
 
-  // Group headers (founder 2026-06-23): Daily / Weekly / Monthly / Repeatable shown directly;
-  // Lifetime gets the summary bar + next reward + recently-unlocked + the expandable full ladder.
-  const groupHeader = (label) => {
-    const g = document.createElement('div');
-    g.className = 'mt-ach-group';
-    g.textContent = label;
-    card.appendChild(g);
-  };
-  [
-    ['daily', th ? 'รายวัน' : 'Daily'],
-    ['weekly', th ? 'รายสัปดาห์' : 'Weekly'],
-    ['monthly', th ? 'รายเดือน' : 'Monthly'],
-    ['repeatable', th ? 'ทำซ้ำได้' : 'Repeatable'],
-  ].forEach(([key, label]) => {
-    const groupItems = items.filter((i) => i.group === key);
-    if (!groupItems.length) return;
-    groupHeader(label);
-    groupItems.forEach((it) => card.appendChild(rowEl(it, lang)));
-  });
-
-  groupHeader(th ? 'ตลอดกาล' : 'Lifetime');
-
-  // summary (Lifetime progress)
-  const sum = document.createElement('div');
-  sum.className = 'mt-ach-summary';
-  sum.innerHTML = `
-    <div class="mt-ach-summary__row"><span>${th ? fmt('ปลดล็อกแล้ว {u} จาก {t} รางวัล', { u: unlocked, t: total }) : fmt('{u} of {t} rewards unlocked', { u: unlocked, t: total })}</span><span class="mt-ach-summary__pct">${pct}%</span></div>
-    <div class="mt-ach-summary__track"><div class="mt-ach-summary__fill" style="width:${pct}%"></div></div>`;
-  card.appendChild(sum);
-
-  // next reward
-  if (nextItem) {
+  // NEXT REWARD first (founder 2026-06-23): lead with the next DECK you're working toward (with
+  // its art) — the strongest motivator — above the daily coin earns.
+  const nextDeck = lifetime.find((i) => !i.done && i.kind === 'deck') || nextItem;
+  if (nextDeck) {
     const eb = document.createElement('div');
     eb.className = 'mt-ach-eyebrow';
     eb.textContent = th ? 'รางวัลถัดไป' : 'Next reward';
     card.appendChild(eb);
     const nextWrap = document.createElement('div');
     nextWrap.className = 'mt-ach-next';
-    nextWrap.appendChild(rowEl(nextItem, lang, { next: true }));
+    nextWrap.appendChild(rowEl(nextDeck, lang, { next: true }));
     card.appendChild(nextWrap);
   }
 
-  // recently unlocked chips
+  const groupHeader = (parent, label) => {
+    const g = document.createElement('div');
+    g.className = 'mt-ach-group';
+    g.textContent = label;
+    parent.appendChild(g);
+  };
+  const renderGroup = (parent, key, label) => {
+    const groupItems = items.filter((i) => i.group === key);
+    if (!groupItems.length) return;
+    groupHeader(parent, label);
+    groupItems.forEach((it) => parent.appendChild(rowEl(it, lang)));
+  };
+
+  // DAILY shown by default (today's quick wins). Everything else is behind "See all".
+  renderGroup(card, 'daily', th ? 'รายวัน' : 'Daily');
+
+  const more = document.createElement('div');
+  more.className = 'mt-ach-more';
+  more.hidden = true;
+  renderGroup(more, 'weekly', th ? 'รายสัปดาห์' : 'Weekly');
+  renderGroup(more, 'monthly', th ? 'รายเดือน' : 'Monthly');
+  renderGroup(more, 'repeatable', th ? 'ทำซ้ำได้' : 'Repeatable');
+
+  // Lifetime (inside "See all"): progress summary + recently-unlocked + the full ladder.
+  groupHeader(more, th ? 'ตลอดกาล' : 'Lifetime');
+  const sum = document.createElement('div');
+  sum.className = 'mt-ach-summary';
+  sum.innerHTML = `
+    <div class="mt-ach-summary__row"><span>${th ? fmt('ปลดล็อกแล้ว {u} จาก {t} รางวัล', { u: unlocked, t: total }) : fmt('{u} of {t} rewards unlocked', { u: unlocked, t: total })}</span><span class="mt-ach-summary__pct">${pct}%</span></div>
+    <div class="mt-ach-summary__track"><div class="mt-ach-summary__fill" style="width:${pct}%"></div></div>`;
+  more.appendChild(sum);
   if (recent.length) {
     const reb = document.createElement('div');
     reb.className = 'mt-ach-recent-head';
     reb.textContent = th ? 'ปลดล็อกล่าสุด' : 'Recently unlocked';
-    card.appendChild(reb);
+    more.appendChild(reb);
     const chips = document.createElement('div');
     chips.className = 'mt-ach-chips';
     recent.forEach((it) => {
@@ -249,8 +251,6 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
       if (it.kind === 'deck') {
         const t = deckThumb(it.id); box.appendChild(t);
       } else {
-        // Badge rewards grant Meow Coins → show the SAME cat coin as the top-right chip
-        // (was a gold-sphere/✦ that read as a different "dragon ball" coin). (founder 2026-06-23)
         const ci = document.createElement('img');
         ci.src = '/assets/meow-coin-200.webp'; ci.alt = ''; ci.loading = 'lazy';
         box.appendChild(ci);
@@ -260,22 +260,17 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
       const lbl = document.createElement('span'); lbl.className = 'mt-ach-chip__label'; lbl.textContent = it.name; chip.appendChild(lbl);
       chips.appendChild(chip);
     });
-    card.appendChild(chips);
+    more.appendChild(chips);
   }
+  lifetime.forEach((it) => more.appendChild(rowEl(it, lang, { next: nextDeck && it.id === nextDeck.id && it.kind === nextDeck.kind })));
 
-  // expandable full list
-  const all = document.createElement('div');
-  all.className = 'mt-ach-all';
-  all.hidden = true;
-  lifetime.forEach((it) => all.appendChild(rowEl(it, lang, { next: nextItem && it.id === nextItem.id && it.kind === nextItem.kind })));
-  card.appendChild(all);
-
+  card.appendChild(more);
   container.appendChild(card);
 
   const seeAll = card.querySelector('#mt-ach-seeall');
   seeAll.addEventListener('click', () => {
-    const showing = !all.hidden;
-    all.hidden = showing;
+    const showing = !more.hidden;
+    more.hidden = showing;
     seeAll.textContent = showing ? (th ? 'ดูทั้งหมด →' : 'See all →') : (th ? 'ย่อ ↑' : 'Show less ↑');
   });
 }
