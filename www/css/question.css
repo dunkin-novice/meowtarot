@@ -410,7 +410,32 @@ body[data-page='question'] .question-continue-button:disabled {
 body[data-page='question-draw'] .question-draw-topbar {
   text-align: center;
   margin-top: 6px;
+  position: relative;
 }
+
+/* Back to the topic/question screen — top-left, leaves the eyebrow centred. */
+body[data-page='question-draw'] .question-draw-back {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 40px;
+  padding: 6px 10px 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--mt-plum, #3d1a5c);
+  font-family: var(--mt-font-body);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: var(--mt-radius-pill, 999px);
+}
+body[data-page='question-draw'] .question-draw-back:active { transform: translateY(-50%) scale(0.96); }
+body[data-page='question-draw'] .question-draw-back svg { display: block; }
 
 body[data-page='question-draw'] .question-draw-topbar__eyebrow {
   font-size: 11px;

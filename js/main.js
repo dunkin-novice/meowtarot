@@ -1322,6 +1322,22 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
   const selectedTopicTitle = document.getElementById('question-selected-topic-title');
   if (!board || !shuffleBtn || !continueBtn || !counter || !selectedTopicTitle) return;
 
+  // Back to the topic/question screen. If the user actually came from question.html, go BACK
+  // (preserves their typed question + topic); otherwise (deep link / share) navigate cleanly to
+  // the topic page. (founder 2026-06-23)
+  const backBtn = document.getElementById('question-back');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      const ref = document.referrer || '';
+      const cameFromQuestion = ref.startsWith(window.location.origin) && ref.includes('/question.html');
+      if (cameFromQuestion && window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = window.location.pathname.startsWith('/th/') ? '/th/question.html' : '/question.html';
+      }
+    });
+  }
+
   let latestSelection = [];
   const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
