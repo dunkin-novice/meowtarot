@@ -1882,6 +1882,13 @@ body[data-page='home'] .section-block {
 .mt-avatar-chip__glyph { display: flex; align-items: center; justify-content: center; }
 
 .mt-coin-chip {
+  /* position:fixed is the fallback for when meow-coin.js is the OLD (unversioned/edge-cached)
+     build that hasn't wrapped the chip in #mt-top-chips yet. The NEW build inline-overrides this
+     to position:static so the chip sits inside the inline-positioned cluster. (2026-06-23) */
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  z-index: 70;
   display: inline-flex;
   align-items: center;
   gap: 5px;

@@ -218,12 +218,19 @@ export function onMeowCoinsChange(fn) {
 // Deck / Profile.)
 const CHIP_PAGES = new Set(['home', 'profile', 'decks', 'deck-detail', 'question', 'daily', 'question-draw', 'full', 'reading', 'shop']);
 
-// Fixed top-right cluster that holds the avatar (signed-in) + the coin chip, side by side.
+// Fixed top-right cluster holding the avatar (signed-in) + the coin chip, side by side.
+// Positioning is set INLINE (not relying on styles.css) because this module loads UNVERSIONED
+// (1h edge cache) while the CSS is versioned — a CSS/JS skew once left the coin chip unpositioned
+// and "gone". Inline styles here are self-consistent with the markup this same file creates.
 function ensureTopChips() {
   let cluster = document.getElementById('mt-top-chips');
   if (!cluster) {
     cluster = document.createElement('div');
     cluster.id = 'mt-top-chips';
+    cluster.style.cssText = 'position:fixed;'
+      + 'top:calc(env(safe-area-inset-top, 0px) + 10px);'
+      + 'right:calc(env(safe-area-inset-right, 0px) + 12px);'
+      + 'z-index:70;display:flex;align-items:center;gap:8px;';
     document.body.appendChild(cluster);
   }
   return cluster;
@@ -244,6 +251,10 @@ export function renderMeowCoinChip() {
   chip.setAttribute('aria-label', isThai ? 'เหรียญเหมียว — ไปที่ร้านค้า' : 'Meow Coins — open shop');
   chip.innerHTML = '<img src="/assets/meow-coin-200.webp" alt="" class="mt-coin-chip__icon" aria-hidden="true" />'
     + '<span class="mt-coin-chip__num">0</span>';
+  // Inline-override the CSS fallback (position:fixed) so the chip sits INSIDE the cluster.
+  chip.style.position = 'static';
+  chip.style.top = 'auto';
+  chip.style.right = 'auto';
   cluster.appendChild(chip);
   const numEl = chip.querySelector('.mt-coin-chip__num');
   onMeowCoinsChange((bal) => { numEl.textContent = String(bal); });
@@ -257,7 +268,12 @@ function renderAuthAvatar(cluster, isThai) {
   const a = document.createElement('a');
   a.id = 'mt-avatar-chip';
   a.className = 'mt-avatar-chip';
-  a.hidden = true;
+  // Inline layout (cache-proof — see ensureTopChips note). Visibility is driven by inline
+  // display (NOT the [hidden] attr, which the inline display:flex would override). CSS adds polish.
+  a.style.cssText = 'width:34px;height:34px;border-radius:50%;overflow:hidden;display:none;'
+    + 'align-items:center;justify-content:center;background:rgba(255,255,255,.85);'
+    + 'border:1px solid var(--mt-gold-pale,#e8c478);box-shadow:0 4px 12px -4px rgba(61,26,92,.32);'
+    + 'color:var(--mt-plum,#3d1a5c);text-decoration:none;flex:none;';
   a.href = isThai ? '/th/profile.html' : '/profile.html';
   a.setAttribute('aria-label', isThai ? 'โปรไฟล์ของคุณ — เข้าสู่ระบบแล้ว' : 'Your profile — signed in');
   a.innerHTML = '<img class="mt-avatar-chip__img" alt="" />'
@@ -272,8 +288,8 @@ function renderAuthAvatar(cluster, isThai) {
   import('./auth.js').then(({ subscribeAuthState }) => {
     if (typeof subscribeAuthState !== 'function') return;
     subscribeAuthState((user) => {
-      if (!user) { a.hidden = true; return; }
-      a.hidden = false;
+      if (!user) { a.style.display = 'none'; return; }
+      a.style.display = 'flex';
       const meta = user.user_metadata || {};
       const url = meta.avatar_url || meta.picture || '';
       if (url) showImg(url); else showGlyph();
