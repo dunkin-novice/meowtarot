@@ -154,6 +154,35 @@ export function showCoinPopup(amount, reason) {
   playNextCoinPopup();
 }
 
+// Shown when the daily coin was ALREADY claimed today (e.g. signing in after earning it from the
+// daily reading) — "you've already received today's quota" instead of a misleading second +N.
+export function showQuotaReachedPopup() {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (document.getElementById('mt-quota-pop')) return;
+  const th = isThaiLocale();
+  const overlay = document.createElement('div');
+  overlay.id = 'mt-quota-pop';
+  overlay.className = 'mt-coin-pop-overlay';
+  overlay.setAttribute('role', 'status');
+  overlay.setAttribute('aria-live', 'polite');
+  overlay.innerHTML = '<div class="mt-coin-pop">'
+    + '<img class="mt-coin-pop__icon" src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" style="opacity:.9;" />'
+    + `<div class="mt-coin-pop__unit" style="margin-top:10px;">${th ? 'วันนี้รับเหรียญครบแล้ว' : "You've already received today's quota"}</div>`
+    + `<div class="mt-coin-pop__reason">${th ? 'กลับมารับใหม่พรุ่งนี้นะ 🐾' : 'Come back tomorrow for more 🐾'}</div>`
+    + '</div>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('is-visible'));
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    overlay.classList.remove('is-visible');
+    window.setTimeout(() => overlay.remove(), 260);
+  };
+  overlay.addEventListener('click', close);
+  window.setTimeout(close, 2400);
+}
+
 // Idempotent credit: when `key` is given the amount is granted at most ONCE for that key
 // (e.g. 'login-2026-06-21', 'ach-streak_7', 'deck-unlock-pawbit') — enforces the daily cap and
 // stops double-minting. Returns the new balance.
@@ -188,11 +217,20 @@ export function canAfford(amount) {
 }
 
 // --- earn helpers (idempotent per the founder spec) -------------------------------------
+// ONE daily coin per day (founder 2026-06-23): claimed from EITHER opening the app while signed in
+// (login) OR completing the daily reading (play) — whichever happens first, via a SHARED key. The
+// other source then shows "you've already received today's quota" instead of granting again.
+const dailyCoinKey = () => `daily-${todayKey()}`;
+export function isDailyCoinClaimedToday() {
+  try { return !!(readWallet().keys || {})[dailyCoinKey()]; } catch (_) { return false; }
+}
 export function grantDailyLogin() {
-  return grantMeowCoins(DAILY_LOGIN_COINS, 'daily_login', `login-${todayKey()}`);
+  return grantMeowCoins(DAILY_LOGIN_COINS, 'daily_login', dailyCoinKey());
 }
 export function grantDailyReading() {
-  return grantMeowCoins(DAILY_READING_COINS, 'daily_reading', `reading-${todayKey()}`);
+  // Playing after today's coin is already claimed → acknowledge, don't silently grant nothing.
+  if (isDailyCoinClaimedToday()) { try { showQuotaReachedPopup(); } catch (_) {} return getMeowCoins(); }
+  return grantMeowCoins(DAILY_READING_COINS, 'daily_reading', dailyCoinKey());
 }
 // +20 per achievement / deck unlock — once each (keyed by the achievement/deck id).
 export function grantAchievementCoins(achievementKey) {

@@ -635,7 +635,10 @@ function renderOther(dict) {
     taps += 1;
     if (tapTimer) clearTimeout(tapTimer);
     tapTimer = setTimeout(() => { taps = 0; }, 1200);
-    if (taps >= 5) { devRow.hidden = false; taps = 0; }
+    // Reversed-cards toggle HIDDEN from the frontend for now (founder 2026-06-23): 'art' mode
+    // needs the -reversed.webp assets (not generated), so the feature is parked. Reveal disabled;
+    // devRow stays hidden. (Re-enable by restoring `devRow.hidden = false` here once shipped.)
+    if (taps >= 5) { taps = 0; }
   });
 
   details.appendChild(body);

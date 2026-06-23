@@ -208,7 +208,15 @@ export function renderAchievementsPanel(container, progress, dict, lang) {
       chip.className = 'mt-ach-chip';
       const box = document.createElement('div');
       box.className = 'mt-ach-chip__box' + (it.kind === 'deck' ? ' is-deck' : ' is-badge');
-      if (it.kind === 'deck') { const t = deckThumb(it.id); box.appendChild(t); } else { box.innerHTML = `<span>${it.sym}</span>`; }
+      if (it.kind === 'deck') {
+        const t = deckThumb(it.id); box.appendChild(t);
+      } else {
+        // Badge rewards grant Meow Coins → show the SAME cat coin as the top-right chip
+        // (was a gold-sphere/✦ that read as a different "dragon ball" coin). (founder 2026-06-23)
+        const ci = document.createElement('img');
+        ci.src = '/assets/meow-coin-200.webp'; ci.alt = ''; ci.loading = 'lazy';
+        box.appendChild(ci);
+      }
       box.insertAdjacentHTML('beforeend', '<span class="mt-ach-chip__check">✓</span>');
       chip.appendChild(box);
       const lbl = document.createElement('span'); lbl.className = 'mt-ach-chip__label'; lbl.textContent = it.name; chip.appendChild(lbl);

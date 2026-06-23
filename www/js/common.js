@@ -1,6 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
-import { grantDailyLogin, renderMeowCoinChip } from './meow-coin.js';
+import { grantDailyLogin, renderMeowCoinChip, isDailyCoinClaimedToday, showQuotaReachedPopup } from './meow-coin.js';
 import { trackLocaleSwitched, trackMeaningViewed, trackCtaClicked, trackOrientationToggled } from './analytics.js';
 import { renderBottomNav } from './bottom-nav.js';
 
@@ -761,11 +761,21 @@ export function initShell(state, afterApply, activePage, options = {}) {
   // result) so they don't get stranded on Profile. Consumed once. (founder 2026-06-23)
   const maybeRestoreAfterSignin = (user) => {
     if (!user) return;
+    // 1) bounce back to the originating page if one was stashed.
     let ret = null;
     try { ret = localStorage.getItem('mt_signin_return'); } catch (_) {}
-    if (!ret) return;
-    try { localStorage.removeItem('mt_signin_return'); } catch (_) {}
-    if (ret !== window.location.href) { try { window.location.replace(ret); } catch (_) {} }
+    if (ret) {
+      try { localStorage.removeItem('mt_signin_return'); } catch (_) {}
+      if (ret !== window.location.href) { try { window.location.replace(ret); } catch (_) {} return; }
+    }
+    // 2) on the final landing page: if this was a fresh sign-in and today's daily coin was already
+    //    claimed (e.g. earned from the daily reading before signing in), say so. (founder 2026-06-23)
+    let q = null;
+    try { q = sessionStorage.getItem('mt_postsignin_quota'); } catch (_) {}
+    if (q) {
+      try { sessionStorage.removeItem('mt_postsignin_quota'); } catch (_) {}
+      if (isDailyCoinClaimedToday()) { try { showQuotaReachedPopup(); } catch (_) {} }
+    }
   };
   import('./auth.js').then(({ getCurrentUserSync, subscribeAuthState, getCurrentUser }) => {
     const grantIfSignedIn = () => { try { if (getCurrentUserSync()) grantDailyLogin(); } catch (_) {} };
