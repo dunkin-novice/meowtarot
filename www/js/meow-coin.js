@@ -30,12 +30,63 @@ function writeWallet(w) {
   try {
     localStorage.setItem(WALLET_KEY, JSON.stringify({ balance: Math.max(0, Math.floor(w.balance)), keys: w.keys }));
   } catch (_) { /* ignore quota / disabled storage */ }
-  notify(w.balance);
+  notify();
 }
 
-function notify(balance) {
-  listeners.forEach((fn) => { try { fn(balance); } catch (_) { /* ignore */ } });
+function notify() {
+  const bal = getMeowCoins();
+  listeners.forEach((fn) => { try { fn(bal); } catch (_) { /* ignore */ } });
 }
+
+// --- Server-authoritative wallet for SIGNED-IN users (Stage 2, founder 2026-06-23). Uses the
+// deployed Supabase RPCs (wallet_balance/grant/spend). GUESTS keep the localStorage wallet,
+// untouched. The sync API (getMeowCoins/grantMeowCoins) is preserved via a cached server balance;
+// real purchases use the async spendCoins() so the spend is server-authoritative (no double-spend).
+let serverReady = false;   // hydrated from the server for the current signed-in user?
+let serverBalance = 0;     // authoritative balance when signed in
+let serverUserId = null;
+
+async function walletRpc(fn, args) {
+  try {
+    const { getSupabaseClient } = await import('./auth.js');
+    const client = await getSupabaseClient();
+    if (!client) return null;
+    const { data, error } = await client.rpc(fn, args || {});
+    if (error) { console.warn('[wallet]', fn, error.message); return null; }
+    return data;
+  } catch (_) { return null; }
+}
+
+async function initServerWallet(userId) {
+  if (!userId) return;
+  serverUserId = userId;
+  // One-time: merge the guest's accrued local balance into this account.
+  try {
+    const mergeFlag = `meowtarot_wallet_merged_${userId}`;
+    if (!localStorage.getItem(mergeFlag)) {
+      const local = readWallet().balance;
+      if (local > 0) await walletRpc('wallet_grant', { p_key: 'merge-local', p_amount: local, p_reason: 'merge_local' });
+      localStorage.setItem(mergeFlag, '1');
+    }
+  } catch (_) {}
+  const bal = await walletRpc('wallet_balance', {});
+  if (typeof bal === 'number') { serverBalance = bal; serverReady = true; notify(); }
+}
+
+// Self-init: flip the wallet server-authoritative the moment auth resolves to a signed-in user.
+(async () => {
+  try {
+    const { subscribeAuthState } = await import('./auth.js');
+    if (typeof subscribeAuthState !== 'function') return;
+    subscribeAuthState((user) => {
+      if (user && user.id) {
+        if (user.id !== serverUserId || !serverReady) initServerWallet(user.id);
+      } else {
+        serverReady = false; serverUserId = null; notify();
+      }
+    });
+  } catch (_) {}
+})();
 
 function todayKey() {
   const d = new Date();
@@ -62,7 +113,7 @@ function trackCoin(action, amount, reason) {
 }
 
 export function getMeowCoins() {
-  return readWallet().balance;
+  return serverReady ? Math.max(0, serverBalance) : readWallet().balance;
 }
 
 // --- coin-earned popup ------------------------------------------------------------------
@@ -204,18 +255,28 @@ export function grantMeowCoins(amount, reason, key) {
   const amt = Math.max(0, Math.floor(Number(amount) || 0));
   if (!amt) return getMeowCoins();
   const w = readWallet();
+  // The local `keys` map dedups the POPUP per-device (so it doesn't re-pop). Server-side
+  // idempotency (the same key) is the real anti-double-credit guard for signed-in users.
   if (key) {
-    if (w.keys[key]) return w.balance;
+    if (w.keys[key]) return getMeowCoins();
     w.keys[key] = 1;
   }
-  w.balance += amt;
-  writeWallet(w);
+  if (serverReady) {
+    // Balance is authoritative server-side: persist only the key locally, credit the server,
+    // reconcile the cached balance on return. (Don't touch the local balance.)
+    writeWallet(w); // saves keys; notify() shows the (unchanged) server balance
+    walletRpc('wallet_grant', { p_key: key || ('grant-' + reason + '-' + Date.now()), p_amount: amt, p_reason: reason || 'grant' })
+      .then((bal) => { if (typeof bal === 'number') { serverBalance = bal; notify(); } });
+  } else {
+    w.balance += amt;
+    writeWallet(w);
+  }
   trackCoin('earn', amt, reason || 'grant');
   try { showCoinPopup(amt, reason); } catch (_) { /* popup is non-critical */ }
-  return w.balance;
+  return getMeowCoins();
 }
 
-// Spend; returns { ok, balance }. ok=false (and no deduction) when the balance is too low.
+// Sync spend (GUEST path / back-compat). Returns { ok, balance }.
 export function spendMeowCoins(amount, reason) {
   const amt = Math.max(0, Math.floor(Number(amount) || 0));
   const w = readWallet();
@@ -224,6 +285,20 @@ export function spendMeowCoins(amount, reason) {
   writeWallet(w);
   trackCoin('spend', amt, reason || 'spend');
   return { ok: true, balance: w.balance };
+}
+
+// Server-authoritative spend for REAL purchases (gacha). Awaited by the caller so a signed-in
+// user can never double-spend across devices (the DB checks balance + deducts atomically).
+export async function spendCoins(amount, reason) {
+  const amt = Math.max(0, Math.floor(Number(amount) || 0));
+  if (serverReady) {
+    const bal = await walletRpc('wallet_spend', { p_amount: amt, p_reason: reason || 'spend' });
+    if (typeof bal !== 'number' || bal < 0) return { ok: false, balance: getMeowCoins() };
+    serverBalance = bal; notify();
+    trackCoin('spend', amt, reason || 'spend');
+    return { ok: true, balance: bal };
+  }
+  return spendMeowCoins(amount, reason);
 }
 
 export function canAfford(amount) {

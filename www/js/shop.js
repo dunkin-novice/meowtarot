@@ -4,7 +4,7 @@
 // from decks you don't own yet). Gallery: every deck, searchable, star-pinnable, auto-sorted
 // pinned → not-owned → owned. (Pull ×10 intentionally removed per founder.)
 import { applyLocaleMeta, applyTranslations, initShell, pathHasThaiPrefix } from './common.js';
-import { getMeowCoins, spendMeowCoins, onMeowCoinsChange } from './meow-coin.js';
+import { getMeowCoins, spendCoins, onMeowCoinsChange } from './meow-coin.js';
 import {
   getAllDecks, getActiveDeckId, setActiveDeck, canUnlockDeck, purchaseDeck,
   isPinnedDeck, togglePinnedDeck,
@@ -293,15 +293,16 @@ function showNotEnough() {
   requestAnimationFrame(() => ov.classList.add('in'));
 }
 
-function doPull() {
+async function doPull() {
   if (state.phase !== 'idle') return;
   if (getMeowCoins() < PULL) { showNotEnough(); return; }
   const pool = gachaDecks().filter((d) => !canUnlockDeck(d.id));
   if (!pool.length) { showToast(pick('You’ve collected every deck! 🎉', 'สะสมครบทุกสำรับแล้ว! 🎉')); return; }
-  const res = spendMeowCoins(PULL, 'gacha_pull');
-  if (!res.ok) { showNotEnough(); return; }
+  state.phase = 'spin'; // lock immediately so a double-tap can't double-spend while we await
+  // Server-authoritative spend when signed in (atomic; can't double-spend across devices).
+  const res = await spendCoins(PULL, 'gacha_pull');
+  if (!res.ok) { state.phase = 'idle'; showNotEnough(); return; }
   const won = pool[Math.floor(Math.random() * pool.length)];
-  state.phase = 'spin';
   runRoulette(won);
   refreshHeroStats();
 }
