@@ -1943,6 +1943,47 @@ body[data-page='home'] .section-block {
   margin-top: 4px;
   color: var(--mt-plum-mid, #6b4a86);
 }
+.mt-coin-pop__cta {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(184, 137, 92, 0.32);
+  width: 100%;
+  max-width: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.mt-coin-pop__keep {
+  font-family: var(--mt-font-body, sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mt-plum, #3d1a5c);
+  margin: 0 0 2px;
+  text-align: center;
+}
+.mt-coin-pop__signin {
+  border: none;
+  border-radius: 13px;
+  padding: 12px 16px;
+  font-family: var(--mt-font-body, sans-serif);
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff8e7;
+  background: var(--mt-cta-grad, linear-gradient(135deg, #d4972c, #d12878));
+  cursor: pointer;
+  box-shadow: 0 8px 20px -6px rgba(209, 40, 120, 0.5);
+}
+.mt-coin-pop__later {
+  border: none;
+  background: transparent;
+  font-family: var(--mt-font-body, sans-serif);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--mt-plum-mid, #6b4a86);
+  cursor: pointer;
+  padding: 4px;
+}
 @media (prefers-reduced-motion: reduce) {
   .mt-coin-pop, .mt-coin-pop__icon { transition: none; animation: none; }
 }
@@ -2225,7 +2266,7 @@ body[data-page='home'] .section-block {
 .mt-ach-row.is-done .mt-ach-row__deck, .mt-ach-row.is-done .mt-ach-row__reward { opacity: .55; }
 .mt-ach-row__badge { width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 38% 30%, #fff0c8, #e8c478 46%, #c08327); display: flex; align-items: center; justify-content: center; color: #7a4a10; font-size: 15px; }
 .mt-ach-row__coin { display: inline-flex; align-items: center; gap: 2px; font-size: 9.5px; font-weight: 800; color: #b07a1e; }
-.mt-ach-row__coin img { width: 11px; height: 11px; display: block; }
+.mt-ach-row__coin img { width: 14px; height: 14px; display: block; }
 
 /* --- achievement-unlocked popup --- */
 .mt-au-overlay { position: fixed; inset: 0; z-index: 140; display: flex; align-items: center; justify-content: center; padding: 22px; background: rgba(20,14,40,0); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); opacity: 0; transition: opacity .3s ease, background .3s ease, backdrop-filter .3s ease; font-family: var(--mt-font-body, 'DM Sans', sans-serif); }

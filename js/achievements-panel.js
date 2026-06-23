@@ -115,7 +115,7 @@ function rowEl(it, lang, { next = false } = {}) {
   }
   const coin = document.createElement('span');
   coin.className = 'mt-ach-row__coin';
-  coin.innerHTML = `<img src="/assets/meow-coin.svg" alt="" aria-hidden="true" />${it.coins}`;
+  coin.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />${it.coins}`;
   reward.appendChild(coin);
   row.appendChild(reward);
 

@@ -54,7 +54,7 @@ function buildHero() {
         <p class="gacha-sub">${pick('Pull a mystery deck — 120 Meow Coins each. Every pull is a deck you don’t own yet.', 'สุ่มสำรับปริศนา — ครั้งละ 120 เหรียญเหมียว ทุกครั้งได้สำรับที่คุณยังไม่มี')}</p>
       </div>
       <div class="gacha-balance">
-        <img src="/assets/meow-coin.svg" alt="" class="gacha-balance__icon" aria-hidden="true" />
+        <img src="/assets/meow-coin-200.webp" alt="" class="gacha-balance__icon" aria-hidden="true" />
         <span class="gacha-balance__num">0</span>
       </div>
     </div>
@@ -66,7 +66,7 @@ function buildHero() {
     </div>
     <button type="button" class="gacha-pull-btn" id="gacha-pull">
       <span>${pick('Pull', 'สุ่ม')} ·</span>
-      <img src="/assets/meow-coin.svg" alt="" aria-hidden="true" /><span>120</span>
+      <img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /><span>120</span>
     </button>
     <p class="gacha-helper" id="gacha-helper"></p>`;
   return wrap;
@@ -225,7 +225,7 @@ function openPreview(deck) {
         btn.addEventListener('click', () => { setActiveDeck(deck.id); close(); renderGallery(); });
       } else {
         btn.className = 'mt-dp-btn mt-dp-btn--buy';
-        btn.innerHTML = `<img src="/assets/meow-coin.svg" alt="" aria-hidden="true" />${pick('Pull', 'สุ่ม')} · ${PULL}`;
+        btn.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />${pick('Pull', 'สุ่ม')} · ${PULL}`;
         btn.addEventListener('click', () => { close(); window.setTimeout(doPull, 120); });
       }
       cond.appendChild(btn);
@@ -252,7 +252,7 @@ function showNotEnough() {
     <div class="gacha-sheet">
       <div class="gacha-sheet__grip"></div>
       <div class="gacha-sheet__head">
-        <div class="gacha-sheet__coin"><img src="/assets/meow-coin.svg" alt="" aria-hidden="true" /></div>
+        <div class="gacha-sheet__coin"><img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /></div>
         <div>
           <h3 class="gacha-sheet__title">${pick('Not enough Meow Coins yet', 'เหรียญเหมียวยังไม่พอ')}</h3>
           <p class="gacha-sheet__body">${pick(`Keep earning! You have ${fmt(bal)} / ${PULL}.`, `สะสมต่อได้เลย! คุณมี ${fmt(bal)} / ${PULL}`)}</p>
@@ -366,7 +366,7 @@ function showReveal(ov, won) {
       <p class="gacha-reveal-note">${pick('Added to Your Decks', 'เพิ่มในสำรับของคุณแล้ว')}</p>
       <button type="button" class="gacha-reveal-primary" id="gacha-setactive">${pick('Set active', 'ใช้สำรับนี้')}</button>
       <div class="gacha-reveal-row">
-        <button type="button" class="gacha-reveal-secondary${canAgain ? '' : ' is-dim'}" id="gacha-again"><img src="/assets/meow-coin.svg" alt="" aria-hidden="true" />${pick('Pull again', 'สุ่มอีกครั้ง')} · ${PULL}</button>
+        <button type="button" class="gacha-reveal-secondary${canAgain ? '' : ' is-dim'}" id="gacha-again"><img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />${pick('Pull again', 'สุ่มอีกครั้ง')} · ${PULL}</button>
         <button type="button" class="gacha-reveal-ghost" id="gacha-done">${pick('Done', 'เสร็จสิ้น')}</button>
       </div>
     </div>`;

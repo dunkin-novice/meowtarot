@@ -748,9 +748,21 @@ export function initShell(state, afterApply, activePage, options = {}) {
   // the daily reading, then get a sign-in CTA). Dynamic import dodges an auth<->common cycle;
   // grantDailyLogin is idempotent per day, and we re-check when auth resolves.
   try { renderMeowCoinChip(); } catch (_) { /* coins non-critical */ }
-  import('./auth.js').then(({ getCurrentUserSync, subscribeAuthState }) => {
+  // OAuth RETURN: after Google sign-in, Supabase hands the session back as ?code=… (PKCE) or
+  // #access_token=… The session is only exchanged when the Supabase client is CREATED, and the
+  // client is lazy — most pages create it on load, but not all. If we land back here with those
+  // markers, eagerly create the client (getCurrentUser) so the session is established + persisted
+  // on EVERY page, not just the eager-init ones (fixes "signed in on Google → back → still signed
+  // out"). 2026-06-23.
+  const _href = window.location.href || '';
+  const _isOAuthReturn = /[?&]code=/.test(_href) || /[#&]access_token=/.test(_href) || /[?&]error=/.test(_href);
+  import('./auth.js').then(({ getCurrentUserSync, subscribeAuthState, getCurrentUser }) => {
     const grantIfSignedIn = () => { try { if (getCurrentUserSync()) grantDailyLogin(); } catch (_) {} };
-    grantIfSignedIn();
+    if (_isOAuthReturn && typeof getCurrentUser === 'function') {
+      getCurrentUser().then(grantIfSignedIn).catch(() => {});
+    } else {
+      grantIfSignedIn();
+    }
     if (typeof subscribeAuthState === 'function') subscribeAuthState(grantIfSignedIn);
   }).catch(() => {});
 

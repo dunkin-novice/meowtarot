@@ -93,10 +93,11 @@ function playNextCoinPopup() {
   overlay.setAttribute('aria-live', 'polite');
   overlay.innerHTML =
     '<div class="mt-coin-pop">'
-    + '<img class="mt-coin-pop__icon" src="/assets/meow-coin.svg" alt="" aria-hidden="true" />'
+    + '<img class="mt-coin-pop__icon" src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />'
     + `<div class="mt-coin-pop__amount">+${next.amount}</div>`
     + `<div class="mt-coin-pop__unit">${th ? 'เหรียญเหมียว' : 'Meow Coins'}</div>`
     + `<div class="mt-coin-pop__reason">${coinReasonLabel(next.reason)}</div>`
+    + '<div class="mt-coin-pop__cta" hidden></div>'
     + '</div>';
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add('is-visible'));
@@ -112,8 +113,38 @@ function playNextCoinPopup() {
       playNextCoinPopup();
     }, 260);
   };
-  overlay.addEventListener('click', close);
-  window.setTimeout(close, 2200);
+  // Signed-in: tap-anywhere / auto-dismiss. Signed-out: this SAME popup grows a "sign in to keep
+  // your coins" CTA (merged — no second sign-in popup) and stays open until they act. (founder
+  // 2026-06-23) We DON'T auto-close until auth resolves (so a slow auth check can't dismiss the
+  // popup before a signed-out user sees the CTA); a 6s safety cap prevents a stuck popup.
+  let safety = window.setTimeout(close, 6000);
+  const autoDismissSignedIn = () => { window.clearTimeout(safety); window.setTimeout(close, 2000); };
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('.mt-coin-pop').addEventListener('click', (e) => {
+    if (e.target.closest('.mt-coin-pop__cta')) return; // CTA buttons handle themselves
+    close();
+  });
+
+  import('./auth.js').then(async ({ getCurrentUser, loginWithProvider, isAuthConfigured }) => {
+    if (typeof isAuthConfigured === 'function' && !isAuthConfigured()) { autoDismissSignedIn(); return; }
+    let user = null;
+    try { user = await getCurrentUser(); } catch (_) {}
+    if (closed) return;
+    if (user) { autoDismissSignedIn(); return; } // signed in → behave like the old toast
+    window.clearTimeout(safety); // signed out → keep it open so they can sign in
+    const cta = overlay.querySelector('.mt-coin-pop__cta');
+    if (!cta) { autoDismissSignedIn(); return; }
+    cta.hidden = false;
+    cta.innerHTML =
+      `<p class="mt-coin-pop__keep">${th ? 'ลงชื่อเข้าใช้เพื่อเก็บเหรียญไว้' : 'Sign in to keep your coins'}</p>`
+      + `<button type="button" class="mt-coin-pop__signin">${th ? 'เข้าสู่ระบบด้วย Google' : 'Sign in with Google'}</button>`
+      + `<button type="button" class="mt-coin-pop__later">${th ? 'ไว้ทีหลัง' : 'Maybe later'}</button>`;
+    cta.querySelector('.mt-coin-pop__signin').addEventListener('click', (e) => {
+      e.stopPropagation();
+      loginWithProvider('google').catch(() => {});
+    });
+    cta.querySelector('.mt-coin-pop__later').addEventListener('click', (e) => { e.stopPropagation(); close(); });
+  }).catch(() => {});
 }
 
 export function showCoinPopup(amount, reason) {
@@ -197,7 +228,7 @@ export function renderMeowCoinChip() {
   chip.className = 'mt-coin-chip';
   chip.href = isThai ? '/th/shop.html' : '/shop.html';
   chip.setAttribute('aria-label', isThai ? 'เหรียญเหมียว — ไปที่ร้านค้า' : 'Meow Coins — open shop');
-  chip.innerHTML = '<img src="/assets/meow-coin.svg" alt="" class="mt-coin-chip__icon" aria-hidden="true" />'
+  chip.innerHTML = '<img src="/assets/meow-coin-200.webp" alt="" class="mt-coin-chip__icon" aria-hidden="true" />'
     + '<span class="mt-coin-chip__num">0</span>';
   document.body.appendChild(chip);
   const numEl = chip.querySelector('.mt-coin-chip__num');

@@ -55,7 +55,7 @@ export function showAchievementUnlocked(opts = {}) {
         <div class="mt-au-visual">${visual}</div>
         <h2 class="mt-au-name">${name}</h2>
         <p class="mt-au-sub">${sub}</p>
-        <div class="mt-au-coinchip"><img src="/assets/meow-coin.svg" alt="" class="mt-au-coinchip__icon" aria-hidden="true" /><span>${th ? `+${coins} เหรียญเหมียว` : `+${coins} Meow Coins`}</span></div>
+        <div class="mt-au-coinchip"><img src="/assets/meow-coin-200.webp" alt="" class="mt-au-coinchip__icon" aria-hidden="true" /><span>${th ? `+${coins} เหรียญเหมียว` : `+${coins} Meow Coins`}</span></div>
         <div class="mt-au-actions">${buttons}</div>
       </div>
     </div>`;

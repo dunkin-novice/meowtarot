@@ -396,7 +396,7 @@ function renderAll() {
   nudge.className = 'decks-shop-nudge';
   nudge.href = localizePath('/shop.html', state.currentLang);
   nudge.innerHTML =
-    '<span class="decks-shop-nudge__icon"><img src="/assets/meow-coin.svg" alt="" aria-hidden="true" /></span>'
+    '<span class="decks-shop-nudge__icon"><img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /></span>'
     + '<span class="decks-shop-nudge__body">'
     + `<span class="decks-shop-nudge__title">${pickLocalized('Want more decks?', 'อยากได้สำรับเพิ่ม?')}</span>`
     + `<span class="decks-shop-nudge__sub">${pickLocalized('Earn Meow Coins from daily readings & streaks, then unlock new art styles in the Shop.', 'รับเหรียญเหมียวจากการเปิดไพ่รายวันและสตรีค แล้วปลดล็อกสไตล์ใหม่ในร้านค้า')}</span>`
