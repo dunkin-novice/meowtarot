@@ -253,29 +253,6 @@ function animateDealSlots(boardEl, slots, onDone) {
 // together (so all 4 rows and both sides appear at the same time), then inline styles are
 // cleared. No per-card translate / getBoundingClientRect / staggered timers (those were
 // fragile and could leave cards stuck invisible). ~0.3s vs the old multi-second sweep.
-function animateFullDeal(boardEl, slots, onDone) {
-  // Query the LIVE board nodes (not the passed array) so the reveal always lands on what's
-  // actually on screen — the collect faded the on-screen cards to opacity 0, and these are
-  // the nodes that must be brought back.
-  const live = Array.from(boardEl.querySelectorAll('.card-slot'));
-  requestAnimationFrame(() => {
-    live.forEach((slot) => {
-      slot.classList.add('card-visible');
-      slot.style.transition = 'opacity .28s ease, transform .28s ease';
-      slot.style.opacity = '1';
-      slot.style.transform = 'none';
-    });
-    setTimeout(() => {
-      live.forEach((slot) => {
-        slot.style.transition = '';
-        slot.style.transform = '';
-        slot.style.opacity = '';
-      });
-      onDone?.();
-    }, 340);
-  });
-}
-
 // Simple, jank-free collect for the 78-card board: fade + slight shrink in place, all at
 // once (no fly-to-centre transforms that thrashed layout on overlapping cards).
 function animateSimpleCollect(boardEl, slots) {
@@ -383,6 +360,47 @@ function animateDailyShuffleSlots(boardEl, slots, onDone) {
 // in render), then this deals the fresh pile back out card-by-card. Big boards (Celtic = 40)
 // use a tighter stagger so the whole deal still lands in well under 2s. Replaces the old
 // fan-out (animateDailyShuffleSlots) for daily + question + full.
+// Celtic / full board (40 cards) deal — ROBUST + self-contained. Operates on the LIVE DOM
+// (boardEl.querySelectorAll), NOT the setupBoard closure `slots` array, because that array can
+// diverge from the rendered cards on the full board and strand animateDealStack on an empty set
+// (the "shuffle freezes with the cards stuck at centre" bug — confirmed 2026-06-23: is-locked
+// cleared but card styles untouched = animateDealStack's empty-slots guard fired). No centre
+// gather either, so a hiccup can never leave a stacked pile — cards only ever fade/slide IN at
+// their grid slots, and a guaranteed setTimeout clears the inline styles no matter what.
+function animateFullDeal(boardEl, onDone) {
+  const slots = Array.from(boardEl.querySelectorAll('.card-slot'));
+  if (!slots.length) { onDone?.(); return; }
+  slots.forEach((slot) => {
+    slot.classList.add('card-visible');
+    slot.style.transition = 'none';
+    slot.style.transform = 'translateY(12px) scale(0.94)';
+    slot.style.opacity = '0';
+    slot.style.willChange = 'transform, opacity';
+  });
+  void boardEl.offsetWidth;
+  const stagger = 14;
+  const flight = 300;
+  const total = flight + slots.length * stagger + 160;
+  requestAnimationFrame(() => {
+    slots.forEach((slot, idx) => {
+      window.setTimeout(() => {
+        slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease-out`;
+        slot.style.transform = 'translateY(0) scale(1)';
+        slot.style.opacity = '1';
+      }, idx * stagger);
+    });
+  });
+  window.setTimeout(() => {
+    slots.forEach((slot) => {
+      slot.style.transition = '';
+      slot.style.transform = '';
+      slot.style.opacity = '';
+      slot.style.willChange = '';
+    });
+    onDone?.();
+  }, total);
+}
+
 function animateDealStack(boardEl, slots, onDone) {
   if (!slots.length) { onDone?.(); return; }
   // CRITICAL: clear any leftover transform first and force a reflow, so getBoundingClientRect
@@ -535,16 +553,20 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     refreshBadges();
     if (withAnimation) {
       boardEl.classList.add('is-locked');
-      // daily + question (profile 'daily') and full all deal one-by-one from the centre.
-      // Call directly (no rAF wrapper) — animateDealStack does its own reflow + a guaranteed
-      // setTimeout cleanup, so it can't get stranded by a dropped frame (Celtic blank-board bug).
-      const animate = (animationProfile === 'daily' || animationProfile === 'full')
-        ? animateDealStack
-        : animateDealSlots;
-      animate(boardEl, slots, () => {
+      const onDone = () => {
         boardEl.classList.remove('is-locked');
         refreshBadges();
-      });
+      };
+      // Full (Celtic) board uses its own DOM-based deal (robust against the closure/DOM slot
+      // divergence that froze the 40-card shuffle). daily + question ('daily' profile) keep the
+      // centre-spread animateDealStack (works for the 12-card boards, "spreads beautifully").
+      if (animationProfile === 'full') {
+        animateFullDeal(boardEl, onDone);
+      } else if (animationProfile === 'daily') {
+        animateDealStack(boardEl, slots, onDone);
+      } else {
+        animateDealSlots(boardEl, slots, onDone);
+      }
     } else {
       animateBoard(boardEl);
     }
@@ -560,12 +582,16 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
 
     if (withAnimation && previousSlots.length) {
       boardEl.classList.add('is-locked');
-      // Collect the current spread to the centre (visible converge), then re-deal. ALL boards
-      // (incl. the 40-card Celtic, which is a clean non-overlapping grid now) use the same
-      // visible collect — never the opacity:0 fade, which left the board blank if the re-deal
-      // hiccupped. (2026-06-22)
-      animateCollectSlots(boardEl, previousSlots);
-      setTimeout(proceed, STACK_DURATION);
+      if (animationProfile === 'full') {
+        // Full board: quick in-place fade-out, then re-deal via animateFullDeal (grid fade/slide-in).
+        // No centre collect — the 40-card gather is what kept stranding the deal. (2026-06-23)
+        previousSlots.forEach((s) => { s.style.transition = 'opacity 0.14s ease'; s.style.opacity = '0'; });
+        setTimeout(proceed, 150);
+      } else {
+        // daily + question: collect the spread to the centre (visible converge), then re-deal.
+        animateCollectSlots(boardEl, previousSlots);
+        setTimeout(proceed, STACK_DURATION);
+      }
     } else {
       proceed();
     }

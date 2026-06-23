@@ -691,12 +691,14 @@ body[data-page='question-draw'] .question-draw-shell[data-question-spread='story
     gap: 14px 6px !important;
     align-content: start;
   }
+  /* EXACT daily card sizing (was 420/40px → cards came out smaller than daily). */
   body[data-page='question-draw'] #question-card-board.card-board--three .card-slot {
-    max-width: clamp(40px, calc((100dvh - 420px) / 6), 64px);
+    max-width: clamp(38px, calc((100dvh - 384px) / 6), 64px);
   }
   body[data-page='question-draw'] .question-draw-counter { margin-top: 6px; }
-  /* Continue pinned to the bottom of the column, clear of the bottom-nav. */
-  body[data-page='question-draw'] .question-draw-cta-row { margin-top: auto; padding-top: 8px; }
+  /* Continue sits right below the board (like the Daily board) — NOT pinned to the bottom of the
+     column, which left a big empty gap under the spread. (founder 2026-06-23: match daily) */
+  body[data-page='question-draw'] .question-draw-cta-row { margin-top: 16px; padding-top: 8px; }
   /* Footer isn't needed during card selection — hide it so it can't force scroll. */
   body[data-page='question-draw'] #site-footer { display: none; }
 }
