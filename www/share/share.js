@@ -20,6 +20,7 @@ const shareBtn = document.getElementById('shareAction');
 const openLink = document.getElementById('openPosterLink');
 const retryBtn = document.getElementById('retryPoster');
 const backToReading = document.getElementById('backToReading');
+const reportBugBtn = document.getElementById('reportBugBtn');
 const sharePromptTitleEl = document.getElementById('sharePromptTitle');
 const sharePromptBodyEl = document.getElementById('sharePromptBody');
 const shareCopyPanelEl = document.getElementById('shareCopyPanel');
@@ -832,6 +833,18 @@ async function init() {
     backToReading.hidden = false;
     backToReading.textContent = lang === 'th' ? 'กลับหน้าแรก' : 'Back to Homepage';
     backToReading.href = lang === 'th' ? '/th/' : '/';
+  }
+
+  // "Report a bug" — bugs can happen on the poster too, and this page has no floating Report FAB
+  // (it's standalone). Lazy-loads the shared reporter on click. (founder 2026-06-23)
+  if (reportBugBtn && !reportBugBtn.dataset.bound) {
+    reportBugBtn.dataset.bound = '1';
+    reportBugBtn.textContent = lang === 'th' ? 'แจ้งปัญหา' : 'Report a bug';
+    reportBugBtn.addEventListener('click', () => {
+      import('../js/bug-report.js').then(({ showBugReport }) => showBugReport({ lang })).catch(() => {});
+    });
+  } else if (reportBugBtn) {
+    reportBugBtn.textContent = lang === 'th' ? 'แจ้งปัญหา' : 'Report a bug';
   }
 
   logFullPayload(currentPayload);

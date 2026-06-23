@@ -35,7 +35,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Noto+Serif+Thai:wght@500;600&family=Poppins:wght@500;600;700&family=Prata&family=Space+Grotesk:wght@400;500;600&display=swap"
     />
   </noscript>
-  <link rel="stylesheet" href="/share/share.css" />
+  <link rel="stylesheet" href="/share/share.css?v=20260623r" />
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -64,14 +64,22 @@
     <nav class="action-bar" aria-label="Share actions">
       <button class="action-btn primary" id="shareAction">Share</button>
       <button class="action-btn" id="retryPoster" type="button" hidden>Retry</button>
-      <a class="action-link" id="backToReading" href="/">Back to Homepage</a>
+      <button class="action-btn ghost" id="reportBugBtn" type="button">Report a bug</button>
+      <a class="action-btn ghost" id="backToReading" href="/">Back to Homepage</a>
       <a class="action-link" id="openPosterLink" href="#" target="_blank" rel="noopener" hidden>Open poster image</a>
     </nav>
   </main>
 
+  <!-- Supabase config — needed so the in-poster "Report a bug" reporter can send (2026-06-23). -->
+  <script>
+    window.__MEOWTAROT_SUPABASE__ = {
+      url: 'https://dzgjjvuiliickdgzshjr.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6Z2pqdnVpbGlpY2tkZ3pzaGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTUyMjMsImV4cCI6MjA5MjI3MTIyM30.dZMHmPe_BdLoDGbwUqLByFx9WYAzP1aCrIw3f2XjSNk'
+    };
+  </script>
   <!-- Cache-bust version: this HTML is served fresh, so bumping ?v= here delivers a fresh
        share.js + poster.js immediately (they sit behind a multi-hour edge cache otherwise).
        BUMP THIS on any change to share.js or poster.js. -->
-  <script type="module" src="/share/share.js?v=20260622m"></script>
+  <script type="module" src="/share/share.js?v=20260623r"></script>
 </body>
 </html>
