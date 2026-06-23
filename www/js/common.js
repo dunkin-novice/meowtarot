@@ -779,6 +779,10 @@ export function initShell(state, afterApply, activePage, options = {}) {
     if (typeof subscribeAuthState === 'function') subscribeAuthState((u) => { grantIfSignedIn(); maybeRestoreAfterSignin(u); });
   }).catch(() => {});
 
+  // Referral: load on every page so an invite link (?ref=CODE) is captured anywhere + auto-redeemed
+  // once the user signs in. (Stage 3, founder 2026-06-23.) Self-inits on import.
+  import('./referral.js').catch(() => {});
+
   // Phase 5: global top navbar removed. The hamburger nav + brand text
   // + EN/TH lang toggle that used to render here are replaced by the
   // bottom tab bar (Features/Today/Draw/Cards/Profile) and the

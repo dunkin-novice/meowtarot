@@ -9467,3 +9467,28 @@ body[data-page='home'] .reading-path-card:focus-visible {
 html[lang='th'] .dd-header__name,
 html[lang='th'] .dd-section__title,
 html[lang='th'] .dd-focus__name { font-family: 'Sarabun', 'Playfair Display', serif; font-style: normal; }
+
+/* ============================================================================
+   Referral panel (Profile) — invite friends + redeem a code. (Stage 3, 2026-06-23) (.mt-ref)
+   ========================================================================== */
+.mt-ref__title { font-family: var(--mt-font-display, 'Playfair Display', serif); font-size: 20px; font-weight: 600; color: var(--mt-plum, #3d1a5c); margin: 0 0 8px; }
+.mt-ref__desc { font-size: 13px; line-height: 1.5; color: var(--mt-plum-mid, #6b4a86); margin: 0 0 14px; }
+.mt-ref__codebox { display: flex; align-items: center; gap: 8px; background: rgba(232, 196, 120, 0.16); border: 1px dashed rgba(192, 131, 39, 0.5); border-radius: 12px; padding: 10px 10px 10px 14px; }
+.mt-ref__code { flex: 1; font-family: var(--mt-font-body, sans-serif); font-weight: 800; font-size: 17px; letter-spacing: 0.12em; color: var(--mt-plum, #3d1a5c); }
+.mt-ref__copy { flex: none; border: none; border-radius: 10px; padding: 9px 14px; font-family: var(--mt-font-body, sans-serif); font-weight: 700; font-size: 13px; color: #fff8e7; background: var(--mt-cta-grad, linear-gradient(135deg, #d4972c, #d12878)); cursor: pointer; box-shadow: 0 6px 16px -7px rgba(209, 40, 120, 0.55); }
+.mt-ref__ladder { margin-top: 14px; }
+.mt-ref__ladder-row { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--mt-plum, #3d1a5c); margin-bottom: 6px; }
+.mt-ref__coins { color: var(--mt-gold-deep, #c08327); }
+.mt-ref__track { height: 7px; border-radius: 6px; background: rgba(61, 26, 92, 0.12); overflow: hidden; }
+.mt-ref__fill { height: 100%; border-radius: 6px; width: 0; background: linear-gradient(90deg, var(--mt-rose, #e8457a), var(--mt-gold-deep, #c9933a)); transition: width 0.5s ease; }
+.mt-ref__hr { border: none; border-top: 1px solid rgba(122, 95, 153, 0.18); margin: 16px 0 12px; }
+.mt-ref__redeem-label { font-size: 13px; font-weight: 600; color: var(--mt-plum, #3d1a5c); margin: 0 0 8px; }
+.mt-ref__redeem { display: flex; gap: 8px; }
+.mt-ref__input { flex: 1; min-width: 0; border: 1px solid rgba(61, 26, 92, 0.25); border-radius: 11px; padding: 11px 13px; font-family: var(--mt-font-body, sans-serif); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--mt-plum, #3d1a5c); text-transform: uppercase; background: #fff; }
+.mt-ref__input::placeholder { letter-spacing: 0.02em; text-transform: none; font-weight: 500; color: #a487c4; }
+.mt-ref__redeem-btn { flex: none; border: none; border-radius: 11px; padding: 11px 18px; font-family: var(--mt-font-body, sans-serif); font-weight: 700; font-size: 14px; color: var(--mt-plum, #3d1a5c); background: rgba(61, 26, 92, 0.08); cursor: pointer; }
+.mt-ref__redeem-btn:disabled { opacity: 0.55; cursor: default; }
+.mt-ref__msg { margin: 10px 0 0; font-size: 13px; font-weight: 600; }
+.mt-ref__msg.is-ok { color: #2f9e5a; }
+.mt-ref__msg.is-err { color: #c0392b; }
+.mt-ref__signin { border: none; border-radius: 13px; padding: 12px 18px; font-family: var(--mt-font-body, sans-serif); font-weight: 700; font-size: 14px; color: #fff8e7; background: var(--mt-cta-grad, linear-gradient(135deg, #d4972c, #d12878)); cursor: pointer; box-shadow: 0 8px 20px -6px rgba(209, 40, 120, 0.5); }

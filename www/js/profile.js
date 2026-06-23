@@ -13,6 +13,7 @@ import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAcco
 import { loadReadings } from './reading-history.js';
 import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
 import { renderAchievementsPanel } from './achievements-panel.js';
+import { renderReferralPanel } from './referral.js';
 
 const state = {
   currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
@@ -751,6 +752,8 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   renderLifetimeStats(dict);
   const achieveEl = document.getElementById('profile-achievements');
   if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);
+  const referralEl = document.getElementById('profile-referral');
+  if (referralEl) renderReferralPanel(referralEl, state.currentLang);
   renderHistory(dict);
   renderContact(dict);
   renderOther(dict);

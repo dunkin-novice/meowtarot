@@ -73,6 +73,13 @@ async function initServerWallet(userId) {
   if (typeof bal === 'number') { serverBalance = bal; serverReady = true; notify(); }
 }
 
+// Re-pull the authoritative balance from the server (e.g. after a referral credit). No-op for guests.
+export async function refreshServerWallet() {
+  if (!serverUserId) return;
+  const bal = await walletRpc('wallet_balance', {});
+  if (typeof bal === 'number') { serverBalance = bal; serverReady = true; notify(); }
+}
+
 // Self-init: flip the wallet server-authoritative the moment auth resolves to a signed-in user.
 (async () => {
   try {
