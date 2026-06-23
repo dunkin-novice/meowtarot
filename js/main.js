@@ -378,13 +378,15 @@ function animateFullDeal(boardEl, onDone) {
     slot.style.willChange = 'transform, opacity';
   });
   void boardEl.offsetWidth;
-  const stagger = 14;
-  const flight = 300;
-  const total = flight + slots.length * stagger + 160;
+  // Founder 2026-06-23: the 40-card deal felt a touch too fast — slowed ~1s (stagger 14→30,
+  // flight 300→500) for a more graceful Celtic spread (still lands well under 2.5s).
+  const stagger = 30;
+  const flight = 500;
+  const total = flight + slots.length * stagger + 180;
   requestAnimationFrame(() => {
     slots.forEach((slot, idx) => {
       window.setTimeout(() => {
-        slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms ease-out`;
+        slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease-out`;
         slot.style.transform = 'translateY(0) scale(1)';
         slot.style.opacity = '1';
       }, idx * stagger);

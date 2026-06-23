@@ -613,7 +613,7 @@ body[data-page='question-draw'] #question-card-board.card-board--three {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px 6px;
   place-items: center;
-  width: auto;
+  width: min(320px, 100%);
   max-width: 320px;
   margin: 14px auto 0;
   padding: 4px 0;
@@ -685,7 +685,11 @@ body[data-page='question-draw'] .question-draw-shell[data-question-spread='story
   body[data-page='question-draw'] #question-card-board.card-board--three {
     flex: 0 0 auto;
     min-height: 0;
-    width: auto;
+    /* DEFINITE width — as a flex item with auto side-margins the board was shrink-wrapping to its
+       cards (4 collapsed 34px columns = a 156px board) instead of filling to 320px, so the cards
+       came out ~half the Daily size. A definite width makes the 4×1fr columns ~75px → 61px cards,
+       exactly matching the Daily board. (founder 2026-06-23) */
+    width: min(320px, 100%);
     max-width: 320px;
     margin: 12px auto 0 !important;
     gap: 14px 6px !important;
