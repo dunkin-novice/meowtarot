@@ -656,6 +656,7 @@ function renderStreakChip() {
 
     let bar = chip.querySelector('.mt-chip-bar');
     const dropBar = () => { if (bar) { bar.remove(); bar = null; } chip.classList.remove('mt-has-progress'); };
+    const dropSub = () => { const su = chip.querySelector('.mt-chip-sub'); if (su) su.remove(); chip.style.removeProperty('--mt-chip-deg'); };
 
     if (!signedIn) {
       // Local streaks are fragile (cache-clear / no cross-device). Show the streak the
@@ -665,6 +666,7 @@ function renderStreakChip() {
       chip.setAttribute('aria-label', dict.dailyStreakSaveCta);
       chip.classList.add('is-cta');
       dropBar();
+      dropSub();
       return;
     }
 
@@ -676,24 +678,21 @@ function renderStreakChip() {
       numEl.textContent = String(next.remaining);
       labelEl.textContent = dict.deckUnlockProgress || 'to next deck';
       chip.setAttribute('aria-label', `${next.remaining} ${dict.deckUnlockProgress || 'to next deck'} (${next.current}/${next.target})`);
-      if (!bar) {
-        bar = document.createElement('span');
-        bar.className = 'mt-chip-bar';
-        bar.setAttribute('aria-hidden', 'true');
-        const fill = document.createElement('span');
-        fill.className = 'mt-chip-bar__fill';
-        bar.appendChild(fill);
-        chip.appendChild(bar);
-      }
+      // Progress RING (Next Deck Chip V1): the conic fill = days-done ÷ milestone.
+      dropBar(); // ring replaces the old horizontal bar
       chip.classList.add('mt-has-progress');
-      const pct = Math.max(0, Math.min(100, Math.round((next.current / Math.max(1, next.target)) * 100)));
-      bar.querySelector('.mt-chip-bar__fill').style.width = `${pct}%`;
+      const pct = Math.max(0, Math.min(100, (next.current / Math.max(1, next.target)) * 100));
+      chip.style.setProperty('--mt-chip-deg', `${Math.round(pct * 3.6)}deg`);
+      let sub = chip.querySelector('.mt-chip-sub');
+      if (!sub) { sub = document.createElement('span'); sub.className = 'mt-chip-sub'; labelEl.insertAdjacentElement('afterend', sub); }
+      sub.textContent = state.currentLang === 'th' ? `วันที่ ${next.current}/${next.target}` : `Day ${next.current} of ${next.target}`;
     } else {
       // All decks unlocked — fall back to the streak.
       numEl.textContent = streak >= 1 ? String(streak) : '✦';
       labelEl.textContent = streak >= 1 ? dict.dailyStreakLabel : dict.dailyStreakStart;
       chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
       dropBar();
+      dropSub();
     }
   });
 }
@@ -794,6 +793,14 @@ function ensureChipProgressStyles() {
     .daily-topbar__streak-chip.mt-has-progress,.full-topbar__streak-chip.mt-has-progress{padding-bottom:9px;cursor:pointer;}
     .mt-chip-bar{position:absolute;left:8px;right:8px;bottom:3px;height:3px;border-radius:2px;background:rgba(61,26,92,.14);overflow:hidden;}
     .mt-chip-bar__fill{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--mt-rose,#e89bc0),var(--mt-gold-deep,#c9933a));transition:width .45s ease;}
+    /* "Next deck" progress RING (Claude Design "Next Deck Chip" V1, founder 2026-06-23): a
+       rose→gold conic ring fills around the days-remaining number; replaces the flat number. */
+    .mt-has-progress .daily-topbar__streak-num,.mt-has-progress .full-topbar__streak-num{position:relative;width:30px;height:30px;min-width:30px;display:inline-flex;align-items:center;justify-content:center;background:transparent!important;box-shadow:none!important;font-family:var(--mt-font-display,'Cormorant Garamond',serif);font-style:italic;font-weight:600;font-size:14px;color:var(--mt-plum,#3d1a5c);}
+    .mt-has-progress .daily-topbar__streak-num::before,.mt-has-progress .full-topbar__streak-num::before{content:'';position:absolute;inset:0;border-radius:50%;z-index:-1;background:conic-gradient(from -90deg,var(--mt-rose,#e8457a),var(--mt-gold-deep,#c9933a) var(--mt-chip-deg,0deg),rgba(61,26,92,.15) var(--mt-chip-deg,0deg));-webkit-mask:radial-gradient(closest-side,transparent 62%,#000 63%);mask:radial-gradient(closest-side,transparent 62%,#000 63%);transition:background .45s ease;}
+    .mt-has-progress.daily-topbar__streak-chip,.mt-has-progress.full-topbar__streak-chip{padding-bottom:6px;animation:mtChipGlow 2.8s ease-in-out infinite;}
+    .mt-chip-sub{display:block;font-size:9px;font-weight:600;color:var(--mt-plum-mid,#a487c4);margin-top:1px;letter-spacing:.01em;}
+    @keyframes mtChipGlow{0%,100%{box-shadow:0 4px 12px -4px rgba(61,26,92,.32);}50%{box-shadow:0 4px 12px -4px rgba(61,26,92,.32),0 0 13px 1px rgba(232,69,122,.32);}}
+    @media (prefers-reduced-motion: reduce){.mt-has-progress.daily-topbar__streak-chip,.mt-has-progress.full-topbar__streak-chip{animation:none;}}
     .mt-reward-overlay{position:fixed;inset:0;z-index:1320;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(28,12,52,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s ease;}
     .mt-reward-overlay.in{opacity:1;}
     .mt-reward{position:relative;width:100%;max-width:320px;background:linear-gradient(180deg,#fbf6ff,#f3ecfc);border-radius:22px;padding:24px 22px 22px;text-align:center;box-shadow:0 18px 50px rgba(28,12,52,.35);transform:translateY(10px) scale(.98);transition:transform .22s ease;}
