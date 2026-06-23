@@ -175,7 +175,8 @@ function buildDeckCell(deck) {
 
   const name = document.createElement('div');
   name.className = 'gacha-cell__name' + (owned ? '' : ' is-locked');
-  name.textContent = owned ? deckName(deck) : '? ? ?';
+  // Show the real deck name even for un-owned decks (founder 2026-06-23 — was '? ? ?').
+  name.textContent = deckName(deck);
   cell.appendChild(name);
 
   if (active) {

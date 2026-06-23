@@ -756,14 +756,25 @@ export function initShell(state, afterApply, activePage, options = {}) {
   // out"). 2026-06-23.
   const _href = window.location.href || '';
   const _isOAuthReturn = /[?&]code=/.test(_href) || /[#&]access_token=/.test(_href) || /[?&]error=/.test(_href);
+  // After sign-in we land on profile.html (the clean redirect target); if a return URL was stashed
+  // (loginWithProvider), bounce the now-signed-in user BACK to where they were (e.g. the reading
+  // result) so they don't get stranded on Profile. Consumed once. (founder 2026-06-23)
+  const maybeRestoreAfterSignin = (user) => {
+    if (!user) return;
+    let ret = null;
+    try { ret = localStorage.getItem('mt_signin_return'); } catch (_) {}
+    if (!ret) return;
+    try { localStorage.removeItem('mt_signin_return'); } catch (_) {}
+    if (ret !== window.location.href) { try { window.location.replace(ret); } catch (_) {} }
+  };
   import('./auth.js').then(({ getCurrentUserSync, subscribeAuthState, getCurrentUser }) => {
     const grantIfSignedIn = () => { try { if (getCurrentUserSync()) grantDailyLogin(); } catch (_) {} };
     if (_isOAuthReturn && typeof getCurrentUser === 'function') {
-      getCurrentUser().then(grantIfSignedIn).catch(() => {});
+      getCurrentUser().then((u) => { grantIfSignedIn(); maybeRestoreAfterSignin(u); }).catch(() => {});
     } else {
       grantIfSignedIn();
     }
-    if (typeof subscribeAuthState === 'function') subscribeAuthState(grantIfSignedIn);
+    if (typeof subscribeAuthState === 'function') subscribeAuthState((u) => { grantIfSignedIn(); maybeRestoreAfterSignin(u); });
   }).catch(() => {});
 
   // Phase 5: global top navbar removed. The hamburger nav + brand text

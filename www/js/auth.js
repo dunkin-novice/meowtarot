@@ -280,11 +280,12 @@ export async function loginWithProvider(provider = 'google') {
   }
   const client = await getSupabaseClient();
   if (!client) throw new Error(AUTH_CONFIG_ERROR);
-  // Return to a CLEAN, stable URL (the Profile page) rather than window.location.href. The full
-  // href carries volatile query/hash (reading state, ?topic=…) that often fails Supabase's
-  // Redirect-URL allow-list → Supabase silently falls back to the Site URL and the session never
-  // lands where we are. profile.html is a simple URL (easy to allow-list) AND it's where the user
-  // sees they're signed in. (founder 2026-06-23 — sign-in wasn't persisting after Google.)
+  // Return to a CLEAN, stable URL (profile.html) rather than window.location.href — the full href
+  // carries volatile query/hash that often fails Supabase's Redirect-URL allow-list → Supabase
+  // falls back to Site URL and the session never lands. BUT we remember where the user was first,
+  // so common.js can bounce them BACK there once signed in — so they stay on (e.g.) the reading
+  // result instead of getting stranded on Profile. (founder 2026-06-23)
+  try { localStorage.setItem('mt_signin_return', window.location.href); } catch (_) {}
   const redirectTo = `${window.location.origin}${authLocale() === 'th' ? '/th' : ''}/profile.html`;
   const { error } = await client.auth.signInWithOAuth({
     provider: safeProvider,
