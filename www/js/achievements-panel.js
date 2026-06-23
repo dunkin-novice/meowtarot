@@ -9,6 +9,7 @@
  */
 import { getAllDecks } from './data.js';
 import { showDeckPreview } from './deck-preview.js';
+import { getCurrentUserSync, loginWithProvider } from './auth.js';
 import {
   isDailyLoginClaimed, isDailyReadingClaimed, isWeeklyQuestionClaimed,
   isMonthlyCelticClaimed, isWeeklyStreakClaimed,
@@ -154,12 +155,27 @@ function rowEl(it, lang, { next = false } = {}) {
               : `${it.req} (${it.cur}/${it.total})`;
           }
           cond.appendChild(text);
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'mt-dp-btn mt-dp-btn--close';
-          btn.textContent = th ? 'เข้าใจแล้ว' : 'Got it';
-          btn.addEventListener('click', close);
-          cond.appendChild(btn);
+          // Signed-out: these reward decks are tied to the account, so nudge sign-in to collect
+          // them. (founder 2026-06-23) Signed-in: just a dismiss button.
+          if (!getCurrentUserSync()) {
+            const cta = document.createElement('p');
+            cta.className = 'mt-dp-cond-text';
+            cta.textContent = th ? 'เข้าสู่ระบบเพื่อสะสมสำรับใหม่' : 'Sign in to collect new decks';
+            cond.appendChild(cta);
+            const signin = document.createElement('button');
+            signin.type = 'button';
+            signin.className = 'mt-dp-btn mt-dp-btn--buy';
+            signin.textContent = th ? 'เข้าสู่ระบบด้วย Google' : 'Sign in with Google';
+            signin.addEventListener('click', () => { loginWithProvider('google').catch(() => {}); });
+            cond.appendChild(signin);
+          } else {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'mt-dp-btn mt-dp-btn--close';
+            btn.textContent = th ? 'เข้าใจแล้ว' : 'Got it';
+            btn.addEventListener('click', close);
+            cond.appendChild(btn);
+          }
         },
       });
     });
