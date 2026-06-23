@@ -3620,33 +3620,9 @@ function renderQuestion(cards, dict) {
       if (luckyChip) caption.appendChild(luckyChip);
     }
 
-    // Single-language inline interpretation paragraph per active locale.
-    // Quick uses tarot_imply_*; Story uses standalone_{position}_*.
-    let inlineActive = '';
-    if (orderedCards.length === 1) {
-      // Quick Pull = the "present" answer. Lead with the standalone present-position
-      // interpretation (a real answer, topic-agnostic so it complements the topic
-      // panel below), never the reflection question. Falls back to the keyword line.
-      inlineActive = state.currentLang === 'th'
-        ? (card.standalone_present_th || card.tarot_imply_th || card.reading_summary_preview_th
-           || card.standalone_present_en || card.tarot_imply_en || '')
-        : (card.standalone_present_en || card.tarot_imply_en || card.reading_summary_preview_en || '');
-    } else {
-      inlineActive = state.currentLang === 'th'
-        ? (card[`standalone_${positionStr}_th`] || '')
-        : (card[`standalone_${positionStr}_en`] || '');
-    }
-    // Quick (1-card) result: omit the standalone inline meaning — the topic
-    // perspective panel below is the single answer (founder request 2026-06-20).
-    // The 3-card Story spread keeps its per-position standalone text.
-    if (inlineActive && orderedCards.length > 1) {
-      const p = document.createElement('p');
-      p.className = state.currentLang === 'th'
-        ? 'spread-inline-text spread-inline-text--th thai'
-        : 'spread-inline-text spread-inline-text--en';
-      p.textContent = inlineActive;
-      caption.appendChild(p);
-    }
+    // Per-card "Detail" text REMOVED under each card (founder 2026-06-23): the Story spread now
+    // shows the 3 cards in a row, then the reading below (topic perspective / guidance + takeaway
+    // + energy) — the per-position standalone paragraph was redundant with that.
 
     cardWrap.appendChild(caption);
     cardWrap.addEventListener('click', () => openCardSheet(card));

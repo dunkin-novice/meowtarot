@@ -192,27 +192,30 @@ body[data-page='reading'] .panel--spread[data-spread-count='1'] .reading-spread-
 
 
 /* §6 — Spread panel: Story layout (3 cards stacked rows) */
+/* 3-up ROW of vertical mini-cards: [Card1][Card2][Card3] (founder 2026-06-23, was stacked rows). */
 body[data-page='reading'] .panel--spread[data-spread-count='3'] .reading-spread-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  align-items: start;
+  margin-top: 16px;
 }
 
 body[data-page='reading'] .panel--spread[data-spread-count='3'] .reading-spread-card {
   position: relative;
   display: flex;
-  gap: 14px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.82);
-  border-radius: 20px;
+  border-radius: 16px;
   border: none;
-  padding: 14px 16px;
+  padding: 12px 7px 11px;
   box-shadow: var(--mt-soft-shadow);
   cursor: pointer;
-  text-align: left;
-  align-items: stretch;
+  text-align: center;
   font-family: inherit;
   color: var(--mt-plum);
-  margin-top: 4px;
 }
 
 
@@ -242,6 +245,18 @@ body[data-page='reading'] .spread-position-pill__th {
   text-transform: none;
 }
 
+/* 3-up row: the pill sits in normal flow, centered atop each mini-card (was floating). Show just
+   the short EN position label so it fits the narrow cell. (founder 2026-06-23) */
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-position-pill {
+  position: static;
+  align-self: center;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-position-pill__th { display: none; }
+
 
 /* §8 — Card art sizing per layout */
 body[data-page='reading'] .reading-spread-card .card-art.is-thumb {
@@ -260,7 +275,7 @@ body[data-page='reading'] .panel--spread[data-spread-count='1'] .card-art.is-thu
 }
 
 body[data-page='reading'] .panel--spread[data-spread-count='3'] .card-art.is-thumb {
-  width: 86px;
+  width: 100%;
   aspect-ratio: var(--mt-card-face-ratio, 1568 / 2720);
 }
 
@@ -301,9 +316,11 @@ body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-caption 
 }
 
 body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-caption {
-  flex: 1;
+  align-items: center;
+  text-align: center;
+  width: 100%;
   min-width: 0;
-  padding-top: 6px;
+  padding-top: 2px;
 }
 
 body[data-page='reading'] .spread-orientation {
@@ -360,8 +377,9 @@ body[data-page='reading'] .panel--spread[data-spread-count='1'] .spread-card-nam
 }
 
 body[data-page='reading'] .panel--spread[data-spread-count='3'] .spread-card-name {
-  font-size: 18px;
-  line-height: 1.05;
+  font-size: 13px;
+  line-height: 1.12;
+  white-space: normal;
 }
 
 body[data-page='reading'] .spread-card-name-th {
