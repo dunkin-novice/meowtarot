@@ -216,13 +216,27 @@ export function onMeowCoinsChange(fn) {
 // Top-right Meow Coin balance chip. Rendered on the app-shell pages only; live-updates on any
 // earn/spend. Tapping it goes to the Shop. (Founder spec: balance chip top-right on Home / Your
 // Deck / Profile.)
-const CHIP_PAGES = new Set(['home', 'profile', 'decks', 'daily', 'question-draw', 'full', 'reading', 'shop']);
+const CHIP_PAGES = new Set(['home', 'profile', 'decks', 'deck-detail', 'question', 'daily', 'question-draw', 'full', 'reading', 'shop']);
+
+// Fixed top-right cluster that holds the avatar (signed-in) + the coin chip, side by side.
+function ensureTopChips() {
+  let cluster = document.getElementById('mt-top-chips');
+  if (!cluster) {
+    cluster = document.createElement('div');
+    cluster.id = 'mt-top-chips';
+    document.body.appendChild(cluster);
+  }
+  return cluster;
+}
+
 export function renderMeowCoinChip() {
   if (typeof document === 'undefined' || !document.body) return;
   const page = document.body.dataset.page || '';
   if (!CHIP_PAGES.has(page)) return;
-  if (document.getElementById('mt-coin-chip')) return;
   const isThai = (document.documentElement.lang === 'th') || (window.location.pathname || '').startsWith('/th/');
+  const cluster = ensureTopChips();
+  renderAuthAvatar(cluster, isThai); // sits LEFT of the coin chip; shown only when signed in
+  if (document.getElementById('mt-coin-chip')) return;
   const chip = document.createElement('a');
   chip.id = 'mt-coin-chip';
   chip.className = 'mt-coin-chip';
@@ -230,7 +244,39 @@ export function renderMeowCoinChip() {
   chip.setAttribute('aria-label', isThai ? 'เหรียญเหมียว — ไปที่ร้านค้า' : 'Meow Coins — open shop');
   chip.innerHTML = '<img src="/assets/meow-coin-200.webp" alt="" class="mt-coin-chip__icon" aria-hidden="true" />'
     + '<span class="mt-coin-chip__num">0</span>';
-  document.body.appendChild(chip);
+  cluster.appendChild(chip);
   const numEl = chip.querySelector('.mt-coin-chip__num');
   onMeowCoinsChange((bal) => { numEl.textContent = String(bal); });
+}
+
+// Avatar chip — the "you're signed in" indicator (founder 2026-06-23). Shows the Google avatar
+// (or a fallback profile glyph) when signed in, hidden when signed out; taps through to Profile.
+// Reactive via subscribeAuthState so it appears the moment the session resolves after OAuth.
+function renderAuthAvatar(cluster, isThai) {
+  if (document.getElementById('mt-avatar-chip')) return;
+  const a = document.createElement('a');
+  a.id = 'mt-avatar-chip';
+  a.className = 'mt-avatar-chip';
+  a.hidden = true;
+  a.href = isThai ? '/th/profile.html' : '/profile.html';
+  a.setAttribute('aria-label', isThai ? 'โปรไฟล์ของคุณ — เข้าสู่ระบบแล้ว' : 'Your profile — signed in');
+  a.innerHTML = '<img class="mt-avatar-chip__img" alt="" />'
+    + '<span class="mt-avatar-chip__glyph" aria-hidden="true">'
+    + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>'
+    + '</span>';
+  cluster.insertBefore(a, cluster.firstChild); // left of the coin chip
+  const img = a.querySelector('.mt-avatar-chip__img');
+  const glyph = a.querySelector('.mt-avatar-chip__glyph');
+  const showGlyph = () => { img.style.display = 'none'; glyph.style.display = 'flex'; };
+  const showImg = (url) => { img.onerror = showGlyph; img.src = url; img.style.display = 'block'; glyph.style.display = 'none'; };
+  import('./auth.js').then(({ subscribeAuthState }) => {
+    if (typeof subscribeAuthState !== 'function') return;
+    subscribeAuthState((user) => {
+      if (!user) { a.hidden = true; return; }
+      a.hidden = false;
+      const meta = user.user_metadata || {};
+      const url = meta.avatar_url || meta.picture || '';
+      if (url) showImg(url); else showGlyph();
+    });
+  }).catch(() => {});
 }

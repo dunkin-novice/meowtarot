@@ -1847,11 +1847,41 @@ body[data-page='home'] .section-block {
 .card-board { overflow: visible; }
 
 /* Meow Coin balance chip — top-right pill (coin icon + balance), links to the Shop. */
-.mt-coin-chip {
+/* Top-right cluster: avatar (when signed in) + coin chip, side by side. */
+#mt-top-chips {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 10px);
   right: calc(env(safe-area-inset-right, 0px) + 12px);
   z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Avatar chip — round, ~coin-chip height; the "signed in" indicator. */
+.mt-avatar-chip {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--mt-gold-pale, #e8c478);
+  box-shadow: 0 4px 12px -4px rgba(61, 26, 92, 0.32);
+  color: var(--mt-plum, #3d1a5c);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease;
+}
+.mt-avatar-chip[hidden] { display: none; }
+.mt-avatar-chip:active { transform: scale(0.94); }
+.mt-avatar-chip__img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.mt-avatar-chip__glyph { display: flex; align-items: center; justify-content: center; }
+
+.mt-coin-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
