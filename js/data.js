@@ -126,6 +126,9 @@ export const DECKS = {
   // generated in a background pass; until they land, the shop cell falls back to full-res back.
   'boo-familiar': {
     id: 'boo-familiar', name: 'Boo Familiar', name_th: 'แมวคืนหลอน', role: 'shop', unlock_day: null,
+    // Seasonal Halloween deck — `hidden` keeps it OUT OF THE GACHA SHOP (gallery + pull pool) until
+    // Halloween; it still shows in 'Your Decks'. Flip `hidden` off to put it back in the gacha. (2026-06-23)
+    hidden: true,
     assetsBase: resolveDeckAssetBase('assets/boo-familiar'), backImage: buildAssetUrl('assets/boo-familiar/00-back.webp'),
   },
   'cats-of-the-ink-peaks': {

@@ -23,9 +23,9 @@ const clearTimers = () => { timers.forEach((t) => window.clearTimeout(t)); timer
 // Gacha pool = collectible decks ONLY. Achievement decks (role 'streak-unlock') are EXCLUSIVE
 // to the streak/achievement ladder and never appear in the gacha; the free default (moonmallow)
 // is excluded too. Everything else (veila + the AI 'shop' decks) is gacha. (founder 2026-06-22)
-const isGachaDeck = (d) => d && d.role !== 'streak-unlock' && d.id !== 'moonmallow';
+const isGachaDeck = (d) => d && !d.hidden && d.role !== 'streak-unlock' && d.id !== 'moonmallow';
 const gachaDecks = () => getAllDecks().filter(isGachaDeck);
-const isAchievementDeck = (d) => d && d.role === 'streak-unlock';
+const isAchievementDeck = (d) => d && !d.hidden && d.role === 'streak-unlock';
 // The gallery is the full COLLECTION view (gacha + achievement decks), each TAGGED by source so
 // players see which decks come from pulls vs streak achievements. Pulls still only draw from
 // gachaDecks(); achievement decks are earned via the daily-reading streak. (founder 2026-06-23)

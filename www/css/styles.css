@@ -1216,7 +1216,10 @@ button,
   position: fixed;
   right: 14px;
   bottom: calc(var(--mt-bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 14px);
-  z-index: 1100;
+  /* Always on top of every popup/overlay so a bug can be reported in ANY situation (founder
+     2026-06-23). Sits above the highest app overlay (login/deck reward = 9999); the bug-report
+     modal itself is higher still (set in bug-report.js) so it opens over whatever's showing. */
+  z-index: 2147483000;
   display: inline-flex;
   align-items: center;
   gap: 6px;

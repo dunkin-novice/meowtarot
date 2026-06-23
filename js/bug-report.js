@@ -111,7 +111,8 @@ function injectStylesOnce() {
   style.id = STYLE_ID;
   style.textContent = `
     .mt-bug-overlay {
-      position: fixed; inset: 0; z-index: 1300;
+      /* Top of everything — the reporter must open over any popup the user is reporting about. */
+      position: fixed; inset: 0; z-index: 2147483646;
       background: rgba(28, 12, 52, 0.45);
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       display: flex; align-items: center; justify-content: center; padding: 22px;

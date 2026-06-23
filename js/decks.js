@@ -364,7 +364,7 @@ function renderAll() {
   if (!els.content) return;
   els.content.innerHTML = '';
 
-  const decks = getAllDecks();
+  const decks = getAllDecks(); // 'Your Decks' shows seasonal decks too (e.g. boo-familiar); only the gacha shop hides them
   const progress = getUserProgress();
   const activeId = getActiveDeckId();
 
