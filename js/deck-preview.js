@@ -5,6 +5,7 @@
 //
 // The condition area is caller-built: pass buildCondition(conditionEl, { close }) and fill it
 // with whatever that surface needs (a Buy button, a "Day N" line, etc.).
+import { canUnlockDeck } from './data.js';
 
 const CDN = 'https://cdn.meowtarot.com/assets';
 
@@ -79,13 +80,19 @@ export function showDeckPreview(deck, { lang = 'en', buildCondition } = {}) {
     card.appendChild(sub);
   }
 
-  // "See all cards" → the full Deck Detail page (browse every card of this deck).
-  const seeAll = document.createElement('a');
-  seeAll.className = 'mt-dp-seeall';
-  seeAll.href = `${lang === 'th' ? '/th' : ''}/deck-detail.html?deck=${encodeURIComponent(id)}`;
-  seeAll.textContent = th ? 'ดูไพ่ทั้งหมด →' : 'See all cards →';
-  seeAll.style.cssText = 'display:inline-block;margin:0 0 12px;font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:12.5px;font-weight:700;color:#d12878;text-decoration:none;';
-  card.appendChild(seeAll);
+  // "See all cards" → the full Deck Detail page. OWNER-ONLY: the full 78-card browse is a perk of
+  // owning the deck, so the link only shows for decks the viewer owns (un-owned gacha previews
+  // get the single-card teaser only). (founder 2026-06-23)
+  let isOwned = false;
+  try { isOwned = canUnlockDeck(id); } catch (_) {}
+  if (isOwned) {
+    const seeAll = document.createElement('a');
+    seeAll.className = 'mt-dp-seeall';
+    seeAll.href = `${lang === 'th' ? '/th' : ''}/deck-detail.html?deck=${encodeURIComponent(id)}`;
+    seeAll.textContent = th ? 'ดูไพ่ทั้งหมด →' : 'See all cards →';
+    seeAll.style.cssText = 'display:inline-block;margin:0 0 12px;font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:12.5px;font-weight:700;color:#d12878;text-decoration:none;';
+    card.appendChild(seeAll);
+  }
 
   const cond = document.createElement('div');
   cond.className = 'mt-dp-cond';

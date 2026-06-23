@@ -19,6 +19,7 @@ import {
   togglePinnedDeck,
   getActiveDeckFaceAspect,
   getActiveDeckCardAspect,
+  canUnlockDeck,
 } from './data.js';
 import { trackLocaleSwitched, trackDeckSelected } from './analytics.js';
 
@@ -181,15 +182,16 @@ function render() {
 
     const grid = el('div', 'dd-grid');
     cards.forEach((card) => {
-      const globalIdx = state.cards.indexOf(card);
-      const cell = el('button', 'dd-cell', { type: 'button' });
+      // Tapping a card opens its MEANING page, carrying ?deck so that page shows THIS deck's art
+      // (not the fixed/active-deck image). (founder 2026-06-23)
+      const href = `${localizePath('/cards/' + card.slug + '/')}?deck=${encodeURIComponent(state.deckId)}`;
+      const cell = el('a', 'dd-cell', { href });
       const frame = el('div', 'dd-cell__frame');
       const img = el('img', null, { alt: card[lang === 'th' ? 'th' : 'en'], loading: 'lazy', src: cardThumb(card) });
       wireImgFallback(img, cardFull(card), deckBack());
       frame.appendChild(img);
       const name = el('div', 'dd-cell__name'); name.textContent = lang === 'th' ? card.th : card.en;
       cell.appendChild(frame); cell.appendChild(name);
-      cell.addEventListener('click', () => openFocus(globalIdx));
       grid.appendChild(cell);
     });
     sec.appendChild(grid);
@@ -260,6 +262,12 @@ function switchLanguageInPlace(nextLang) {
 async function init() {
   if (!els.content) return;
   state.deckId = resolveDeckId();
+  // OWNER-ONLY (founder 2026-06-23): the full card browse is a perk of owning the deck. If the
+  // viewer doesn't own this deck, bounce them to Your Decks (no peeking at decks you don't have).
+  if (!canUnlockDeck(state.deckId)) {
+    window.location.replace(localizePath('/decks.html'));
+    return;
+  }
   initShell(state, onTranslations, 'deck-detail', { onLangToggle: switchLanguageInPlace });
   render(); // header + loading state immediately
   await loadCards();

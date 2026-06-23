@@ -1,6 +1,6 @@
 import { initShell, pathHasThaiPrefix } from './common.js';
 import { trackMeaningViewed } from './analytics.js';
-import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId } from './data.js';
+import { getCardImageUrl, loadTarotData, meowTarotCards, normalizeId, getActiveDeckId, getAllDecks, canUnlockDeck } from './data.js';
 import {
   renderCardHero,
   renderMeaningSnapshot,
@@ -182,7 +182,18 @@ function redirectToMeaningsIndex(mode) {
 
 function renderPage(card, slug, mode, orientation) {
   const group = getGroupMeta(card);
-  const imageUrl = getCardImageUrl(card, { orientation });
+  let imageUrl = getCardImageUrl(card, { orientation });
+  // ?deck=<id> → show THAT deck's art (arrived from the Deck Detail page). Swap the deck folder
+  // in the URL getCardImageUrl already built (keeps CDN + versioning; no asset-resolver edit).
+  // Owner-gated: only honour a deck the viewer actually owns. (founder 2026-06-23)
+  const deckParam = new URLSearchParams(window.location.search).get('deck');
+  if (deckParam) {
+    const activePack = getActiveDeckId();
+    const known = getAllDecks().some((d) => d.id === deckParam);
+    if (known && deckParam !== activePack && canUnlockDeck(deckParam)) {
+      imageUrl = imageUrl.replace(`/assets/${activePack}/`, `/assets/${deckParam}/`);
+    }
+  }
   const isThai = mode === 'th';
 
   if (dom.page) dom.page.dataset.renderLang = mode;

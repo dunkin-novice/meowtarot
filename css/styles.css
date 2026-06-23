@@ -9341,6 +9341,7 @@ body[data-page='home'] .reading-path-card:focus-visible {
 .dd-cell {
   display: flex; flex-direction: column; border: none; background: transparent;
   padding: 0; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent;
+  text-decoration: none; color: inherit;
   animation: ddCardIn 0.5s ease-out both;
 }
 @keyframes ddCardIn { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: none; } }
