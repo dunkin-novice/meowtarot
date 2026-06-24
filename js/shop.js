@@ -411,7 +411,7 @@ function renderAll() {
   header.className = 'shop-header';
   header.innerHTML = `
     <div class="shop-eyebrow">${pick('Shop', 'ร้านค้า')}</div>
-    <h1 class="shop-title">${pick('Mystic Market', 'ตลาดเวทมนตร์')}</h1>`;
+    <h1 class="shop-title">${pick('Meow Market', 'ตลาดเหมียว')}</h1>`;
   content.appendChild(header);
 
   content.appendChild(buildHero());
