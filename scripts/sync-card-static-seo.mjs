@@ -74,7 +74,6 @@ function buildThaiSeoTitle(card, mode = 'both') {
   return `ความหมายไพ่ยิปซี ${displayName} (${suffix}) | เหมียวทาโร่ต์`;
 }
 function injectFaqSection(html, lang, card) {
-  if (html.includes('id="seoFaqSection"')) return html;
   const isThai = lang === 'th';
   const displayName = isThai ? (card.alias_th || card.card_name_en || 'ไพ่ทาโรต์') : (card.card_name_en || card.alias_th || 'Tarot Card');
   const tarotImply = isThai ? (card.tarot_imply_th || card.tarot_imply_en || '') : (card.tarot_imply_en || card.tarot_imply_th || '');
@@ -82,7 +81,12 @@ function injectFaqSection(html, lang, card) {
   const light = card.keywords_light || '';
   const shadow = card.keywords_shadow || '';
 
-  const section = `\n\n      <section class="section-block" id="seoFaqSection">\n        <h2>${isThai ? 'คำตอบแบบเร็ว' : 'Quick answers'}</h2>\n        <dl>\n          <dt>${isThai ? `ความหมายหลักของไพ่ ${escHtml(displayName)} คืออะไร?` : `What is the core meaning of ${escHtml(displayName)}?`}</dt>\n          <dd>${escHtml(tarotImply)}</dd>\n          <dt>${isThai ? `${escHtml(displayName)} สื่อถึงอะไรในการเปิดไพ่?` : `What does ${escHtml(displayName)} suggest in a reading?`}</dt>\n          <dd>${escHtml(summary)}</dd>\n          <dt>${isThai ? `คีย์เวิร์ดสำคัญของ ${escHtml(displayName)} คืออะไร?` : `What are the key themes of ${escHtml(displayName)}?`}</dt>\n          <dd>${isThai ? `ด้านสว่าง: ${escHtml(light)} | ด้านเงา: ${escHtml(shadow)}` : `Light: ${escHtml(light)} | Shadow: ${escHtml(shadow)}`}</dd>\n        </dl>\n      </section>`;
+  const section = `\n      <section class="section-block" id="seoFaqSection">\n        <h2>${isThai ? 'คำตอบแบบเร็ว' : 'Quick answers'}</h2>\n        <dl>\n          <dt>${isThai ? `ความหมายหลักของไพ่ ${escHtml(displayName)} คืออะไร?` : `What is the core meaning of ${escHtml(displayName)}?`}</dt>\n          <dd>${escHtml(tarotImply)}</dd>\n          <dt>${isThai ? `${escHtml(displayName)} สื่อถึงอะไรในการเปิดไพ่?` : `What does ${escHtml(displayName)} suggest in a reading?`}</dt>\n          <dd>${escHtml(summary)}</dd>\n          <dt>${isThai ? `คีย์เวิร์ดสำคัญของ ${escHtml(displayName)} คืออะไร?` : `What are the key themes of ${escHtml(displayName)}?`}</dt>\n          <dd>${isThai ? `ด้านสว่าง: ${escHtml(light)} | ด้านเงา: ${escHtml(shadow)}` : `Light: ${escHtml(light)} | Shadow: ${escHtml(shadow)}`}</dd>\n        </dl>\n      </section>`;
+
+  if (html.includes('id="seoFaqSection"')) {
+    // Replace the existing section
+    return html.replace(/<section class="section-block" id="seoFaqSection">[\s\S]*?<\/section>/i, section.trim());
+  }
 
   return html.replace(/\n\s*<section class="section-block" id="microCta">/, `${section}\n\n      <section class="section-block" id="microCta">`);
 }
@@ -136,6 +140,12 @@ async function updateFile(filePath, card, lang) {
     html = replaceMetaContent(html, 'og-title', title);
     html = replaceMetaContent(html, 'twitter-title', title);
   }
+
+  // Fix hardcoded "The Fool" in microCta
+  const ctaDisplayName = isThai ? (card.alias_th || card.name_th || card.card_name_en || 'ไพ่ทาโรต์') : (card.card_name_en || card.alias_th || 'Tarot Card');
+  const ctaText = isThai ? `นำพลังของ ${escHtml(ctaDisplayName)} มาสู่การเปิดไพ่ของคุณในตอนนี้` : `Bring ${escHtml(ctaDisplayName)} into a live spread and see how this message lands in your present moment.`;
+  const ctaHtml = `\n        <h2>${isThai ? 'ดึงดูดพลังงานนี้' : 'Draw this energy now'}</h2>\n        <p>${ctaText}</p>\n        <a id="microCtaLink" href="${isThai ? '/th/daily.html' : '/daily.html'}" class="footer-nav-pill is-primary">${isThai ? 'เปิดไพ่เลย' : 'Draw now'}</a>\n      `;
+  html = html.replace(/(<section class="section-block" id="microCta">)[\s\S]*?(<\/section>)/i, `$1${ctaHtml}$2`);
 
   await fs.writeFile(filePath, html, 'utf8');
 }
