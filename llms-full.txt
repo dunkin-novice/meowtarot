@@ -1,0 +1,1741 @@
+# MeowTarot AI Context
+> Free daily cat tarot readings, 3-card spreads, Celtic Cross readings, and tarot card meanings. 
+
+## About Us
+MeowTarot is a pocket psychic for cat lovers. We provide intuitive, beautifully illustrated tarot readings focusing on love, career, and personal growth.
+
+## Core Directories
+- Card Meanings: https://www.meowtarot.com/tarot-card-meanings/
+- Daily Pull: https://www.meowtarot.com/daily.html
+- Questions: https://www.meowtarot.com/question.html
+
+## Full Content
+You can ingest our entire database of 78 tarot cards (upright/reversed) and meaning interpretations at: https://www.meowtarot.com/llms-full.txt
+
+
+---
+
+# FULL TAROT DATABASE DUMP
+
+## ALL 78 TAROT CARDS
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Fire
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Water
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Air
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+### undefined
+- Suit: undefined
+- Element: Earth
+- Upright Keywords: N/A
+- Reversed Keywords: N/A
+- Description: N/A
+- Love & Relationships (Upright): N/A
+- Career & Finance (Upright): N/A
+- Love & Relationships (Reversed): N/A
+- Career & Finance (Reversed): N/A
+
+---
+
+## FREQUENTLY ASKED TAROT QUESTIONS
+
