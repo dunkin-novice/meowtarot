@@ -3280,6 +3280,11 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
 .result-summary {
   color: var(--color-text-muted);
   font-size: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .search-empty {
@@ -3339,7 +3344,8 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .featured-link-item {

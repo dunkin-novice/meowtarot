@@ -102,6 +102,7 @@ export function buildCardSchema(card, {
       name: isThai ? `${displayName} ความหมายไพ่ทาโรต์` : `${displayName} Tarot Meaning`,
       description,
       inLanguage: isThai ? 'th-TH' : 'en-US',
+      author: { '@id': `${baseUrl}/#person_dunkin` },
     },
     {
       '@type': 'DefinedTerm',
@@ -137,6 +138,21 @@ export function buildCardSchema(card, {
           item: pageUrl,
         },
       ],
+    },
+    {
+      '@type': 'Person',
+      '@id': `${baseUrl}/#person_dunkin`,
+      name: 'Kitikorn (Dunkin)',
+      url: isThai ? `${baseUrl}/th/` : `${baseUrl}/`,
+      jobTitle: isThai ? 'ผู้เชี่ยวชาญด้านไพ่ยิปซีและผู้พัฒนาสร้างสรรค์' : 'Tarot Expert & Creative Developer',
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': `${baseUrl}/#webapplication`,
+      name: 'MeowTarot',
+      url: isThai ? `${baseUrl}/th/` : `${baseUrl}/`,
+      applicationCategory: 'EntertainmentApplication',
+      browserRequirements: 'Requires JavaScript. Requires HTML5.',
     },
   ];
 

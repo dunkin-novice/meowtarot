@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>วิดเจ็ต MeowTarot</title>
+    <style>
+      :root {
+        --bg: #080f2d;
+        --surface: rgba(255, 255, 255, 0.05);
+        --text: #f9f9f9;
+        --accent: #ffd700;
+        --font: "Noto Sans Thai", "Outfit", system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        overflow: hidden;
+        text-align: center;
+      }
+      .widget-container {
+        width: 100%;
+        max-width: 300px;
+        padding: 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+      .card-img {
+        width: 120px;
+        height: 200px;
+        border-radius: 8px;
+        object-fit: cover;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s ease;
+        cursor: pointer;
+      }
+      .card-img:hover {
+        transform: translateY(-5px);
+      }
+      .card-img.hidden {
+        display: none;
+      }
+      .btn {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+        transition: opacity 0.2s;
+      }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .brand {
+        font-size: 12px;
+        opacity: 0.6;
+        margin-top: 10px;
+      }
+      .brand a {
+        color: var(--text);
+        text-decoration: none;
+      }
+      .brand a:hover {
+        text-decoration: underline;
+      }
+      .content {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .title {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 0;
+      }
+      .meaning {
+        font-size: 13px;
+        line-height: 1.4;
+        opacity: 0.8;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="widget-container" id="app">
+      <div id="start-state">
+        <img
+          src="https://cdn.meowtarot.com/assets/backs/card-back.webp"
+          alt="Card Back"
+          class="card-img"
+          id="draw-btn"
+        />
+        <p style="font-size: 14px; font-weight: bold">สุ่มไพ่ทาโรต์ประจำวัน</p>
+      </div>
+
+      <div class="content" id="result-state">
+        <img src="" alt="Drawn Card" class="card-img" id="result-img" />
+        <h3 class="title" id="result-title"></h3>
+        <p class="meaning" id="result-meaning"></p>
+        <a
+          href="https://www.meowtarot.com/th/"
+          target="_blank"
+          class="btn"
+          id="read-more-btn"
+          >อ่านคำทำนายฉบับเต็ม</a
+        >
+      </div>
+
+      <div class="brand">
+        สนับสนุนโดย
+        <a href="https://www.meowtarot.com/th/" target="_blank">MeowTarot</a>
+      </div>
+    </div>
+
+    <script>
+      let cards = [];
+
+      fetch("/data/cards.json")
+        .then((res) => res.json())
+        .then((data) => {
+          cards = data.filter((c) => c.orientation === "upright");
+        })
+        .catch(console.error);
+
+      document.getElementById("draw-btn").addEventListener("click", () => {
+        if (!cards.length) return;
+        const randomCard = cards[Math.floor(Math.random() * cards.length)];
+
+        const imgPath = randomCard.card_id.replace("-upright", "");
+        document.getElementById("result-img").src =
+          `https://cdn.meowtarot.com/assets/cards/${imgPath}.webp`;
+        document.getElementById("result-title").textContent =
+          randomCard.alias_th || randomCard.card_name_en;
+        document.getElementById("result-meaning").textContent =
+          randomCard.tarot_imply_th;
+
+        const slug = randomCard.card_name_en.toLowerCase().replace(/ /g, "-");
+        document.getElementById("read-more-btn").href =
+          `https://www.meowtarot.com/th/tarot-card-meanings/${slug}/?utm_source=widget&utm_medium=embed`;
+
+        document.getElementById("start-state").style.display = "none";
+        document.getElementById("result-state").style.display = "flex";
+      });
+    </script>
+  </body>
+</html>

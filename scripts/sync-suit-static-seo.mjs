@@ -49,7 +49,9 @@ async function run() {
         : path.join(ROOT, 'tarot-card-meanings', `${suit}.html`);
       let html;
       try { html = await fs.readFile(file, 'utf8'); } catch { continue; }
-      const fullTitle = `${data.title} | MeowTarot`;
+      const fullTitle = lang === 'th'
+        ? `${data.title} | เหมียวทาโร่ต์`
+        : `${data.title} | MeowTarot`;
       const url = lang === 'th' ? `${BASE}/th/tarot-card-meanings/${suit}` : `${BASE}/tarot-card-meanings/${suit}`;
       html = setTitle(html, fullTitle);
       html = setSuitMeta(html, 'description', data.intro);
