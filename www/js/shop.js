@@ -66,7 +66,7 @@ function buildHero() {
       </div>
       <div class="gacha-hero2__copy">
         <span class="gacha-hero2__pill">★ ${pick('Gacha Pull', 'กาชา')}</span>
-        <h2 class="gacha-hero2__title">${pick('Summon a<br>mystery deck', 'สุ่มสำรับ<br>ปริศนา')}</h2>
+        <h2 class="gacha-hero2__title">${pick('Summon a<br>new deck', 'สุ่มสำรับใหม่')}</h2>
         <p class="gacha-hero2__sub">${pick(`One of ${poolSize} enchanted decks — yours at random.`, `1 ใน ${poolSize} สำรับมนตรา ได้แบบสุ่ม`)}</p>
       </div>
     </div>
