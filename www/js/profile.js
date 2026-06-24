@@ -56,68 +56,104 @@ function formatReadingDate(value = '') {
   }).format(parsed);
 }
 
+const CAT_AVATAR_SVG = `<svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+  <path d="M11 12 L15 4 L19 15 Z" fill="#fff6ea"/><path d="M37 12 L33 4 L29 15 Z" fill="#fff6ea"/>
+  <ellipse cx="24" cy="27" rx="14" ry="12.5" fill="#fff6ea"/>
+  <circle cx="19" cy="25" r="1.7" fill="#3d1a5c"/><circle cx="29" cy="25" r="1.7" fill="#3d1a5c"/>
+  <path d="M22.5 30 L24 31.6 L25.5 30 Z" fill="#e8457a"/></svg>`;
+
+// Header: avatar (real Google photo when signed in, cat fallback otherwise) + name + subtitle.
+// Account actions (log out / privacy / sign-in) moved to the Settings tab's Account card.
 function renderIdentity(dict) {
   if (!els.identity) return;
   els.identity.innerHTML = '';
+  const th = state.currentLang === 'th';
 
+  const header = document.createElement('div');
+  header.className = 'profile-header';
+
+  const av = document.createElement('div');
+  av.className = 'profile-avatar' + (state.user ? '' : ' profile-avatar--guest');
+  const photo = state.user && (state.user.user_metadata?.avatar_url || state.user.user_metadata?.picture);
+  if (photo) {
+    const img = document.createElement('img');
+    img.src = photo; img.alt = ''; img.referrerPolicy = 'no-referrer';
+    img.addEventListener('error', () => { av.innerHTML = CAT_AVATAR_SVG; av.classList.add('profile-avatar--fallback'); });
+    av.appendChild(img);
+  } else {
+    av.classList.add('profile-avatar--fallback');
+    av.innerHTML = CAT_AVATAR_SVG;
+  }
+  if (state.user) {
+    const flame = document.createElement('span');
+    flame.className = 'profile-avatar__badge';
+    flame.textContent = '🔥';
+    av.appendChild(flame);
+  }
+  header.appendChild(av);
+
+  const meta = document.createElement('div');
+  meta.className = 'profile-header__meta';
+  const name = document.createElement('div');
+  name.className = 'profile-header__name';
+  name.textContent = state.user
+    ? (state.user.user_metadata?.full_name || state.user.user_metadata?.name || state.user.email || (th ? 'นักอ่านไพ่' : 'Reader'))
+    : (th ? 'ผู้มาเยือน' : 'Guest reader');
+  const sub = document.createElement('div');
+  sub.className = 'profile-header__sub';
+  sub.textContent = state.user
+    ? (th ? 'นักอ่านไพ่แห่งแสงจันทร์' : 'Moonlit reader')
+    : (th ? 'ลงชื่อเข้าใช้เพื่อบันทึกเส้นทางของคุณ' : 'Sign in to save your journey');
+  meta.appendChild(name);
+  meta.appendChild(sub);
+  header.appendChild(meta);
+
+  els.identity.appendChild(header);
+}
+
+// Settings → Account card: log out + privacy + (signed out) sign-in CTA.
+function renderAccountActions(dict) {
+  const host = document.getElementById('profile-account');
+  if (!host) return;
+  host.innerHTML = '';
+  const th = state.currentLang === 'th';
   const card = document.createElement('section');
   card.className = 'panel';
-
   const title = document.createElement('h2');
-  title.textContent = dict.profileIdentityTitle || (state.currentLang === 'th' ? 'บัญชี' : 'Account');
+  title.textContent = th ? 'บัญชี' : 'Account';
   card.appendChild(title);
 
-  const line = document.createElement('p');
   if (state.user) {
-    const displayName = state.user.user_metadata?.full_name || state.user.user_metadata?.name || state.user.email || state.user.id;
-    line.textContent = displayName;
-  } else {
-    line.textContent = dict.profileGuestLabel || (state.currentLang === 'th' ? 'ยังไม่ได้เข้าสู่ระบบ' : 'Not signed in');
-  }
-  card.appendChild(line);
-
-  if (state.user) {
+    const line = document.createElement('p');
+    line.className = 'profile-account-email';
+    line.textContent = (th ? 'เข้าสู่ระบบเป็น ' : 'Signed in as ') + (state.user.email || state.user.id);
+    card.appendChild(line);
+    const row = document.createElement('div');
+    row.className = 'profile-account-actions';
+    const privacyLink = document.createElement('a');
+    privacyLink.className = 'ghost';
+    privacyLink.href = th ? '/th/privacy.html' : '/privacy.html';
+    privacyLink.textContent = dict.profilePrivacyLink || (th ? 'ความเป็นส่วนตัว' : 'Privacy');
     const logoutBtn = document.createElement('button');
     logoutBtn.type = 'button';
     logoutBtn.className = 'ghost';
-    logoutBtn.textContent = dict.profileLogout || (state.currentLang === 'th' ? 'ออกจากระบบ' : 'Log out');
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await logout();
-      } catch (_) {
-        // ignore
-      }
-    });
-    card.appendChild(logoutBtn);
-
-    const th = state.currentLang === 'th';
-
-    // Privacy policy link.
-    const privacyLink = document.createElement('a');
-    privacyLink.className = 'profile-privacy-link';
-    privacyLink.href = th ? '/th/privacy.html' : '/privacy.html';
-    privacyLink.textContent = dict.profilePrivacyLink || (th ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy');
-    card.appendChild(privacyLink);
-
-    // Account deletion (Guideline 5.1.1(v)) lives at the very bottom of the page,
-    // tucked under the collapsed "Other" disclosure — see renderOther(). Kept out
-    // of the identity card so it can't be tapped by accident.
+    logoutBtn.textContent = dict.profileLogout || (th ? 'ออกจากระบบ' : 'Log out');
+    logoutBtn.addEventListener('click', async () => { try { await logout(); } catch (_) {} });
+    row.appendChild(privacyLink);
+    row.appendChild(logoutBtn);
+    card.appendChild(row);
   } else {
+    const line = document.createElement('p');
+    line.textContent = th ? 'ลงชื่อเข้าใช้เพื่อซิงก์สตรีค สำรับ และการอ่านไพ่ข้ามอุปกรณ์' : 'Sign in to sync your streak, decks and readings across devices.';
+    card.appendChild(line);
     const loginBtn = document.createElement('button');
     loginBtn.type = 'button';
     loginBtn.className = 'primary';
-    loginBtn.textContent = dict.profileSignInCta || (state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Google' : 'Sign in with Google');
-    loginBtn.addEventListener('click', async () => {
-      try {
-        await loginWithProvider('google');
-      } catch (_) {
-        // ignore
-      }
-    });
+    loginBtn.textContent = dict.profileSignInCta || (th ? 'เข้าสู่ระบบด้วย Google' : 'Continue with Google');
+    loginBtn.addEventListener('click', async () => { try { await loginWithProvider('google'); } catch (_) {} });
     card.appendChild(loginBtn);
   }
-
-  els.identity.appendChild(card);
+  host.appendChild(card);
 }
 
 const THAI_NUMBER_WORDS = [
@@ -568,20 +604,23 @@ function renderContact(dict) {
 // "Other" — collapsed disclosure at the very bottom (Guideline 5.1.1(v)). Tap
 // "Other" to reveal a "Delete account" button; tapping THAT opens a centered
 // confirmation modal (warning + checkbox-gated delete). Signed-in users only.
+// Reversed-cards visualization control — its own Settings card, visible to everyone.
+function renderReversed() {
+  const host = document.getElementById('profile-reversed');
+  if (!host) return;
+  host.innerHTML = '';
+  host.appendChild(buildReversedModePanel(state.currentLang === 'th'));
+}
+
 function renderOther(dict) {
   const host = document.getElementById('profile-other');
   if (!host) return;
   host.innerHTML = '';
+  // Account deletion is signed-in only.
+  if (!state.user) { host.hidden = true; return; }
   host.hidden = false;
 
   const th = state.currentLang === 'th';
-
-  // Reversed-cards visualization control — VISIBLE to everyone (local preference, no account
-  // needed), above the account/deactivate area. (founder 2026-06-24; -reversed.webp art exists.)
-  host.appendChild(buildReversedModePanel(th));
-
-  // Account deletion is signed-in only.
-  if (!state.user) return;
 
   const card = document.createElement('section');
   card.className = 'panel profile-other';
@@ -810,8 +849,32 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   if (referralEl) renderReferralPanel(referralEl, state.currentLang);
   renderHistory(dict);
   renderContact(dict);
+  renderReversed();
+  renderAccountActions(dict);
   renderOther(dict);
   renderLoginCta(dict);
+  renderTabs(dict);
+}
+
+// 3-tab segmented control (Rewards / Activity / Settings) — shows/hides the .profile-tab panels.
+function renderTabs(dict) {
+  const bar = document.getElementById('profile-tabs');
+  if (!bar) return;
+  const th = state.currentLang === 'th';
+  const tabs = [
+    { key: 'rewards', label: th ? 'รางวัล' : 'Rewards' },
+    { key: 'activity', label: th ? 'กิจกรรม' : 'Activity' },
+    { key: 'settings', label: th ? 'ตั้งค่า' : 'Settings' },
+  ];
+  const active = state.profileTab || 'rewards';
+  bar.innerHTML = tabs.map((t) => `<button type="button" class="profile-tab-btn${t.key === active ? ' is-active' : ''}" data-go="${t.key}">${t.label}</button>`).join('');
+  const activate = (key) => {
+    state.profileTab = key;
+    bar.querySelectorAll('.profile-tab-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.go === key));
+    document.querySelectorAll('.profile-tab').forEach((panel) => { panel.hidden = panel.dataset.tab !== key; });
+  };
+  bar.querySelectorAll('.profile-tab-btn').forEach((b) => b.addEventListener('click', () => activate(b.dataset.go)));
+  activate(active);
 }
 
 function onTranslations(dict) {

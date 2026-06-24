@@ -49,19 +49,24 @@
   <!-- End Google Tag Manager (noscript) -->
   <header id="site-header"></header>
   <main class="page-shell">
-    <section class="section-block results show reading-card">
-      <section class="reading-intro">
-        <p class="eyebrow" data-i18n="profileTitle">Profile</p>
-        <h1 data-i18n="profileTitle">Profile</h1>
-      </section>
-      <div id="profile-identity" class="reading-content"></div>
-      <div id="profile-streak" class="reading-content"></div>
-      <div id="profile-lifetime-stats" class="reading-content"></div>
-      <div id="profile-achievements" class="reading-content"></div>
-      <div id="profile-referral" class="reading-content"></div>
-      <div id="profile-history" class="reading-content"></div>
-      <div id="profile-contact" class="reading-content"></div>
-      <div id="profile-other" class="reading-content"></div>
+    <section class="section-block results show reading-card profile-redesign">
+      <div id="profile-identity" class="reading-content profile-header-host"></div>
+      <div id="profile-streak" class="reading-content profile-hero-host"></div>
+      <div class="profile-tabs" id="profile-tabs"></div>
+      <div class="profile-tab" data-tab="rewards">
+        <div id="profile-achievements" class="reading-content"></div>
+        <div id="profile-lifetime-stats" class="reading-content"></div>
+      </div>
+      <div class="profile-tab" data-tab="activity" hidden>
+        <div id="profile-history" class="reading-content"></div>
+        <div id="profile-referral" class="reading-content"></div>
+      </div>
+      <div class="profile-tab" data-tab="settings" hidden>
+        <div id="profile-reversed" class="reading-content"></div>
+        <div id="profile-contact" class="reading-content"></div>
+        <div id="profile-account" class="reading-content"></div>
+        <div id="profile-other" class="reading-content"></div>
+      </div>
       <div id="profile-cta" class="reading-content"></div>
     </section>
   </main>

@@ -803,3 +803,45 @@ body[data-page='profile'] .profile-reversed-seg__btn {
 body[data-page='profile'] .profile-reversed-seg__btn.is-active {
   background: var(--mt-plum, #3d1a5c); color: #fff8ec; border-color: var(--mt-plum, #3d1a5c);
 }
+
+/* ===== Profile redesign — avatar header + Rewards/Activity/Settings tabs (founder 2026-06-24,
+   from Profile.dc.html) ===== */
+body[data-page='profile'] .profile-header {
+  display: flex; align-items: center; gap: 14px; margin: 4px 2px 4px;
+}
+body[data-page='profile'] .profile-avatar {
+  flex: 0 0 auto; width: 60px; height: 60px; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; position: relative;
+  background: linear-gradient(150deg, #7a3f8e 0%, #e8457a 55%, #e8a838 120%);
+  box-shadow: 0 10px 22px -8px rgba(232,69,122,.5), inset 0 1px 0 rgba(255,255,255,.4);
+}
+body[data-page='profile'] .profile-avatar--guest {
+  background: linear-gradient(150deg, #cdb6e6 0%, #e7c6dd 100%);
+}
+body[data-page='profile'] .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+body[data-page='profile'] .profile-avatar__badge {
+  position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px;
+  box-shadow: 0 3px 8px -2px rgba(61,26,92,.4);
+}
+body[data-page='profile'] .profile-header__name {
+  font-family: var(--mt-font-display, 'Cormorant Garamond', Georgia, serif); font-style: italic;
+  font-weight: 600; font-size: 25px; line-height: 1.05; color: var(--mt-plum, #3d1a5c);
+}
+body[data-page='profile'] .profile-header__sub { font-size: 12px; color: #7c5e96; margin-top: 2px; }
+
+body[data-page='profile'] .profile-tabs {
+  display: flex; gap: 4px; padding: 4px; margin: 18px 0 4px; border-radius: 999px;
+  background: rgba(255,255,255,.7); box-shadow: 0 8px 20px -10px rgba(61,26,92,.3);
+  border: .5px solid rgba(255,255,255,.7);
+}
+body[data-page='profile'] .profile-tab-btn {
+  flex: 1; padding: 9px 0; border: none; border-radius: 999px; cursor: pointer;
+  font-family: var(--mt-font-body, 'DM Sans', sans-serif); font-weight: 600; font-size: 13px;
+  background: transparent; color: #6a3f8e; transition: background .15s, color .15s;
+}
+body[data-page='profile'] .profile-tab-btn.is-active {
+  background: var(--mt-plum, #3d1a5c); color: #fff6ea; box-shadow: 0 6px 14px -6px rgba(61,26,92,.6);
+}
+body[data-page='profile'] .profile-account-email { font-size: 12px; color: #7c5e96; margin: 4px 0 0; }
+body[data-page='profile'] .profile-account-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
