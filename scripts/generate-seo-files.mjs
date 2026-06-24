@@ -8,7 +8,9 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const BASE_URL = (process.env.BASE_URL || 'https://www.meowtarot.com').replace(/\/$/, '');
 const SEPARATE_LANG_SITEMAPS = String(process.env.SEPARATE_LANG_SITEMAPS || '').toLowerCase() === 'true';
 
-const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests', 'node_modules'];
+// `www` and `ios` are full-site MIRRORS (Capacitor outputs) — never crawl them
+// into the sitemap or they pollute it with duplicate /www/* and /ios/* URLs.
+const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests', 'node_modules', 'www', 'ios'];
 const SITEMAP_EXCLUDED_HTML = new Set([
   'share/index.html',
   'docs/poster/full-reading-poster.html',
