@@ -2189,8 +2189,11 @@ body[data-page='home'] .section-block {
 
 .gacha-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .gacha-cell { cursor: pointer; }
-.gacha-cell__art { position: relative; aspect-ratio: var(--mt-card-ratio, 848 / 1264); border-radius: 15px; overflow: hidden; border: 1.5px solid rgba(232,196,120,.6); box-shadow: 0 12px 26px -14px rgba(61,26,92,.55); background: var(--mt-card-back-deep, #2a1d4a); }
-.gacha-cell__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Fixed to the actual deck-back thumb ratio (NOT the active deck's --mt-card-ratio, which
+   differs per deck and cropped other decks' side borders, e.g. Night Shift). `contain` keeps
+   each deck's painted border fully visible even if a thumb isn't a perfect match. (2026-06-24) */
+.gacha-cell__art { position: relative; aspect-ratio: 848 / 1264; border-radius: 15px; overflow: hidden; border: 1.5px solid rgba(232,196,120,.6); box-shadow: 0 12px 26px -14px rgba(61,26,92,.55); background: var(--mt-card-back-deep, #2a1d4a); }
+.gacha-cell__img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .gacha-cell__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(26,12,44,.66), rgba(45,22,72,.8)); display: flex; align-items: center; justify-content: center; }
 .gacha-cell__q { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,250,242,.14); border: 1px solid rgba(232,196,120,.5); display: flex; align-items: center; justify-content: center; font-family: var(--mt-font-display, serif); font-weight: 700; font-size: 20px; color: var(--mt-gold-pale, #e8c478); }
 .gacha-cell__check { position: absolute; top: 7px; left: 7px; width: 23px; height: 23px; border-radius: 50%; background: linear-gradient(135deg, #e8c478, #c08327); display: flex; align-items: center; justify-content: center; color: var(--mt-plum, #3d1a5c); font-size: 13px; font-weight: 800; border: 1.5px solid #fff8e7; box-shadow: 0 3px 8px -2px rgba(192,131,39,.7); }

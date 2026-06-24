@@ -18,7 +18,7 @@ function injectStyleOnce() {
     .mt-dp-overlay.in{background:rgba(28,12,52,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
     .mt-dp-card{width:100%;max-width:320px;background:linear-gradient(180deg,#fffaf2,#fdf3ec);border:1px solid rgba(197,177,220,.55);border-radius:24px;padding:20px 20px 18px;text-align:center;box-shadow:0 30px 60px -20px rgba(20,8,40,.55),inset 0 1px 0 rgba(255,255,255,.8);transform:translateY(12px) scale(.94);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s ease;}
     .mt-dp-overlay.in .mt-dp-card{transform:none;opacity:1;}
-    .mt-dp-thumb{width:150px;aspect-ratio:848/1264;object-fit:cover;border-radius:12px;margin:0 auto 4px;display:block;box-shadow:0 14px 30px -12px rgba(61,26,92,.6);border:1px solid var(--mt-gold-pale,#e8c478);}
+    .mt-dp-thumb{width:150px;height:auto;border-radius:12px;margin:0 auto 4px;display:block;box-shadow:0 14px 30px -12px rgba(61,26,92,.6);border:1px solid var(--mt-gold-pale,#e8c478);}
     .mt-dp-fool{font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mt-plum-mid,#6b4a86);opacity:.7;margin:6px 0 2px;}
     .mt-dp-name{font-family:var(--mt-font-display,"Cormorant Garamond",serif);font-style:italic;font-weight:600;font-size:23px;color:var(--mt-plum,#3d1a5c);margin:0 0 2px;line-height:1.15;}
     .mt-dp-name-th{font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:13px;color:var(--mt-plum-mid,#6b4a86);margin:0 0 12px;}
@@ -73,10 +73,12 @@ export function showDeckPreview(deck, { lang = 'en', buildCondition } = {}) {
   name.textContent = th ? (nameTh || nameEn) : nameEn;
   card.appendChild(name);
 
-  if (th ? nameEn : nameTh) {
+  // Secondary name only in the TH session (shows the English deck name underneath). In EN we
+  // show the English name alone — no Thai deck name under it. (founder 2026-06-24)
+  if (th && nameEn) {
     const sub = document.createElement('div');
     sub.className = 'mt-dp-name-th';
-    sub.textContent = th ? nameEn : nameTh;
+    sub.textContent = nameEn;
     card.appendChild(sub);
   }
 
