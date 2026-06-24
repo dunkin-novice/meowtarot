@@ -10,6 +10,7 @@ import {
 } from './data.js';
 import { showDeckPreview } from './deck-preview.js';
 import { getWeeklyFeatured, getDaysUntilRefresh } from './weekly-shop.js';
+import { getCurrentUserSync, loginWithProvider } from './auth.js';
 import { trackLocaleSwitched } from './analytics.js';
 
 const CDN = 'https://cdn.meowtarot.com/assets';
@@ -18,6 +19,12 @@ const WEEKLY_PRICE = 250;  // Weekly Shop: buy a SPECIFIC featured deck (+50 for
 const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en', query: '', phase: 'idle' };
 const pick = (en, th) => (state.currentLang === 'th' ? th : en);
 const fmt = (n) => Number(n).toLocaleString('en-US');
+const isSignedIn = () => { try { return Boolean(getCurrentUserSync()); } catch (_) { return false; } };
+function openSignIn() {
+  import('./sign-in-gate.js')
+    .then(({ showSignInGate }) => showSignInGate({ lang: state.currentLang, onSignIn: () => loginWithProvider('google').catch(() => {}) }))
+    .catch(() => { loginWithProvider('google').catch(() => {}); });
+}
 let timers = [];
 const clearTimers = () => { timers.forEach((t) => window.clearTimeout(t)); timers = []; };
 
@@ -80,17 +87,28 @@ function buildHero() {
 
 function refreshHeroStats() {
   const bal = getMeowCoins();
+  const signedIn = isSignedIn();
   // Gacha "Collection complete": no buyable deck left to pull → disable the pull, don't tease coins.
   const complete = gachaDecks().filter((d) => !canUnlockDeck(d.id)).length === 0;
   const helper = document.getElementById('gacha-helper');
   if (helper) {
-    helper.textContent = complete
-      ? pick('You own every gacha deck — collection complete! 🎉', 'คุณมีครบทุกสำรับกาชาแล้ว! 🎉')
-      : (bal < PULL ? pick(`Need ${PULL - bal} more coins for a pull`, `ต้องการอีก ${PULL - bal} เหรียญเพื่อสุ่ม`) : '');
+    helper.classList.remove('gacha-helper--cta');
+    helper.onclick = null;
+    if (!signedIn) {
+      // Signed out: don't tease "not enough coins" — invite sign-in to start earning. Tappable.
+      helper.textContent = pick('Sign in to start collecting Meow Coins →', 'ลงชื่อเข้าใช้เพื่อเริ่มสะสมเหรียญเหมียว →');
+      helper.classList.add('gacha-helper--cta');
+      helper.onclick = openSignIn;
+    } else {
+      helper.textContent = complete
+        ? pick('You own every gacha deck — collection complete! 🎉', 'คุณมีครบทุกสำรับกาชาแล้ว! 🎉')
+        : (bal < PULL ? pick(`Need ${PULL - bal} more coins for a pull`, `ต้องการอีก ${PULL - bal} เหรียญเพื่อสุ่ม`) : '');
+    }
   }
   const pullBtn = document.getElementById('gacha-pull');
   if (pullBtn) {
-    pullBtn.classList.toggle('is-dim', complete || bal < PULL);
+    // Dim when complete or (signed in but short on coins). Signed-out stays bright — it's a sign-in CTA.
+    pullBtn.classList.toggle('is-dim', complete || (signedIn && bal < PULL));
     pullBtn.disabled = complete;
     if (complete) pullBtn.innerHTML = `<span class="gacha-hero2__btn-label">${pick('Collection complete', 'สะสมครบแล้ว')} 🎉</span>`;
   }
@@ -246,6 +264,8 @@ function showNotEnough(price = PULL) {
 
 async function doPull() {
   if (state.phase !== 'idle') return;
+  // Signed out → invite sign-in instead of a coin wall (guest coins don't persist).
+  if (!isSignedIn()) { openSignIn(); return; }
   if (getMeowCoins() < PULL) { showNotEnough(); return; }
   const pool = gachaDecks().filter((d) => !canUnlockDeck(d.id));
   if (!pool.length) { showToast(pick('You’ve collected every deck! 🎉', 'สะสมครบทุกสำรับแล้ว! 🎉')); return; }

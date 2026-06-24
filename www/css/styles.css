@@ -2034,6 +2034,12 @@ body[data-page='home'] .section-block {
    gold eyebrow + Cormorant-italic title, gold-framed cover art, deck name + sub-name,
    gold→rose price button, owned checkmark, deal-in stagger. */
 .shop-shell { max-width: 560px; margin: 0 auto; padding: 14px 18px 112px; }
+/* Mobile: the .page-shell top padding clears a fixed header that's HIDDEN on mobile, so it's
+   ~92px of dead space that pushed the Weekly Spotlight below the fold. Tighten it so all 4
+   featured decks fit without scrolling. (founder 2026-06-24) */
+@media (max-width: 768px) {
+  body[data-page='shop'] .shop-shell { padding-top: 16px; }
+}
 .shop-hero { padding: 8px 4px 4px; }
 .shop-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .shop-eyebrow {
@@ -2251,6 +2257,8 @@ body[data-page='home'] .section-block {
 .gacha-hero2__btn-cost { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 100px; background: rgba(74,36,16,.16); font-size: 14px; font-weight: 800; color: #4a2410; }
 .gacha-hero2__btn-cost img { width: 17px; height: 17px; }
 .gacha-helper { text-align: center; font-size: 11px; color: #a487c4; margin: 10px 0 0; }
+.gacha-hero2 .gacha-helper { color: rgba(253,246,238,0.7); }
+.gacha-helper--cta { color: #f3d98c !important; font-weight: 700; font-size: 12.5px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
 .spotlight { margin-top: 18px; }
 .spotlight__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
