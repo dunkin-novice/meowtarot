@@ -135,7 +135,7 @@ export function maybeShowWeeklyShopNews(user, lang = 'en') {
     ov.innerHTML = `
       <div class="mt-wn-card" role="document">
         <div class="mt-wn-thumbs">${thumbs}</div>
-        <p class="mt-wn-eyebrow">${th ? 'ร้านประจำสัปดาห์' : 'Weekly Shop'}</p>
+        <p class="mt-wn-eyebrow">${th ? 'สำรับประจำสัปดาห์' : 'Weekly Spotlight'}</p>
         <h2 class="mt-wn-title">${th ? 'มีสำรับใหม่ในร้านแล้ว! 🎉' : 'New decks are in the shop! 🎉'}</h2>
         <p class="mt-wn-body">${th
           ? 'สำรับใหม่ 4 ใบประจำสัปดาห์นี้ — แวะดูที่ร้านค้าได้เลย'

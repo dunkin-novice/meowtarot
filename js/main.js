@@ -1458,15 +1458,12 @@ function renderHomeDeckStrip() {
     }
     tile.appendChild(card);
 
-    const nameEn = document.createElement('div');
-    nameEn.className = 'home-deck-thumb__name';
-    nameEn.textContent = deck.name || '';
-    tile.appendChild(nameEn);
-
-    const nameTh = document.createElement('div');
-    nameTh.className = 'home-deck-thumb__name-th';
-    nameTh.textContent = deck.name_th || '';
-    tile.appendChild(nameTh);
+    // Single name per locale — EN shows the English name only (no Thai name under it),
+    // TH shows the Thai name. (founder 2026-06-24: drop the TH card name in EN sessions.)
+    const nameEl = document.createElement('div');
+    nameEl.className = 'home-deck-thumb__name';
+    nameEl.textContent = (state.currentLang === 'th' ? (deck.name_th || deck.name) : deck.name) || '';
+    tile.appendChild(nameEl);
 
     frag.appendChild(tile);
   });

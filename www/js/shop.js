@@ -54,8 +54,8 @@ function buildHero() {
     <div class="gacha-head">
       <div class="gacha-head__left">
         <div class="gacha-eyebrow">${pick('Gacha', 'กาชา')}</div>
-        <h1 class="gacha-title">${pick('Deck Gacha', 'กาชาสำรับ')}</h1>
-        <p class="gacha-sub">${pick('Pull a mystery deck — 200 Meow Coins each. Every pull is a deck you don’t own yet.', 'สุ่มสำรับปริศนา — ครั้งละ 200 เหรียญเหมียว ทุกครั้งได้สำรับที่คุณยังไม่มี')}</p>
+        <h1 class="gacha-title">${pick('Gacha Shop', 'ร้านกาชา')}</h1>
+        <p class="gacha-sub">${pick('Pull a new deck for just 200 Meow Coins — always one you don’t own yet.', 'สุ่มสำรับใหม่ เพียง 200 MeowCoin — ได้สำรับที่คุณยังไม่มีเสมอ')}</p>
       </div>
     </div>
     <!-- In-page coin balance removed (founder 2026-06-23): the universal top-right chip already shows it. -->
@@ -120,7 +120,7 @@ function refreshHeroStats() {
 function buildWeeklyHead() {
   const head = document.createElement('div');
   head.className = 'gacha-gallery-head';
-  head.innerHTML = `<h2>${pick('Weekly Shop', 'ร้านประจำสัปดาห์')}</h2><span></span>`;
+  head.innerHTML = `<h2>${pick('Weekly Spotlight', 'สำรับประจำสัปดาห์')}</h2><span></span>`;
   return head;
 }
 
@@ -428,9 +428,7 @@ function renderAll() {
 
   const sub = document.createElement('p');
   sub.className = 'gacha-weekly-sub';
-  sub.textContent = pick(
-    'New decks every Monday · same for everyone · buy a specific deck for 250.',
-    'สำรับใหม่ทุกวันจันทร์ · เหมือนกันทุกคน · เลือกซื้อสำรับที่ต้องการได้ในราคา 250');
+  sub.textContent = pick('Refresh every Monday', 'อัปเดตใหม่ทุกวันจันทร์');
   content.appendChild(sub);
 
   const grid = document.createElement('div');
