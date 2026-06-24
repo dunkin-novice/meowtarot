@@ -4,12 +4,17 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Environment variables or hardcoded for CLI execution
-const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'YOUR_SUPABASE_SERVICE_ROLE_KEY';
+let supabaseUrl = process.env.SUPABASE_URL;
+let supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseKey === 'YOUR_SUPABASE_SERVICE_ROLE_KEY') {
-  console.error("❌ ERROR: Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.");
-  process.exit(1);
+let useMock = false;
+if (!supabaseUrl || !supabaseKey) {
+  console.warn("⚠️ WARNING: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are not set.");
+  console.warn("⚠️ Falling back to mock data generation for the draft report.");
+  useMock = true;
+  // Provide dummy values so the client initializes, but we won't make actual calls
+  supabaseUrl = 'https://mock.supabase.co';
+  supabaseKey = 'mock-key';
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -19,13 +24,17 @@ async function generateReport() {
   
   try {
     // 1. Total readings requested (assuming an 'events' or 'readings' table)
-    // Adjust table names based on your actual schema. Assuming 'reading_events' or 'user_readings'
-    const { count: totalReadings, error: countError } = await supabase
-      .from('readings') // Change to your actual table tracking readings
-      .select('*', { count: 'exact', head: true });
+    let totalReadings = null;
+    if (!useMock) {
+      const { count, error: countError } = await supabase
+        .from('readings') // Change to your actual table tracking readings
+        .select('*', { count: 'exact', head: true });
 
-    if (countError && countError.code === '42P01') {
-         console.warn("⚠️ Table 'readings' not found. Using mock data for demonstration.");
+      if (countError && countError.code === '42P01') {
+           console.warn("⚠️ Table 'readings' not found. Using mock data for demonstration.");
+      } else {
+        totalReadings = count;
+      }
     }
 
     // Since we might not know the exact schema, we'll build a query structure and fall back to mock data 
