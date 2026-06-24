@@ -21,8 +21,13 @@ const pick = (en, th) => (state.currentLang === 'th' ? th : en);
 const fmt = (n) => Number(n).toLocaleString('en-US');
 const isSignedIn = () => { try { return Boolean(getCurrentUserSync()); } catch (_) { return false; } };
 function openSignIn() {
+  // Shop-context copy (the shared gate's default "save your reading" headline is for the
+  // streak/coin chip, not the deck shop).
+  const title = pick('Sign in to start collecting', 'ลงชื่อเข้าใช้เพื่อเริ่มสะสม');
+  const body = pick('Earn Meow Coins and unlock new decks — saved to your account.',
+    'รับเหรียญเหมียวและปลดล็อกสำรับใหม่ — บันทึกไว้ในบัญชีของคุณ');
   import('./sign-in-gate.js')
-    .then(({ showSignInGate }) => showSignInGate({ lang: state.currentLang, onSignIn: () => loginWithProvider('google').catch(() => {}) }))
+    .then(({ showSignInGate }) => showSignInGate({ lang: state.currentLang, title, body, onSignIn: () => loginWithProvider('google').catch(() => {}) }))
     .catch(() => { loginWithProvider('google').catch(() => {}); });
 }
 let timers = [];
@@ -176,6 +181,8 @@ function renderWeekly() {
 // ---- buy a specific featured deck (250) ------------------------------------------------
 async function buyDeck(deck) {
   if (canUnlockDeck(deck.id)) { setActiveDeck(deck.id); renderWeekly(); refreshHeroStats(); return; }
+  // Signed out → invite sign-in instead of the coin wall (same as the gacha pull).
+  if (!isSignedIn()) { openSignIn(); return; }
   if (getMeowCoins() < WEEKLY_PRICE) { showNotEnough(WEEKLY_PRICE); return; }
   const res = await spendCoins(WEEKLY_PRICE, 'weekly_shop_buy');
   if (!res.ok) { showNotEnough(WEEKLY_PRICE); return; }
