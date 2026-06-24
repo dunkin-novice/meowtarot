@@ -143,8 +143,9 @@
 }
 
 @media (min-width: 769px) {
+  /* Desktop top navbar lives in this shell now (was hidden when desktop had no nav). */
   #bottom-nav-shell {
-    display: none !important;
+    display: block;
   }
 }
 
@@ -10021,4 +10022,41 @@ body[data-page='meanings'] .card-meaning-footer-nav .footer-nav-pill {
   body[data-page] .bottom-nav--phase5 .bottom-nav__item.is-active .bottom-nav__icon { opacity: 1; }
   body[data-page] .bottom-nav--phase5 .bottom-nav__icon svg { display: block; width: 22px; height: 22px; }
   body[data-page] .bottom-nav--phase5 .bottom-nav__label { font-size: 10.5px; letter-spacing: 0.02em; }
+}
+
+/* ===== Desktop top navbar (>768px) — the bottom pill is mobile-only, so desktop had no
+   nav. Injected by bottom-nav.js. (founder 2026-06-24) ===== */
+.mt-desktop-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(197, 177, 220, 0.45);
+  box-shadow: 0 4px 20px -12px rgba(61, 26, 92, 0.25);
+}
+.mt-desktop-nav__inner {
+  max-width: 1120px; margin: 0 auto; height: 62px;
+  /* extra right padding reserves the top-right corner for the floating coin chip */
+  padding: 0 110px 0 32px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+}
+.mt-desktop-nav__brand {
+  font-family: var(--mt-font-display, 'Cormorant Garamond', Georgia, serif);
+  font-style: italic; font-weight: 600; font-size: 25px; line-height: 1;
+  color: var(--mt-plum, #3d1a5c); text-decoration: none; white-space: nowrap;
+}
+.mt-desktop-nav__links { display: flex; align-items: center; gap: 6px; }
+.mt-desktop-nav__item {
+  font-family: var(--mt-font-body, 'DM Sans', system-ui, sans-serif);
+  font-size: 14px; font-weight: 600; letter-spacing: 0.01em;
+  color: var(--mt-plum-mid, #6b4a86); text-decoration: none;
+  padding: 8px 16px; border-radius: 100px;
+  transition: background 150ms ease, color 150ms ease;
+}
+.mt-desktop-nav__item:hover { background: rgba(123, 74, 134, 0.10); color: var(--mt-plum, #3d1a5c); }
+.mt-desktop-nav__item.is-active { background: var(--mt-plum, #3d1a5c); color: #fff8ec; }
+body.has-top-nav { padding-top: 62px; }
+/* Float the global coin/avatar chip cluster above the desktop nav (the nav reserves 110px
+   on the right for it). #mt-coin-chip is static inside #mt-top-chips, so raise the cluster. */
+@media (min-width: 769px) {
+  #mt-top-chips { z-index: 1001 !important; }
 }

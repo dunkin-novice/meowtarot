@@ -133,6 +133,31 @@ function buildNavMarkup(pathname) {
   return `<nav class="bottom-nav bottom-nav--phase5" aria-label="Mobile app navigation">${tabHtml}</nav>`;
 }
 
+// Desktop (>768px) top navbar — brand + the same 4 destinations as text links.
+// (founder 2026-06-24: desktop had no nav at all; the bottom pill is mobile-only.)
+function buildDesktopNavMarkup(pathname) {
+  const { prefix, labels } = getLocaleConfig(pathname);
+  const active = getActiveTab(pathname);
+
+  const tabs = [
+    { key: 'today',   href: `${prefix}/index.html`,   label: labels.today },
+    { key: 'decks',   href: `${prefix}/decks.html`,   label: labels.decks },
+    { key: 'shop',    href: `${prefix}/shop.html`,    label: labels.shop },
+    { key: 'profile', href: `${prefix}/profile.html`, label: labels.profile },
+  ];
+
+  const links = tabs.map((tab) => `
+    <a class="mt-desktop-nav__item ${active === tab.key ? 'is-active' : ''}" href="${tab.href}">${tab.label}</a>
+  `).join('');
+
+  return `<nav class="mt-desktop-nav" aria-label="Site navigation">
+    <div class="mt-desktop-nav__inner">
+      <a class="mt-desktop-nav__brand" href="${prefix}/index.html">MeowTarot</a>
+      <div class="mt-desktop-nav__links">${links}</div>
+    </div>
+  </nav>`;
+}
+
 function bindWindowListeners() {
   if (typeof window === 'undefined') return;
   if (window._meowNavListenerBound) return;
@@ -158,25 +183,30 @@ export function renderBottomNav() {
 
   bindWindowListeners();
   const pathname = window.location.pathname || '/';
-  if (shouldExclude(pathname)) {
-    document.body.classList.remove('has-bottom-nav');
-    return;
-  }
-
-  const mobile = window.matchMedia(MOBILE_QUERY);
-  if (!mobile.matches) {
-    document.body.classList.remove('has-bottom-nav');
-    return;
-  }
-
   let shell = document.getElementById('bottom-nav-shell');
+
+  if (shouldExclude(pathname)) {
+    if (shell) shell.innerHTML = '';
+    document.body.classList.remove('has-bottom-nav', 'has-top-nav');
+    return;
+  }
+
   if (!shell) {
     shell = document.createElement('div');
     shell.id = 'bottom-nav-shell';
     document.body.appendChild(shell);
   }
-  shell.innerHTML = buildNavMarkup(pathname);
-  document.body.classList.add('has-bottom-nav');
+
+  // Mobile → floating bottom pill; desktop → top navbar. (Re-renders on resize.)
+  if (window.matchMedia(MOBILE_QUERY).matches) {
+    shell.innerHTML = buildNavMarkup(pathname);
+    document.body.classList.add('has-bottom-nav');
+    document.body.classList.remove('has-top-nav');
+  } else {
+    shell.innerHTML = buildDesktopNavMarkup(pathname);
+    document.body.classList.add('has-top-nav');
+    document.body.classList.remove('has-bottom-nav');
+  }
 
   bindMutationObserver();
 }
