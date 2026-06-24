@@ -652,6 +652,20 @@ function resolveLocalizedCardName(card = {}, fallback = '', lang = 'en') {
   return toSafeText(name || fallback, fallback);
 }
 
+// Short meaning-recap shown in place of the card name on the single-card posters
+// (Daily + Ask-a-Question 1-card). The card art already prints the name, so the
+// poster headline recaps WHAT THE CARD MEANS instead. Source = `tarot_imply`
+// (localized), a comma-separated keyword list; we keep the first few so the big
+// serif slot stays clean. Localizes to the active locale (TH imply for /th/).
+function resolveCardImplyRecap(card = {}, lang = 'en', maxKeywords = 3) {
+  const raw = getLocalizedField(card, 'tarot_imply', lang);
+  const keywords = toSafeText(raw, '')
+    .split(/[,，、]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return keywords.slice(0, maxKeywords).join(', ');
+}
+
 function mergeCelticCrossCardEntries(payload = {}, cardEntries = []) {
   return CELTIC_CROSS_POSITIONS.map((position, index) => {
     const payloadCard = payload?.cards?.[index] || {};
@@ -1932,8 +1946,12 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
   const orientation = toOrientation(cardEntry?.orientation || card?.orientation || sourceCard?.orientation || 'upright');
   const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || card?.id || '');
   const orientedId = baseId ? `${baseId}-${orientation}` : '';
+  // Headline = short MEANING RECAP (top-3 `tarot_imply` keywords, localized), NOT
+  // the card name — the card art already prints the name. Falls back to the card
+  // name if a card lacks imply data so the slot is never empty.
   const cardName = toSafeText(
-    resolveLocalizedCardName(sourceCard, '', 'en') || card?.title || card?.name || '',
+    resolveCardImplyRecap(sourceCard, lang)
+      || resolveLocalizedCardName(sourceCard, '', 'en') || card?.title || card?.name || '',
     '',
   ).trim();
   const orientationLabel = getOrientationLabel(orientation, lang);
@@ -2085,7 +2103,13 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
     ctx.fillStyle = palette.primary;
     ctx.shadowColor = 'rgba(11, 13, 26, 0.55)';
     ctx.shadowBlur = 20;
-    lines.forEach((line, i) => ctx.fillText(line, width / 2, nameBottomY + i * lineHeight));
+    // EXPLICIT centring (left-align + x − lineWidth/2) instead of textAlign='center',
+    // which mis-centres Thai on iOS Safari canvas → the recap drifts off the right edge.
+    ctx.textAlign = 'left';
+    lines.forEach((line, i) => {
+      const lw = ctx.measureText(line).width;
+      ctx.fillText(line, width / 2 - lw / 2, nameBottomY + i * lineHeight);
+    });
     ctx.restore();
     nameBottomY = nameBottomY + (lines.length - 1) * lineHeight + Math.round(fontSize * 0.26);
   }
@@ -2645,11 +2669,14 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     const resolvedOrientation = resolveDailyReadingOrientation(payload, cardEntry);
     const reading = resolveDailyReading(payload, cardEntry, lang);
     const mainQuoteText = reading.mainQuoteText || '';
-    // Card name renders in English in BOTH locales (user direction — interim until
-    // Thai card names land; tarot names commonly stay English in TH). Resolve the
-    // EN name from card data first so a localized payload title can't reintroduce Thai.
+    // Headline = a short MEANING RECAP (top-3 `tarot_imply` keywords, localized),
+    // NOT the card name — the card art already prints the name, so the poster
+    // recaps what the card means. Falls back to the EN card name if a card lacks
+    // imply data so the slot is never empty. (EN-name fallback keeps the interim
+    // "tarot names stay English in TH" behaviour.)
     const cardName = toSafeText(
-      resolveLocalizedCardName(cardEntry?.card, '', 'en')
+      resolveCardImplyRecap(cardEntry?.card, lang)
+      || resolveLocalizedCardName(cardEntry?.card, '', 'en')
       || payload?.cards?.[0]?.title
       || payload?.cards?.[0]?.name
       || '',
@@ -2835,13 +2862,17 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       }
     };
 
-    // Big italic-serif card name, auto-fit to one line where possible, ≤2 lines.
+    // Big italic-serif headline (meaning recap), auto-fit to one line where
+    // possible, ≤2 lines.
     const drawCardName = (topBaselineY) => {
       if (!cardName) return topBaselineY;
       const maxWidth = width - safeMargin * 2;
       const minSize = 66;
       let fontSize = 132;
-      ctx.textAlign = 'center';
+      // EXPLICIT centring (left-align + x − lineWidth/2) instead of textAlign='center',
+      // which mis-centres Thai on iOS Safari canvas → the headline drifts off the right
+      // edge (the recap can now be Thai imply text, so this matters here too).
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
       while (fontSize > minSize) {
         ctx.font = `italic 500 ${fontSize}px ${displayFont}`;
@@ -2852,7 +2883,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const lines = wrapTextLines(ctx, cardName, maxWidth, 2);
       const lineHeight = Math.round(fontSize * 1.02);
       ctx.fillStyle = textPalette.primary;
-      lines.forEach((line, i) => ctx.fillText(line, width / 2, topBaselineY + i * lineHeight));
+      lines.forEach((line, i) => {
+        const lw = ctx.measureText(line).width;
+        ctx.fillText(line, width / 2 - lw / 2, topBaselineY + i * lineHeight);
+      });
       const descent = Math.round(fontSize * 0.26);
       return topBaselineY + (lines.length - 1) * lineHeight + descent;
     };

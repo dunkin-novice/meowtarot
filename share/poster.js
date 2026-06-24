@@ -2103,7 +2103,13 @@ async function renderQuickPullPoster(ctx, canvas, perf, opts) {
     ctx.fillStyle = palette.primary;
     ctx.shadowColor = 'rgba(11, 13, 26, 0.55)';
     ctx.shadowBlur = 20;
-    lines.forEach((line, i) => ctx.fillText(line, width / 2, nameBottomY + i * lineHeight));
+    // EXPLICIT centring (left-align + x − lineWidth/2) instead of textAlign='center',
+    // which mis-centres Thai on iOS Safari canvas → the recap drifts off the right edge.
+    ctx.textAlign = 'left';
+    lines.forEach((line, i) => {
+      const lw = ctx.measureText(line).width;
+      ctx.fillText(line, width / 2 - lw / 2, nameBottomY + i * lineHeight);
+    });
     ctx.restore();
     nameBottomY = nameBottomY + (lines.length - 1) * lineHeight + Math.round(fontSize * 0.26);
   }
@@ -2856,13 +2862,17 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       }
     };
 
-    // Big italic-serif card name, auto-fit to one line where possible, ≤2 lines.
+    // Big italic-serif headline (meaning recap), auto-fit to one line where
+    // possible, ≤2 lines.
     const drawCardName = (topBaselineY) => {
       if (!cardName) return topBaselineY;
       const maxWidth = width - safeMargin * 2;
       const minSize = 66;
       let fontSize = 132;
-      ctx.textAlign = 'center';
+      // EXPLICIT centring (left-align + x − lineWidth/2) instead of textAlign='center',
+      // which mis-centres Thai on iOS Safari canvas → the headline drifts off the right
+      // edge (the recap can now be Thai imply text, so this matters here too).
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
       while (fontSize > minSize) {
         ctx.font = `italic 500 ${fontSize}px ${displayFont}`;
@@ -2873,7 +2883,10 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
       const lines = wrapTextLines(ctx, cardName, maxWidth, 2);
       const lineHeight = Math.round(fontSize * 1.02);
       ctx.fillStyle = textPalette.primary;
-      lines.forEach((line, i) => ctx.fillText(line, width / 2, topBaselineY + i * lineHeight));
+      lines.forEach((line, i) => {
+        const lw = ctx.measureText(line).width;
+        ctx.fillText(line, width / 2 - lw / 2, topBaselineY + i * lineHeight);
+      });
       const descent = Math.round(fontSize * 0.26);
       return topBaselineY + (lines.length - 1) * lineHeight + descent;
     };
