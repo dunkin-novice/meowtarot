@@ -2208,6 +2208,14 @@ body[data-page='home'] .section-block {
 .gacha-empty__title { margin: 0; font-size: 14px; font-weight: 600; color: var(--mt-plum-mid, #6b4a86); }
 .gacha-empty__sub { margin: 4px 0 0; font-size: 12px; color: #9a85b4; }
 
+/* Weekly Shop (founder 2026-06-24) — featured deck price row + complete state */
+.gacha-weekly-sub { margin: -4px 2px 14px; font-family: var(--mt-font-body, 'DM Sans', sans-serif); font-size: 12px; line-height: 1.5; color: var(--mt-plum-mid, #6b4a86); }
+.gacha-cell__price { margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px; font-family: var(--mt-font-body, 'DM Sans', sans-serif); font-size: 13px; font-weight: 800; color: var(--mt-gold-deep, #c08327); }
+.gacha-cell__price img { width: 15px; height: 15px; }
+.gacha-cell__owned { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #e8457a; }
+.gacha-capsule.is-complete { opacity: .55; filter: saturate(.6); }
+.gacha-pull-btn:disabled { cursor: default; }
+
 .gacha-reveal-overlay { position: fixed; inset: 0; z-index: 120; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 34px 22px; background: radial-gradient(110% 80% at 50% 40%, rgba(61,26,92,.9), rgba(20,8,40,.97)); overflow: hidden; }
 .gacha-reel-caption { position: absolute; top: calc(38% - 120px); margin: 0; font-family: var(--mt-font-body, 'DM Sans', sans-serif); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--mt-gold-pale, #e8c478); font-weight: 700; }
 .gacha-reel-viewport { position: absolute; left: 0; right: 0; top: 38%; transform: translateY(-50%); height: 172px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 17%, #000 83%, transparent); mask-image: linear-gradient(90deg, transparent, #000 17%, #000 83%, transparent); }
@@ -3272,6 +3280,11 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
 .result-summary {
   color: var(--color-text-muted);
   font-size: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .search-empty {
@@ -3331,7 +3344,8 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .featured-link-item {

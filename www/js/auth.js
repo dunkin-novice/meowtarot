@@ -100,6 +100,10 @@ async function createClient() {
       import('./deck-reward.js')
         .then(({ maybeShowUnseenDeckRewards }) => maybeShowUnseenDeckRewards(lang))
         .catch(() => {});
+      // Weekly Shop "new decks!" notice — once per ISO week, queued behind the coin popup.
+      import('./weekly-shop.js')
+        .then(({ maybeShowWeeklyShopNews }) => maybeShowWeeklyShopNews(session.user, lang))
+        .catch(() => {});
     }
     try {
       const pendingClaim = localStorage.getItem('meowtarot_pending_deck_claim');
