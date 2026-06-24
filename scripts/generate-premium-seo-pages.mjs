@@ -10,6 +10,11 @@ const TH_TEMPLATE_PATH = path.join(ROOT, 'th', 'cards', 'the-fool', 'index.html'
 const JS_TEMPLATE_PATH = path.join(ROOT, 'js', 'pages', 'the-fool-card.js');
 const ROUTES_PATH = path.join(ROOT, 'js', 'canonical-card-routes.js');
 const BASE_URL = (process.env.BASE_URL || 'https://www.meowtarot.com').replace(/\/$/, '');
+// `--force-js` re-writes every per-card page script from the template (safe: the
+// scripts are fully templated, parameterised only by slug/prefix). HTML pages are
+// always left to writeIfMissing — they carry per-card baked content (FAQ) the
+// generator cannot reproduce, so they must never be force-overwritten.
+const FORCE_JS = process.argv.includes('--force-js');
 
 function normalizeSlug(value = '') {
   return String(value || '')
@@ -240,7 +245,14 @@ async function run() {
       cardIdPrefix,
       nextSlug: next.slug,
     });
-    if (await writeIfMissing(path.join(ROOT, 'js', 'pages', `${slug}-card.js`), jsOut)) createdScripts += 1;
+    const jsPath = path.join(ROOT, 'js', 'pages', `${slug}-card.js`);
+    if (FORCE_JS) {
+      await fs.mkdir(path.dirname(jsPath), { recursive: true });
+      await fs.writeFile(jsPath, jsOut, 'utf8');
+      createdScripts += 1;
+    } else if (await writeIfMissing(jsPath, jsOut)) {
+      createdScripts += 1;
+    }
   }
 
   await fs.writeFile(ROUTES_PATH, renderCanonicalRoutes(slugs), 'utf8');

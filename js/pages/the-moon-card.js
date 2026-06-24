@@ -3,7 +3,7 @@ import { getCardImageUrl, loadTarotData, meowTarotCards } from '../data.js';
 import { CANONICAL_CARD_ORDER, getCanonicalCardPath } from '../canonical-card-routes.js';
 import { buildCardSchema } from '../card-seo-schema.js';
 
-const CARD_ID_PREFIX = '19-the-moon-upright';
+const CARD_ID_PREFIX = '19-the-moon';
 const BASE_URL = 'https://www.meowtarot.com';
 
 const labels = {
@@ -20,6 +20,9 @@ const labels = {
     light: 'Light',
     shadow: 'Shadow',
     descriptionSuffix: 'Read both upright and reversed interpretations.',
+    discoverTitle: 'Discover more from here',
+    discoverDaily: "Discover Today's Card",
+    discoverQuiz: 'Take the Tarot Personality Quiz',
   },
   th: {
     upright: 'ความหมายไพ่ตั้งตรง',
@@ -34,6 +37,9 @@ const labels = {
     light: 'ด้านสว่าง',
     shadow: 'ด้านเงา',
     descriptionSuffix: 'อ่านความหมายทั้งไพ่ตั้งตรงและกลับหัวได้ในหน้าเดียว',
+    discoverTitle: 'ค้นหาเพิ่มเติมจากที่นี่',
+    discoverDaily: 'เปิดไพ่ประจำวันนี้',
+    discoverQuiz: 'ทำแบบทดสอบไพ่ประจำตัว',
   },
 };
 
@@ -179,6 +185,56 @@ function renderSymbolicProfile(card) {
 }
 
 
+// Render a comma-separated keyword string into individual pill chips
+// (matches the Death Card Meaning redesign). Falls back to plain text-empty.
+function renderKeywordChips(el, value) {
+  if (!el) return;
+  el.classList.add('kw-chips');
+  el.textContent = '';
+  String(value || '')
+    .split(/[,，]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((keyword) => {
+      const chip = document.createElement('span');
+      chip.className = 'kw-chip';
+      chip.textContent = keyword;
+      el.appendChild(chip);
+    });
+}
+
+// Inject a "Discover more from here" internal-links block once, before the
+// card-nav footer. Crawlable links to the daily reading + personality quiz.
+function renderDiscoverMore(localize) {
+  const article = document.querySelector('.tarot-card-meaning-page article');
+  if (!article || article.querySelector('.card-discover')) return;
+  const footer = article.querySelector('.card-meaning-footer-nav');
+  const labelsForLang = labels[state.lang];
+
+  const section = document.createElement('section');
+  section.className = 'section-block card-discover';
+
+  const heading = document.createElement('h2');
+  heading.textContent = labelsForLang.discoverTitle;
+  section.appendChild(heading);
+
+  const links = document.createElement('div');
+  links.className = 'card-discover__links';
+  [
+    { href: localize('/daily.html'), text: labelsForLang.discoverDaily },
+    { href: localize('/quiz/tarot-card-personality/'), text: labelsForLang.discoverQuiz },
+  ].forEach((entry) => {
+    const link = document.createElement('a');
+    link.href = entry.href;
+    link.textContent = entry.text;
+    links.appendChild(link);
+  });
+  section.appendChild(links);
+
+  if (footer) article.insertBefore(section, footer);
+  else article.appendChild(section);
+}
+
 function getDisplayName(card) {
   if (state.lang === 'th') return card.alias_th || card.card_name_en || 'ไพ่ทาโรต์';
   return card.card_name_en || card.alias_th || 'Tarot Card';
@@ -251,7 +307,7 @@ function render() {
   if (footerHome) footerHome.setAttribute('href', localize('/'));
   if (footerIndex) footerIndex.setAttribute('href', localize('/tarot-card-meanings/'));
   if (footerNext) {
-    const fallbackNext = localize('/cards/the-fool/');
+    const fallbackNext = localize('/cards/the-sun/');
     footerNext.setAttribute('href', nextCanonicalPath || fallbackNext);
   }
   if (footerDaily) footerDaily.setAttribute('href', localize('/daily.html'));
@@ -278,8 +334,10 @@ function render() {
 
   dom.summaryPreview.textContent = getLocalized(card, 'reading_summary_preview');
 
-  dom.lightKeywords.textContent = card.keywords_light || '';
-  dom.shadowKeywords.textContent = card.keywords_shadow || '';
+  renderKeywordChips(dom.lightKeywords, card.keywords_light);
+  renderKeywordChips(dom.shadowKeywords, card.keywords_shadow);
+
+  renderDiscoverMore(localize);
 
   dom.toggles.forEach((toggle) => {
     const active = toggle.dataset.orientation === state.orientation;
