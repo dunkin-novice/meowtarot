@@ -78,7 +78,8 @@ body[data-page='full'] .full-topbar--board {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
+  /* Clear the fixed top-right coin chip so the streak chip doesn't overlap it (2026-06-24). */
+  margin-top: 30px;
   gap: 12px;
 }
 
@@ -421,7 +422,7 @@ body[data-page='full'] .full-continue-button:disabled {
 @media (max-height: 780px) {
   body[data-page='full'] .full-shell { min-height: 0; padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 8px); }
   body[data-page='full'] .page-shell.board-page { min-height: 0; }
-  body[data-page='full'] .full-topbar--board { margin-top: 4px; }
+  body[data-page='full'] .full-topbar--board { margin-top: 24px; }
   body[data-page='full'] .full-board-title { margin-top: 6px; }
   body[data-page='full'] .full-board-title__en { font-size: 21px; }
   body[data-page='full'] .full-board-title__hint { display: none; }

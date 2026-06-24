@@ -493,7 +493,9 @@ body[data-page='daily'] .daily-topbar--board {
   grid-template-columns: 36px 1fr auto;
   align-items: center;
   gap: 8px;
-  margin-top: 6px;
+  /* Drop the row below the fixed top-right coin chip so the "Save your fortune" streak
+     chip doesn't sit under it (founder 2026-06-24). */
+  margin-top: 30px;
 }
 
 body[data-page='daily'] .daily-topbar--board::before {
