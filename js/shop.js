@@ -9,7 +9,7 @@ import {
   getAllDecks, getActiveDeckId, setActiveDeck, canUnlockDeck, purchaseDeck,
 } from './data.js';
 import { showDeckPreview } from './deck-preview.js';
-import { getWeeklyFeatured } from './weekly-shop.js';
+import { getWeeklyFeatured, getDaysUntilRefresh } from './weekly-shop.js';
 import { trackLocaleSwitched } from './analytics.js';
 
 const CDN = 'https://cdn.meowtarot.com/assets';
@@ -47,80 +47,64 @@ function backImg(id, className) {
 }
 
 // ---- header / hero / progress ----------------------------------------------------------
+// Gacha hero card — dark mystic panel with a fanned mystery deck + gold pull button.
+// (founder 2026-06-24, from the "Mystic Market" Shop.dc.html redesign.)
 function buildHero() {
   const wrap = document.createElement('section');
-  wrap.className = 'gacha-hero';
+  wrap.className = 'gacha-hero2';
+  const poolSize = gachaDecks().length;
   wrap.innerHTML = `
-    <div class="gacha-head">
-      <div class="gacha-head__left">
-        <div class="gacha-eyebrow">${pick('Gacha', 'กาชา')}</div>
-        <h1 class="gacha-title">${pick('Gacha Shop', 'ร้านกาชา')}</h1>
-        <p class="gacha-sub">${pick('Pull a new deck for just 200 Meow Coins — always one you don’t own yet.', 'สุ่มสำรับใหม่ เพียง 200 MeowCoin — ได้สำรับที่คุณยังไม่มีเสมอ')}</p>
+    <span class="gacha-hero2__star" style="top:14px;left:18px;"></span>
+    <span class="gacha-hero2__star" style="top:44px;right:30px;animation-delay:.6s;"></span>
+    <span class="gacha-hero2__star" style="bottom:28px;right:64px;animation-delay:1.1s;"></span>
+    <span class="gacha-hero2__star gacha-hero2__star--sm" style="top:78px;left:40px;animation-delay:.3s;"></span>
+    <div class="gacha-hero2__row">
+      <div class="gacha-hero2__deck" aria-hidden="true">
+        <span class="gacha-hero2__deck-c gacha-hero2__deck-c--l"></span>
+        <span class="gacha-hero2__deck-c gacha-hero2__deck-c--r"></span>
+        <span class="gacha-hero2__deck-c gacha-hero2__deck-c--f"><span class="gacha-hero2__q">?</span></span>
+      </div>
+      <div class="gacha-hero2__copy">
+        <span class="gacha-hero2__pill">★ ${pick('Gacha Pull', 'กาชา')}</span>
+        <h2 class="gacha-hero2__title">${pick('Summon a<br>mystery deck', 'สุ่มสำรับ<br>ปริศนา')}</h2>
+        <p class="gacha-hero2__sub">${pick(`One of ${poolSize} enchanted decks — yours at random.`, `1 ใน ${poolSize} สำรับมนตรา ได้แบบสุ่ม`)}</p>
       </div>
     </div>
-    <!-- In-page coin balance removed (founder 2026-06-23): the universal top-right chip already shows it. -->
-    <div class="gacha-capsule-zone">
-      <div class="gacha-capsule" id="gacha-capsule" role="button" tabindex="0" aria-label="${pick('Pull a deck', 'สุ่มสำรับ')}">
-        <span class="gacha-capsule__q">?</span>
-        <span class="gacha-capsule__label">${pick('Mystery', 'ปริศนา')}</span>
-      </div>
-    </div>
-    <button type="button" class="gacha-pull-btn" id="gacha-pull">
-      <span>${pick('Pull', 'สุ่ม')} ·</span>
-      <img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /><span>200</span>
+    <button type="button" class="gacha-hero2__btn" id="gacha-pull">
+      <span class="gacha-hero2__btn-label">${pick('Pull a Deck', 'สุ่มสำรับ')}</span>
+      <span class="gacha-hero2__btn-cost"><img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />${PULL}</span>
     </button>
     <p class="gacha-helper" id="gacha-helper"></p>`;
   return wrap;
 }
 
-function buildProgress() {
-  const wrap = document.createElement('div');
-  wrap.className = 'gacha-progress';
-  wrap.innerHTML = `
-    <div class="gacha-progress__row">
-      <span class="gacha-progress__label" id="gacha-prog-label"></span>
-      <span class="gacha-progress__pct" id="gacha-prog-pct"></span>
-    </div>
-    <div class="gacha-progress__track"><div class="gacha-progress__fill" id="gacha-prog-fill"></div></div>`;
-  return wrap;
-}
-
 function refreshHeroStats() {
-  const decks = collectibleDecks();
-  const total = decks.length;
-  const owned = decks.filter((d) => canUnlockDeck(d.id)).length;
-  const pct = total ? Math.round((owned / total) * 100) : 0;
   const bal = getMeowCoins();
   // Gacha "Collection complete": no buyable deck left to pull → disable the pull, don't tease coins.
-  const gachaLeft = gachaDecks().filter((d) => !canUnlockDeck(d.id)).length;
-  const complete = gachaLeft === 0;
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('gacha-prog-label', pick(`${owned} of ${total} decks collected`, `${owned} จาก ${total} สำรับ`));
-  set('gacha-prog-pct', `${pct}%`);
-  const fill = document.getElementById('gacha-prog-fill'); if (fill) fill.style.width = `${pct}%`;
+  const complete = gachaDecks().filter((d) => !canUnlockDeck(d.id)).length === 0;
   const helper = document.getElementById('gacha-helper');
   if (helper) {
     helper.textContent = complete
       ? pick('You own every gacha deck — collection complete! 🎉', 'คุณมีครบทุกสำรับกาชาแล้ว! 🎉')
-      : (bal >= PULL
-        ? pick(`You have ${fmt(bal)} coins`, `คุณมี ${fmt(bal)} เหรียญ`)
-        : pick(`Need ${PULL - bal} more coins for a pull`, `ต้องการอีก ${PULL - bal} เหรียญเพื่อสุ่ม`));
+      : (bal < PULL ? pick(`Need ${PULL - bal} more coins for a pull`, `ต้องการอีก ${PULL - bal} เหรียญเพื่อสุ่ม`) : '');
   }
   const pullBtn = document.getElementById('gacha-pull');
   if (pullBtn) {
     pullBtn.classList.toggle('is-dim', complete || bal < PULL);
     pullBtn.disabled = complete;
-    if (complete) pullBtn.innerHTML = `<span>${pick('Collection complete', 'สะสมครบแล้ว')} 🎉</span>`;
+    if (complete) pullBtn.innerHTML = `<span class="gacha-hero2__btn-label">${pick('Collection complete', 'สะสมครบแล้ว')} 🎉</span>`;
   }
-  const capsule = document.getElementById('gacha-capsule');
-  if (capsule) capsule.classList.toggle('is-complete', complete);
 }
 
-// ---- weekly shop -----------------------------------------------------------------------
-function buildWeeklyHead() {
+// ---- weekly spotlight ------------------------------------------------------------------
+function buildSpotlightHead() {
   const head = document.createElement('div');
-  head.className = 'gacha-gallery-head';
-  head.innerHTML = `<h2>${pick('Weekly Spotlight', 'สำรับประจำสัปดาห์')}</h2><span></span>`;
+  head.className = 'spotlight__head';
+  const days = getDaysUntilRefresh();
+  const timer = days <= 1 ? pick('New soon', 'เร็ว ๆ นี้') : pick(`New in ${days}d`, `อีก ${days} วัน`);
+  head.innerHTML = `
+    <h3 class="spotlight__title">${pick('Weekly Spotlight', 'สำรับประจำสัปดาห์')}</h3>
+    <span class="spotlight__timer"><i></i>${timer}</span>`;
   return head;
 }
 
@@ -129,46 +113,46 @@ function buildWeeklyCell(deck) {
   const active = deck.id === getActiveDeckId();
 
   const cell = document.createElement('div');
-  cell.className = 'gacha-cell';
+  cell.className = 'spot-card';
 
   const art = document.createElement('div');
-  art.className = 'gacha-cell__art' + (active ? ' is-active' : '');
-  art.appendChild(backImg(deck.id, 'gacha-cell__img'));
-  if (owned) {
+  art.className = 'spot-card__art' + (active ? ' is-active' : '');
+  art.appendChild(backImg(deck.id, 'spot-card__img'));
+  if (owned && !active) {
     const check = document.createElement('span');
-    check.className = 'gacha-cell__check';
+    check.className = 'spot-card__check';
     check.textContent = '✓';
     art.appendChild(check);
   }
   cell.appendChild(art);
 
   const name = document.createElement('div');
-  name.className = 'gacha-cell__name';
+  name.className = 'spot-card__name';
   name.textContent = deckName(deck);
   cell.appendChild(name);
 
-  const price = document.createElement('div');
-  price.className = 'gacha-cell__price';
+  const tag = document.createElement('div');
   if (active) {
-    price.innerHTML = `<span class="gacha-cell__owned">${pick('Active', 'ใช้อยู่')}</span>`;
+    tag.className = 'spot-card__tag spot-card__tag--active';
+    tag.textContent = `★ ${pick('Active', 'ใช้อยู่')}`;
   } else if (owned) {
-    price.innerHTML = `<span class="gacha-cell__owned">${pick('Owned', 'มีแล้ว')}</span>`;
+    tag.className = 'spot-card__tag spot-card__tag--owned';
+    tag.textContent = `✓ ${pick('Owned', 'มีแล้ว')}`;
   } else {
-    price.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /><b>${WEEKLY_PRICE}</b>`;
+    tag.className = 'spot-card__price';
+    tag.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /><b>${WEEKLY_PRICE}</b>`;
   }
-  cell.appendChild(price);
+  cell.appendChild(tag);
 
-  art.addEventListener('click', () => openPreview(deck));
-  name.addEventListener('click', () => openPreview(deck));
+  cell.addEventListener('click', () => openPreview(deck));
   return cell;
 }
 
 function renderWeekly() {
-  const grid = document.getElementById('gacha-grid');
+  const grid = document.getElementById('spot-grid');
   if (!grid) return;
   grid.textContent = '';
-  const decks = getWeeklyFeatured();
-  decks.forEach((d) => grid.appendChild(buildWeeklyCell(d)));
+  getWeeklyFeatured().forEach((d) => grid.appendChild(buildWeeklyCell(d)));
 }
 
 // ---- buy a specific featured deck (250) ------------------------------------------------
@@ -421,31 +405,36 @@ function renderAll() {
   const content = document.getElementById('shop-content');
   if (!content) return;
   content.textContent = '';
+
+  // Page header (eyebrow + title). The coin balance lives in the global top-right chip.
+  const header = document.createElement('div');
+  header.className = 'shop-header';
+  header.innerHTML = `
+    <div class="shop-eyebrow">${pick('Shop', 'ร้านค้า')}</div>
+    <h1 class="shop-title">${pick('Mystic Market', 'ตลาดเวทมนตร์')}</h1>`;
+  content.appendChild(header);
+
   content.appendChild(buildHero());
-  content.appendChild(buildProgress());
 
-  content.appendChild(buildWeeklyHead());
-
-  const sub = document.createElement('p');
-  sub.className = 'gacha-weekly-sub';
-  sub.textContent = pick('Refresh every Monday', 'อัปเดตใหม่ทุกวันจันทร์');
-  content.appendChild(sub);
-
+  // Weekly Spotlight — 4 featured decks in one no-scroll row.
+  const spot = document.createElement('section');
+  spot.className = 'spotlight';
+  spot.appendChild(buildSpotlightHead());
   const grid = document.createElement('div');
-  grid.className = 'gacha-grid';
-  grid.id = 'gacha-grid';
-  content.appendChild(grid);
+  grid.className = 'spotlight__grid';
+  grid.id = 'spot-grid';
+  spot.appendChild(grid);
+  const cap = document.createElement('p');
+  cap.className = 'spotlight__caption';
+  cap.textContent = pick('Refreshes every Monday · tap a deck to preview', 'อัปเดตใหม่ทุกวันจันทร์ · แตะเพื่อดูตัวอย่าง');
+  spot.appendChild(cap);
+  content.appendChild(spot);
 
   renderWeekly();
   refreshHeroStats();
 
-  const capsule = document.getElementById('gacha-capsule');
   const pullBtn = document.getElementById('gacha-pull');
   if (pullBtn) pullBtn.addEventListener('click', doPull);
-  if (capsule) {
-    capsule.addEventListener('click', doPull);
-    capsule.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') doPull(); });
-  }
   onMeowCoinsChange(() => { refreshHeroStats(); });
 }
 

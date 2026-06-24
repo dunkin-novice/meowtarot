@@ -33,6 +33,12 @@ export function getWeekIndex(now = new Date()) {
   return Math.floor((now.getTime() - ANCHOR_UTC) / WEEK_MS);
 }
 
+// Whole days until the next Monday refresh (for the "New in Nd" spotlight chip). Min 1.
+export function getDaysUntilRefresh(now = new Date()) {
+  const nextRefresh = ANCHOR_UTC + (getWeekIndex(now) + 1) * WEEK_MS;
+  return Math.max(1, Math.ceil((nextRefresh - now.getTime()) / (24 * 60 * 60 * 1000)));
+}
+
 // Deterministic PRNG (mulberry32) — same seed → same sequence on every device.
 function mulberry32(seed) {
   let a = seed >>> 0;
