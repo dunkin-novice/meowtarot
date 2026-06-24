@@ -19,6 +19,7 @@ import {
   getNewlyUnlockedDecks,
   getAllDecks,
   getReversedMode,
+  reversedUsesArt,
   markDeckRewardSeen,
 } from './data.js';
 import { showAchievementUnlocked } from './achievement-popup.js';
@@ -617,7 +618,7 @@ function openCardSheet(card, opts = {}) {
   // 'flip' (default): source UPRIGHT art; reversed rotates 180° via the .is-reversed
   // class (CSS gated by data-reversed-mode). 'art': source the real orientation's
   // *-reversed.webp; the CSS rotation is suppressed in that mode.
-  const sheetOrientation = getReversedMode() === 'art' ? toOrientation(card) : 'upright';
+  const sheetOrientation = reversedUsesArt() ? toOrientation(card) : 'upright';
   resolveCardImageUrl(card, sheetOrientation).then((resolvedSrc) => {
     if (resolvedSrc && resolvedSrc !== cardSheetEls.image.src) {
       cardSheetEls.image.src = resolvedSrc;
@@ -1155,7 +1156,7 @@ function getCardImageUrlWithFallback(card) {
   //   'art'            — source the dedicated *-reversed.webp; no rotation.
   // In either mode, fall back to upright → back → site logo so a missing reversed
   // asset never breaks the image.
-  const useArt = getReversedMode() === 'art';
+  const useArt = reversedUsesArt();
   const orientation = useArt && toOrientation(card) === 'reversed' ? 'reversed' : 'upright';
   const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
   const primaryUrl = (orientation === 'reversed' ? reversedUrl : uprightUrl) || uprightUrl;
@@ -1172,7 +1173,7 @@ async function resolveReadingResultRuntimeImageUrl(card) {
   // 'flip' (default) resolves upright (rotated in CSS); 'art' resolves the real
   // orientation so reversed cards load *-reversed.webp. resolveCardImageUrl already
   // falls back reversed → upright → back when an asset is missing.
-  const orientation = getReversedMode() === 'art' ? toOrientation(card) : 'upright';
+  const orientation = reversedUsesArt() ? toOrientation(card) : 'upright';
   return resolveCardImageUrl(card, orientation);
 }
 

@@ -266,20 +266,28 @@ applyActiveDeckCardAspect();
 // Either way the orientation LABEL + reversed MEANINGS are unchanged — only the
 // IMAGE sourcing/rotation differs. Mirrored to a <html data-reversed-mode> attr so
 // CSS can gate the rotation without reading storage.
+//   'flipart'        — reversed cards load the *-reversed.webp asset AND are rotated 180°
+//                      (the dedicated reversed art, flipped). (founder 2026-06-24)
 const REVERSED_MODE_STORAGE_KEY = 'meowtarot_reversed_mode';
+const REVERSED_MODES = ['flip', 'art', 'flipart'];
 export function getReversedMode() {
   try {
-    return localStorage.getItem(REVERSED_MODE_STORAGE_KEY) === 'art' ? 'art' : 'flip';
+    const v = localStorage.getItem(REVERSED_MODE_STORAGE_KEY);
+    return REVERSED_MODES.includes(v) ? v : 'flip';
   } catch (_) {
     return 'flip';
   }
 }
 export function setReversedMode(mode) {
-  const normalized = mode === 'art' ? 'art' : 'flip';
+  const normalized = REVERSED_MODES.includes(mode) ? mode : 'flip';
   try { localStorage.setItem(REVERSED_MODE_STORAGE_KEY, normalized); } catch (_) { /* ignore */ }
   applyReversedModeAttr();
   return normalized;
 }
+// Sourcing: 'art' + 'flipart' load the dedicated -reversed.webp; 'flip' uses the upright art.
+export function reversedUsesArt() { return getReversedMode() !== 'flip'; }
+// Rotation: 'flip' + 'flipart' rotate 180°; 'art' shows the reversed art un-rotated.
+export function reversedIsRotated() { return getReversedMode() !== 'art'; }
 export function applyReversedModeAttr() {
   if (typeof document === 'undefined' || !document.documentElement) return;
   document.documentElement.setAttribute('data-reversed-mode', getReversedMode());

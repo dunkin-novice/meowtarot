@@ -8,6 +8,8 @@ import {
   getActiveDeckId,
   DEFAULT_DECK_ID,
   getReversedMode,
+  reversedUsesArt,
+  reversedIsRotated,
 } from '../js/data.js';
 import { imageManager } from '../js/image-manager.js';
 import { normalizePayload } from './normalize-payload.js';
@@ -24,15 +26,14 @@ import { translations } from '../js/common.js';
 import { orderQuestionCards } from '../js/question-card-order.js';
 
 
-// Reversed-card render mode (hidden Profile toggle, founder 2026-06-20). 'flip'
-// (DEFAULT) sources the upright art and rotates 180° on the canvas; 'art' sources
-// the dedicated *-reversed.webp and does NOT rotate. These helpers keep the default
-// path byte-identical to before (flip → upright + rotate).
-const isPosterArtMode = () => getReversedMode() === 'art';
+// Reversed-card render mode (Profile toggle). 'flip' = upright art + 180° rotate;
+// 'art' = the dedicated *-reversed.webp, no rotate; 'flipart' = reversed art AND rotated.
+// Sourcing keys off reversedUsesArt() (art + flipart), rotation off reversedIsRotated()
+// (flip + flipart) — decoupled so all three modes render correctly. (founder 2026-06-24)
 const posterImageOrientation = (realOrientation) =>
-  (isPosterArtMode() && toOrientation(realOrientation) === 'reversed') ? 'reversed' : 'upright';
+  (reversedUsesArt() && toOrientation(realOrientation) === 'reversed') ? 'reversed' : 'upright';
 const posterShouldRotateReversed = (realOrientation) =>
-  toOrientation(realOrientation) === 'reversed' && !isPosterArtMode();
+  toOrientation(realOrientation) === 'reversed' && reversedIsRotated();
 
 // Prefer the 200px thumbnail for SMALL multi-card posters (Celtic Cross + the
 // 3-card Question spread). Returns the -200 variant URL, or null when the URL

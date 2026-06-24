@@ -19,6 +19,7 @@ import {
   getNewlyUnlockedDecks,
   getAllDecks,
   getReversedMode,
+  reversedUsesArt,
   markDeckRewardSeen,
 } from './data.js';
 import { showAchievementUnlocked } from './achievement-popup.js';
@@ -392,13 +393,22 @@ function buildCardMeaningUrl(card) {
   return `https://www.meowtarot.com${prefix}/cards/${slug}/`;
 }
 
-function buildReadingEntryLinks() {
+// Inline SVG glyphs for the three "start a new reading" tiles (sun / question /
+// three-card spread) — mirrors the Claude Design RelatedLinks mockup. Static,
+// trusted markup; uses currentColor so CSS controls the stroke.
+const READING_TILE_ICONS = {
+  daily: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.2 5.2l1.8 1.8M17 17l1.8 1.8M18.8 5.2L17 7M7 17l-1.8 1.8"/></svg>',
+  question: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8.4 9.2a3.6 3.6 0 1 1 5 3.3c-1 .5-1.4 1.1-1.4 2.1v.6"/><circle cx="12" cy="18.4" r="0.6" fill="currentColor" stroke="none"/></svg>',
+  full: '<svg viewBox="0 0 28 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.6" y="7" width="7" height="11" rx="1.4" transform="rotate(-15 7 12.5)"/><rect x="10.5" y="5.5" width="7" height="12" rx="1.4"/><rect x="17.4" y="7" width="7" height="11" rx="1.4" transform="rotate(15 21 12.5)"/></svg>',
+};
+
+function buildReadingEntryTiles() {
   const isThai = state.currentLang === 'th';
   const base = isThai ? '/th' : '';
   return [
-    { href: `${base}/daily.html`, label: isThai ? 'เริ่ม Daily Reading' : 'Start Daily Reading' },
-    { href: `${base}/question.html`, label: isThai ? 'เริ่ม Question Reading' : 'Start Question Reading' },
-    { href: `${base}/full.html`, label: isThai ? 'เริ่ม Full Reading' : 'Start Full Reading' },
+    { href: `${base}/daily.html`, name: 'Daily', sub: isThai ? 'ไพ่ประจำวัน' : 'Card of the day', icon: READING_TILE_ICONS.daily },
+    { href: `${base}/question.html`, name: 'Question', sub: isThai ? 'ถามคำถาม' : 'Ask a question', icon: READING_TILE_ICONS.question },
+    { href: `${base}/full.html`, name: 'Full', sub: isThai ? 'เซลติกครอส' : 'Celtic Cross', icon: READING_TILE_ICONS.full },
   ];
 }
 
@@ -408,40 +418,112 @@ function appendReadingInternalLinks(container, cards = []) {
   // direction — 10 links cluttered the result). Daily/Question keep it for SEO crawl.
   if (state.mode === 'full') return;
 
+  const isThai = state.currentLang === 'th';
+
   const panel = document.createElement('section');
-  panel.className = 'panel panel--internal-links';
+  panel.className = 'panel panel--internal-links related-links';
 
+  // Title + gold underline
+  const head = document.createElement('header');
+  head.className = 'related-links__head';
   const heading = document.createElement('h3');
-  heading.textContent = state.currentLang === 'th' ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related Internal Links';
-  panel.appendChild(heading);
+  heading.textContent = isThai ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related Internal Links';
+  head.appendChild(heading);
+  const rule = document.createElement('span');
+  rule.className = 'related-links__rule';
+  rule.setAttribute('aria-hidden', 'true');
+  head.appendChild(rule);
+  panel.appendChild(head);
 
-  const cardLinks = document.createElement('ul');
+  // Hero rows — one "read full meaning" card row per unique drawn card (1 for
+  // Daily, up to 3 for Question). Real card art thumbnail + crawlable meaning link.
   const seen = new Set();
   cards.forEach((card) => {
     const meaningUrl = buildCardMeaningUrl(card);
     if (!meaningUrl || seen.has(meaningUrl)) return;
     seen.add(meaningUrl);
 
-    const li = document.createElement('li');
-    const link = document.createElement('a');
-    link.href = meaningUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = state.currentLang === 'th' ? `อ่านความหมาย: ${getName(card)}` : `Read meaning: ${getName(card)}`;
-    li.appendChild(link);
-    cardLinks.appendChild(li);
-  });
-  if (cardLinks.children.length) panel.appendChild(cardLinks);
+    const hero = document.createElement('a');
+    hero.className = 'related-links__hero';
+    hero.href = meaningUrl;
+    hero.target = '_blank';
+    hero.rel = 'noopener noreferrer';
 
-  const entryLinks = document.createElement('p');
-  buildReadingEntryLinks().forEach((entry, index) => {
-    const link = document.createElement('a');
-    link.href = entry.href;
-    link.textContent = entry.label;
-    entryLinks.appendChild(link);
-    if (index < 2) entryLinks.appendChild(document.createTextNode(' · '));
+    const thumb = document.createElement('span');
+    thumb.className = 'related-links__thumb';
+    if (toOrientation(card) === 'reversed' && getReversedMode() !== 'art') {
+      thumb.classList.add('is-reversed');
+    }
+    const img = document.createElement('img');
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.width = 48;
+    img.height = 72;
+    const { src, candidates } = getStableCardImageSources(card);
+    applyImgFallback(img, src, candidates);
+    thumb.appendChild(img);
+    hero.appendChild(thumb);
+
+    const text = document.createElement('span');
+    text.className = 'related-links__hero-text';
+    const eyebrow = document.createElement('span');
+    eyebrow.className = 'related-links__eyebrow';
+    eyebrow.textContent = isThai ? 'อ่านความหมายเต็ม' : 'Read full meaning';
+    const title = document.createElement('span');
+    title.className = 'related-links__title';
+    title.textContent = getName(card);
+    const sub = document.createElement('span');
+    sub.className = 'related-links__sub';
+    sub.textContent = isThai
+      ? 'สัญลักษณ์ · ไพ่กลับหัว · ความรัก · การงาน'
+      : 'Symbolism · Reversed · Love · Career';
+    text.append(eyebrow, title, sub);
+    hero.appendChild(text);
+
+    const chevron = document.createElement('span');
+    chevron.className = 'related-links__chevron';
+    chevron.setAttribute('aria-hidden', 'true');
+    chevron.innerHTML = '<svg width="8" height="13" viewBox="0 0 8 13" fill="none"><path d="M1 1L6.5 6.5L1 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    hero.appendChild(chevron);
+
+    panel.appendChild(hero);
   });
-  panel.appendChild(entryLinks);
+
+  // Divider eyebrow
+  const divider = document.createElement('div');
+  divider.className = 'related-links__divider';
+  const divLabel = document.createElement('span');
+  divLabel.textContent = isThai ? 'เริ่มดูดวงใหม่' : 'Start a new reading';
+  divider.appendChild(divLabel);
+  panel.appendChild(divider);
+
+  // Three reading-mode tiles (crawlable internal links to the reading entry points)
+  const tiles = document.createElement('div');
+  tiles.className = 'related-links__tiles';
+  buildReadingEntryTiles().forEach((entry) => {
+    const tile = document.createElement('a');
+    tile.className = 'related-links__tile';
+    tile.href = entry.href;
+
+    const icon = document.createElement('span');
+    icon.className = 'related-links__tile-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = entry.icon;
+    const eb = document.createElement('span');
+    eb.className = 'related-links__tile-eyebrow';
+    eb.textContent = isThai ? 'เริ่ม' : 'Start';
+    const nm = document.createElement('span');
+    nm.className = 'related-links__tile-name';
+    nm.textContent = entry.name;
+    const ts = document.createElement('span');
+    ts.className = 'related-links__tile-sub';
+    ts.textContent = entry.sub;
+    tile.append(icon, eb, nm, ts);
+    tiles.appendChild(tile);
+  });
+  panel.appendChild(tiles);
+
   container.appendChild(panel);
 }
 
@@ -536,7 +618,7 @@ function openCardSheet(card, opts = {}) {
   // 'flip' (default): source UPRIGHT art; reversed rotates 180° via the .is-reversed
   // class (CSS gated by data-reversed-mode). 'art': source the real orientation's
   // *-reversed.webp; the CSS rotation is suppressed in that mode.
-  const sheetOrientation = getReversedMode() === 'art' ? toOrientation(card) : 'upright';
+  const sheetOrientation = reversedUsesArt() ? toOrientation(card) : 'upright';
   resolveCardImageUrl(card, sheetOrientation).then((resolvedSrc) => {
     if (resolvedSrc && resolvedSrc !== cardSheetEls.image.src) {
       cardSheetEls.image.src = resolvedSrc;
@@ -1074,7 +1156,7 @@ function getCardImageUrlWithFallback(card) {
   //   'art'            — source the dedicated *-reversed.webp; no rotation.
   // In either mode, fall back to upright → back → site logo so a missing reversed
   // asset never breaks the image.
-  const useArt = getReversedMode() === 'art';
+  const useArt = reversedUsesArt();
   const orientation = useArt && toOrientation(card) === 'reversed' ? 'reversed' : 'upright';
   const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(card, orientation);
   const primaryUrl = (orientation === 'reversed' ? reversedUrl : uprightUrl) || uprightUrl;
@@ -1091,7 +1173,7 @@ async function resolveReadingResultRuntimeImageUrl(card) {
   // 'flip' (default) resolves upright (rotated in CSS); 'art' resolves the real
   // orientation so reversed cards load *-reversed.webp. resolveCardImageUrl already
   // falls back reversed → upright → back when an asset is missing.
-  const orientation = getReversedMode() === 'art' ? toOrientation(card) : 'upright';
+  const orientation = reversedUsesArt() ? toOrientation(card) : 'upright';
   return resolveCardImageUrl(card, orientation);
 }
 

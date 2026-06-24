@@ -6,7 +6,7 @@ import {
   pathHasThaiPrefix,
   translations,
 } from './common.js';
-import { getAllDecks, loadTarotManifest, normalizeId, getReversedMode, setReversedMode } from './data.js';
+import { getAllDecks, loadTarotManifest, normalizeId, getReversedMode, setReversedMode, getActiveDeckId } from './data.js';
 import { computePhase } from './phase.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
@@ -572,10 +572,16 @@ function renderOther(dict) {
   const host = document.getElementById('profile-other');
   if (!host) return;
   host.innerHTML = '';
-  if (!state.user) { host.hidden = true; return; }
   host.hidden = false;
 
   const th = state.currentLang === 'th';
+
+  // Reversed-cards visualization control — VISIBLE to everyone (local preference, no account
+  // needed), above the account/deactivate area. (founder 2026-06-24; -reversed.webp art exists.)
+  host.appendChild(buildReversedModePanel(th));
+
+  // Account deletion is signed-in only.
+  if (!state.user) return;
 
   const card = document.createElement('section');
   card.className = 'panel profile-other';
@@ -598,53 +604,101 @@ function renderOther(dict) {
   trigger.addEventListener('click', () => openDeleteModal(dict, th));
   body.appendChild(trigger);
 
-  // Hidden dev toggle — reversed-card render mode. Revealed by tapping the "Other"
-  // header 5× (founder 2026-06-20). Default 'flip' (rotate upright art); 'art' uses
-  // the separate *-reversed.webp. Persists via setReversedMode → localStorage.
-  const devRow = document.createElement('div');
-  devRow.className = 'profile-reversed-mode';
-  devRow.hidden = true;
-  devRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:12px;';
-  const devLabel = document.createElement('span');
-  devLabel.textContent = th ? 'ไพ่กลับหัว' : 'Reversed cards';
-  devLabel.style.cssText = 'opacity:0.75;';
-  const seg = document.createElement('div');
-  seg.style.cssText = 'display:inline-flex;border:1px solid rgba(61,26,92,0.3);border-radius:9px;overflow:hidden;';
-  const restyle = (mode) => seg.querySelectorAll('button').forEach((x) => {
-    const on = x.dataset.mode === mode;
-    x.setAttribute('aria-pressed', String(on));
-    x.style.cssText = `border:none;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;background:${on ? '#3d1a5c' : 'transparent'};color:${on ? '#fff' : '#3d1a5c'};`;
-  });
-  const mkBtn = (mode, en, thLabel) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.dataset.mode = mode;
-    b.textContent = th ? thLabel : en;
-    b.addEventListener('click', () => { setReversedMode(mode); restyle(mode); });
-    return b;
-  };
-  seg.appendChild(mkBtn('flip', 'Flip', 'พลิก'));
-  seg.appendChild(mkBtn('art', 'Art', 'รูปแยก'));
-  devRow.appendChild(devLabel);
-  devRow.appendChild(seg);
-  restyle(getReversedMode());
-  body.appendChild(devRow);
-
-  let taps = 0;
-  let tapTimer = null;
-  summary.addEventListener('click', () => {
-    taps += 1;
-    if (tapTimer) clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => { taps = 0; }, 1200);
-    // Reversed-cards toggle HIDDEN from the frontend for now (founder 2026-06-23): 'art' mode
-    // needs the -reversed.webp assets (not generated), so the feature is parked. Reveal disabled;
-    // devRow stays hidden. (Re-enable by restoring `devRow.hidden = false` here once shipped.)
-    if (taps >= 5) { taps = 0; }
-  });
-
   details.appendChild(body);
   card.appendChild(details);
   host.appendChild(card);
+}
+
+// Visible "Reversed cards" control: Flip / Art / Flip + Art. Selecting a mode persists it
+// and shows a Fool preview so the user sees what reversed cards will look like.
+function buildReversedModePanel(th) {
+  const panel = document.createElement('section');
+  panel.className = 'panel profile-reversed-panel';
+
+  const title = document.createElement('h2');
+  title.className = 'profile-reversed-panel__title';
+  title.textContent = th ? 'ไพ่กลับหัว' : 'Reversed cards';
+  panel.appendChild(title);
+
+  const desc = document.createElement('p');
+  desc.className = 'profile-reversed-panel__desc';
+  desc.textContent = th ? 'เลือกว่าไพ่กลับหัวจะแสดงแบบไหน' : 'Choose how reversed cards are shown.';
+  panel.appendChild(desc);
+
+  const seg = document.createElement('div');
+  seg.className = 'profile-reversed-seg';
+  const modes = [
+    { key: 'flip', en: 'Flip', th: 'พลิก' },
+    { key: 'art', en: 'Art', th: 'รูปแยก' },
+    { key: 'flipart', en: 'Flip + Art', th: 'พลิก + รูปแยก' },
+  ];
+  const restyle = (active) => seg.querySelectorAll('button').forEach((b) => {
+    const on = b.dataset.mode === active;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  modes.forEach((m) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.mode = m.key;
+    b.className = 'profile-reversed-seg__btn';
+    b.textContent = th ? m.th : m.en;
+    b.addEventListener('click', () => {
+      setReversedMode(m.key);
+      restyle(m.key);
+      showReversedPreview(m.key, th);
+    });
+    seg.appendChild(b);
+  });
+  restyle(getReversedMode());
+  panel.appendChild(seg);
+  return panel;
+}
+
+function showReversedPreview(mode, th) {
+  if (typeof document === 'undefined') return;
+  document.getElementById('mt-rev-preview')?.remove();
+  if (!document.getElementById('mt-rev-preview-style')) {
+    const st = document.createElement('style');
+    st.id = 'mt-rev-preview-style';
+    st.textContent = `
+      .mt-rev-overlay{position:fixed;inset:0;z-index:1250;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(28,12,52,0);transition:background .22s ease;}
+      .mt-rev-overlay.in{background:rgba(28,12,52,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+      .mt-rev-card{width:100%;max-width:300px;background:linear-gradient(180deg,#fffaf2,#fdf3ec);border:1px solid rgba(197,177,220,.55);border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 30px 60px -20px rgba(20,8,40,.55);transform:translateY(12px) scale(.95);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s ease;}
+      .mt-rev-overlay.in .mt-rev-card{transform:none;opacity:1;}
+      .mt-rev-img{width:140px;aspect-ratio:848/1264;object-fit:contain;border-radius:12px;margin:0 auto 12px;display:block;box-shadow:0 14px 30px -12px rgba(61,26,92,.55);border:1px solid var(--mt-gold-pale,#e8c478);}
+      .mt-rev-img.is-flipped{transform:rotate(180deg);}
+      .mt-rev-text{font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:14px;color:var(--mt-ink-soft,#6b5b82);line-height:1.5;margin:0 0 14px;}
+      .mt-rev-btn{width:100%;padding:12px;border:none;border-radius:14px;background:var(--mt-plum,#3d1a5c);color:#fff8e7;font-family:var(--mt-font-body,"DM Sans",sans-serif);font-weight:700;font-size:14px;cursor:pointer;}
+    `;
+    document.head.appendChild(st);
+  }
+  const deckId = getActiveDeckId();
+  const CDN = 'https://cdn.meowtarot.com/assets';
+  // flip → upright art (rotated via CSS); art + flipart → the dedicated reversed art.
+  const src = mode === 'flip'
+    ? `${CDN}/${deckId}/01-the-fool-upright.webp`
+    : `${CDN}/${deckId}/01-the-fool-reversed.webp`;
+  const rotated = mode !== 'art'; // flip + flipart rotate 180°
+
+  const ov = document.createElement('div');
+  ov.id = 'mt-rev-preview';
+  ov.className = 'mt-rev-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  ov.innerHTML = `
+    <div class="mt-rev-card" role="document">
+      <img class="mt-rev-img${rotated ? ' is-flipped' : ''}" src="${src}" alt="" />
+      <p class="mt-rev-text">${th ? 'ตอนนี้ไพ่กลับหัวของคุณจะเป็นแบบนี้!' : "Now your reversed cards will look like this!"}</p>
+      <button type="button" class="mt-rev-btn">${th ? 'เข้าใจแล้ว' : 'Got it'}</button>
+    </div>`;
+  const img = ov.querySelector('.mt-rev-img');
+  img.addEventListener('error', () => { img.src = `${CDN}/${deckId}/01-the-fool-upright.webp`; });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+  const close = () => { ov.classList.remove('in'); window.setTimeout(() => ov.remove(), 220); };
+  ov.querySelector('.mt-rev-btn').addEventListener('click', close);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
 }
 
 // Centered confirmation modal for account deletion. The destructive call is
