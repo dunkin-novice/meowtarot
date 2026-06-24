@@ -7,29 +7,28 @@ import { applyLocaleMeta, applyTranslations, initShell, pathHasThaiPrefix } from
 import { getMeowCoins, spendCoins, onMeowCoinsChange } from './meow-coin.js';
 import {
   getAllDecks, getActiveDeckId, setActiveDeck, canUnlockDeck, purchaseDeck,
-  isPinnedDeck, togglePinnedDeck,
 } from './data.js';
 import { showDeckPreview } from './deck-preview.js';
+import { getWeeklyFeatured } from './weekly-shop.js';
 import { trackLocaleSwitched } from './analytics.js';
 
 const CDN = 'https://cdn.meowtarot.com/assets';
-const PULL = 200;
+const PULL = 200;          // gacha: random, guaranteed-new
+const WEEKLY_PRICE = 250;  // Weekly Shop: buy a SPECIFIC featured deck (+50 for the choice)
 const state = { currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en', query: '', phase: 'idle' };
 const pick = (en, th) => (state.currentLang === 'th' ? th : en);
 const fmt = (n) => Number(n).toLocaleString('en-US');
 let timers = [];
 const clearTimers = () => { timers.forEach((t) => window.clearTimeout(t)); timers = []; };
 
-// Gacha pool = collectible decks ONLY. Achievement decks (role 'streak-unlock') are EXCLUSIVE
-// to the streak/achievement ladder and never appear in the gacha; the free default (moonmallow)
-// is excluded too. Everything else (veila + the AI 'shop' decks) is gacha. (founder 2026-06-22)
-const isGachaDeck = (d) => d && !d.hidden && d.role !== 'streak-unlock' && d.id !== 'moonmallow';
+// Gacha + Weekly Shop pool = buyable art decks ONLY (role 'shop'), minus Seasonal/hidden ones.
+// Achievement decks (role 'streak-unlock') are earned on the streak ladder and never sold here;
+// the free defaults (moonmallow, veila-tarot) are excluded too. (founder 2026-06-24)
+const isGachaDeck = (d) => d && d.role === 'shop' && !d.seasonal && !d.hidden;
 const gachaDecks = () => getAllDecks().filter(isGachaDeck);
 const isAchievementDeck = (d) => d && !d.hidden && d.role === 'streak-unlock';
-// The gallery is the full COLLECTION view (gacha + achievement decks), each TAGGED by source so
-// players see which decks come from pulls vs streak achievements. Pulls still only draw from
-// gachaDecks(); achievement decks are earned via the daily-reading streak. (founder 2026-06-23)
-const galleryDecks = () => getAllDecks().filter((d) => d && d.id !== 'moonmallow' && (isGachaDeck(d) || isAchievementDeck(d)));
+// Collection denominator for the progress bar: every collectible deck (buyable + achievement).
+const collectibleDecks = () => getAllDecks().filter((d) => isGachaDeck(d) || isAchievementDeck(d));
 
 const backThumb = (id) => `${CDN}/${id}/00-back-200.webp`;
 const backFull = (id) => `${CDN}/${id}/00-back.webp`;
@@ -87,132 +86,101 @@ function buildProgress() {
 }
 
 function refreshHeroStats() {
-  const decks = galleryDecks();
+  const decks = collectibleDecks();
   const total = decks.length;
   const owned = decks.filter((d) => canUnlockDeck(d.id)).length;
   const pct = total ? Math.round((owned / total) * 100) : 0;
   const bal = getMeowCoins();
+  // Gacha "Collection complete": no buyable deck left to pull → disable the pull, don't tease coins.
+  const gachaLeft = gachaDecks().filter((d) => !canUnlockDeck(d.id)).length;
+  const complete = gachaLeft === 0;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('gacha-prog-label', pick(`${owned} of ${total} decks collected`, `${owned} จาก ${total} สำรับ`));
   set('gacha-prog-pct', `${pct}%`);
   const fill = document.getElementById('gacha-prog-fill'); if (fill) fill.style.width = `${pct}%`;
   const helper = document.getElementById('gacha-helper');
   if (helper) {
-    helper.textContent = bal >= PULL
-      ? pick(`You have ${fmt(bal)} coins`, `คุณมี ${fmt(bal)} เหรียญ`)
-      : pick(`Need ${PULL - bal} more coins for a pull`, `ต้องการอีก ${PULL - bal} เหรียญเพื่อสุ่ม`);
+    helper.textContent = complete
+      ? pick('You own every gacha deck — collection complete! 🎉', 'คุณมีครบทุกสำรับกาชาแล้ว! 🎉')
+      : (bal >= PULL
+        ? pick(`You have ${fmt(bal)} coins`, `คุณมี ${fmt(bal)} เหรียญ`)
+        : pick(`Need ${PULL - bal} more coins for a pull`, `ต้องการอีก ${PULL - bal} เหรียญเพื่อสุ่ม`));
   }
   const pullBtn = document.getElementById('gacha-pull');
-  if (pullBtn) pullBtn.classList.toggle('is-dim', bal < PULL);
+  if (pullBtn) {
+    pullBtn.classList.toggle('is-dim', complete || bal < PULL);
+    pullBtn.disabled = complete;
+    if (complete) pullBtn.innerHTML = `<span>${pick('Collection complete', 'สะสมครบแล้ว')} 🎉</span>`;
+  }
+  const capsule = document.getElementById('gacha-capsule');
+  if (capsule) capsule.classList.toggle('is-complete', complete);
 }
 
-// ---- gallery ---------------------------------------------------------------------------
-function buildSearch() {
-  const wrap = document.createElement('div');
-  wrap.className = 'gacha-search';
-  wrap.innerHTML = `
-    <svg class="gacha-search__ico" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="#c08327" stroke-width="2.1"/><path d="M20 20l-4.6-4.6" stroke="#c08327" stroke-width="2.1" stroke-linecap="round"/></svg>
-    <input class="gacha-search__input" type="text" placeholder="${pick('Search decks…', 'ค้นหาสำรับ…')}" aria-label="${pick('Search decks', 'ค้นหาสำรับ')}" />
-    <button type="button" class="gacha-search__clear" aria-label="${pick('Clear', 'ล้าง')}" hidden>×</button>`;
-  const input = wrap.querySelector('.gacha-search__input');
-  const clear = wrap.querySelector('.gacha-search__clear');
-  input.value = state.query;
-  input.addEventListener('input', () => {
-    state.query = input.value;
-    clear.hidden = !state.query.length;
-    renderGallery();
-  });
-  clear.addEventListener('click', () => { state.query = ''; input.value = ''; clear.hidden = true; renderGallery(); input.focus(); });
-  return wrap;
+// ---- weekly shop -----------------------------------------------------------------------
+function buildWeeklyHead() {
+  const head = document.createElement('div');
+  head.className = 'gacha-gallery-head';
+  head.innerHTML = `<h2>${pick('Weekly Shop', 'ร้านประจำสัปดาห์')}</h2><span></span>`;
+  return head;
 }
 
-// Sort: pinned → not-owned → owned (founder 2026-06-22). Stable within each bucket.
-function sortedFilteredDecks() {
-  const q = state.query.trim().toLowerCase();
-  let decks = galleryDecks().map((d, i) => ({ d, i }));
-  if (q) decks = decks.filter(({ d }) => (d.name || '').toLowerCase().includes(q) || (d.name_th || '').includes(state.query.trim()));
-  const rank = ({ d }) => {
-    if (isPinnedDeck(d.id)) return 0;          // pinned first
-    return canUnlockDeck(d.id) ? 2 : 1;        // then not-owned, then owned
-  };
-  decks.sort((a, b) => (rank(a) - rank(b)) || (a.i - b.i));
-  return decks.map((x) => x.d);
-}
-
-function buildDeckCell(deck) {
+function buildWeeklyCell(deck) {
   const owned = canUnlockDeck(deck.id);
   const active = deck.id === getActiveDeckId();
-  const pinned = isPinnedDeck(deck.id);
-
-  const isAch = isAchievementDeck(deck);
 
   const cell = document.createElement('div');
   cell.className = 'gacha-cell';
 
   const art = document.createElement('div');
-  art.className = 'gacha-cell__art' + (owned ? '' : ' is-locked') + (active ? ' is-active' : '');
+  art.className = 'gacha-cell__art' + (active ? ' is-active' : '');
   art.appendChild(backImg(deck.id, 'gacha-cell__img'));
-  // Source tag (founder 2026-06-23): how you GET this deck — Gacha pull vs streak Achievement.
-  const src = document.createElement('span');
-  src.className = 'gacha-cell__src' + (isAch ? ' is-ach' : ' is-gacha');
-  src.textContent = isAch ? pick('Achievement', 'ความสำเร็จ') : pick('Gacha', 'กาชา');
-  art.appendChild(src);
-  if (!owned) {
-    const scrim = document.createElement('div');
-    scrim.className = 'gacha-cell__scrim';
-    scrim.innerHTML = '<span class="gacha-cell__q">?</span>';
-    art.appendChild(scrim);
-  } else {
+  if (owned) {
     const check = document.createElement('span');
     check.className = 'gacha-cell__check';
     check.textContent = '✓';
     art.appendChild(check);
   }
-  // star / pin
-  const star = document.createElement('span');
-  star.className = 'gacha-cell__star' + (pinned ? ' is-pinned' : '');
-  star.setAttribute('role', 'button');
-  star.setAttribute('tabindex', '0');
-  star.setAttribute('aria-pressed', pinned ? 'true' : 'false');
-  star.setAttribute('aria-label', pinned ? pick('Unpin', 'เลิกปักหมุด') : pick('Pin to top', 'ปักหมุดไว้บนสุด'));
-  star.textContent = pinned ? '★' : '☆';
-  const toggleStar = (e) => { if (e) { e.stopPropagation(); e.preventDefault(); } togglePinnedDeck(deck.id); renderGallery(); };
-  star.addEventListener('click', toggleStar);
-  star.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') toggleStar(e); });
-  art.appendChild(star);
   cell.appendChild(art);
 
   const name = document.createElement('div');
-  name.className = 'gacha-cell__name' + (owned ? '' : ' is-locked');
-  // Show the real deck name even for un-owned decks (founder 2026-06-23 — was '? ? ?').
+  name.className = 'gacha-cell__name';
   name.textContent = deckName(deck);
   cell.appendChild(name);
 
+  const price = document.createElement('div');
+  price.className = 'gacha-cell__price';
   if (active) {
-    const tag = document.createElement('div');
-    tag.className = 'gacha-cell__activetag';
-    tag.textContent = pick('Active', 'ใช้อยู่');
-    cell.appendChild(tag);
+    price.innerHTML = `<span class="gacha-cell__owned">${pick('Active', 'ใช้อยู่')}</span>`;
+  } else if (owned) {
+    price.innerHTML = `<span class="gacha-cell__owned">${pick('Owned', 'มีแล้ว')}</span>`;
+  } else {
+    price.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /><b>${WEEKLY_PRICE}</b>`;
   }
+  cell.appendChild(price);
 
   art.addEventListener('click', () => openPreview(deck));
   name.addEventListener('click', () => openPreview(deck));
   return cell;
 }
 
-function renderGallery() {
+function renderWeekly() {
   const grid = document.getElementById('gacha-grid');
   if (!grid) return;
   grid.textContent = '';
-  const decks = sortedFilteredDecks();
-  if (!decks.length) {
-    const empty = document.createElement('div');
-    empty.className = 'gacha-empty';
-    empty.innerHTML = `<p class="gacha-empty__title">${pick('No decks match', 'ไม่พบสำรับที่ค้นหา')}</p><p class="gacha-empty__sub">${pick('Try a different name', 'ลองค้นหาชื่ออื่น')}</p>`;
-    grid.appendChild(empty);
-    return;
-  }
-  decks.forEach((d) => grid.appendChild(buildDeckCell(d)));
+  const decks = getWeeklyFeatured();
+  decks.forEach((d) => grid.appendChild(buildWeeklyCell(d)));
+}
+
+// ---- buy a specific featured deck (250) ------------------------------------------------
+async function buyDeck(deck) {
+  if (canUnlockDeck(deck.id)) { setActiveDeck(deck.id); renderWeekly(); refreshHeroStats(); return; }
+  if (getMeowCoins() < WEEKLY_PRICE) { showNotEnough(WEEKLY_PRICE); return; }
+  const res = await spendCoins(WEEKLY_PRICE, 'weekly_shop_buy');
+  if (!res.ok) { showNotEnough(WEEKLY_PRICE); return; }
+  purchaseDeck(deck.id);
+  showBuyReveal(deck);
+  renderWeekly();
+  refreshHeroStats();
 }
 
 // ---- preview (reuse shared Fool-card popup) --------------------------------------------
@@ -221,32 +189,31 @@ function openPreview(deck) {
     lang: state.currentLang,
     buildCondition(cond, { close }) {
       const owned = canUnlockDeck(deck.id);
-      const isAch = isAchievementDeck(deck);
+      const active = deck.id === getActiveDeckId();
       const text = document.createElement('p');
       text.className = 'mt-dp-cond-text';
-      if (owned) {
+      if (active) {
+        text.textContent = pick('✓ This is your active deck.', '✓ นี่คือสำรับที่ใช้อยู่');
+      } else if (owned) {
         text.textContent = pick('✓ You own this deck — set it as your active deck.', '✓ คุณมีสำรับนี้แล้ว — ตั้งเป็นสำรับที่ใช้อยู่ได้เลย');
-      } else if (isAch) {
-        const d = deck.unlock_day;
-        text.textContent = pick(`Achievement deck — earned by reading on ${d} different days (not from the gacha).`, `สำรับความสำเร็จ — รับได้เมื่อเปิดไพ่ครบ ${d} วัน (ไม่ได้จากกาชา)`);
       } else {
-        text.textContent = pick('Pull the gacha for a chance to get this deck.', 'สุ่มกาชาเพื่อลุ้นรับสำรับนี้');
+        text.textContent = pick('Featured this week — buy it now to add it to Your Decks.', 'สำรับเด่นประจำสัปดาห์ — ซื้อเลยเพื่อเพิ่มในสำรับของคุณ');
       }
       cond.appendChild(text);
       const btn = document.createElement('button');
       btn.type = 'button';
-      if (owned) {
+      if (active) {
+        btn.className = 'mt-dp-btn mt-dp-btn--close';
+        btn.textContent = pick('Close', 'ปิด');
+        btn.addEventListener('click', close);
+      } else if (owned) {
         btn.className = 'mt-dp-btn mt-dp-btn--close';
         btn.textContent = pick('Set active', 'ใช้สำรับนี้');
-        btn.addEventListener('click', () => { setActiveDeck(deck.id); close(); renderGallery(); });
-      } else if (isAch) {
-        btn.className = 'mt-dp-btn mt-dp-btn--close';
-        btn.textContent = pick('Got it', 'เข้าใจแล้ว');
-        btn.addEventListener('click', close);
+        btn.addEventListener('click', () => { setActiveDeck(deck.id); close(); renderWeekly(); });
       } else {
         btn.className = 'mt-dp-btn mt-dp-btn--buy';
-        btn.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />${pick('Pull', 'สุ่ม')} · ${PULL}`;
-        btn.addEventListener('click', () => { close(); window.setTimeout(doPull, 120); });
+        btn.innerHTML = `<img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" />${pick('Buy', 'ซื้อ')} · ${WEEKLY_PRICE}`;
+        btn.addEventListener('click', () => { close(); window.setTimeout(() => buyDeck(deck), 120); });
       }
       cond.appendChild(btn);
     },
@@ -264,7 +231,7 @@ function showToast(msg) {
   toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 2400);
 }
 
-function showNotEnough() {
+function showNotEnough(price = PULL) {
   const bal = getMeowCoins();
   const ov = document.createElement('div');
   ov.className = 'gacha-sheet-overlay';
@@ -275,7 +242,7 @@ function showNotEnough() {
         <div class="gacha-sheet__coin"><img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /></div>
         <div>
           <h3 class="gacha-sheet__title">${pick('Not enough Meow Coins yet', 'เหรียญเหมียวยังไม่พอ')}</h3>
-          <p class="gacha-sheet__body">${pick(`Keep earning! You have ${fmt(bal)} / ${PULL}.`, `สะสมต่อได้เลย! คุณมี ${fmt(bal)} / ${PULL}`)}</p>
+          <p class="gacha-sheet__body">${pick(`Keep earning! You have ${fmt(bal)} / ${price}.`, `สะสมต่อได้เลย! คุณมี ${fmt(bal)} / ${price}`)}</p>
         </div>
       </div>
       <div class="gacha-sheet__earn">
@@ -394,8 +361,20 @@ function showReveal(ov, won) {
   const wonCard = ov.querySelector('.gacha-won-card');
   wonCard.insertBefore(backImg(won.id, 'gacha-won-card__img'), wonCard.firstChild);
 
-  // confetti
-  const conf = ov.querySelector('#gacha-confetti');
+  addConfetti(ov.querySelector('#gacha-confetti'));
+
+  const close = () => { clearTimers(); state.phase = 'idle'; ov.remove(); renderWeekly(); refreshHeroStats(); };
+  ov.querySelector('#gacha-setactive').addEventListener('click', () => { setActiveDeck(won.id); close(); });
+  ov.querySelector('#gacha-done').addEventListener('click', close);
+  ov.querySelector('#gacha-again').addEventListener('click', () => {
+    if (getMeowCoins() < PULL) { close(); window.setTimeout(() => showNotEnough(PULL), 200); return; }
+    close();
+    window.setTimeout(doPull, 80);
+  });
+}
+
+function addConfetti(conf) {
+  if (!conf) return;
   const colors = ['#e8457a', '#e8c478', '#d12878', '#c08327', '#fff8ec'];
   for (let i = 0; i < 26; i += 1) {
     const c = document.createElement('span');
@@ -405,15 +384,36 @@ function showReveal(ov, won) {
     c.style.animationDelay = `${(i % 8) * 90}ms`;
     conf.appendChild(c);
   }
+}
 
-  const close = () => { clearTimers(); state.phase = 'idle'; ov.remove(); renderGallery(); refreshHeroStats(); };
-  ov.querySelector('#gacha-setactive').addEventListener('click', () => { setActiveDeck(won.id); close(); });
-  ov.querySelector('#gacha-done').addEventListener('click', close);
-  ov.querySelector('#gacha-again').addEventListener('click', () => {
-    if (getMeowCoins() < PULL) { close(); window.setTimeout(showNotEnough, 200); return; }
-    close();
-    window.setTimeout(doPull, 80);
-  });
+// Direct Weekly-Shop buy: known deck, so no roulette — straight to the celebratory reveal.
+function showBuyReveal(deck) {
+  const ov = document.createElement('div');
+  ov.className = 'gacha-reveal-overlay is-reveal';
+  requestAnimationFrame(() => ov.classList.add('in'));
+  ov.innerHTML = `
+    <div class="gacha-rays"></div>
+    <div class="gacha-won-card">
+      <div class="gacha-won-ribbon">${pick('NEW!', 'ใหม่!')}</div>
+    </div>
+    <div class="gacha-confetti" id="gacha-confetti"></div>
+    <div class="gacha-reveal-text">
+      <p class="gacha-reveal-kicker">${pick('Deck unlocked', 'ปลดล็อกสำรับแล้ว')}</p>
+      <h2 class="gacha-reveal-name">${deckName(deck)}</h2>
+      <p class="gacha-reveal-sub">${deckSub(deck)}</p>
+      <p class="gacha-reveal-note">${pick('Added to Your Decks', 'เพิ่มในสำรับของคุณแล้ว')}</p>
+      <button type="button" class="gacha-reveal-primary" id="gacha-buy-setactive">${pick('Set active', 'ใช้สำรับนี้')}</button>
+      <div class="gacha-reveal-row">
+        <button type="button" class="gacha-reveal-ghost" id="gacha-buy-done">${pick('Done', 'เสร็จสิ้น')}</button>
+      </div>
+    </div>`;
+  const wonCard = ov.querySelector('.gacha-won-card');
+  wonCard.insertBefore(backImg(deck.id, 'gacha-won-card__img'), wonCard.firstChild);
+  document.body.appendChild(ov);
+  addConfetti(ov.querySelector('#gacha-confetti'));
+  const close = () => { ov.remove(); renderWeekly(); refreshHeroStats(); };
+  ov.querySelector('#gacha-buy-setactive').addEventListener('click', () => { setActiveDeck(deck.id); close(); });
+  ov.querySelector('#gacha-buy-done').addEventListener('click', close);
 }
 
 // ---- shell -----------------------------------------------------------------------------
@@ -424,19 +424,21 @@ function renderAll() {
   content.appendChild(buildHero());
   content.appendChild(buildProgress());
 
-  const gHead = document.createElement('div');
-  gHead.className = 'gacha-gallery-head';
-  gHead.innerHTML = `<h2>${pick('All Decks', 'สำรับทั้งหมด')}</h2><span></span>`;
-  content.appendChild(gHead);
+  content.appendChild(buildWeeklyHead());
 
-  content.appendChild(buildSearch());
+  const sub = document.createElement('p');
+  sub.className = 'gacha-weekly-sub';
+  sub.textContent = pick(
+    'New decks every Monday · same for everyone · buy a specific deck for 250.',
+    'สำรับใหม่ทุกวันจันทร์ · เหมือนกันทุกคน · เลือกซื้อสำรับที่ต้องการได้ในราคา 250');
+  content.appendChild(sub);
 
   const grid = document.createElement('div');
   grid.className = 'gacha-grid';
   grid.id = 'gacha-grid';
   content.appendChild(grid);
 
-  renderGallery();
+  renderWeekly();
   refreshHeroStats();
 
   const capsule = document.getElementById('gacha-capsule');

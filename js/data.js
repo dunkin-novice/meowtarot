@@ -126,8 +126,10 @@ export const DECKS = {
   // generated in a background pass; until they land, the shop cell falls back to full-res back.
   'boo-familiar': {
     id: 'boo-familiar', name: 'Boo Familiar', name_th: 'แมวคืนหลอน', role: 'shop', unlock_day: null,
-    // Seasonal Halloween deck — `hidden` keeps it OUT OF THE GACHA SHOP (gallery + pull pool) until
-    // Halloween; it still shows in 'Your Decks'. Flip `hidden` off to put it back in the gacha. (2026-06-23)
+    // Seasonal Halloween deck. `seasonal` + `hidden` both keep it OUT OF the gacha pull pool AND the
+    // Weekly Shop rotation (it stays buyable on its own and visible in 'Your Decks'). Flip these off
+    // to fold it back into the weekly rotation. (seasonal flag added 2026-06-24)
+    seasonal: true,
     hidden: true,
     assetsBase: resolveDeckAssetBase('assets/boo-familiar'), backImage: buildAssetUrl('assets/boo-familiar/00-back.webp'),
   },

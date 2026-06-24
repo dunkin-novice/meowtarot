@@ -102,7 +102,16 @@ export function showDeckPreview(deck, { lang = 'en', buildCondition } = {}) {
   ov.appendChild(card);
   requestAnimationFrame(() => ov.classList.add('in'));
 
+  // The site-wide Report FAB sits at the maximum z-index (always-on-top so a bug can be
+  // reported over any overlay). On short/standard mobile viewports its bottom-right hitbox
+  // overlaps THIS popup's action button and silently steals the tap — "the button can't be
+  // clicked". Hide the FAB while the preview is open; restore it on close. (founder 2026-06-24)
+  const reportFab = document.getElementById('mt-report-fab');
+  const prevFabDisplay = reportFab ? reportFab.style.display : '';
+  if (reportFab) reportFab.style.display = 'none';
+
   const close = () => {
+    if (reportFab) reportFab.style.display = prevFabDisplay;
     ov.classList.remove('in');
     window.setTimeout(() => ov.remove(), 240);
   };
