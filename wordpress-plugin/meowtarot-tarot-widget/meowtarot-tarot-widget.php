@@ -3,7 +3,7 @@
  * Plugin Name:       MeowTarot — Free Tarot Widget
  * Plugin URI:        https://www.meowtarot.com/widgets/
  * Description:       Embed a free, cute cat-themed tarot card draw (single card or Past · Present · Future spread) anywhere via a shortcode, block, or sidebar widget. English & Thai.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 5.8
  * Requires PHP:      7.2
  * Author:            MeowTarot
@@ -19,8 +19,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'MEOWTAROT_WIDGET_VERSION', '1.1.0' );
+define( 'MEOWTAROT_WIDGET_VERSION', '1.2.0' );
 define( 'MEOWTAROT_WIDGET_BASE', 'https://www.meowtarot.com' );
+
+/**
+ * Whether to render the optional attribution backlink.
+ *
+ * Per WordPress.org Plugin Guideline 10, a front-end credit link must be OPT-IN.
+ * It is therefore OFF by default: a per-instance `attribution` attribute wins when
+ * set, otherwise we fall back to the site-wide setting (Settings → MeowTarot Tarot),
+ * which itself defaults to off.
+ *
+ * @param array $atts Shortcode / block attributes.
+ * @return bool
+ */
+function meowtarot_widget_attribution_enabled( $atts ) {
+	if ( isset( $atts['attribution'] ) && '' !== $atts['attribution'] ) {
+		$truthy = array( '1', 'yes', 'true', 'on' );
+		return in_array( strtolower( (string) $atts['attribution'] ), $truthy, true );
+	}
+	return (bool) get_option( 'meowtarot_widget_show_attribution', 0 );
+}
 
 /**
  * Render the widget: a lazy-loaded iframe + the attribution backlink.
@@ -31,10 +50,11 @@ define( 'MEOWTAROT_WIDGET_BASE', 'https://www.meowtarot.com' );
 function meowtarot_widget_render( $atts ) {
 	$atts = shortcode_atts(
 		array(
-			'spread' => 'one',   // one | three
-			'lang'   => 'auto',  // auto | en | th
-			'height' => '600',
-			'width'  => '340',
+			'spread'      => 'one',   // one | three
+			'lang'        => 'auto',  // auto | en | th
+			'height'      => '600',
+			'width'       => '340',
+			'attribution' => '',      // '' = inherit site setting (default off) | yes/no
 		),
 		$atts,
 		'meowtarot_tarot'
@@ -69,9 +89,13 @@ function meowtarot_widget_render( $atts ) {
 	$html .= '<iframe src="' . esc_url( $src ) . '" title="' . esc_attr( $iframe_title ) . '"';
 	$html .= ' width="' . esc_attr( $width ) . '" height="' . esc_attr( $height ) . '" loading="lazy"';
 	$html .= ' style="border:0;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 12px 30px -12px rgba(61,26,92,.4)"></iframe>';
-	// Attribution backlink (do-follow) — this is what keeps the widget free. Please keep it.
-	$html .= '<p style="font:13px/1.5 system-ui,-apple-system,sans-serif;margin:8px 0 0">';
-	$html .= '<a href="' . esc_url( $link_href ) . '" target="_blank" rel="noopener">' . esc_html( $link_text ) . '</a></p>';
+	// Optional attribution backlink — OFF by default (WordPress.org Guideline 10: front-end
+	// credit must be opt-in). Enable site-wide under Settings → MeowTarot Tarot, or per
+	// instance with attribution="yes". Keeping it on helps support the free widget. 🙏
+	if ( meowtarot_widget_attribution_enabled( $atts ) ) {
+		$html .= '<p style="font:13px/1.5 system-ui,-apple-system,sans-serif;margin:8px 0 0">';
+		$html .= '<a href="' . esc_url( $link_href ) . '" target="_blank" rel="noopener">' . esc_html( $link_text ) . '</a></p>';
+	}
 	$html .= '</div>';
 
 	return $html;
@@ -115,6 +139,10 @@ function meowtarot_widget_block_init() {
 					'type'    => 'number',
 					'default' => 600,
 				),
+				'attribution' => array(
+					'type'    => 'boolean',
+					'default' => false,
+				),
 			),
 		)
 	);
@@ -130,9 +158,11 @@ add_action( 'init', 'meowtarot_widget_block_init' );
 function meowtarot_widget_block_render( $attributes ) {
 	return meowtarot_widget_render(
 		array(
-			'spread' => isset( $attributes['spread'] ) ? $attributes['spread'] : 'one',
-			'lang'   => isset( $attributes['lang'] ) ? $attributes['lang'] : 'auto',
-			'height' => isset( $attributes['height'] ) ? $attributes['height'] : 600,
+			'spread'      => isset( $attributes['spread'] ) ? $attributes['spread'] : 'one',
+			'lang'        => isset( $attributes['lang'] ) ? $attributes['lang'] : 'auto',
+			'height'      => isset( $attributes['height'] ) ? $attributes['height'] : 600,
+			// Block toggle is a real boolean; only override the site setting when it's ON.
+			'attribution' => ( isset( $attributes['attribution'] ) && $attributes['attribution'] ) ? 'yes' : '',
 		)
 	);
 }
@@ -216,13 +246,88 @@ function meowtarot_register_sidebar_widget() {
 add_action( 'widgets_init', 'meowtarot_register_sidebar_widget' );
 
 /**
- * Add a "Docs" link on the Plugins screen.
+ * Add "Settings" + "Docs" links on the Plugins screen.
  *
  * @param array $links Existing action links.
  * @return array
  */
 function meowtarot_widget_plugin_links( $links ) {
-	$links[] = '<a href="' . esc_url( MEOWTAROT_WIDGET_BASE . '/widgets/' ) . '" target="_blank">' . esc_html__( 'Docs', 'meowtarot-tarot-widget' ) . '</a>';
+	$settings = '<a href="' . esc_url( admin_url( 'options-general.php?page=meowtarot-tarot-widget' ) ) . '">' . esc_html__( 'Settings', 'meowtarot-tarot-widget' ) . '</a>';
+	$docs     = '<a href="' . esc_url( MEOWTAROT_WIDGET_BASE . '/widgets/' ) . '" target="_blank">' . esc_html__( 'Docs', 'meowtarot-tarot-widget' ) . '</a>';
+	array_unshift( $links, $settings );
+	$links[] = $docs;
 	return $links;
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'meowtarot_widget_plugin_links' );
+
+/**
+ * Register the single opt-in setting (front-end attribution link, default OFF).
+ */
+function meowtarot_widget_register_settings() {
+	register_setting(
+		'meowtarot_widget_settings',
+		'meowtarot_widget_show_attribution',
+		array(
+			'type'              => 'boolean',
+			'sanitize_callback' => 'meowtarot_widget_sanitize_bool',
+			'default'           => 0,
+		)
+	);
+}
+add_action( 'admin_init', 'meowtarot_widget_register_settings' );
+
+/**
+ * Sanitize the checkbox value to 0/1.
+ *
+ * @param mixed $value Raw input.
+ * @return int
+ */
+function meowtarot_widget_sanitize_bool( $value ) {
+	return $value ? 1 : 0;
+}
+
+/**
+ * Add the settings page under Settings.
+ */
+function meowtarot_widget_settings_menu() {
+	add_options_page(
+		esc_html__( 'MeowTarot Tarot Widget', 'meowtarot-tarot-widget' ),
+		esc_html__( 'MeowTarot Tarot', 'meowtarot-tarot-widget' ),
+		'manage_options',
+		'meowtarot-tarot-widget',
+		'meowtarot_widget_settings_page'
+	);
+}
+add_action( 'admin_menu', 'meowtarot_widget_settings_menu' );
+
+/**
+ * Render the settings page.
+ */
+function meowtarot_widget_settings_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	?>
+	<div class="wrap">
+		<h1><?php echo esc_html__( 'MeowTarot Tarot Widget', 'meowtarot-tarot-widget' ); ?></h1>
+		<form action="options.php" method="post">
+			<?php settings_fields( 'meowtarot_widget_settings' ); ?>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php echo esc_html__( 'Attribution link', 'meowtarot-tarot-widget' ); ?></th>
+					<td>
+						<label>
+							<input type="checkbox" name="meowtarot_widget_show_attribution" value="1" <?php checked( 1, (int) get_option( 'meowtarot_widget_show_attribution', 0 ) ); ?> />
+							<?php echo esc_html__( 'Show a small "Free Tarot Reading — MeowTarot" link below the widget on the front end.', 'meowtarot-tarot-widget' ); ?>
+						</label>
+						<p class="description">
+							<?php echo esc_html__( 'Off by default. Turning it on adds a public link to meowtarot.com — entirely optional, and a kind way to support the free widget. You can also set it per instance with attribution="yes" on the shortcode/block.', 'meowtarot-tarot-widget' ); ?>
+						</p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button(); ?>
+		</form>
+	</div>
+	<?php
+}
