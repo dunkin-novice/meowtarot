@@ -423,8 +423,9 @@ function appendReadingInternalLinks(container, cards = []) {
   const panel = document.createElement('section');
   panel.className = 'panel panel--internal-links related-links';
 
-  // Title + gold underline
-  const head = document.createElement('header');
+  // Title + gold underline. NOTE: a <div>, not a <header> — a global `header{position:fixed}`
+  // rule in styles.css would otherwise pin this out of flow and overlap the card link below.
+  const head = document.createElement('div');
   head.className = 'related-links__head';
   const heading = document.createElement('h3');
   heading.textContent = isThai ? 'ลิงก์ที่เกี่ยวข้อง' : 'Related Internal Links';
@@ -451,17 +452,22 @@ function appendReadingInternalLinks(container, cards = []) {
 
     const thumb = document.createElement('span');
     thumb.className = 'related-links__thumb';
-    if (toOrientation(card) === 'reversed' && getReversedMode() !== 'art') {
-      thumb.classList.add('is-reversed');
-    }
     const img = document.createElement('img');
     img.alt = '';
     img.loading = 'lazy';
     img.decoding = 'async';
     img.width = 48;
     img.height = 72;
-    const { src, candidates } = getStableCardImageSources(card);
-    applyImgFallback(img, src, candidates);
+    if (toOrientation(card) === 'reversed') {
+      // Show the dedicated reversed art here — a rotated-upright thumbnail looks off in
+      // this small related-links context. Fall back to upright (un-rotated) then the back.
+      const { reversedUrl, uprightUrl, backUrl } = buildCardImageUrls(card, 'reversed');
+      const revCandidates = [reversedUrl, uprightUrl, backUrl].filter(Boolean);
+      applyImgFallback(img, revCandidates[0], revCandidates.slice(1));
+    } else {
+      const { src, candidates } = getStableCardImageSources(card);
+      applyImgFallback(img, src, candidates);
+    }
     thumb.appendChild(img);
     hero.appendChild(thumb);
 
