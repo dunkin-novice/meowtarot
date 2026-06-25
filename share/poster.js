@@ -161,6 +161,37 @@ async function loadPosterCardImageWithTimeout(primary, fallbacks = []) {
   );
 }
 
+// Warm the poster card-image cache CONCURRENTLY before a sequential draw loop.
+// Pure pre-fetch: it resolves each card's thumbnail exactly the way the draw loops
+// do and loads it into the shared imageManager cache (which dedupes by URL), so the
+// loop then hits warm cache instead of serializing N network round-trips — the main
+// cause of the export timeout / failed download. Nothing is drawn here and the draw
+// loops are unchanged: they still resolve + draw (and per-card fallback) as before.
+// Failures are swallowed; the draw loop re-resolves and falls back per card.
+async function warmPosterCardImages(cardEntries = [], payloadCards = [], lang = 'en') {
+  await Promise.all((cardEntries || []).map(async (entry, i) => {
+    try {
+      const payloadCard = payloadCards?.[i] || {};
+      const fallbackBaseId = baseCardId(payloadCard?.id || payloadCard?.card_id || payloadCard?.image_id || `slot-${i + 1}`);
+      const sourceCard = entry?.card || payloadCard;
+      const baseId = baseCardId(sourceCard?.id || sourceCard?.card_id || sourceCard?.image_id || fallbackBaseId);
+      const orientation = toOrientation(entry?.orientation || payloadCard?.orientation || sourceCard?.orientation || 'upright');
+      const imageOrientation = posterImageOrientation(orientation);
+      const orientedId = `${baseId}-${imageOrientation}`;
+      const cardIdentity = { ...sourceCard, id: orientedId, card_id: orientedId, image_id: orientedId };
+      const { uprightUrl, reversedUrl, backUrl } = buildCardImageUrls(cardIdentity, imageOrientation);
+      const resolvedPrimary = await resolveCardImageUrl(cardIdentity, imageOrientation);
+      const { primary: selectedUrl, fallbackChain } = resolvePosterCardImageSources({ ...entry, ...payloadCard, orientation: imageOrientation, card: sourceCard }, {
+        resolvedPrimary, uprightUrl, reversedUrl, backUrl, lang,
+      });
+      const thumb = toPosterThumb200(selectedUrl);
+      await loadPosterCardImageWithTimeout(thumb || selectedUrl, thumb ? [selectedUrl, ...fallbackChain] : fallbackChain);
+    } catch (_) {
+      // best-effort warm-up; the draw loop handles real resolution + fallback
+    }
+  }));
+}
+
 function setPosterRuntimeFlag(key, value) {
   if (typeof window === 'undefined') return;
   window[key] = value;
@@ -2344,6 +2375,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.font = '500 20px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     drawTrackingText(ctx, toSafeText(payload?.poster?.subtitle, ''), width / 2, 178, 0.35);
 
+    // Warm all card images concurrently first (draw loop below is unchanged).
+    await warmPosterCardImages(cardEntries, payload?.cards, lang);
     for (let i = 0; i < cardEntries.length; i += 1) {
       const entry = cardEntries[i] || null;
       const payloadCard = payload?.cards?.[i] || {};
@@ -2479,6 +2512,8 @@ export async function buildPoster(rawPayload, { preset = 'story' } = {}) {
     ctx.font = '500 22px "Space Grotesk", "IBM Plex Sans Thai", sans-serif';
     drawTrackingText(ctx, questionStrings.tertiary, width / 2, 248, 0.8);
 
+    // Warm all card images concurrently first (draw loop below is unchanged).
+    await warmPosterCardImages(cardEntries, orderedQuestionCards, lang);
     for (let i = 0; i < questionCardCount; i += 1) {
       const entry = cardEntries[i] || null;
       const payloadCard = orderedQuestionCards[i] || {};
