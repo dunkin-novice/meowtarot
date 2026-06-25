@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#3d1a5c" />
+<title>Add a Free Tarot Widget to Your Site — MeowTarot</title>
+<meta name="description" content="Embed a free, cute cat-themed tarot card draw on your blog or website in one copy-paste. No signup. Works on any platform — WordPress, Wix, Squarespace, Ghost, Blogger." />
+<link rel="canonical" href="https://www.meowtarot.com/embed.html" />
+<meta property="og:title" content="Free Tarot Widget for Your Website — MeowTarot" />
+<meta property="og:description" content="Add a free daily tarot draw to your site in one copy-paste. Cute, cat-themed, mobile-friendly." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.meowtarot.com/embed.html" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&display=swap" />
+<style>
+  :root{
+    --plum:#3d1a5c; --plum-deep:#2a1142; --plum-soft:#6b3d8a; --gold:#c9933a; --rose:#e8457a; --cream:#fdf6ee;
+    --bg:linear-gradient(165deg,#f3edff 0%,#fce7f1 55%,#e7f1ff 100%);
+    --cta:linear-gradient(135deg,#6e1d4c 0%,#d12878 45%,#e8a838 100%);
+    --display:"Cormorant Garamond","Noto Serif Thai",Georgia,serif;
+    --body:"DM Sans","IBM Plex Sans Thai",system-ui,sans-serif;
+  }
+  html[lang="th"]{ --display:"Noto Serif Thai",serif; --body:"IBM Plex Sans Thai","DM Sans",sans-serif; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{ font-family:var(--body); color:var(--plum); background:var(--bg); min-height:100vh;
+    line-height:1.55; -webkit-font-smoothing:antialiased; padding:0 20px 64px; }
+  .wrap{ max-width:980px; margin:0 auto; }
+  header{ display:flex; align-items:center; justify-content:space-between; padding:22px 0; }
+  .brand{ font-family:var(--display); font-style:italic; font-weight:700; font-size:26px; color:var(--gold); text-decoration:none; }
+  .brand a, header a{ text-decoration:none; }
+  .topnav a{ color:var(--plum); font-weight:600; font-size:14px; opacity:.78; }
+  .lang{ font-size:13px; }
+  .lang a{ color:var(--plum-soft); font-weight:700; text-decoration:none; }
+  .lang a.on{ color:var(--rose); }
+  .hero{ text-align:center; padding:26px 0 30px; }
+  .hero .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--plum-soft); }
+  h1{ font-family:var(--display); font-weight:700; font-size:clamp(34px,6vw,56px); line-height:1.05; color:var(--plum-deep); margin:8px 0 12px; }
+  .hero p{ max-width:620px; margin:0 auto; font-size:17px; color:var(--plum-soft); }
+  .grid{ display:grid; grid-template-columns:minmax(0,300px) minmax(0,1fr); gap:32px; align-items:start; margin-top:18px; }
+  @media (max-width:760px){ .grid{ grid-template-columns:1fr; } }
+  .card{ background:rgba(255,255,255,.62); border:1px solid rgba(255,255,255,.7); border-radius:22px;
+    padding:20px; box-shadow:0 18px 44px -22px rgba(61,26,92,.4); }
+  .previewframe{ width:100%; height:600px; border:0; border-radius:18px; display:block; }
+  .panel-title{ font-family:var(--display); font-weight:600; font-size:24px; color:var(--plum-deep); margin-bottom:4px; }
+  .panel-sub{ font-size:14px; color:var(--plum-soft); margin-bottom:14px; }
+  pre.code{ background:#2a1142; color:#f3e8ff; border-radius:14px; padding:16px; font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;
+    overflow:auto; white-space:pre-wrap; word-break:break-word; max-height:300px; }
+  .copybar{ display:flex; gap:10px; align-items:center; margin-top:14px; flex-wrap:wrap; }
+  .btn{ appearance:none; border:0; cursor:pointer; font-family:var(--body); font-weight:700; font-size:15px; color:#fff;
+    background:var(--cta); border-radius:100px; padding:13px 28px; box-shadow:0 8px 20px -6px rgba(209,40,120,.5); }
+  .btn:active{ transform:translateY(1px); }
+  .copied{ color:#2e9e6b; font-weight:700; font-size:14px; opacity:0; transition:opacity .2s; }
+  .copied.show{ opacity:1; }
+  .note{ font-size:13px; color:var(--plum-soft); margin-top:12px; }
+  .note b{ color:var(--plum-deep); }
+  .steps{ margin-top:46px; }
+  .steps h2{ font-family:var(--display); font-weight:700; font-size:30px; color:var(--plum-deep); text-align:center; margin-bottom:22px; }
+  .steprow{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  @media (max-width:680px){ .steprow{ grid-template-columns:1fr; } }
+  .step{ background:rgba(255,255,255,.55); border-radius:18px; padding:20px; }
+  .step .n{ width:30px; height:30px; border-radius:50%; background:var(--cta); color:#fff; font-weight:700;
+    display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+  .step h3{ font-size:16px; color:var(--plum-deep); margin-bottom:4px; }
+  .step p{ font-size:14px; color:var(--plum-soft); }
+  footer{ text-align:center; margin-top:48px; font-size:14px; color:var(--plum-soft); }
+  footer a{ color:var(--gold); font-weight:700; text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" id="brandLink" href="https://www.meowtarot.com/">MeowTarot</a>
+    <span class="lang"><a id="langEn" href="?lang=en" class="on">EN</a> · <a id="langTh" href="?lang=th">TH</a></span>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow" id="eyebrow">Free embeddable widget</div>
+    <h1 id="h1">Add a free tarot card to your site</h1>
+    <p id="lede">Drop a cute, cat-themed daily tarot draw onto your blog or website in one copy-paste. No signup, no cost, works on any platform — WordPress, Wix, Squarespace, Ghost, Blogger, plain HTML.</p>
+  </section>
+
+  <div class="grid">
+    <div class="card">
+      <iframe class="previewframe" id="preview" src="widget.html" title="Tarot widget live preview" loading="lazy"></iframe>
+    </div>
+
+    <div class="card">
+      <div class="panel-title" id="codeTitle">Copy this code</div>
+      <div class="panel-sub" id="codeSub">Paste it into an HTML / “Custom HTML” / “Embed” block where you want the card to appear.</div>
+      <pre class="code" id="codeBlock"></pre>
+      <div class="copybar">
+        <button class="btn" id="copyBtn" type="button">Copy embed code</button>
+        <span class="copied" id="copied">Copied! ✨</span>
+      </div>
+      <p class="note" id="note"><b>Please keep the attribution link.</b> It’s how the widget stays free — and it credits MeowTarot.</p>
+    </div>
+  </div>
+
+  <section class="steps">
+    <h2 id="howTitle">How it works</h2>
+    <div class="steprow" id="steprow"></div>
+  </section>
+
+  <footer>
+    <span id="footText">Want the full experience?</span>
+    <a id="footLink" href="https://www.meowtarot.com/?utm_source=embed_page&utm_medium=referral" target="_blank" rel="noopener">Get your free tarot reading on MeowTarot →</a>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const lang = (params.get('lang') === 'th' || location.pathname.includes('/th/')) ? 'th' : 'en';
+  document.documentElement.lang = lang;
+  const SITE = 'https://www.meowtarot.com';
+  const widgetUrl = lang === 'th' ? SITE + '/widget.html?lang=th' : SITE + '/widget.html';
+  const siteHome = lang === 'th' ? SITE + '/th/' : SITE + '/';
+
+  // The embed snippet. The <a> is a real, do-follow link with keyword anchor text —
+  // THIS is the backlink (the iframe itself passes no SEO value).
+  const anchor = lang === 'th' ? 'ดูดวงทาโรต์ฟรี — MeowTarot' : 'Free Tarot Reading — MeowTarot';
+  const attrHref = siteHome + '?utm_source=widget&utm_medium=embed&utm_campaign=attribution';
+  const iframeTitle = lang === 'th' ? 'เปิดไพ่ทาโรต์ฟรีโดย MeowTarot' : 'Free Tarot Card Draw by MeowTarot';
+  const snippet =
+'<iframe src="' + widgetUrl + '" title="' + iframeTitle + '" width="340" height="600" loading="lazy"\n' +
+'  style="border:0;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 12px 30px -12px rgba(61,26,92,.4)"></iframe>\n' +
+'<p style="font:13px/1.5 system-ui,sans-serif;text-align:center;max-width:340px;margin:8px auto 0">\n' +
+'  Powered by <a href="' + attrHref + '" target="_blank" rel="noopener"\n' +
+'  style="color:#c9933a;font-weight:700;text-decoration:none">' + anchor + '</a>\n' +
+'</p>';
+
+  const T = {
+    en: {
+      eyebrow:'Free embeddable widget', h1:'Add a free tarot card to your site',
+      lede:'Drop a cute, cat-themed daily tarot draw onto your blog or website in one copy-paste. No signup, no cost, works on any platform — WordPress, Wix, Squarespace, Ghost, Blogger, plain HTML.',
+      codeTitle:'Copy this code', codeSub:'Paste it into an HTML / “Custom HTML” / “Embed” block where you want the card to appear.',
+      copy:'Copy embed code', copied:'Copied! ✨',
+      note:'<b>Please keep the attribution link.</b> It’s how the widget stays free — and it credits MeowTarot.',
+      howTitle:'How it works',
+      steps:[['1','Copy the code','Hit “Copy embed code” above.'],['2','Paste it in','Drop it into any HTML / Custom-HTML / Embed block on your page.'],['3','Done','Your readers get a free daily card — and it auto-updates forever.']],
+      footText:'Want the full experience? ', footLink:'Get your free tarot reading on MeowTarot →'
+    },
+    th: {
+      eyebrow:'วิดเจ็ตฟรีสำหรับเว็บคุณ', h1:'เพิ่มไพ่ทาโรต์ฟรีลงในเว็บของคุณ',
+      lede:'วางไพ่ทาโรต์รายวันธีมแมวน่ารักลงบล็อกหรือเว็บไซต์ของคุณได้ในคลิกเดียว ไม่ต้องสมัคร ไม่มีค่าใช้จ่าย ใช้ได้ทุกแพลตฟอร์ม — WordPress, Wix, Squarespace, Ghost, Blogger หรือ HTML ธรรมดา',
+      codeTitle:'คัดลอกโค้ดนี้', codeSub:'นำไปวางในบล็อก HTML / “Custom HTML” / “Embed” ตรงจุดที่อยากให้ไพ่แสดง',
+      copy:'คัดลอกโค้ด', copied:'คัดลอกแล้ว! ✨',
+      note:'<b>กรุณาเก็บลิงก์เครดิตไว้</b> นี่คือเหตุผลที่วิดเจ็ตนี้ใช้ได้ฟรี — และเป็นการให้เครดิต MeowTarot',
+      howTitle:'วิธีใช้งาน',
+      steps:[['1','คัดลอกโค้ด','กดปุ่ม “คัดลอกโค้ด” ด้านบน'],['2','นำไปวาง','วางในบล็อก HTML / Custom-HTML / Embed บนหน้าเว็บของคุณ'],['3','เสร็จเลย','ผู้อ่านของคุณได้เปิดไพ่ฟรีทุกวัน — และอัปเดตอัตโนมัติตลอดไป']],
+      footText:'อยากได้ประสบการณ์เต็มรูปแบบ? ', footLink:'ดูดวงทาโรต์ฟรีที่ MeowTarot →'
+    }
+  }[lang];
+
+  const $ = (id)=>document.getElementById(id);
+  $('eyebrow').textContent=T.eyebrow; $('h1').textContent=T.h1; $('lede').textContent=T.lede;
+  $('codeTitle').textContent=T.codeTitle; $('codeSub').textContent=T.codeSub;
+  $('copyBtn').textContent=T.copy; $('copied').textContent=T.copied;
+  $('note').innerHTML=T.note; $('howTitle').textContent=T.howTitle;
+  $('footText').textContent=T.footText; $('footLink').textContent=T.footLink;
+  $('codeBlock').textContent=snippet;
+  $('preview').src = lang === 'th' ? 'widget.html?lang=th' : 'widget.html';
+  $('brandLink').href = siteHome;
+  $('footLink').href = siteHome + '?utm_source=embed_page&utm_medium=referral';
+  $('langEn').className = lang==='en'?'on':''; $('langTh').className = lang==='th'?'on':'';
+
+  $('steprow').innerHTML = T.steps.map(s =>
+    '<div class="step"><div class="n">'+s[0]+'</div><h3>'+s[1]+'</h3><p>'+s[2]+'</p></div>').join('');
+
+  $('copyBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(snippet); }
+    catch(_){ const t=document.createElement('textarea'); t.value=snippet; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    const c=$('copied'); c.classList.add('show'); setTimeout(()=>c.classList.remove('show'),1800);
+  });
+})();
+</script>
+</body>
+</html>

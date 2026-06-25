@@ -702,6 +702,14 @@
   </url>
   <url>
     <loc>https://www.meowtarot.com/widget</loc>
-    <lastmod>2026-06-24</lastmod>
+    <lastmod>2026-06-25</lastmod>
+  </url>
+  <url>
+    <loc>https://www.meowtarot.com/embed</loc>
+    <lastmod>2026-06-25</lastmod>
+  </url>
+  <url>
+    <loc>https://www.meowtarot.com/th/embed</loc>
+    <lastmod>2026-06-25</lastmod>
   </url>
 </urlset>
