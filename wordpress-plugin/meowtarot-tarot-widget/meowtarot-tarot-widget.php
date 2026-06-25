@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       MeowTarot — Free Tarot Widget
+ * Plugin Name:       MeowTarot Tarot Widget
  * Plugin URI:        https://www.meowtarot.com/widgets/
  * Description:       Embed a free, cute cat-themed tarot card draw (single card or Past · Present · Future spread) anywhere via a shortcode, block, or sidebar widget. English & Thai.
  * Version:           1.2.0

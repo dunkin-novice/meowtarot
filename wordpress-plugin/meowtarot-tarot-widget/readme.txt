@@ -1,8 +1,8 @@
-=== MeowTarot — Free Tarot Widget ===
+=== MeowTarot Tarot Widget ===
 Contributors: dunkinkr
 Tags: tarot, fortune telling, divination, oracle, widget
 Requires at least: 5.8
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 7.2
 Stable tag: 1.2.0
 License: GPLv2 or later
@@ -12,7 +12,7 @@ Add a free, cute cat-themed tarot card draw to your site — single card or a Pa
 
 == Description ==
 
-MeowTarot — Free Tarot Widget lets you drop an interactive tarot card draw onto any page, post, or sidebar. Visitors pick a spread (a single card, or a 3-card Past · Present · Future reading), draw, and each card links through to its full meaning.
+MeowTarot Tarot Widget lets you drop a free, interactive tarot card draw onto any page, post, or sidebar. Visitors pick a spread (a single card, or a 3-card Past · Present · Future reading), draw, and each card links through to its full meaning.
 
 * Two spreads: **Single Card** and **Past · Present · Future**.
 * Three ways to add it: **shortcode** `[meowtarot_tarot]`, a **block** ("MeowTarot Tarot Widget"), or a classic **sidebar widget**.
@@ -68,7 +68,7 @@ This plugin embeds the tarot widget by loading it in an iframe from MeowTarot (h
 * The front-end attribution link is now **opt-in and off by default** (WordPress.org Guideline 10). Enable it site-wide under Settings → MeowTarot Tarot, per shortcode with `attribution="yes"`, or via the block toggle.
 * Added a settings page and a "Settings" link on the Plugins screen.
 * Documented the external service (iframe from meowtarot.com).
-* Tested up to WordPress 6.8.
+* Tested up to WordPress 7.0.
 
 = 1.1.0 =
 * Added a classic sidebar widget and a `[meowtarot_daily_card]` back-compat alias.
