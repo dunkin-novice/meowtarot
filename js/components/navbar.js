@@ -23,7 +23,7 @@ export function renderNavbar(container, onLangToggle) {
           </div>
         </div>
       </div>
-      <a href="${homeHref}" class="logo-text nav-logo" data-logo aria-label="Go to home">✦</a>
+      <a href="${homeHref}" class="nav-logo" aria-label="Go to home" style="text-decoration:none;"><img src="https://cdn.meowtarot.com/assets/logo.jpg" alt="MeowTarot Logo" style="height: 40px; width: 40px; border-radius: 8px; vertical-align: middle;"></a>
       <button class="nav-backdrop" type="button" aria-hidden="true" tabindex="-1"></button>
       <nav class="nav-panel page-card" id="primary-nav-panel" aria-label="Primary">
         <div class="nav-links">
