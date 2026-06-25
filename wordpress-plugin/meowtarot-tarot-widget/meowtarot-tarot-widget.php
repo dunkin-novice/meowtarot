@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name:       MeowTarot — Free Tarot Widget
- * Plugin URI:        https://www.meowtarot.com/embed.html
- * Description:       Embed a free, cute cat-themed tarot card draw (single card or Past · Present · Future spread) anywhere via a shortcode or block. English & Thai.
- * Version:           1.0.0
+ * Plugin URI:        https://www.meowtarot.com/widgets/
+ * Description:       Embed a free, cute cat-themed tarot card draw (single card or Past · Present · Future spread) anywhere via a shortcode, block, or sidebar widget. English & Thai.
+ * Version:           1.1.0
  * Requires at least: 5.8
  * Requires PHP:      7.2
  * Author:            MeowTarot
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'MEOWTAROT_WIDGET_VERSION', '1.0.0' );
+define( 'MEOWTAROT_WIDGET_VERSION', '1.1.0' );
 define( 'MEOWTAROT_WIDGET_BASE', 'https://www.meowtarot.com' );
 
 /**
@@ -77,6 +77,8 @@ function meowtarot_widget_render( $atts ) {
 	return $html;
 }
 add_shortcode( 'meowtarot_tarot', 'meowtarot_widget_render' );
+// Back-compat alias for the original shortcode shipped on /widgets/.
+add_shortcode( 'meowtarot_daily_card', 'meowtarot_widget_render' );
 
 /**
  * Register the dynamic Gutenberg block (server-rendered via the shortcode renderer).
@@ -136,13 +138,91 @@ function meowtarot_widget_block_render( $attributes ) {
 }
 
 /**
+ * Classic sidebar widget (for themes / users not on the block editor).
+ */
+class MeowTarot_Sidebar_Widget extends WP_Widget {
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		parent::__construct(
+			'meowtarot_sidebar_widget',
+			'MeowTarot Tarot Widget',
+			array( 'description' => 'A free cat-themed tarot card draw (single card or Past · Present · Future).' )
+		);
+	}
+
+	/**
+	 * Front-end output.
+	 *
+	 * @param array $args     Sidebar args.
+	 * @param array $instance Saved settings.
+	 */
+	public function widget( $args, $instance ) {
+		echo $args['before_widget']; // phpcs:ignore WordPress.Security.EscapeOutput
+		if ( ! empty( $instance['title'] ) ) {
+			echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title']; // phpcs:ignore WordPress.Security.EscapeOutput
+		}
+		$spread = ( isset( $instance['spread'] ) && 'three' === $instance['spread'] ) ? 'three' : 'one';
+		echo meowtarot_widget_render( array( 'spread' => $spread ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo $args['after_widget']; // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+
+	/**
+	 * Settings form.
+	 *
+	 * @param array $instance Saved settings.
+	 */
+	public function form( $instance ) {
+		$title  = ! empty( $instance['title'] ) ? $instance['title'] : 'Daily Tarot';
+		$spread = ! empty( $instance['spread'] ) ? $instance['spread'] : 'one';
+		?>
+		<p>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>">Title:</label>
+			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>">
+		</p>
+		<p>
+			<label for="<?php echo esc_attr( $this->get_field_id( 'spread' ) ); ?>">Spread:</label>
+			<select class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'spread' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'spread' ) ); ?>">
+				<option value="one" <?php selected( $spread, 'one' ); ?>>Single card</option>
+				<option value="three" <?php selected( $spread, 'three' ); ?>>Past · Present · Future</option>
+			</select>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Persist settings.
+	 *
+	 * @param array $new_instance New values.
+	 * @param array $old_instance Old values.
+	 * @return array
+	 */
+	public function update( $new_instance, $old_instance ) {
+		$instance           = array();
+		$instance['title']  = ( ! empty( $new_instance['title'] ) ) ? sanitize_text_field( $new_instance['title'] ) : '';
+		$instance['spread'] = ( ! empty( $new_instance['spread'] ) && 'three' === $new_instance['spread'] ) ? 'three' : 'one';
+		return $instance;
+	}
+}
+
+/**
+ * Register the sidebar widget.
+ */
+function meowtarot_register_sidebar_widget() {
+	register_widget( 'MeowTarot_Sidebar_Widget' );
+}
+add_action( 'widgets_init', 'meowtarot_register_sidebar_widget' );
+
+/**
  * Add a "Docs" link on the Plugins screen.
  *
  * @param array $links Existing action links.
  * @return array
  */
 function meowtarot_widget_plugin_links( $links ) {
-	$links[] = '<a href="' . esc_url( MEOWTAROT_WIDGET_BASE . '/embed.html' ) . '" target="_blank">' . esc_html__( 'Docs', 'meowtarot-tarot-widget' ) . '</a>';
+	$links[] = '<a href="' . esc_url( MEOWTAROT_WIDGET_BASE . '/widgets/' ) . '" target="_blank">' . esc_html__( 'Docs', 'meowtarot-tarot-widget' ) . '</a>';
 	return $links;
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'meowtarot_widget_plugin_links' );

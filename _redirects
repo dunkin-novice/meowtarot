@@ -165,3 +165,9 @@ https://meowtarot.com/* https://www.meowtarot.com/:splat 301!
 /th/tarot-card-meanings/two-of-swords/ /th/cards/two-of-swords/ 301
 /th/tarot-card-meanings/two-of-wands/ /th/cards/two-of-wands/ 301
 /th/tarot-card-meanings/wheel-of-fortune/ /th/cards/wheel-of-fortune/ 301
+
+# Embed page consolidated into /widgets/ (2026-06-25)
+/embed /widgets/ 301
+/embed.html /widgets/ 301
+/th/embed /widgets/ 301
+/th/embed.html /widgets/ 301
