@@ -107,6 +107,85 @@ export const DECKS = {
     assetsBase: resolveDeckAssetBase('assets/inkmess'),
     backImage: buildAssetUrl('assets/inkmess/00-back.webp'),
   },
+  // SHOP-EXCLUSIVE deck (founder 2026-06-21): not on any free streak/sign-in ladder —
+  // obtainable ONLY by spending Meow Coins in the Shop. role 'shop' + unlock_day null →
+  // canUnlockDeck returns false until purchased (meowtarot_purchased_decks), and
+  // getDecksForDisplay hides it from the streak deck surfaces until then. Art 848×1264
+  // (default ratio, no aspect special-casing). First real shop deck.
+  'siam-paws': {
+    id: 'siam-paws',
+    name: 'Siam Paws',
+    name_th: 'เหมียวสยาม',
+    role: 'shop',
+    unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/siam-paws'),
+    backImage: buildAssetUrl('assets/siam-paws/00-back.webp'),
+  },
+  // More SHOP-EXCLUSIVE decks (founder 2026-06-22) — full art on the CDN, all role 'shop'
+  // (purchase-only via canUnlockDeck, hidden from streak surfaces until bought). -200 thumbs
+  // generated in a background pass; until they land, the shop cell falls back to full-res back.
+  'boo-familiar': {
+    id: 'boo-familiar', name: 'Boo Familiar', name_th: 'แมวคืนหลอน', role: 'shop', unlock_day: null,
+    // Seasonal Halloween deck. `seasonal` + `hidden` both keep it OUT OF the gacha pull pool AND the
+    // Weekly Shop rotation (it stays buyable on its own and visible in 'Your Decks'). Flip these off
+    // to fold it back into the weekly rotation. (seasonal flag added 2026-06-24)
+    seasonal: true,
+    hidden: true,
+    assetsBase: resolveDeckAssetBase('assets/boo-familiar'), backImage: buildAssetUrl('assets/boo-familiar/00-back.webp'),
+  },
+  'cats-of-the-ink-peaks': {
+    id: 'cats-of-the-ink-peaks', name: 'Cats of the Ink Peaks', name_th: 'เหมียวภูผาหมึก', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/cats-of-the-ink-peaks'), backImage: buildAssetUrl('assets/cats-of-the-ink-peaks/00-back.webp'),
+  },
+  'chaos-familiar': {
+    id: 'chaos-familiar', name: 'Chaos Familiar', name_th: 'เพี้ยนพยากรณ์', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/chaos-familiar'), backImage: buildAssetUrl('assets/chaos-familiar/00-back.webp'),
+  },
+  'cloudmew': {
+    id: 'cloudmew', name: 'Cloudmew', name_th: 'เมฆหวาน', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/cloudmew'), backImage: buildAssetUrl('assets/cloudmew/00-back.webp'),
+  },
+  'crimson-reverie': {
+    id: 'crimson-reverie', name: 'Crimson Reverie', name_th: 'แมวสุริยา', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/crimson-reverie'), backImage: buildAssetUrl('assets/crimson-reverie/00-back.webp'),
+  },
+  'crumblemew': {
+    id: 'crumblemew', name: 'Crumblemew', name_th: 'เหมียวครัมเบิล', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/crumblemew'), backImage: buildAssetUrl('assets/crumblemew/00-back.webp'),
+  },
+  'meowgame': {
+    id: 'meowgame', name: 'Meowgame', name_th: 'เหมียวลุ้นแมว', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/meowgame'), backImage: buildAssetUrl('assets/meowgame/00-back.webp'),
+  },
+  'mochimew': {
+    id: 'mochimew', name: 'Mochimew', name_th: 'เหมียวจุ๊บจิ๊บ', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/mochimew'), backImage: buildAssetUrl('assets/mochimew/00-back.webp'),
+  },
+  'neopurr': {
+    id: 'neopurr', name: 'NeoPurr', name_th: 'เหมียวโมเดิร์น', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/neopurr'), backImage: buildAssetUrl('assets/neopurr/00-back.webp'),
+  },
+  'night-shift-oracle': {
+    id: 'night-shift-oracle', name: 'Night Shift Oracle', name_th: 'แมวเวรดึก', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/night-shift-oracle'), backImage: buildAssetUrl('assets/night-shift-oracle/00-back.webp'),
+  },
+  'snappaws': {
+    id: 'snappaws', name: 'SnapPaws', name_th: 'เหมียวซ่า', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/snappaws'), backImage: buildAssetUrl('assets/snappaws/00-back.webp'),
+  },
+  'starpaw': {
+    id: 'starpaw', name: 'StarPaw', name_th: 'แมวไอดอล', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/starpaw'), backImage: buildAssetUrl('assets/starpaw/00-back.webp'),
+  },
+  // Uploaded from the local library 2026-06-22 (jpg→webp full-res + -200) — were missing on CDN.
+  'cybermeow': {
+    id: 'cybermeow', name: 'CyberMeow', name_th: 'เหมียวไซเบอร์', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/cybermeow'), backImage: buildAssetUrl('assets/cybermeow/00-back.webp'),
+  },
+  'noir-social': {
+    id: 'noir-social', name: 'Noir Social', name_th: 'วิฬาร์คลับ', role: 'shop', unlock_day: null,
+    assetsBase: resolveDeckAssetBase('assets/noir-social'), backImage: buildAssetUrl('assets/noir-social/00-back.webp'),
+  },
 };
 
 export const DEFAULT_DECK_ID = 'moonmallow';
@@ -153,6 +232,12 @@ const DECK_CARD_BACK_ASPECT = {
 const DECK_CARD_FACE_ASPECT = {
   'boba-oracle': '768 / 1376',
   'overtime-oracle': '768 / 1376',
+  // Shop decks whose FACE art ships at 768×1376 (backs are all 848×1264). (2026-06-22)
+  'crimson-reverie': '768 / 1376',
+  'meowgame': '768 / 1376',
+  'night-shift-oracle': '768 / 1376',
+  'starpaw': '768 / 1376',
+  'cybermeow': '768 / 1376',
 };
 export function getActiveDeckCardAspect(deckId = getActiveDeckId()) {
   return DECK_CARD_BACK_ASPECT[deckId] || '848 / 1264';
@@ -181,20 +266,28 @@ applyActiveDeckCardAspect();
 // Either way the orientation LABEL + reversed MEANINGS are unchanged — only the
 // IMAGE sourcing/rotation differs. Mirrored to a <html data-reversed-mode> attr so
 // CSS can gate the rotation without reading storage.
+//   'flipart'        — reversed cards load the *-reversed.webp asset AND are rotated 180°
+//                      (the dedicated reversed art, flipped). (founder 2026-06-24)
 const REVERSED_MODE_STORAGE_KEY = 'meowtarot_reversed_mode';
+const REVERSED_MODES = ['flip', 'art', 'flipart'];
 export function getReversedMode() {
   try {
-    return localStorage.getItem(REVERSED_MODE_STORAGE_KEY) === 'art' ? 'art' : 'flip';
+    const v = localStorage.getItem(REVERSED_MODE_STORAGE_KEY);
+    return REVERSED_MODES.includes(v) ? v : 'flip';
   } catch (_) {
     return 'flip';
   }
 }
 export function setReversedMode(mode) {
-  const normalized = mode === 'art' ? 'art' : 'flip';
+  const normalized = REVERSED_MODES.includes(mode) ? mode : 'flip';
   try { localStorage.setItem(REVERSED_MODE_STORAGE_KEY, normalized); } catch (_) { /* ignore */ }
   applyReversedModeAttr();
   return normalized;
 }
+// Sourcing: 'art' + 'flipart' load the dedicated -reversed.webp; 'flip' uses the upright art.
+export function reversedUsesArt() { return getReversedMode() !== 'flip'; }
+// Rotation: 'flip' + 'flipart' rotate 180°; 'art' shows the reversed art un-rotated.
+export function reversedIsRotated() { return getReversedMode() !== 'art'; }
 export function applyReversedModeAttr() {
   if (typeof document === 'undefined' || !document.documentElement) return;
   document.documentElement.setAttribute('data-reversed-mode', getReversedMode());
@@ -216,21 +309,105 @@ export function isGiftedDeck(id) {
   }
 }
 
+// Decks bought with Meow Coins in the Shop (client-side MVP, mirrors the coin wallet's
+// localStorage model). A purchase unlocks the deck immediately, with no sign-in or streak
+// requirement — the coin spend IS the entitlement. Server-authoritative ownership is the
+// planned hardening. (founder 2026-06-21 — wires the Shop into the real unlock truth.)
+const PURCHASED_DECKS_KEY = 'meowtarot_purchased_decks';
+
+export function getPurchasedDecks() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PURCHASED_DECKS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+export function isPurchasedDeck(id) {
+  return getPurchasedDecks().includes(id);
+}
+
+export function purchaseDeck(id) {
+  if (!DECKS[id]) return false;
+  const owned = getPurchasedDecks();
+  if (!owned.includes(id)) {
+    owned.push(id);
+    try { localStorage.setItem(PURCHASED_DECKS_KEY, JSON.stringify(owned)); } catch (_) { /* ignore */ }
+  }
+  return true;
+}
+
+// Persisted "decks I've ever owned" set. Once a deck is CONFIRMED unlocked while signed in
+// (gift / sign-in-reward / streak-day met), we record it here so it stays visible + usable
+// even when auth is momentarily unresolved, the session is restoring, or the page is on a
+// different origin where the Supabase session isn't visible. Fixes "Your decks showed only
+// Moonmallow" for a signed-in user whose other decks vanished the instant getCurrentUserSync()
+// returned null. (founder 2026-06-22) Mirrors the purchased-decks model.
+const OWNED_DECKS_KEY = 'meowtarot_owned_decks';
+export function getOwnedDecks() {
+  try {
+    const v = JSON.parse(localStorage.getItem(OWNED_DECKS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) {
+    return [];
+  }
+}
+function recordOwnedDeck(id) {
+  if (!id) return;
+  const owned = getOwnedDecks();
+  if (!owned.includes(id)) {
+    owned.push(id);
+    try { localStorage.setItem(OWNED_DECKS_KEY, JSON.stringify(owned)); } catch (_) { /* ignore */ }
+  }
+}
+
+// Pinned / starred decks — the user can star decks to float them to the front of any deck
+// list (Your Decks now; the gacha gallery later). Pure cosmetic ordering, localStorage-backed.
+// (founder 2026-06-22)
+const PINNED_DECKS_KEY = 'meowtarot_pinned_decks';
+export function getPinnedDecks() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PINNED_DECKS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) {
+    return [];
+  }
+}
+export function isPinnedDeck(id) {
+  return getPinnedDecks().includes(id);
+}
+export function togglePinnedDeck(id) {
+  if (!id) return getPinnedDecks();
+  let pins = getPinnedDecks();
+  pins = pins.includes(id) ? pins.filter((p) => p !== id) : [...pins, id];
+  try { localStorage.setItem(PINNED_DECKS_KEY, JSON.stringify(pins)); } catch (_) { /* ignore */ }
+  return pins;
+}
+
 export function canUnlockDeck(id) {
   const deck = DECKS[id];
   if (!deck) return false;
   if (id === 'moonmallow') return true;
+  if (isPurchasedDeck(id)) return true;
+  // Sticky ownership: once confirmed (below), a deck stays unlocked across auth/origin blips.
+  if (getOwnedDecks().includes(id)) return true;
+  // Shop-exclusive decks unlock ONLY via a coin purchase (handled above) — never by
+  // sign-in or streak day. Without this they'd fall through to `!unlock_day → true`.
+  if (deck.role === 'shop') return false;
   if (!getCurrentUserSync()) return false;
-  if (isGiftedDeck(id)) return true;
-  if (deck.role === 'default') return true;
-  if (!deck.unlock_day) return true;
+  // Each live-true path records the deck so its ownership persists past this session.
+  if (isGiftedDeck(id)) { recordOwnedDeck(id); return true; }
+  if (deck.role === 'default') { recordOwnedDeck(id); return true; }
+  if (!deck.unlock_day) { recordOwnedDeck(id); return true; }
   if (typeof localStorage === 'undefined') return false;
   try {
     const progress = JSON.parse(localStorage.getItem('meowtarot_user_progress') || '{}');
     // Unlock by ACCUMULATED days drawn (total_daily_reads), not consecutive streak —
     // forgiving: missing a day never sets you back. (User decision 2026-06-18.)
     const daysDrawn = progress.total_daily_reads ?? 0;
-    return daysDrawn >= deck.unlock_day;
+    if (daysDrawn >= deck.unlock_day) { recordOwnedDeck(id); return true; }
+    return false;
   } catch {
     return false;
   }
@@ -266,7 +443,13 @@ export function getAllDecks() {
 // unlock day. It does NOT move the active deck to the front — active is shown via
 // glow + an "Active" label, not by reordering (founder decision 2026-06-20).
 export function getDecksForDisplay() {
-  return getAllDecks().slice().sort((a, b) => {
+  return getAllDecks()
+    // Hide shop-exclusive decks from the streak deck surfaces (profile "My Decks", home
+    // strip, board picker) until they're actually purchased — they live in the Shop, not
+    // on the day-unlock ladder, so a "Day N locked" cell would be meaningless. Once bought,
+    // canUnlockDeck is true and they appear here like any owned deck.
+    .filter((deck) => deck.role !== 'shop' || canUnlockDeck(deck.id))
+    .slice().sort((a, b) => {
     const ua = canUnlockDeck(a.id) ? 0 : 1;
     const ub = canUnlockDeck(b.id) ? 0 : 1;
     if (ua !== ub) return ua - ub;                        // available before locked

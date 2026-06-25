@@ -1,5 +1,6 @@
 import { renderNavbar } from './components/navbar.js';
 import { renderFooter } from './components/footer.js';
+import { grantDailyLogin, renderMeowCoinChip } from './meow-coin.js';
 import { trackLocaleSwitched, trackMeaningViewed, trackCtaClicked, trackOrientationToggled } from './analytics.js';
 import { renderBottomNav } from './bottom-nav.js';
 
@@ -276,7 +277,7 @@ export const translations = {
     profileDeckLocked: 'Locked — Day {day}',
     profileDeckActive: 'Active',
     profileDeckActivateCta: 'Use this deck',
-    profileDeckLockedHint: 'Keep your streak going to unlock on Day {day}',
+    profileDeckLockedHint: 'Unlocks after {day} daily readings — miss a day, no setback',
     deckRewardEyebrow: 'New deck unlocked',
     deckRewardTitle: '{deck} is yours',
     deckRewardBody: 'You reached Day {day}. Tap to make {deck} your active deck.',
@@ -581,7 +582,7 @@ export const translations = {
     profileDeckLocked: 'ล็อค — วันที่ {day}',
     profileDeckActive: 'ใช้งานอยู่',
     profileDeckActivateCta: 'ใช้สำรับนี้',
-    profileDeckLockedHint: 'รักษาสตรีคถึงวันที่ {day} เพื่อปลดล็อค',
+    profileDeckLockedHint: 'ปลดล็อกเมื่อเปิดไพ่รายวันครบ {day} วัน (ขาดวันได้ ไม่รีเซ็ต)',
     deckRewardEyebrow: 'ปลดล็อคสำรับใหม่แล้ว',
     deckRewardTitle: '{deck} เป็นของคุณแล้ว',
     deckRewardBody: 'คุณมาถึงวันที่ {day} แล้ว แตะเพื่อตั้งสำรับ {deck} เป็นสำรับหลัก',
@@ -742,6 +743,46 @@ export function initShell(state, afterApply, activePage, options = {}) {
   state.currentLang = explicitParam || (pathIsThai ? 'th' : 'en');
   localStorage.setItem(LANG_STORAGE_KEY, state.currentLang);
 
+  // Meow Coin balance chip always renders. The +5 daily-LOGIN coin is now SIGNED-IN ONLY
+  // (founder 2026-06-22: don't hand signed-out users passive coins — they only earn by playing
+  // the daily reading, then get a sign-in CTA). Dynamic import dodges an auth<->common cycle;
+  // grantDailyLogin is idempotent per day, and we re-check when auth resolves.
+  try { renderMeowCoinChip(); } catch (_) { /* coins non-critical */ }
+  // OAuth RETURN: after Google sign-in, Supabase hands the session back as ?code=… (PKCE) or
+  // #access_token=… The session is only exchanged when the Supabase client is CREATED, and the
+  // client is lazy — most pages create it on load, but not all. If we land back here with those
+  // markers, eagerly create the client (getCurrentUser) so the session is established + persisted
+  // on EVERY page, not just the eager-init ones (fixes "signed in on Google → back → still signed
+  // out"). 2026-06-23.
+  const _href = window.location.href || '';
+  const _isOAuthReturn = /[?&]code=/.test(_href) || /[#&]access_token=/.test(_href) || /[?&]error=/.test(_href);
+  // After sign-in we land on profile.html (the clean redirect target); if a return URL was stashed
+  // (loginWithProvider), bounce the now-signed-in user BACK to where they were (e.g. the reading
+  // result) so they don't get stranded on Profile. Consumed once. (founder 2026-06-23)
+  const maybeRestoreAfterSignin = (user) => {
+    if (!user) return;
+    // 1) bounce back to the originating page if one was stashed.
+    let ret = null;
+    try { ret = localStorage.getItem('mt_signin_return'); } catch (_) {}
+    if (ret) {
+      try { localStorage.removeItem('mt_signin_return'); } catch (_) {}
+      if (ret !== window.location.href) { try { window.location.replace(ret); } catch (_) {} }
+    }
+  };
+  import('./auth.js').then(({ getCurrentUserSync, subscribeAuthState, getCurrentUser }) => {
+    const grantIfSignedIn = () => { try { if (getCurrentUserSync()) grantDailyLogin(); } catch (_) {} };
+    if (_isOAuthReturn && typeof getCurrentUser === 'function') {
+      getCurrentUser().then((u) => { grantIfSignedIn(); maybeRestoreAfterSignin(u); }).catch(() => {});
+    } else {
+      grantIfSignedIn();
+    }
+    if (typeof subscribeAuthState === 'function') subscribeAuthState((u) => { grantIfSignedIn(); maybeRestoreAfterSignin(u); });
+  }).catch(() => {});
+
+  // Referral: load on every page so an invite link (?ref=CODE) is captured anywhere + auto-redeemed
+  // once the user signs in. (Stage 3, founder 2026-06-23.) Self-inits on import.
+  import('./referral.js').catch(() => {});
+
   // Phase 5: global top navbar removed. The hamburger nav + brand text
   // + EN/TH lang toggle that used to render here are replaced by the
   // bottom tab bar (Features/Today/Draw/Cards/Profile) and the
@@ -833,6 +874,53 @@ export function initShell(state, afterApply, activePage, options = {}) {
   // once per page; GA4 uses sendBeacon so the push survives the navigation.
   if (typeof window !== 'undefined' && !window._meowCtaListenerBound) {
     window._meowCtaListenerBound = true;
+
+    // Nudge popup when a card-meaning page's "Reversed" tab is tapped: tells the user they
+    // can choose a special reversed-card image, and sends them to Profile to set it. Once
+    // per session. (founder 2026-06-24)
+    function showReversedNudge(lang) {
+      try { if (sessionStorage.getItem('meowtarot_rev_nudge_seen')) return; } catch (_) {}
+      if (document.getElementById('mt-rev-nudge')) return;
+      try { sessionStorage.setItem('meowtarot_rev_nudge_seen', '1'); } catch (_) {}
+      const th = lang === 'th';
+      if (!document.getElementById('mt-rev-nudge-style')) {
+        const st = document.createElement('style');
+        st.id = 'mt-rev-nudge-style';
+        st.textContent = `
+          .mt-rn-overlay{position:fixed;inset:0;z-index:1250;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(28,12,52,0);transition:background .22s ease;}
+          .mt-rn-overlay.in{background:rgba(28,12,52,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+          .mt-rn-card{width:100%;max-width:320px;background:linear-gradient(180deg,#fffaf2,#fdf3ec);border:1px solid rgba(197,177,220,.55);border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 30px 60px -20px rgba(20,8,40,.55);transform:translateY(12px) scale(.95);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s ease;}
+          .mt-rn-overlay.in .mt-rn-card{transform:none;opacity:1;}
+          .mt-rn-emoji{font-size:30px;margin:0 0 6px;}
+          .mt-rn-title{font-family:var(--mt-font-display,"Cormorant Garamond",serif);font-style:italic;font-weight:600;font-size:21px;color:var(--mt-plum,#3d1a5c);margin:0 0 6px;line-height:1.2;}
+          .mt-rn-body{font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:13.5px;color:var(--mt-ink-soft,#6b5b82);line-height:1.5;margin:0 0 16px;}
+          .mt-rn-btn{width:100%;padding:13px;border:none;border-radius:14px;background:var(--mt-cta-grad,linear-gradient(135deg,#d4972c,#d12878));color:#fff8e7;font-family:var(--mt-font-body,"DM Sans",sans-serif);font-weight:700;font-size:14px;cursor:pointer;margin-bottom:8px;}
+          .mt-rn-skip{background:none;border:none;color:var(--mt-plum-mid,#6b4a86);font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:13px;font-weight:600;cursor:pointer;}
+        `;
+        document.head.appendChild(st);
+      }
+      const profileHref = (window.location.pathname || '').startsWith('/th/') ? '/th/profile.html' : '/profile.html';
+      const ov = document.createElement('div');
+      ov.id = 'mt-rev-nudge';
+      ov.className = 'mt-rn-overlay';
+      ov.setAttribute('role', 'dialog');
+      ov.setAttribute('aria-modal', 'true');
+      ov.innerHTML = `
+        <div class="mt-rn-card" role="document">
+          <div class="mt-rn-emoji" aria-hidden="true">🔮</div>
+          <p class="mt-rn-title">${th ? 'อยากได้รูปไพ่กลับหัวแบบพิเศษไหม?' : 'Want a special reversed card image?'}</p>
+          <p class="mt-rn-body">${th ? 'เลือกสไตล์ไพ่กลับหัวของคุณได้ในหน้าโปรไฟล์' : 'Pick how your reversed cards look — set it in your Profile.'}</p>
+          <button type="button" class="mt-rn-btn">${th ? 'ตั้งค่าในโปรไฟล์' : 'Set it in Profile'}</button>
+          <button type="button" class="mt-rn-skip">${th ? 'ไว้ทีหลัง' : 'Maybe later'}</button>
+        </div>`;
+      const close = () => { ov.classList.remove('in'); window.setTimeout(() => ov.remove(), 220); };
+      document.body.appendChild(ov);
+      requestAnimationFrame(() => ov.classList.add('in'));
+      ov.querySelector('.mt-rn-btn').addEventListener('click', () => { window.location.href = profileHref; });
+      ov.querySelector('.mt-rn-skip').addEventListener('click', close);
+      ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+    }
+
     document.addEventListener('click', (e) => {
       // Card-meaning orientation toggle (upright/reversed re-renders without a reload,
       // so meaning_viewed won't re-fire — track the toggle explicitly).
@@ -841,6 +929,8 @@ export function initShell(state, afterApply, activePage, options = {}) {
         const cm = (window.location.pathname || '').match(/\/cards\/([^/]+)\/?$/);
         if (cm) {
           try { trackOrientationToggled({ cardId: cm[1], orientation: toggle.dataset.orientation, locale: state.currentLang }); } catch (_) {}
+          // Nudge: tapping "Reversed" offers the special reversed-art toggle (set in Profile).
+          if (toggle.dataset.orientation === 'reversed') showReversedNudge(state.currentLang);
         }
         return;
       }

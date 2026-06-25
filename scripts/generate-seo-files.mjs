@@ -10,7 +10,7 @@ const SEPARATE_LANG_SITEMAPS = String(process.env.SEPARATE_LANG_SITEMAPS || '').
 
 // `www` and `ios` are full-site MIRRORS (Capacitor outputs) — never crawl them
 // into the sitemap or they pollute it with duplicate /www/* and /ios/* URLs.
-const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests', 'node_modules', 'www', 'ios'];
+const DEVLIKE_SEGMENTS = ['dev', 'draft', 'tests', 'node_modules', 'www', 'ios', 'docs', 'share'];
 const SITEMAP_EXCLUDED_HTML = new Set([
   'share/index.html',
   'docs/poster/full-reading-poster.html',
@@ -91,7 +91,7 @@ async function buildStaticPages() {
     const lastmod = formatDate((await fs.stat(path.join(ROOT_DIR, file))).mtime);
     const urlPath = file === 'index.html'
       ? ''
-      : asPosix(file).replace(/\/index\.html$/i, '/').replace(/index\.html$/i, '');
+      : asPosix(file).replace(/\/index\.html$/i, '/').replace(/index\.html$/i, '').replace(/\.html$/i, '');
     urls.push({ loc: `${BASE_URL}/${urlPath}`, lastmod });
   }
 

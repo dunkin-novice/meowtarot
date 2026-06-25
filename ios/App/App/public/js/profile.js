@@ -6,14 +6,14 @@ import {
   pathHasThaiPrefix,
   translations,
 } from './common.js';
-import { getAllDecks, loadTarotManifest, normalizeId, getReversedMode, setReversedMode } from './data.js';
+import { getAllDecks, loadTarotManifest, normalizeId, getReversedMode, setReversedMode, getActiveDeckId } from './data.js';
 import { computePhase } from './phase.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
-import { renderDeckInventory } from './deck-inventory.js';
 import { renderAchievementsPanel } from './achievements-panel.js';
+import { renderReferralPanel } from './referral.js';
 
 const state = {
   currentLang: pathHasThaiPrefix(window.location.pathname) ? 'th' : 'en',
@@ -56,68 +56,104 @@ function formatReadingDate(value = '') {
   }).format(parsed);
 }
 
+const CAT_AVATAR_SVG = `<svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+  <path d="M11 12 L15 4 L19 15 Z" fill="#fff6ea"/><path d="M37 12 L33 4 L29 15 Z" fill="#fff6ea"/>
+  <ellipse cx="24" cy="27" rx="14" ry="12.5" fill="#fff6ea"/>
+  <circle cx="19" cy="25" r="1.7" fill="#3d1a5c"/><circle cx="29" cy="25" r="1.7" fill="#3d1a5c"/>
+  <path d="M22.5 30 L24 31.6 L25.5 30 Z" fill="#e8457a"/></svg>`;
+
+// Header: avatar (real Google photo when signed in, cat fallback otherwise) + name + subtitle.
+// Account actions (log out / privacy / sign-in) moved to the Settings tab's Account card.
 function renderIdentity(dict) {
   if (!els.identity) return;
   els.identity.innerHTML = '';
+  const th = state.currentLang === 'th';
 
+  const header = document.createElement('div');
+  header.className = 'profile-header';
+
+  const av = document.createElement('div');
+  av.className = 'profile-avatar' + (state.user ? '' : ' profile-avatar--guest');
+  const photo = state.user && (state.user.user_metadata?.avatar_url || state.user.user_metadata?.picture);
+  if (photo) {
+    const img = document.createElement('img');
+    img.src = photo; img.alt = ''; img.referrerPolicy = 'no-referrer';
+    img.addEventListener('error', () => { av.innerHTML = CAT_AVATAR_SVG; av.classList.add('profile-avatar--fallback'); });
+    av.appendChild(img);
+  } else {
+    av.classList.add('profile-avatar--fallback');
+    av.innerHTML = CAT_AVATAR_SVG;
+  }
+  if (state.user) {
+    const flame = document.createElement('span');
+    flame.className = 'profile-avatar__badge';
+    flame.textContent = '🔥';
+    av.appendChild(flame);
+  }
+  header.appendChild(av);
+
+  const meta = document.createElement('div');
+  meta.className = 'profile-header__meta';
+  const name = document.createElement('div');
+  name.className = 'profile-header__name';
+  name.textContent = state.user
+    ? (state.user.user_metadata?.full_name || state.user.user_metadata?.name || state.user.email || (th ? 'นักอ่านไพ่' : 'Reader'))
+    : (th ? 'ผู้มาเยือน' : 'Guest reader');
+  const sub = document.createElement('div');
+  sub.className = 'profile-header__sub';
+  sub.textContent = state.user
+    ? (th ? 'นักอ่านไพ่แห่งแสงจันทร์' : 'Moonlit reader')
+    : (th ? 'ลงชื่อเข้าใช้เพื่อบันทึกเส้นทางของคุณ' : 'Sign in to save your journey');
+  meta.appendChild(name);
+  meta.appendChild(sub);
+  header.appendChild(meta);
+
+  els.identity.appendChild(header);
+}
+
+// Settings → Account card: log out + privacy + (signed out) sign-in CTA.
+function renderAccountActions(dict) {
+  const host = document.getElementById('profile-account');
+  if (!host) return;
+  host.innerHTML = '';
+  const th = state.currentLang === 'th';
   const card = document.createElement('section');
   card.className = 'panel';
-
   const title = document.createElement('h2');
-  title.textContent = dict.profileIdentityTitle || (state.currentLang === 'th' ? 'บัญชี' : 'Account');
+  title.textContent = th ? 'บัญชี' : 'Account';
   card.appendChild(title);
 
-  const line = document.createElement('p');
   if (state.user) {
-    const displayName = state.user.user_metadata?.full_name || state.user.user_metadata?.name || state.user.email || state.user.id;
-    line.textContent = displayName;
-  } else {
-    line.textContent = dict.profileGuestLabel || (state.currentLang === 'th' ? 'ยังไม่ได้เข้าสู่ระบบ' : 'Not signed in');
-  }
-  card.appendChild(line);
-
-  if (state.user) {
+    const line = document.createElement('p');
+    line.className = 'profile-account-email';
+    line.textContent = (th ? 'เข้าสู่ระบบเป็น ' : 'Signed in as ') + (state.user.email || state.user.id);
+    card.appendChild(line);
+    const row = document.createElement('div');
+    row.className = 'profile-account-actions';
+    const privacyLink = document.createElement('a');
+    privacyLink.className = 'ghost';
+    privacyLink.href = th ? '/th/privacy.html' : '/privacy.html';
+    privacyLink.textContent = dict.profilePrivacyLink || (th ? 'ความเป็นส่วนตัว' : 'Privacy');
     const logoutBtn = document.createElement('button');
     logoutBtn.type = 'button';
     logoutBtn.className = 'ghost';
-    logoutBtn.textContent = dict.profileLogout || (state.currentLang === 'th' ? 'ออกจากระบบ' : 'Log out');
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await logout();
-      } catch (_) {
-        // ignore
-      }
-    });
-    card.appendChild(logoutBtn);
-
-    const th = state.currentLang === 'th';
-
-    // Privacy policy link.
-    const privacyLink = document.createElement('a');
-    privacyLink.className = 'profile-privacy-link';
-    privacyLink.href = th ? '/th/privacy.html' : '/privacy.html';
-    privacyLink.textContent = dict.profilePrivacyLink || (th ? 'นโยบายความเป็นส่วนตัว' : 'Privacy Policy');
-    card.appendChild(privacyLink);
-
-    // Account deletion (Guideline 5.1.1(v)) lives at the very bottom of the page,
-    // tucked under the collapsed "Other" disclosure — see renderOther(). Kept out
-    // of the identity card so it can't be tapped by accident.
+    logoutBtn.textContent = dict.profileLogout || (th ? 'ออกจากระบบ' : 'Log out');
+    logoutBtn.addEventListener('click', async () => { try { await logout(); } catch (_) {} });
+    row.appendChild(privacyLink);
+    row.appendChild(logoutBtn);
+    card.appendChild(row);
   } else {
+    const line = document.createElement('p');
+    line.textContent = th ? 'ลงชื่อเข้าใช้เพื่อซิงก์สตรีค สำรับ และการอ่านไพ่ข้ามอุปกรณ์' : 'Sign in to sync your streak, decks and readings across devices.';
+    card.appendChild(line);
     const loginBtn = document.createElement('button');
     loginBtn.type = 'button';
     loginBtn.className = 'primary';
-    loginBtn.textContent = dict.profileSignInCta || (state.currentLang === 'th' ? 'เข้าสู่ระบบด้วย Google' : 'Sign in with Google');
-    loginBtn.addEventListener('click', async () => {
-      try {
-        await loginWithProvider('google');
-      } catch (_) {
-        // ignore
-      }
-    });
+    loginBtn.textContent = dict.profileSignInCta || (th ? 'เข้าสู่ระบบด้วย Google' : 'Continue with Google');
+    loginBtn.addEventListener('click', async () => { try { await loginWithProvider('google'); } catch (_) {} });
     card.appendChild(loginBtn);
   }
-
-  els.identity.appendChild(card);
+  host.appendChild(card);
 }
 
 const THAI_NUMBER_WORDS = [
@@ -224,91 +260,6 @@ function renderStreak(dict) {
 
   els.streak.appendChild(hero);
 
-  // Progress panel (Next: deck + bar + Moonveil-style info box)
-  const nextMilestone = getNextStreakMilestone(progress);
-  if (nextMilestone) {
-    const { target, current, remaining } = nextMilestone;
-    const fillPct = Math.max(0, Math.min(100, Math.round((current / target) * 100)));
-    const targetDeck = getAllDecks().find((d) => d.unlock_day === target);
-    const deckNameEn = targetDeck?.name || '';
-    const deckNameTh = targetDeck?.name_th || deckNameEn;
-    const deckBlurbEn = targetDeck?.blurb_en || targetDeck?.tagline_en || '';
-    const deckBlurbTh = targetDeck?.blurb_th || targetDeck?.tagline_th || '';
-
-    const panel = document.createElement('div');
-    panel.className = 'profile-progress-panel';
-
-    const head = document.createElement('div');
-    head.className = 'profile-progress-panel__head';
-
-    const headLeft = document.createElement('div');
-    const titleEn = document.createElement('div');
-    titleEn.className = 'profile-progress-panel__title';
-    titleEn.textContent = state.currentLang === 'th'
-      ? `สำรับถัดไป · ${deckNameTh}`
-      : `Next: ${deckNameEn}`;
-    headLeft.appendChild(titleEn);
-    // Single-language per locale — no bilingual alt title-th line.
-    head.appendChild(headLeft);
-
-    const headRight = document.createElement('div');
-    headRight.className = 'profile-progress-panel__remaining';
-    const remNum = document.createElement('div');
-    remNum.className = 'profile-progress-panel__remaining-num';
-    remNum.textContent = String(remaining);
-    headRight.appendChild(remNum);
-    const remLabel = document.createElement('div');
-    remLabel.className = 'profile-progress-panel__remaining-label';
-    remLabel.textContent = state.currentLang === 'th' ? 'วันที่เหลือ' : 'days to go';
-    headRight.appendChild(remLabel);
-    head.appendChild(headRight);
-
-    panel.appendChild(head);
-
-    const bar = document.createElement('div');
-    bar.className = 'profile-progress-bar';
-    const track = document.createElement('div');
-    track.className = 'profile-progress-bar__track';
-    const fill = document.createElement('div');
-    fill.className = 'profile-progress-bar__fill';
-    fill.style.width = `${fillPct}%`;
-    const pearl = document.createElement('div');
-    pearl.className = 'profile-progress-bar__pearl';
-    fill.appendChild(pearl);
-    track.appendChild(fill);
-    bar.appendChild(track);
-
-    const labels = document.createElement('div');
-    labels.className = 'profile-progress-bar__labels';
-    const dayCurr = document.createElement('span');
-    dayCurr.textContent = state.currentLang === 'th' ? `วันที่ ${current}` : `Day ${current}`;
-    labels.appendChild(dayCurr);
-    const dayTarget = document.createElement('span');
-    dayTarget.textContent = state.currentLang === 'th' ? `วันที่ ${target} · ปลดล็อก` : `Day ${target} · unlock`;
-    labels.appendChild(dayTarget);
-    bar.appendChild(labels);
-
-    panel.appendChild(bar);
-
-    if (deckBlurbEn || deckBlurbTh) {
-      const blurb = document.createElement('div');
-      blurb.className = 'profile-progress-panel__blurb';
-      const bName = document.createElement('b');
-      bName.textContent = state.currentLang === 'th' ? deckNameTh : deckNameEn;
-      blurb.appendChild(bName);
-      const blurbText = document.createTextNode(' ' + (state.currentLang === 'th' ? (deckBlurbTh || deckBlurbEn) : (deckBlurbEn || deckBlurbTh)));
-      blurb.appendChild(blurbText);
-      if (deckBlurbTh && state.currentLang !== 'th') {
-        const th = document.createElement('div');
-        th.className = 'profile-progress-panel__blurb-th';
-        th.textContent = deckBlurbTh;
-        blurb.appendChild(th);
-      }
-      panel.appendChild(blurb);
-    }
-
-    els.streak.appendChild(panel);
-  }
 }
 
 function getMonthlyReadingDays(history = []) {
@@ -653,10 +604,19 @@ function renderContact(dict) {
 // "Other" — collapsed disclosure at the very bottom (Guideline 5.1.1(v)). Tap
 // "Other" to reveal a "Delete account" button; tapping THAT opens a centered
 // confirmation modal (warning + checkbox-gated delete). Signed-in users only.
+// Reversed-cards visualization control — its own Settings card, visible to everyone.
+function renderReversed() {
+  const host = document.getElementById('profile-reversed');
+  if (!host) return;
+  host.innerHTML = '';
+  host.appendChild(buildReversedModePanel(state.currentLang === 'th'));
+}
+
 function renderOther(dict) {
   const host = document.getElementById('profile-other');
   if (!host) return;
   host.innerHTML = '';
+  // Account deletion is signed-in only.
   if (!state.user) { host.hidden = true; return; }
   host.hidden = false;
 
@@ -683,50 +643,101 @@ function renderOther(dict) {
   trigger.addEventListener('click', () => openDeleteModal(dict, th));
   body.appendChild(trigger);
 
-  // Hidden dev toggle — reversed-card render mode. Revealed by tapping the "Other"
-  // header 5× (founder 2026-06-20). Default 'flip' (rotate upright art); 'art' uses
-  // the separate *-reversed.webp. Persists via setReversedMode → localStorage.
-  const devRow = document.createElement('div');
-  devRow.className = 'profile-reversed-mode';
-  devRow.hidden = true;
-  devRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:12px;';
-  const devLabel = document.createElement('span');
-  devLabel.textContent = th ? 'ไพ่กลับหัว' : 'Reversed cards';
-  devLabel.style.cssText = 'opacity:0.75;';
-  const seg = document.createElement('div');
-  seg.style.cssText = 'display:inline-flex;border:1px solid rgba(61,26,92,0.3);border-radius:9px;overflow:hidden;';
-  const restyle = (mode) => seg.querySelectorAll('button').forEach((x) => {
-    const on = x.dataset.mode === mode;
-    x.setAttribute('aria-pressed', String(on));
-    x.style.cssText = `border:none;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;background:${on ? '#3d1a5c' : 'transparent'};color:${on ? '#fff' : '#3d1a5c'};`;
-  });
-  const mkBtn = (mode, en, thLabel) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.dataset.mode = mode;
-    b.textContent = th ? thLabel : en;
-    b.addEventListener('click', () => { setReversedMode(mode); restyle(mode); });
-    return b;
-  };
-  seg.appendChild(mkBtn('flip', 'Flip', 'พลิก'));
-  seg.appendChild(mkBtn('art', 'Art', 'รูปแยก'));
-  devRow.appendChild(devLabel);
-  devRow.appendChild(seg);
-  restyle(getReversedMode());
-  body.appendChild(devRow);
-
-  let taps = 0;
-  let tapTimer = null;
-  summary.addEventListener('click', () => {
-    taps += 1;
-    if (tapTimer) clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => { taps = 0; }, 1200);
-    if (taps >= 5) { devRow.hidden = false; taps = 0; }
-  });
-
   details.appendChild(body);
   card.appendChild(details);
   host.appendChild(card);
+}
+
+// Visible "Reversed cards" control: Flip / Art / Flip + Art. Selecting a mode persists it
+// and shows a Fool preview so the user sees what reversed cards will look like.
+function buildReversedModePanel(th) {
+  const panel = document.createElement('section');
+  panel.className = 'panel profile-reversed-panel';
+
+  const title = document.createElement('h2');
+  title.className = 'profile-reversed-panel__title';
+  title.textContent = th ? 'ไพ่กลับหัว' : 'Reversed cards';
+  panel.appendChild(title);
+
+  const desc = document.createElement('p');
+  desc.className = 'profile-reversed-panel__desc';
+  desc.textContent = th ? 'เลือกว่าไพ่กลับหัวจะแสดงแบบไหน' : 'Choose how reversed cards are shown.';
+  panel.appendChild(desc);
+
+  const seg = document.createElement('div');
+  seg.className = 'profile-reversed-seg';
+  const modes = [
+    { key: 'flip', en: 'Flip', th: 'พลิก' },
+    { key: 'art', en: 'Art', th: 'รูปแยก' },
+    { key: 'flipart', en: 'Flip + Art', th: 'พลิก + รูปแยก' },
+  ];
+  const restyle = (active) => seg.querySelectorAll('button').forEach((b) => {
+    const on = b.dataset.mode === active;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  modes.forEach((m) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.mode = m.key;
+    b.className = 'profile-reversed-seg__btn';
+    b.textContent = th ? m.th : m.en;
+    b.addEventListener('click', () => {
+      setReversedMode(m.key);
+      restyle(m.key);
+      showReversedPreview(m.key, th);
+    });
+    seg.appendChild(b);
+  });
+  restyle(getReversedMode());
+  panel.appendChild(seg);
+  return panel;
+}
+
+function showReversedPreview(mode, th) {
+  if (typeof document === 'undefined') return;
+  document.getElementById('mt-rev-preview')?.remove();
+  if (!document.getElementById('mt-rev-preview-style')) {
+    const st = document.createElement('style');
+    st.id = 'mt-rev-preview-style';
+    st.textContent = `
+      .mt-rev-overlay{position:fixed;inset:0;z-index:1250;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(28,12,52,0);transition:background .22s ease;}
+      .mt-rev-overlay.in{background:rgba(28,12,52,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+      .mt-rev-card{width:100%;max-width:300px;background:linear-gradient(180deg,#fffaf2,#fdf3ec);border:1px solid rgba(197,177,220,.55);border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 30px 60px -20px rgba(20,8,40,.55);transform:translateY(12px) scale(.95);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s ease;}
+      .mt-rev-overlay.in .mt-rev-card{transform:none;opacity:1;}
+      .mt-rev-img{width:140px;aspect-ratio:848/1264;object-fit:contain;border-radius:12px;margin:0 auto 12px;display:block;box-shadow:0 14px 30px -12px rgba(61,26,92,.55);border:1px solid var(--mt-gold-pale,#e8c478);}
+      .mt-rev-img.is-flipped{transform:rotate(180deg);}
+      .mt-rev-text{font-family:var(--mt-font-body,"DM Sans",sans-serif);font-size:14px;color:var(--mt-ink-soft,#6b5b82);line-height:1.5;margin:0 0 14px;}
+      .mt-rev-btn{width:100%;padding:12px;border:none;border-radius:14px;background:var(--mt-plum,#3d1a5c);color:#fff8e7;font-family:var(--mt-font-body,"DM Sans",sans-serif);font-weight:700;font-size:14px;cursor:pointer;}
+    `;
+    document.head.appendChild(st);
+  }
+  const deckId = getActiveDeckId();
+  const CDN = 'https://cdn.meowtarot.com/assets';
+  // flip → upright art (rotated via CSS); art + flipart → the dedicated reversed art.
+  const src = mode === 'flip'
+    ? `${CDN}/${deckId}/01-the-fool-upright.webp`
+    : `${CDN}/${deckId}/01-the-fool-reversed.webp`;
+  const rotated = mode !== 'art'; // flip + flipart rotate 180°
+
+  const ov = document.createElement('div');
+  ov.id = 'mt-rev-preview';
+  ov.className = 'mt-rev-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  ov.innerHTML = `
+    <div class="mt-rev-card" role="document">
+      <img class="mt-rev-img${rotated ? ' is-flipped' : ''}" src="${src}" alt="" />
+      <p class="mt-rev-text">${th ? 'ตอนนี้ไพ่กลับหัวของคุณจะเป็นแบบนี้!' : "Now your reversed cards will look like this!"}</p>
+      <button type="button" class="mt-rev-btn">${th ? 'เข้าใจแล้ว' : 'Got it'}</button>
+    </div>`;
+  const img = ov.querySelector('.mt-rev-img');
+  img.addEventListener('error', () => { img.src = `${CDN}/${deckId}/01-the-fool-upright.webp`; });
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('in'));
+  const close = () => { ov.classList.remove('in'); window.setTimeout(() => ov.remove(), 220); };
+  ov.querySelector('.mt-rev-btn').addEventListener('click', close);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
 }
 
 // Centered confirmation modal for account deletion. The destructive call is
@@ -828,28 +839,42 @@ async function renderAll(dict = translations[state.currentLang] || translations.
   renderIdentity(dict);
   renderStreak(dict);
   const progress = getUserProgress();
-  const deckInvEl = document.getElementById('profile-deck-inventory');
-  if (deckInvEl) {
-    renderDeckInventory(deckInvEl, progress, dict, state.currentLang, () => renderAll());
-    // Phase 5: "View all decks" CTA below the horizontal strip routes
-    // to the standalone /decks.html page (ScreenDeckInventory).
-    const seeAll = document.createElement('a');
-    seeAll.className = 'profile-deck-see-all';
-    seeAll.href = localizePath('/decks.html', state.currentLang);
-    // EN-only on EN site / TH-only on TH site — drop the bilingual alt.
-    const seeAllEn = document.createElement('span');
-    seeAllEn.className = 'profile-deck-see-all__en';
-    seeAllEn.textContent = state.currentLang === 'th' ? 'ดูสำรับทั้งหมด' : 'View all decks';
-    seeAll.appendChild(seeAllEn);
-    deckInvEl.appendChild(seeAll);
-  }
+  // Deck INVENTORY ("My Decks") removed from Profile (founder 2026-06-22): Profile is now the
+  // achievement REWARD board; the deck inventory lives only on "Your Decks" (/decks.html, the
+  // Decks tab). Keeps reward vs inventory cleanly separated. #profile-deck-inventory dropped.
   renderLifetimeStats(dict);
   const achieveEl = document.getElementById('profile-achievements');
   if (achieveEl) renderAchievementsPanel(achieveEl, progress, dict, state.currentLang);
+  const referralEl = document.getElementById('profile-referral');
+  if (referralEl) renderReferralPanel(referralEl, state.currentLang);
   renderHistory(dict);
   renderContact(dict);
+  renderReversed();
+  renderAccountActions(dict);
   renderOther(dict);
   renderLoginCta(dict);
+  renderTabs(dict);
+}
+
+// 3-tab segmented control (Rewards / Activity / Settings) — shows/hides the .profile-tab panels.
+function renderTabs(dict) {
+  const bar = document.getElementById('profile-tabs');
+  if (!bar) return;
+  const th = state.currentLang === 'th';
+  const tabs = [
+    { key: 'rewards', label: th ? 'รางวัล' : 'Rewards' },
+    { key: 'activity', label: th ? 'กิจกรรม' : 'Activity' },
+    { key: 'settings', label: th ? 'ตั้งค่า' : 'Settings' },
+  ];
+  const active = state.profileTab || 'rewards';
+  bar.innerHTML = tabs.map((t) => `<button type="button" class="profile-tab-btn${t.key === active ? ' is-active' : ''}" data-go="${t.key}">${t.label}</button>`).join('');
+  const activate = (key) => {
+    state.profileTab = key;
+    bar.querySelectorAll('.profile-tab-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.go === key));
+    document.querySelectorAll('.profile-tab').forEach((panel) => { panel.hidden = panel.dataset.tab !== key; });
+  };
+  bar.querySelectorAll('.profile-tab-btn').forEach((b) => b.addEventListener('click', () => activate(b.dataset.go)));
+  activate(active);
 }
 
 function onTranslations(dict) {

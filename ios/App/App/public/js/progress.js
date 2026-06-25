@@ -1,4 +1,5 @@
 import { getNewlyUnlockedDecks, getUnlockMilestones, normalizeId } from './data.js';
+import { grantDailyReading, grantDeckUnlockCoins, grantWeeklyStreak } from './meow-coin.js';
 
 const PROGRESS_STORAGE_KEY = 'meowtarot_user_progress';
 const PROGRESS_VERSION = 2;
@@ -301,6 +302,21 @@ export function trackCompletedDailyReading(card = null) {
     }
   });
 
+  // Meow Coin earns (idempotent, best-effort — never block the reading): +5 for the daily
+  // reading, and +20 only when a NEW DECK is unlocked at a milestone. The +20 "achievement"
+  // reward is intentionally tied to DECK milestones, NOT the generic micro-achievements
+  // (first_daily / first_reversed / first_major_arcana / collect_*): those could fire 2-3 at
+  // once on the very first reading (e.g. a reversed major arcana → first_daily + first_reversed
+  // + first_major_arcana), minting 60 coins and popping "3 achievements unlocked" on day one —
+  // which doesn't match what an achievement reward means here (founder 2026-06-21). The micro-
+  // achievements still exist as badges; they just no longer mint coins.
+  try {
+    grantDailyReading();
+    // Repeatable 7-day-streak reward: +5 once per calendar week while a 7-day streak is alive.
+    if (progress.streak_current >= 7) grantWeeklyStreak();
+    newlyUnlockedDecks.forEach((deck) => grantDeckUnlockCoins(deck.id));
+  } catch (_) { /* coins are non-critical */ }
+
   persistProgress(progress);
 
   return {
@@ -308,6 +324,7 @@ export function trackCompletedDailyReading(card = null) {
     didCount: true,
     newlyUnlocked,
     previousStreak,
+    previousTotalReads,
     firstReversed,
     firstMajorArcana,
     softMessageKey: getSoftMessageKey({

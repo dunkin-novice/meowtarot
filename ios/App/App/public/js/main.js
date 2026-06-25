@@ -253,29 +253,6 @@ function animateDealSlots(boardEl, slots, onDone) {
 // together (so all 4 rows and both sides appear at the same time), then inline styles are
 // cleared. No per-card translate / getBoundingClientRect / staggered timers (those were
 // fragile and could leave cards stuck invisible). ~0.3s vs the old multi-second sweep.
-function animateFullDeal(boardEl, slots, onDone) {
-  // Query the LIVE board nodes (not the passed array) so the reveal always lands on what's
-  // actually on screen — the collect faded the on-screen cards to opacity 0, and these are
-  // the nodes that must be brought back.
-  const live = Array.from(boardEl.querySelectorAll('.card-slot'));
-  requestAnimationFrame(() => {
-    live.forEach((slot) => {
-      slot.classList.add('card-visible');
-      slot.style.transition = 'opacity .28s ease, transform .28s ease';
-      slot.style.opacity = '1';
-      slot.style.transform = 'none';
-    });
-    setTimeout(() => {
-      live.forEach((slot) => {
-        slot.style.transition = '';
-        slot.style.transform = '';
-        slot.style.opacity = '';
-      });
-      onDone?.();
-    }, 340);
-  });
-}
-
 // Simple, jank-free collect for the 78-card board: fade + slight shrink in place, all at
 // once (no fly-to-centre transforms that thrashed layout on overlapping cards).
 function animateSimpleCollect(boardEl, slots) {
@@ -377,6 +354,118 @@ function animateDailyShuffleSlots(boardEl, slots, onDone) {
   setTimeout(finalize, 1260);
 }
 
+// Deal the cards out one-by-one from a stacked pile in the CENTRE of the board — the
+// "dealing onto the table" feel the founder asked for (2026-06-21). On a re-shuffle the
+// previous spread is first collected to the middle (animateCollectSlots / animateSimpleCollect
+// in render), then this deals the fresh pile back out card-by-card. Big boards (Celtic = 40)
+// use a tighter stagger so the whole deal still lands in well under 2s. Replaces the old
+// fan-out (animateDailyShuffleSlots) for daily + question + full.
+// Celtic / full board (40 cards) deal — ROBUST + self-contained. Operates on the LIVE DOM
+// (boardEl.querySelectorAll), NOT the setupBoard closure `slots` array, because that array can
+// diverge from the rendered cards on the full board and strand animateDealStack on an empty set
+// (the "shuffle freezes with the cards stuck at centre" bug — confirmed 2026-06-23: is-locked
+// cleared but card styles untouched = animateDealStack's empty-slots guard fired). No centre
+// gather either, so a hiccup can never leave a stacked pile — cards only ever fade/slide IN at
+// their grid slots, and a guaranteed setTimeout clears the inline styles no matter what.
+function animateFullDeal(boardEl, onDone) {
+  const slots = Array.from(boardEl.querySelectorAll('.card-slot'));
+  if (!slots.length) { onDone?.(); return; }
+  slots.forEach((slot) => {
+    slot.classList.add('card-visible');
+    slot.style.transition = 'none';
+    slot.style.transform = 'translateY(12px) scale(0.94)';
+    slot.style.opacity = '0';
+    slot.style.willChange = 'transform, opacity';
+  });
+  void boardEl.offsetWidth;
+  // Founder 2026-06-23: the 40-card deal felt a touch too fast — slowed ~1s (stagger 14→30,
+  // flight 300→500) for a more graceful Celtic spread (still lands well under 2.5s).
+  const stagger = 30;
+  const flight = 500;
+  const total = flight + slots.length * stagger + 180;
+  requestAnimationFrame(() => {
+    slots.forEach((slot, idx) => {
+      window.setTimeout(() => {
+        slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease-out`;
+        slot.style.transform = 'translateY(0) scale(1)';
+        slot.style.opacity = '1';
+      }, idx * stagger);
+    });
+  });
+  window.setTimeout(() => {
+    slots.forEach((slot) => {
+      slot.style.transition = '';
+      slot.style.transform = '';
+      slot.style.opacity = '';
+      slot.style.willChange = '';
+    });
+    onDone?.();
+  }, total);
+}
+
+function animateDealStack(boardEl, slots, onDone) {
+  if (!slots.length) { onDone?.(); return; }
+  // CRITICAL: clear any leftover transform first and force a reflow, so getBoundingClientRect
+  // measures each card's TRUE GRID position — not a stale transformed one. Bug (2026-06-22):
+  // on the shuffle button the previous step (animateCollectSlots) leaves every card translated
+  // to the centre; measuring then gave a fly-out distance of ~0, so the "deal" collapsed into
+  // an in-place pulse — i.e. each card just shook. Reset → reflow → measure clean grid coords.
+  slots.forEach((slot) => {
+    slot.classList.add('card-visible');
+    slot.style.transition = 'none';
+    slot.style.transform = 'none';
+    slot.style.opacity = '1';
+  });
+  void boardEl.offsetWidth; // force reflow so the cleared transforms take effect before measuring
+
+  const boardRect = boardEl.getBoundingClientRect();
+  const centerX = boardRect.left + boardRect.width / 2;
+  const centerY = boardRect.top + boardRect.height / 2;
+
+  // 1) Pull every card to the centre but keep it INVISIBLE — no visible stacked pile sits there
+  //    (founder 2026-06-22: "no need for the stack of deck at the centre"). As the deal begins
+  //    each card fades in while spreading out, so the centre stack just "disappears".
+  slots.forEach((slot, idx) => {
+    const rect = slot.getBoundingClientRect();
+    const dx = centerX - (rect.left + rect.width / 2);
+    const dy = centerY - (rect.top + rect.height / 2);
+    slot.style.transition = 'none';
+    slot.style.transform = `translate(${dx}px, ${dy}px) scale(0.9)`;
+    slot.style.opacity = '0';
+    slot.style.zIndex = String(slots.length - idx);
+    slot.style.willChange = 'transform, opacity';
+  });
+
+  // 2) DEAL out — each card fades in while flying to its slot, staggered (the spread). Tighter
+  //    stagger on big boards so the 40-card Celtic spread still lands well under 2s.
+  const stagger = slots.length > 18 ? Math.max(12, Math.floor(900 / slots.length)) : 60;
+  const flight = 360;
+  const total = flight + (slots.length - 1) * stagger + 140;
+
+  requestAnimationFrame(() => {
+    slots.forEach((slot, idx) => {
+      window.setTimeout(() => {
+        slot.style.transition = `transform ${flight}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out`;
+        slot.style.transform = 'translate(0, 0) scale(1)';
+        slot.style.opacity = '1';
+      }, idx * stagger);
+    });
+  });
+
+  // GUARANTEED cleanup — scheduled OUTSIDE any rAF so cards ALWAYS end visible at their grid slot
+  // even if a frame/timer is dropped (fixes the Celtic shuffle leaving the board blank).
+  window.setTimeout(() => {
+    slots.forEach((slot) => {
+      slot.style.transition = '';
+      slot.style.transform = '';
+      slot.style.opacity = '';
+      slot.style.zIndex = '';
+      slot.style.willChange = '';
+    });
+    onDone?.();
+  }, total);
+}
+
 function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { animated = false, animationProfile = 'default' } = {}) {
   let cards = [];
   let selected = [];
@@ -466,15 +555,20 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     refreshBadges();
     if (withAnimation) {
       boardEl.classList.add('is-locked');
-      requestAnimationFrame(() => {
-        const animate = animationProfile === 'daily' ? animateDailyShuffleSlots
-          : animationProfile === 'full' ? animateFullDeal
-          : animateDealSlots;
-        animate(boardEl, slots, () => {
-          boardEl.classList.remove('is-locked');
-          refreshBadges();
-        });
-      });
+      const onDone = () => {
+        boardEl.classList.remove('is-locked');
+        refreshBadges();
+      };
+      // Full (Celtic) board uses its own DOM-based deal (robust against the closure/DOM slot
+      // divergence that froze the 40-card shuffle). daily + question ('daily' profile) keep the
+      // centre-spread animateDealStack (works for the 12-card boards, "spreads beautifully").
+      if (animationProfile === 'full') {
+        animateFullDeal(boardEl, onDone);
+      } else if (animationProfile === 'daily') {
+        animateDealStack(boardEl, slots, onDone);
+      } else {
+        animateDealSlots(boardEl, slots, onDone);
+      }
     } else {
       animateBoard(boardEl);
     }
@@ -491,11 +585,12 @@ function setupBoard(boardEl, boardSize, selectionGoal, onSelectionChange, { anim
     if (withAnimation && previousSlots.length) {
       boardEl.classList.add('is-locked');
       if (animationProfile === 'full') {
-        // 78 overlapping cards flying to centre (getBoundingClientRect per card) thrashed
-        // layout and looked buggy. Simple in-place fade-out instead, then re-deal.
-        animateSimpleCollect(boardEl, previousSlots);
-        setTimeout(proceed, 190);
+        // Full board: quick in-place fade-out, then re-deal via animateFullDeal (grid fade/slide-in).
+        // No centre collect — the 40-card gather is what kept stranding the deal. (2026-06-23)
+        previousSlots.forEach((s) => { s.style.transition = 'opacity 0.14s ease'; s.style.opacity = '0'; });
+        setTimeout(proceed, 150);
       } else {
+        // daily + question: collect the spread to the centre (visible converge), then re-deal.
         animateCollectSlots(boardEl, previousSlots);
         setTimeout(proceed, STACK_DURATION);
       }
@@ -561,6 +656,7 @@ function renderStreakChip() {
 
     let bar = chip.querySelector('.mt-chip-bar');
     const dropBar = () => { if (bar) { bar.remove(); bar = null; } chip.classList.remove('mt-has-progress'); };
+    const dropSub = () => { const su = chip.querySelector('.mt-chip-sub'); if (su) su.remove(); chip.style.removeProperty('--mt-chip-deg'); };
 
     if (!signedIn) {
       // Local streaks are fragile (cache-clear / no cross-device). Show the streak the
@@ -570,6 +666,7 @@ function renderStreakChip() {
       chip.setAttribute('aria-label', dict.dailyStreakSaveCta);
       chip.classList.add('is-cta');
       dropBar();
+      dropSub();
       return;
     }
 
@@ -581,24 +678,21 @@ function renderStreakChip() {
       numEl.textContent = String(next.remaining);
       labelEl.textContent = dict.deckUnlockProgress || 'to next deck';
       chip.setAttribute('aria-label', `${next.remaining} ${dict.deckUnlockProgress || 'to next deck'} (${next.current}/${next.target})`);
-      if (!bar) {
-        bar = document.createElement('span');
-        bar.className = 'mt-chip-bar';
-        bar.setAttribute('aria-hidden', 'true');
-        const fill = document.createElement('span');
-        fill.className = 'mt-chip-bar__fill';
-        bar.appendChild(fill);
-        chip.appendChild(bar);
-      }
+      // Progress RING (Next Deck Chip V1): the conic fill = days-done ÷ milestone.
+      dropBar(); // ring replaces the old horizontal bar
       chip.classList.add('mt-has-progress');
-      const pct = Math.max(0, Math.min(100, Math.round((next.current / Math.max(1, next.target)) * 100)));
-      bar.querySelector('.mt-chip-bar__fill').style.width = `${pct}%`;
+      const pct = Math.max(0, Math.min(100, (next.current / Math.max(1, next.target)) * 100));
+      chip.style.setProperty('--mt-chip-deg', `${Math.round(pct * 3.6)}deg`);
+      let sub = chip.querySelector('.mt-chip-sub');
+      if (!sub) { sub = document.createElement('span'); sub.className = 'mt-chip-sub'; labelEl.insertAdjacentElement('afterend', sub); }
+      sub.textContent = state.currentLang === 'th' ? `วันที่ ${next.current}/${next.target}` : `Day ${next.current} of ${next.target}`;
     } else {
       // All decks unlocked — fall back to the streak.
       numEl.textContent = streak >= 1 ? String(streak) : '✦';
       labelEl.textContent = streak >= 1 ? dict.dailyStreakLabel : dict.dailyStreakStart;
       chip.setAttribute('aria-label', streak >= 1 ? `${streak} ${dict.dailyStreakLabel}` : dict.dailyStreakStart);
       dropBar();
+      dropSub();
     }
   });
 }
@@ -699,6 +793,14 @@ function ensureChipProgressStyles() {
     .daily-topbar__streak-chip.mt-has-progress,.full-topbar__streak-chip.mt-has-progress{padding-bottom:9px;cursor:pointer;}
     .mt-chip-bar{position:absolute;left:8px;right:8px;bottom:3px;height:3px;border-radius:2px;background:rgba(61,26,92,.14);overflow:hidden;}
     .mt-chip-bar__fill{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--mt-rose,#e89bc0),var(--mt-gold-deep,#c9933a));transition:width .45s ease;}
+    /* "Next deck" progress RING (Claude Design "Next Deck Chip" V1, founder 2026-06-23): a
+       rose→gold conic ring fills around the days-remaining number; replaces the flat number. */
+    .mt-has-progress .daily-topbar__streak-num,.mt-has-progress .full-topbar__streak-num{position:relative;width:30px;height:30px;min-width:30px;display:inline-flex;align-items:center;justify-content:center;background:transparent!important;box-shadow:none!important;font-family:var(--mt-font-display,'Cormorant Garamond',serif);font-style:italic;font-weight:600;font-size:14px;color:var(--mt-plum,#3d1a5c);}
+    .mt-has-progress .daily-topbar__streak-num::before,.mt-has-progress .full-topbar__streak-num::before{content:'';position:absolute;inset:0;border-radius:50%;z-index:-1;background:conic-gradient(from -90deg,var(--mt-rose,#e8457a),var(--mt-gold-deep,#c9933a) var(--mt-chip-deg,0deg),rgba(61,26,92,.15) var(--mt-chip-deg,0deg));-webkit-mask:radial-gradient(closest-side,transparent 62%,#000 63%);mask:radial-gradient(closest-side,transparent 62%,#000 63%);transition:background .45s ease;}
+    .mt-has-progress.daily-topbar__streak-chip,.mt-has-progress.full-topbar__streak-chip{padding-bottom:6px;animation:mtChipGlow 2.8s ease-in-out infinite;}
+    .mt-chip-sub{display:block;font-size:9px;font-weight:600;color:var(--mt-plum-mid,#a487c4);margin-top:1px;letter-spacing:.01em;}
+    @keyframes mtChipGlow{0%,100%{box-shadow:0 4px 12px -4px rgba(61,26,92,.32);}50%{box-shadow:0 4px 12px -4px rgba(61,26,92,.32),0 0 13px 1px rgba(232,69,122,.32);}}
+    @media (prefers-reduced-motion: reduce){.mt-has-progress.daily-topbar__streak-chip,.mt-has-progress.full-topbar__streak-chip{animation:none;}}
     .mt-reward-overlay{position:fixed;inset:0;z-index:1320;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(28,12,52,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .2s ease;}
     .mt-reward-overlay.in{opacity:1;}
     .mt-reward{position:relative;width:100%;max-width:320px;background:linear-gradient(180deg,#fbf6ff,#f3ecfc);border-radius:22px;padding:24px 22px 22px;text-align:center;box-shadow:0 18px 50px rgba(28,12,52,.35);transform:translateY(10px) scale(.98);transition:transform .22s ease;}
@@ -1227,6 +1329,22 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
   const selectedTopicTitle = document.getElementById('question-selected-topic-title');
   if (!board || !shuffleBtn || !continueBtn || !counter || !selectedTopicTitle) return;
 
+  // Back to the topic/question screen. If the user actually came from question.html, go BACK
+  // (preserves their typed question + topic); otherwise (deep link / share) navigate cleanly to
+  // the topic page. (founder 2026-06-23)
+  const backBtn = document.getElementById('question-back');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      const ref = document.referrer || '';
+      const cameFromQuestion = ref.startsWith(window.location.origin) && ref.includes('/question.html');
+      if (cameFromQuestion && window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = window.location.pathname.startsWith('/th/') ? '/th/question.html' : '/question.html';
+      }
+    });
+  }
+
   let latestSelection = [];
   const { getAskQuestionTopics } = await getQuestionTopicsModule();
   const topics = getAskQuestionTopics();
@@ -1340,15 +1458,12 @@ function renderHomeDeckStrip() {
     }
     tile.appendChild(card);
 
-    const nameEn = document.createElement('div');
-    nameEn.className = 'home-deck-thumb__name';
-    nameEn.textContent = deck.name || '';
-    tile.appendChild(nameEn);
-
-    const nameTh = document.createElement('div');
-    nameTh.className = 'home-deck-thumb__name-th';
-    nameTh.textContent = deck.name_th || '';
-    tile.appendChild(nameTh);
+    // Single name per locale — EN shows the English name only (no Thai name under it),
+    // TH shows the Thai name. (founder 2026-06-24: drop the TH card name in EN sessions.)
+    const nameEl = document.createElement('div');
+    nameEl.className = 'home-deck-thumb__name';
+    nameEl.textContent = (state.currentLang === 'th' ? (deck.name_th || deck.name) : deck.name) || '';
+    tile.appendChild(nameEl);
 
     frag.appendChild(tile);
   });

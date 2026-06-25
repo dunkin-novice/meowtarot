@@ -100,6 +100,10 @@ async function createClient() {
       import('./deck-reward.js')
         .then(({ maybeShowUnseenDeckRewards }) => maybeShowUnseenDeckRewards(lang))
         .catch(() => {});
+      // Weekly Shop "new decks!" notice — once per ISO week, queued behind the coin popup.
+      import('./weekly-shop.js')
+        .then(({ maybeShowWeeklyShopNews }) => maybeShowWeeklyShopNews(session.user, lang))
+        .catch(() => {});
     }
     try {
       const pendingClaim = localStorage.getItem('meowtarot_pending_deck_claim');
@@ -280,7 +284,13 @@ export async function loginWithProvider(provider = 'google') {
   }
   const client = await getSupabaseClient();
   if (!client) throw new Error(AUTH_CONFIG_ERROR);
-  const redirectTo = window.location.href;
+  // Return to a CLEAN, stable URL (profile.html) rather than window.location.href — the full href
+  // carries volatile query/hash that often fails Supabase's Redirect-URL allow-list → Supabase
+  // falls back to Site URL and the session never lands. BUT we remember where the user was first,
+  // so common.js can bounce them BACK there once signed in — so they stay on (e.g.) the reading
+  // result instead of getting stranded on Profile. (founder 2026-06-23)
+  try { localStorage.setItem('mt_signin_return', window.location.href); } catch (_) {}
+  const redirectTo = `${window.location.origin}${authLocale() === 'th' ? '/th' : ''}/profile.html`;
   const { error } = await client.auth.signInWithOAuth({
     provider: safeProvider,
     options: { redirectTo },

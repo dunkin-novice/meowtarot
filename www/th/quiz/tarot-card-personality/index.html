@@ -52,6 +52,9 @@
   </noscript>
   <link rel="preload" href="../../../css/styles.css" as="style" />
   <link rel="stylesheet" href="../../../css/styles.css" />
+  <link rel="stylesheet" href="../../../css/quiz.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&display=swap" /></noscript>
 </head>
 <body data-page="quiz">
   <!-- Google Tag Manager (noscript) -->
@@ -60,35 +63,76 @@
   <!-- End Google Tag Manager (noscript) -->
   <header id="site-header"></header>
 
-  <main class="page-shell quiz-personality-page">
-    <section class="quiz-personality-card" aria-labelledby="quiz-title">
-      <p id="quiz-eyebrow" class="eyebrow"></p>
-      <h1 id="quiz-title"></h1>
-      <p id="quiz-intro" class="quiz-personality-intro"></p>
+  <main class="page-shell quiz-page" data-quiz>
 
-      <section id="quiz-panel" class="quiz-panel" aria-live="polite">
-        <p id="quiz-progress" class="quiz-progress"></p>
-        <h2 id="quiz-prompt" class="quiz-prompt"></h2>
-        <div id="quiz-answers" class="quiz-answers"></div>
-      </section>
-
-      <section id="quiz-result" class="quiz-result" hidden aria-live="polite">
-        <p id="quiz-result-lead" class="quiz-result-lead"></p>
-        <h2 id="quiz-result-title" class="quiz-result-title"></h2>
-        <img id="quiz-result-image" class="quiz-result-image" alt="" width="360" height="600" loading="lazy" />
-        <p id="quiz-result-summary" class="quiz-result-summary"></p>
-        <div class="quiz-result-actions">
-          <a id="quiz-daily-cta" class="btn" href="/th/daily.html"></a>
-          <a id="quiz-meanings-cta" class="btn btn-secondary" href="/th/tarot-card-meanings/"></a>
-          <button id="quiz-share-cta" class="btn btn-secondary" type="button"></button>
-          <button id="quiz-restart-cta" class="btn btn-secondary" type="button"></button>
+    <!-- INTRO -->
+    <section class="quiz-view quiz-view--intro" data-view="intro">
+      <div class="quiz-hero">
+        <div class="quiz-hero__glow" aria-hidden="true"></div>
+        <span class="quiz-hero__spark quiz-hero__spark--1" aria-hidden="true">✦</span>
+        <span class="quiz-hero__spark quiz-hero__spark--2" aria-hidden="true">✦</span>
+        <span class="quiz-hero__spark quiz-hero__spark--3" aria-hidden="true">✦</span>
+        <div class="quiz-hero__fan">
+          <img class="quiz-hero__card quiz-hero__card--l" src="https://cdn.meowtarot.com/assets/moonmallow/00-back.webp?v=2026-03" alt="" loading="eager" />
+          <img class="quiz-hero__card quiz-hero__card--r" src="https://cdn.meowtarot.com/assets/moonmallow/00-back.webp?v=2026-03" alt="" loading="eager" />
+          <img class="quiz-hero__card quiz-hero__card--c" src="https://cdn.meowtarot.com/assets/moonmallow/00-back.webp?v=2026-03" alt="" loading="eager" />
         </div>
-        <p id="quiz-share-status" class="quiz-share-status" aria-live="polite"></p>
-      </section>
+      </div>
+      <p class="quiz-eyebrow" id="quizEyebrow"></p>
+      <h1 class="quiz-title" id="quizTitle"></h1>
+      <p class="quiz-intro" id="quizIntro"></p>
+      <div class="quiz-intro-spacer"></div>
+      <button class="quiz-start-btn" id="quizStartBtn" type="button"></button>
+      <p class="quiz-time" id="quizTime"></p>
     </section>
+
+    <!-- QUESTION -->
+    <section class="quiz-view quiz-view--question" data-view="question" aria-live="polite" hidden>
+      <div class="quiz-progress">
+        <div class="quiz-progress__row">
+          <span class="quiz-progress__count" id="quizProgressCount"></span>
+          <span class="quiz-progress__left" id="quizProgressLeft"></span>
+        </div>
+        <div class="quiz-progress__bar" id="quizProgressBar"></div>
+      </div>
+      <div class="quiz-q">
+        <p class="quiz-q__eyebrow" id="quizQEyebrow"></p>
+        <h2 class="quiz-q__prompt" id="quizPrompt"></h2>
+      </div>
+      <div class="quiz-answers" id="quizAnswers"></div>
+      <div class="quiz-q-spacer"></div>
+      <p class="quiz-hint" id="quizHint"></p>
+    </section>
+
+    <!-- RESULT -->
+    <section class="quiz-view quiz-view--result" data-view="result" aria-live="polite" hidden>
+      <div class="quiz-card" id="quizShareCard">
+        <p class="quiz-card__eyebrow" id="quizResultLead"></p>
+        <div class="quiz-card__art">
+          <div class="quiz-card__aura" aria-hidden="true"></div>
+          <img id="quizResultImage" alt="" loading="lazy" />
+        </div>
+        <div class="quiz-card__name">
+          <span class="quiz-card__name-en" id="quizResultNameEn"></span>
+          <span class="quiz-card__name-th" id="quizResultNameTh"></span>
+        </div>
+        <p class="quiz-card__summary" id="quizResultSummary"></p>
+        <div class="quiz-card__traits" id="quizResultTraits"></div>
+        <div class="quiz-card__mark" id="quizResultMark"></div>
+      </div>
+      <p class="quiz-saved" id="quizSaved" hidden></p>
+      <div class="quiz-result-spacer"></div>
+      <button class="quiz-share-btn" id="quizShareBtn" type="button"></button>
+      <div class="quiz-result-actions">
+        <a class="quiz-result-btn" id="quizDailyCta" href="/th/daily.html"></a>
+        <button class="quiz-result-btn quiz-result-btn--ghost" id="quizRestartBtn" type="button"></button>
+      </div>
+      <p class="quiz-share-status" id="quizShareStatus" aria-live="polite"></p>
+    </section>
+
   </main>
 
   <footer id="site-footer"></footer>
-  <script type="module" src="../../../js/quiz-tarot-card-personality.js?v=20260520"></script>
+  <script type="module" src="../../../js/quiz-tarot-card-personality.js?v=20260624"></script>
 </body>
 </html>
