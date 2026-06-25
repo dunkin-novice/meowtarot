@@ -83,7 +83,7 @@
 
   <div class="grid">
     <div class="card">
-      <iframe class="previewframe" id="preview" src="widget.html" title="Tarot widget live preview" loading="lazy"></iframe>
+      <iframe class="previewframe" id="preview" src="widget.html?promo=1" title="Tarot widget live preview" loading="lazy"></iframe>
     </div>
 
     <div class="card">
@@ -161,7 +161,7 @@
   $('note').innerHTML=T.note; $('howTitle').textContent=T.howTitle;
   $('footText').textContent=T.footText; $('footLink').textContent=T.footLink;
   $('codeBlock').textContent=snippet;
-  $('preview').src = lang === 'th' ? 'widget.html?lang=th' : 'widget.html';
+  $('preview').src = lang === 'th' ? 'widget.html?lang=th&promo=1' : 'widget.html?promo=1';
   $('brandLink').href = siteHome;
   $('footLink').href = siteHome + '?utm_source=embed_page&utm_medium=referral';
   $('langEn').className = lang==='en'?'on':''; $('langTh').className = lang==='th'?'on':'';
