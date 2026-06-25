@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Free Embeddable Tarot Widget – MeowTarot</title>
+  <meta name="description" content="Embed a free, beautifully animated Daily Cat Tarot card reading into your blog, WordPress site, or Notion dashboard." />
+  <meta name="theme-color" content="#080f2d" />
+  <link rel="canonical" href="https://www.meowtarot.com/widgets/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" />
+  <style>
+    :root {
+      --plum: #3d1a5c; --plum-mid: #6a3f8e; --ink: #2c2440; --ink-soft: #6b5b82;
+      --gold: #c9933a; --bg: #fbf6ef; --card: #fffaf2; --line: #ece1d6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+      line-height: 1.7; font-size: 16px;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .wrap { max-width: 800px; margin: 0 auto; padding: 40px 22px 80px; }
+    .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin: 0 0 8px; }
+    h1 {
+      font-family: "Cormorant Garamond", Georgia, serif; font-style: italic;
+      font-weight: 600; font-size: clamp(34px, 8vw, 48px); color: var(--plum);
+      margin: 0 0 6px; line-height: 1.1;
+    }
+    .lead { font-size: 18px; color: var(--ink-soft); margin-bottom: 40px; }
+    h2 {
+      font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600;
+      font-size: 26px; color: var(--plum); margin: 48px 0 16px; line-height: 1.2;
+    }
+    h3 { font-size: 18px; color: var(--ink); margin: 24px 0 8px; }
+    p, li { color: var(--ink); }
+    a { color: var(--plum-mid); text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+      padding: 24px; margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    
+    .code-block {
+      background: #1a1a1a; color: #f8f8f2; padding: 16px; border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px; line-height: 1.5; overflow-x: auto; margin-bottom: 16px;
+      border: 1px solid #333;
+    }
+    
+    .btn {
+      display: inline-block; background: var(--plum); color: #fff;
+      padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px;
+      text-align: center; border: none; cursor: pointer; transition: background 0.2s;
+    }
+    .btn:hover { background: var(--plum-mid); color: #fff; text-decoration: none; }
+    
+    .widget-preview-box {
+      background: #fff; padding: 20px; border-radius: 16px; border: 1px dashed var(--gold);
+      display: flex; justify-content: center;
+    }
+    
+    .back { display: inline-block; margin-top: 36px; color: var(--plum-mid); font-weight: 600; }
+    footer { margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="eyebrow">MeowTarot for Creators</p>
+    <h1>Free Daily Tarot Widget</h1>
+    <p class="lead">Add a beautifully animated, interactive Daily Cat Tarot draw to your blog, Notion dashboard, or WordPress site. It's 100% free and requires no account.</p>
+
+    <div class="grid">
+      <!-- Left Column: Instructions -->
+      <div>
+        <div class="card" style="margin-bottom: 24px;">
+          <h2>Option 1: Universal Embed</h2>
+          <p>Perfect for Webflow, Wix, Squarespace, and Notion. Simply copy and paste this HTML snippet into your site.</p>
+          <div class="code-block" id="embed-code">&lt;!-- MeowTarot Daily Card Widget --&gt;
+&lt;div style="width: 100%; max-width: 400px; margin: 0 auto; text-align: center;"&gt;
+  &lt;iframe src="https://meowtarot.com/widget.html?theme=light" width="100%" height="600px" frameborder="0" scrolling="no" style="border:none; overflow:hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"&gt;&lt;/iframe&gt;
+  &lt;div style="font-size: 11px; margin-top: 8px; color: #666; font-family: sans-serif;"&gt;
+    Free Daily Tarot by &lt;a href="https://meowtarot.com" target="_blank" style="color: #d4a373; text-decoration: none; font-weight: bold;"&gt;MeowTarot&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</div>
+          <button class="btn" onclick="copyCode()" style="width: 100%;">Copy HTML snippet</button>
+        </div>
+
+        <div class="card">
+          <h2>Option 2: WordPress Plugin</h2>
+          <p>Using WordPress? Download our official lightweight plugin to easily add the widget via shortcode.</p>
+          <ol>
+            <li>Download the plugin <strong>.zip</strong> file.</li>
+            <li>Upload it via <strong>Plugins &rarr; Add New</strong> in your WP admin.</li>
+            <li>Use the shortcode <code>[meowtarot_daily_card]</code> anywhere in your posts.</li>
+          </ol>
+          <a href="/wordpress-plugin/meowtarot-widget.zip" class="btn" style="width: 100%; margin-top: 8px;" download>Download for WordPress</a>
+        </div>
+      </div>
+
+      <!-- Right Column: Preview -->
+      <div>
+        <h3 style="margin-top: 0;">Live Preview</h3>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 0;">This is exactly how it will look on your site. Go ahead, draw a card!</p>
+        <div class="widget-preview-box">
+          <!-- MeowTarot Daily Card Widget -->
+          <div style="width: 100%; max-width: 400px; margin: 0 auto; text-align: center;">
+            <iframe src="https://meowtarot.com/widget.html?theme=light" width="100%" height="600px" frameborder="0" scrolling="no" style="border:none; overflow:hidden; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></iframe>
+            <div style="font-size: 11px; margin-top: 8px; color: #666; font-family: sans-serif;">
+              Free Daily Tarot by <a href="https://meowtarot.com" target="_blank" style="color: #d4a373; text-decoration: none; font-weight: bold;">MeowTarot</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a class="back" href="/">← Back to MeowTarot</a>
+    <footer>© 2026 MeowTarot. A free cat tarot reading app.</footer>
+  </main>
+
+  <script>
+    function copyCode() {
+      const code = document.getElementById('embed-code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.querySelector('.btn');
+        const originalText = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.background = '#4a9c59';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.background = 'var(--plum)';
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
