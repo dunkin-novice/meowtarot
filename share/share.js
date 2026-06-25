@@ -607,18 +607,40 @@ async function ensurePoster() {
       const normalizedPayload = normalizePayload(currentPayload);
       currentPayload = normalizedPayload;
       const timeoutMs = 15000;
-      updatePipelineStage('rendering');
       const buildPoster = await getBuildPoster();
-      const posterPromiseOp = buildPoster(normalizedPayload, { preset: 'story' });
-      const stageWatcher = setInterval(() => {
-        if (window.__MEOW_POSTER_STAGE === 'exporting' && pipelineStage !== 'exporting') {
-          updatePipelineStage('exporting');
+      // Auto-retry once on a failed/timed-out build before surfacing the failure UI.
+      // Most failures here are transient (a slow CDN tipping over the timeout); the
+      // second attempt reuses the now-warm image cache, so it usually succeeds fast.
+      // Only if BOTH attempts fail do we fall through to the catch + manual Retry.
+      const MAX_ATTEMPTS = 2;
+      let result = null;
+      let attemptErr = null;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+        updatePipelineStage(attempt === 1 ? 'rendering' : 'retrying');
+        const posterPromiseOp = buildPoster(normalizedPayload, { preset: 'story' });
+        const stageWatcher = setInterval(() => {
+          if (window.__MEOW_POSTER_STAGE === 'exporting' && pipelineStage !== 'exporting') {
+            updatePipelineStage('exporting');
+          }
+        }, 150);
+        try {
+          result = await Promise.race([
+            posterPromiseOp,
+            new Promise((_, reject) => setTimeout(() => reject(new Error(`timeout at ${window.__MEOW_POSTER_STAGE || pipelineStage || 'rendering'} after ${timeoutMs}ms`)), timeoutMs)),
+          ]).finally(() => clearInterval(stageWatcher));
+          attemptErr = null;
+          break;
+        } catch (err) {
+          attemptErr = err;
+          if (attempt < MAX_ATTEMPTS) {
+            debugLog('warn', `[Poster] build attempt ${attempt} failed — retrying`, err?.message || String(err));
+            pushDebugOverlay({ stage: 'ensurePoster.retry', attempt, error: err?.message || String(err) });
+            window.__MEOW_POSTER_STAGE = 'retrying';
+            await new Promise((resolve) => setTimeout(resolve, 350));
+          }
         }
-      }, 150);
-      const result = await Promise.race([
-        posterPromiseOp,
-        new Promise((_, reject) => setTimeout(() => reject(new Error(`timeout at ${window.__MEOW_POSTER_STAGE || pipelineStage || 'rendering'} after ${timeoutMs}ms`)), timeoutMs)),
-      ]).finally(() => clearInterval(stageWatcher));
+      }
+      if (attemptErr) throw attemptErr;
       if (result.width !== 1080 || result.height !== 1920) {
         throw new Error('Unexpected poster size');
       }

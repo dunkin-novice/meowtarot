@@ -56,8 +56,8 @@ function buildAchievements(progress, lang) {
   });
   earn('daily', 'daily_login', 'Daily sign-in', 'เข้าระบบรายวัน', 'Sign in today', 'เข้าระบบวันนี้', isDailyLoginClaimed(), 5);
   earn('daily', 'daily_reading', 'Daily reading', 'เปิดไพ่รายวัน', "Do today's reading", 'เปิดไพ่วันนี้', isDailyReadingClaimed(), 5);
-  earn('weekly', 'weekly_question', 'Ask a Question', 'ถามไพ่', 'Once this week', 'สัปดาห์ละครั้ง', isWeeklyQuestionClaimed(), 10);
-  earn('monthly', 'monthly_celtic', 'Celtic Cross', 'เซลติกครอส', 'Once this month', 'เดือนละครั้ง', isMonthlyCelticClaimed(), 20);
+  earn('weekly', 'weekly_question', 'Ask a Question', 'ถามไพ่', 'Ask a question this week', 'ถามไพ่สัปดาห์นี้', isWeeklyQuestionClaimed(), 10);
+  earn('monthly', 'monthly_celtic', 'Celtic Cross', 'เซลติกครอส', 'Do a Celtic Cross this month', 'เปิดเซลติกครอสเดือนนี้', isMonthlyCelticClaimed(), 20);
   earn('repeatable', 'weekly_streak', '7-day streak', 'สตรีค 7 วัน', 'Keep a 7-day streak · weekly', 'รักษาสตรีค 7 วัน · รายสัปดาห์', isWeeklyStreakClaimed(), 5, Math.min(streak, 7), 7, th ? 'วัน' : 'days');
 
   // LIFETIME — deck-reward milestones (the exclusive streak decks; "sign in for X days").

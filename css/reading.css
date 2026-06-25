@@ -933,12 +933,18 @@ body[data-page='reading'][data-reading-mode='full'] .celtic-slot .spread-caption
 
 
 /* Right-column staff: design order is 7-Self (top) → 8 → 9 → 10-Outcome (bottom).
- * Existing styles.css has Outcome at top; override here. Same specificity as
- * the existing rule, source order wins (reading.css loads after styles.css). */
-body[data-page='reading'][data-reading-mode='full'] .celtic-slot--power       { grid-area: 1 / 4; }
-body[data-page='reading'][data-reading-mode='full'] .celtic-slot--environment { grid-area: 2 / 4; }
-body[data-page='reading'][data-reading-mode='full'] .celtic-slot--hopes       { grid-area: 3 / 4; }
-body[data-page='reading'][data-reading-mode='full'] .celtic-slot--outcome     { grid-area: 4 / 4; }
+ * DESKTOP ONLY. styles.css's base (≥641px) grid puts the staff in column 4 but
+ * with Outcome at top; this reorders it. MUST be scoped to desktop — the mobile
+ * (≤640px) grid in styles.css is a 5-column layout where the staff lives in
+ * column 5 (col 4 is a flexible gap) and is ALREADY in the right order. Leaving
+ * this unscoped forced the staff back into the collapsing gap column on mobile,
+ * so the cards rendered at ~0 width and only the badges showed. (fix 2026-06-25) */
+@media (min-width: 641px) {
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--power       { grid-area: 1 / 4; }
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--environment { grid-area: 2 / 4; }
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--hopes       { grid-area: 3 / 4; }
+  body[data-page='reading'][data-reading-mode='full'] .celtic-slot--outcome     { grid-area: 4 / 4; }
+}
 
 /* FIX (2026-06-20): the two center-cross cards (#1 situation + #2 challenge) were
  * rendering at ~half the size of the other 8. They live inside .celtic-slot--center,

@@ -7606,7 +7606,12 @@ body[data-page='reading'][data-reading-mode='full'] .full-integration-box > p:la
      * cross (#5 / #1+#2 / #6) equal breathing room. width:100% makes the 1fr
      * expand to fill the panel (founder 2026-06-20, v4). */
     grid-template-columns: 52px 52px 52px minmax(0, 1fr) 52px;
-    gap: 26px;
+    /* Tighter COLUMN gap so the fixed tracks (4×52 + gaps) fit a real ~360-390px
+     * viewport once panel padding + safe-area insets are subtracted — at 26px the
+     * 312px+ minimum overflowed and pushed the staff column (col 5) off-screen.
+     * Row gap stays generous for vertical breathing room. (fix 2026-06-25) */
+    column-gap: 14px;
+    row-gap: 26px;
     width: 100%;
     max-width: 100%;
     margin: 0 auto;

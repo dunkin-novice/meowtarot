@@ -136,6 +136,13 @@ const IMAGE_LOAD_TIMEOUT_MS = 5000;
 
 function buildPosterCardVariantCandidates(url) {
   if (!url || !/\.(webp|jpg|jpeg|png)(\?|$)/i.test(url)) return [url].filter(Boolean);
+  // Already a small/sized variant (e.g. the -200 Celtic/Question thumb, or a pre-rendered
+  // .h900/.h1080) — don't expand it. The h1080/h900 forms of a -200 thumb don't exist on the
+  // CDN, so expanding them just burned 2 failed 404 round-trips per card before the real file
+  // loaded (a real contributor to the 15s poster-export timeout). (founder 2026-06-25)
+  if (/-200\.(webp|jpg|jpeg|png)(\?|$)/i.test(url) || /\.h(900|1080)\.(webp|jpg|jpeg|png)(\?|$)/i.test(url)) {
+    return [url];
+  }
   const variants = [
     url.replace(/\.(webp|jpg|jpeg|png)(\?|$)/i, '.h1080.$1$2'),
     url.replace(/\.(webp|jpg|jpeg|png)(\?|$)/i, '.h900.$1$2'),
@@ -1282,8 +1289,11 @@ function resolveCelticCrossPresetLayout(preset = 'story', width = 1080, height =
   const layouts = {
     story: {
       header: { top: 110, brandSize: 72, eyebrowSize: 20, heroSize: 44, subtitleSize: 22 },
-      spreadShell: { x: 56, y: 286, w: width - 112, h: 930, radius: 32 },
-      spread: { cardW: 132, cardH: 210, gapX: 14, gapY: 20, labelGap: 10, nameGap: 7 },
+      // Hero + subtitle removed from the header → reclaim ~120px: pull the shell up
+      // and make it taller so the (now larger) cards fill it instead of floating in
+      // empty space. Shell ends ~1240, just above the narration box at 1272.
+      spreadShell: { x: 56, y: 206, w: width - 112, h: 1044, radius: 32 },
+      spread: { cardW: 146, cardH: 232, gapX: 16, gapY: 16, labelGap: 10, nameGap: 7 },
       insights: { x: 56, y: 1272, w: width - 112, gap: 14, rowH: 150, direction: 'column', heroFirst: true },
       footerY: height - 92,
     },
@@ -1334,25 +1344,11 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     ctx.fillStyle = 'rgba(201, 147, 58, 0.95)';
     ctx.font = `600 ${header.eyebrowSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
     drawTrackingText(ctx, content.strings.eyebrow, width / 2, header.top + 44, 1.2);
-
-    const heroWidth = Math.min(width - 180, preset === 'square' ? 820 : 860);
-    const heroFit = fitMainGuidanceText(ctx, content.heroTitle, {
-      maxWidth: heroWidth,
-      maxLines: preset === 'square' ? 2 : 3,
-      maxHeight: preset === 'square' ? 82 : 128,
-      startFontSize: header.heroSize,
-      minFontSize: preset === 'square' ? 24 : 28,
-    });
-    ctx.fillStyle = '#f7f4ee';
-    ctx.font = `700 ${heroFit.fontSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
-    heroFit.lines.forEach((line, index) => {
-      ctx.fillText(line, width / 2, header.top + 94 + index * heroFit.lineHeight);
-    });
-
-    const subtitleY = header.top + 94 + heroFit.lines.length * heroFit.lineHeight + 10;
-    ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    ctx.font = `500 ${header.subtitleSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
-    wrapText(ctx, content.subtitle, width / 2, subtitleY, width - 220, Math.round(header.subtitleSize * 1.45), 2);
+    // Hero affirmation + "A 10-card spread…" subtitle were drawn here, but the hero
+    // line duplicates the closing sentence of the bottom narration and the subtitle
+    // is generic filler — both crowded the header and pushed the spread down. Dropped
+    // so the spread can breathe and the reading speaks once, in the narration block.
+    // (founder 2026-06-25)
     ctx.restore();
   };
 
@@ -1364,13 +1360,19 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
     strokeRoundedRect(ctx, spreadShell.x, spreadShell.y, spreadShell.w, spreadShell.h, spreadShell.radius, 'rgba(255,255,255,0.14)', 1.5);
   };
 
-  const spreadGridWidth = spread.cardW * 5 + spread.gapX * 4;
+  // Cross occupies 3 columns (past · center · future); the staff is one column to the
+  // right. Previously they sat in a rigid 5-column grid with a FULL empty card-column
+  // between them — a big dead gap mid-poster. Replace that with an explicit, tighter
+  // mid gap (~0.62× a card) so the cross and staff read as one balanced composition.
+  const crossSpanW = spread.cardW * 3 + spread.gapX * 2;
+  const midGap = Math.round(spread.cardW * 0.62);
+  const spreadGridWidth = crossSpanW + midGap + spread.cardW;
   const spreadGridHeight = spread.cardH * 4 + spread.gapY * 3;
   const spreadOriginX = spreadShell.x + (spreadShell.w - spreadGridWidth) / 2;
   const spreadOriginY = spreadShell.y + Math.max(26, (spreadShell.h - spreadGridHeight - 84) / 2);
   const spreadCenterX = spreadOriginX + spread.cardW + spread.gapX + spread.cardW / 2;
   const spreadCenterY = spreadOriginY + spread.cardH + spread.gapY + spread.cardH / 2;
-  const staffX = spreadOriginX + (spread.cardW + spread.gapX) * 4 + spread.cardW / 2;
+  const staffX = spreadOriginX + crossSpanW + midGap + spread.cardW / 2;
   const cardLayouts = {
     present: { x: spreadCenterX, y: spreadCenterY },
     challenge: { x: spreadCenterX, y: spreadCenterY, rotated: true },
@@ -1558,6 +1560,12 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
 
   drawHeader();
   drawSpreadShell();
+  // Warm all 10 card images CONCURRENTLY first. imageManager caches each load (and
+  // dedupes by URL), so the sequential draw loop below then draws from cache instead
+  // of serializing 10 network round-trips — previously the dominant cost and the main
+  // reason a slow CDN tipped a Celtic poster over the 15s export timeout. Failures are
+  // swallowed here; drawSingleCard re-resolves and falls back per-card as before.
+  await Promise.all(content.positionedCards.map((item) => drawCardArt(item).catch(() => null)));
   for (const item of content.positionedCards) {
     // Keep the implementation canvas-based while mirroring the product's poster--celtic-cross layout structure.
     await drawSingleCard(item);
