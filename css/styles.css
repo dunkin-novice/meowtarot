@@ -3856,6 +3856,15 @@ body[data-page='reading'][data-reading-mode='full'] .card-art.is-thumb .card-art
   gap: 32px;
 }
 
+/* Mobile: the fixed header is HIDDEN on these static /cards/* pages, so the
+   nav-height top padding is ~90px of dead space above the breadcrumb.
+   Tighten it (mirrors the .shop-shell fix, founder 2026-06-24). */
+@media (max-width: 768px) {
+  body[data-page='meanings'] .page-card-meaning {
+    padding-top: 14px;
+  }
+}
+
 .page-card-meaning > article {
   display: grid;
   gap: 16px;
@@ -4083,7 +4092,7 @@ body[data-page='meanings'] #site-header .site-header {
 .footer-card-nav,
 .reading-cta-buttons {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
@@ -9986,6 +9995,21 @@ body[data-page='meanings'] .card-meaning-footer-nav .footer-nav-pill {
   padding: 12px 14px;
   text-align: center;
   text-decoration: none;
+}
+
+/* Narrow phones: shrink the pills so both 3-pill rows ([← Homepage][Card Index]
+   [The Hierophant →] and [Daily][Celtic Cross][Ask a Question]) sit on ONE line
+   each instead of wrapping. */
+@media (max-width: 430px) {
+  body[data-page='meanings'] .footer-card-nav,
+  body[data-page='meanings'] .reading-cta-buttons {
+    gap: 7px;
+  }
+  body[data-page='meanings'] .card-meaning-footer-nav .footer-nav-pill {
+    font-size: 11.5px;
+    padding: 11px 6px;
+    line-height: 1.2;
+  }
 }
 
 /* Desktop: keep the single-column reading column but allow a touch more width */
