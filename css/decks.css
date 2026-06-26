@@ -372,3 +372,26 @@ body[data-page='decks'] .decks-toast.is-visible {
     padding: 20px 24px;
   }
 }
+
+/* ============================================================
+   DESKTOP DECK-DETAIL (>=1024px only). Additive — mobile + iOS untouched.
+   The 78-card browse grid was a centred ~480px / 3-col column. Widen it.
+   (Base .dd-* rules live in css/styles.css; these override at desktop.)
+   ============================================================ */
+@media (min-width: 1024px) {
+  body[data-page='deck-detail'] .dd-content { max-width: 1080px; padding-top: 14px; }
+  body[data-page='deck-detail'] .dd-header { padding: 22px; }
+  body[data-page='deck-detail'] .dd-header__art { width: 124px; }
+  body[data-page='deck-detail'] .dd-header__name { font-size: 32px; }
+  body[data-page='deck-detail'] .dd-grid { grid-template-columns: repeat(6, 1fr); gap: 18px 14px; }
+}
+
+/* ============================================================
+   DESKTOP SHOP / GACHA (Meow Market, >=1024px only). Additive.
+   Widen the ~560px shell and fan the deck grid 2 -> 4 cols. The gacha
+   hero band + weekly spotlight already span; just give them more room.
+   ============================================================ */
+@media (min-width: 1024px) {
+  body[data-page='shop'] .shop-shell { max-width: 1040px; padding-top: 22px; }
+  body[data-page='shop'] .shop-grid { grid-template-columns: repeat(4, 1fr); gap: 22px; }
+}
