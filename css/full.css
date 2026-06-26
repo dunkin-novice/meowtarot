@@ -431,3 +431,46 @@ body[data-page='full'] .full-continue-button:disabled {
   body[data-page='full'] .full-board-counter { margin-top: 6px; }
   body[data-page='full'] .full-state__cta-row { margin-top: 8px; }
 }
+
+/* ============================================================================
+ * DESKTOP DRAW BOARD  (additive — ≥1024px only; mobile + iOS untouched)
+ * Frame A two-column board: deck/streak + title + hint + shuffle + counter +
+ * Continue in a left rail; the Celtic-Cross pick pool fills the right column as
+ * a roomier 8-up grid. Same row-gap:0 + big-span technique (no phantom gaps).
+ * ==========================================================================*/
+@media (min-width: 1024px) {
+  body[data-page='full'] .page-shell.board-page.full-shell {
+    max-width: 1100px;
+    min-height: auto;
+    padding: 28px 32px 64px;
+  }
+  body[data-page='full'] .full-state--board {
+    display: grid;
+    grid-template-columns: 352px minmax(0, 1fr);
+    column-gap: 60px;
+    row-gap: 0;
+    align-items: start;
+  }
+  body[data-page='full'] .full-state--board > .full-topbar { grid-column: 1 / -1; }
+  body[data-page='full'] .full-state--board > .full-board-title,
+  body[data-page='full'] .full-state--board > .full-shuffle-row,
+  body[data-page='full'] .full-state--board > .full-board-counter,
+  body[data-page='full'] .full-state--board > .full-state__cta-row {
+    grid-column: 1;
+  }
+  body[data-page='full'] .full-state--board > .full-board-title__hint { display: block; }
+  body[data-page='full'] .full-state--board > .full-state__cta-row { margin-top: 24px; }
+  body[data-page='full'] .full-state--board #full-board.card-board--full {
+    grid-column: 2;
+    grid-row: 2 / span 99;
+    align-self: start;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 14px 12px;
+    width: 100%;
+    max-width: none;
+    margin: 8px 0 0;
+  }
+  body[data-page='full'] .full-state--board #full-board .card-slot {
+    max-width: 82px;
+  }
+}

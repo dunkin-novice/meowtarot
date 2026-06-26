@@ -1249,3 +1249,66 @@ html:not([data-reversed-mode='art']) body[data-page='reading'] .card-art.is-reve
 html:not([data-reversed-mode='art']) body[data-page='reading'] .card-sheet-media.is-reversed {
   transform: rotate(180deg);
 }
+
+/* ============================================================================
+ * DESKTOP RESULT LAYOUT  (additive — ≥1024px only; mobile + iOS untouched)
+ * ----------------------------------------------------------------------------
+ * Translates "MeowTarot Reading Desktop.dc.html" Frame B (single-card result)
+ * into a two-column reading: the drawn card + title sits in a sticky left rail,
+ * the interpretation panels flow in a wider right column. Pure CSS — the result
+ * is JS-rendered with i18n via common.js, so this one block serves EN + TH and
+ * needs no markup change. The share poster itself is unchanged (mobile reuse);
+ * only the page chrome around it widens.
+ *
+ * Scope is locked to body[data-reading-mode='daily'] so Question/Full are never
+ * touched (Hard rule 6: surgical per-mode). asset-resolver / poster untouched.
+ * ==========================================================================*/
+@media (min-width: 1024px) {
+  /* Daily-scoped: Question/Full results keep their narrow column until their own
+   * desktop layouts land, so they don't stretch into an unreadable wide column. */
+  body[data-page='reading'][data-reading-mode='daily'] .page-shell {
+    max-width: 1120px;
+    padding: 28px 32px 96px;
+  }
+
+  /* Daily single-card: card+caption left (sticky), interpretation right.
+   * The real panel container is .daily-reading-stage — #reading-content holds a
+   * single stage child, and the stage stacks: question-recap, spread (the card),
+   * daily-interp-panel, daily-reading-details, related-links. We grid the stage:
+   * the .panel--spread (card art + name + lucky-colour caption) becomes the
+   * sticky left rail; every other panel flows down the wider right column. */
+  body[data-page='reading'][data-reading-mode='daily'] .daily-reading-stage {
+    display: grid;
+    grid-template-columns: minmax(320px, 372px) minmax(0, 1fr);
+    column-gap: 52px;
+    /* row-gap MUST stay 0: the card spans many implicit rows for sticky travel,
+     * and any row-gap would be multiplied across every empty track (a 944px
+     * phantom gap with row-gap:16). Right-column spacing is via margin-bottom. */
+    row-gap: 0;
+    align-items: start;
+  }
+  body[data-page='reading'][data-reading-mode='daily'] .daily-reading-stage > .panel--spread {
+    grid-column: 1;
+    grid-row: 1 / span 99;
+    align-self: start;
+    position: sticky;
+    top: 24px;
+    margin: 0;
+  }
+  body[data-page='reading'][data-reading-mode='daily'] .daily-reading-stage > :not(.panel--spread) {
+    grid-column: 2;
+    margin: 0 0 16px 0;
+  }
+  /* Mobile forces page-shell to full viewport height; on desktop the two-column
+   * result is short, so drop the forced height to avoid a dead gap before the
+   * Save/Share gateway, and present that gateway as a centred CTA rather than a
+   * full-bleed band. (Poster image itself is unchanged — mobile reuse.) */
+  body[data-page='reading'][data-reading-mode='daily'] .page-shell {
+    min-height: auto;
+  }
+  body[data-page='reading'][data-reading-mode='daily'] .action-row {
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

@@ -792,3 +792,45 @@ body[data-page='daily'] .daily-shuffle-btn .thai { font-family: var(--mt-font-th
 @media (prefers-reduced-motion: reduce) {
   body[data-page='daily'] .daily-shuffle-btn.is-spinning .daily-shuffle-btn__ico { animation: none; }
 }
+
+/* ============================================================================
+ * DESKTOP DRAW BOARD  (additive — ≥1024px only; mobile + iOS untouched)
+ * Frame A two-column board: deck/streak + title + shuffle + counter + Continue
+ * in a left rail; the 12-card pick grid fills the right column. Same row-gap:0 +
+ * big-span technique so the board spans the rail rows without phantom gaps.
+ * ==========================================================================*/
+@media (min-width: 1024px) {
+  body[data-page='daily'] .page-shell.board-page.daily-shell {
+    max-width: 1040px;
+    min-height: auto;
+    padding: 28px 32px 64px;
+  }
+  body[data-page='daily'] .daily-state--board {
+    display: grid;
+    grid-template-columns: 352px minmax(0, 1fr);
+    column-gap: 60px;
+    row-gap: 0;
+    align-items: start;
+  }
+  body[data-page='daily'] .daily-state--board > .daily-topbar { grid-column: 1 / -1; }
+  body[data-page='daily'] .daily-state--board > .daily-board-title,
+  body[data-page='daily'] .daily-state--board > .daily-shuffle-row,
+  body[data-page='daily'] .daily-state--board > .daily-board-counter,
+  body[data-page='daily'] .daily-state--board > .daily-state__cta-row {
+    grid-column: 1;
+  }
+  body[data-page='daily'] .daily-state--board > .daily-state__cta-row { margin-top: 24px; }
+  body[data-page='daily'] .daily-state--board #daily-board.card-board--daily {
+    grid-column: 2;
+    grid-row: 2 / span 99;
+    align-self: start;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px 18px;
+    width: 100%;
+    max-width: none;
+    margin: 8px 0 0;
+  }
+  body[data-page='daily'] .daily-state--board #daily-board .card-slot {
+    max-width: 132px;
+  }
+}

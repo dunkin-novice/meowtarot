@@ -731,3 +731,55 @@ body[data-page='question-draw'] .question-draw-shell[data-question-spread='story
   /* Footer isn't needed during card selection — hide it so it can't force scroll. */
   body[data-page='question-draw'] #site-footer { display: none; }
 }
+
+/* ============================================================================
+ * DESKTOP DRAW BOARD  (additive — ≥1024px only; mobile + iOS untouched)
+ * ----------------------------------------------------------------------------
+ * Frame A of "MeowTarot Reading Desktop.dc.html": instead of a narrow centred
+ * column, the controls (topic recap, prompt, legend, shuffle, counter, Reveal
+ * CTA) sit in a left rail and the dealt card grid fills a wider right column.
+ * Same row-gap:0 + big-span technique as the desktop result so the tall board
+ * spans the rail rows without phantom gaps. Card-back art is unchanged.
+ * ==========================================================================*/
+@media (min-width: 1024px) {
+  body[data-page='question-draw'] .question-draw-shell {
+    max-width: 1060px;
+    display: grid;
+    grid-template-columns: 352px minmax(0, 1fr);
+    column-gap: 60px;
+    row-gap: 0;
+    align-items: start;
+    min-height: auto;
+    padding: 28px 32px 64px;
+  }
+  /* Back/eyebrow bar spans both columns at the top. */
+  body[data-page='question-draw'] .question-draw-topbar {
+    grid-column: 1 / -1;
+  }
+  /* Left rail. */
+  body[data-page='question-draw'] .question-draw-recap,
+  body[data-page='question-draw'] .question-draw-title,
+  body[data-page='question-draw'] .question-draw-legend,
+  body[data-page='question-draw'] .question-shuffle-row,
+  body[data-page='question-draw'] .question-draw-counter,
+  body[data-page='question-draw'] .question-draw-cta-row {
+    grid-column: 1;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  body[data-page='question-draw'] .question-draw-cta-row { margin-top: 24px; padding-top: 0; }
+  /* Card grid: right column, larger 4-up board spanning the rail rows. */
+  body[data-page='question-draw'] #question-card-board.card-board--three {
+    grid-column: 2;
+    grid-row: 2 / span 99;
+    align-self: start;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px 18px;
+    width: 100%;
+    max-width: none;
+    margin: 8px 0 0;
+  }
+  body[data-page='question-draw'] #question-card-board.card-board--three .card-slot {
+    max-width: 132px;
+  }
+}
