@@ -188,6 +188,10 @@
   .mtd-embed .rv { margin-top: 10px; font: 600 9px/1.1 'DM Sans'; color: #fff; background: linear-gradient(135deg, #d12878, #e8a838); padding: 8px; border-radius: 99px; }
   .mtd-embed .via { font-size: 8px; color: #b3a4c2; margin-top: 8px; }
   .mtd-embed .via b { color: #6a3f8e; }
+  /* live widget embed (real iframe inside the browser chrome) */
+  .mtd-browser__body--live { display: block; padding: 0; }
+  .mtd-widframe { width: 100%; height: 540px; border: 0; display: block;
+    background: linear-gradient(160deg, #f0eaff 0%, #fce4f0 50%, #e4f0ff 100%); }
 
   /* ---------- FOOTER ---------- */
   .mtd-foot { max-width: 1240px; margin: 56px auto 0; padding: 36px 32px 56px;
