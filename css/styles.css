@@ -10018,6 +10018,90 @@ body[data-page='meanings'] .card-meaning-footer-nav .footer-nav-pill {
   body[data-page='meanings'] .card-meta h1 { font-size: 52px; }
 }
 
+/* ===========================================================================
+   CARD-MEANING DESKTOP VIEW (≥1024px) — translated from the claude.ai/design
+   "MeowTarot Desktop" doc, Card Meaning screen. Additive + pure CSS on the
+   existing DOM: the card art becomes a sticky left rail, every meaning block
+   flows in a wide right column. Mobile + iOS render byte-identical (all rules
+   live inside this @media). EN + TH share it (i18n stays in JS).
+   Anchored to .tarot-card-meaning-page so the /tarot-card-meanings/ index
+   (also data-page='meanings') is untouched.
+   =========================================================================== */
+@media (min-width: 1024px) {
+  body[data-page='meanings'] .tarot-card-meaning-page {
+    width: min(1180px, calc(100vw - 80px));
+    max-width: none;
+    gap: 22px;
+  }
+
+  /* article becomes the two-column grid; the hero "card" dissolves so its two
+     children (art + meta) place directly into the grid. */
+  body[data-page='meanings'] .tarot-card-meaning-page > article {
+    display: grid;
+    grid-template-columns: 336px minmax(0, 1fr);
+    column-gap: 46px;
+    row-gap: 18px;
+    align-items: start;
+  }
+  body[data-page='meanings'] .tarot-card-meaning-page .card-meaning-hero {
+    display: contents;
+  }
+
+  /* LEFT RAIL — card art, sticky */
+  body[data-page='meanings'] .tarot-card-meaning-page .card-visual {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    align-self: start;
+    position: sticky;
+    top: 96px;
+    display: flex;
+    justify-content: center;
+  }
+  body[data-page='meanings'] .tarot-card-meaning-page .card-meaning-hero .card-frame {
+    width: 296px;
+    max-width: 296px;
+  }
+
+  /* RIGHT COLUMN — title block + every section flow here */
+  body[data-page='meanings'] .tarot-card-meaning-page .card-meta {
+    grid-column: 2;
+    align-items: flex-start;
+    text-align: left;
+    gap: 9px;
+  }
+  body[data-page='meanings'] .tarot-card-meaning-page > article > section,
+  body[data-page='meanings'] .tarot-card-meaning-page > article > footer,
+  body[data-page='meanings'] .tarot-card-meaning-page > article > .card-discover {
+    grid-column: 2;
+    margin: 0;
+  }
+
+  body[data-page='meanings'] .tarot-card-meaning-page .card-meta h1 { font-size: 60px; }
+  body[data-page='meanings'] .tarot-card-meaning-page .card-summary {
+    margin-left: 0;
+    max-width: 560px;
+  }
+
+  /* Light & Shadow keywords sit side-by-side on the wider column */
+  body[data-page='meanings'] .tarot-card-meaning-page #keywordSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+    row-gap: 0;
+    align-content: start;
+  }
+  body[data-page='meanings'] .tarot-card-meaning-page #keywordSection > h2 {
+    grid-column: 1 / -1;
+  }
+  body[data-page='meanings'] .tarot-card-meaning-page #keywordSection p { margin: 0; }
+
+  /* Footer nav pills breathe on one row */
+  body[data-page='meanings'] .tarot-card-meaning-page .card-meaning-footer-nav .footer-nav-pill {
+    padding: 13px 20px;
+    font-size: 13.5px;
+  }
+}
+
 /* ===== Floating-pill bottom nav for pages that load ONLY styles.css (the static SEO
    /cards/* pages) — mirrors phase-3-redesign.css §2 so they match the app instead of
    showing the dark base nav. (founder 2026-06-24) ===== */
