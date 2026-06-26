@@ -1378,6 +1378,12 @@ async function renderQuestionDraw(dict = translations[state.currentLang] || tran
   // Guarded against double-taps via the is-locked class setupBoard adds mid-animation.
   boardApi.render();
   updateContinue([]);
+  // Wire the "From the deck" pill so the Ask-a-Question board gets the same deck-switcher
+  // as Daily/Full (founder 2026-06-26). renderDeckName targets .daily-topbar__deck-name and
+  // wires .daily-topbar__deck → .mt-deck-switch (reused classes; styling is global). The
+  // picker's setActiveDeck path already calls repaintCardBacks(), which repaints this board's
+  // .card-back slots — satisfying the CLAUDE.md post-switch repaint requirement.
+  renderDeckName();
   shuffleBtn.onclick = () => {
     if (board.classList.contains('is-locked')) return;
     try { trackShuffleHit({ mode: 'question', locale: state.currentLang, source: 'board' }); } catch (_) {}

@@ -448,6 +448,9 @@ body[data-page='question-draw'] .question-draw-topbar__eyebrow {
 
 body[data-page='question-draw'] .question-draw-shell[data-question-spread='quick'] .question-draw-topbar__eyebrow--quick { display: block; }
 body[data-page='question-draw'] .question-draw-shell[data-question-spread='story'] .question-draw-topbar__eyebrow--story { display: block; }
+/* Deck-switcher pill on the Ask-a-Question board (founder 2026-06-26). The .mt-deck-switch
+   pill styling is global; this just gives it breathing room under the centred eyebrow. */
+body[data-page='question-draw'] .question-draw-topbar__deck { margin-top: 9px; }
 
 
 /* §9 — Draw page question recap (dashed panel) */
