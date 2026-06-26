@@ -1312,3 +1312,92 @@ html:not([data-reversed-mode='art']) body[data-page='reading'] .card-sheet-media
     margin-right: auto;
   }
 }
+
+/* ============================================================================
+ * DESKTOP RESULT — QUESTION (3-card spread)   (additive — ≥1024px only)
+ * ----------------------------------------------------------------------------
+ * Frame B adapted for the Past/Present/Future spread. Here the panels are
+ * DIRECT children of #reading-content (no .daily-reading-stage wrapper), so we
+ * grid #reading-content itself: the 3-card .panel--spread becomes the sticky
+ * left rail; recap + story + takeaway + energy + related flow in the right
+ * column. Scoped to [data-reading-mode='question'] (Hard rule 6). row-gap:0 +
+ * big-span technique avoids phantom gaps. Spread thumbs are small at this size,
+ * so existing art resolution is fine; asset-resolver / poster untouched.
+ * ==========================================================================*/
+@media (min-width: 1024px) {
+  body[data-page='reading'][data-reading-mode='question'] .page-shell {
+    max-width: 1120px;
+    padding: 28px 32px 96px;
+    min-height: auto;
+  }
+  body[data-page='reading'][data-reading-mode='question'] #reading-content {
+    display: grid;
+    grid-template-columns: minmax(330px, 396px) minmax(0, 1fr);
+    column-gap: 52px;
+    row-gap: 0;
+    align-items: start;
+  }
+  body[data-page='reading'][data-reading-mode='question'] #reading-content > .panel--spread {
+    grid-column: 1;
+    grid-row: 1 / span 99;
+    align-self: start;
+    position: sticky;
+    top: 24px;
+    margin: 0;
+  }
+  body[data-page='reading'][data-reading-mode='question'] #reading-content > :not(.panel--spread) {
+    grid-column: 2;
+    margin: 0 0 16px 0;
+  }
+  body[data-page='reading'][data-reading-mode='question'] .action-row {
+    max-width: 460px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ============================================================================
+ * DESKTOP RESULT — FULL / CELTIC CROSS (10 cards)   (additive — ≥1024px only)
+ * ----------------------------------------------------------------------------
+ * Frame C: the ten-card cross breathes in a wide sticky LEFT column while the
+ * ten-cards summary, per-card interpretation, integration and energy panels
+ * scroll in a 460px RIGHT column. The celtic-hero title spans the full width on
+ * top. Scoped to [data-reading-mode='full'] (Hard rule 6). row-gap:0 + big-span
+ * technique. asset-resolver / poster untouched.
+ * ==========================================================================*/
+@media (min-width: 1024px) {
+  body[data-page='reading'][data-reading-mode='full'] .page-shell {
+    max-width: 1280px;
+    padding: 28px 32px 96px;
+    min-height: auto;
+  }
+  body[data-page='reading'][data-reading-mode='full'] #reading-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 460px;
+    column-gap: 44px;
+    row-gap: 0;
+    align-items: start;
+  }
+  body[data-page='reading'][data-reading-mode='full'] #reading-content > .panel--celtic-hero {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin: 0 0 10px;
+  }
+  body[data-page='reading'][data-reading-mode='full'] #reading-content > .panel--celtic-cross {
+    grid-column: 1;
+    grid-row: 2 / span 99;
+    align-self: start;
+    position: sticky;
+    top: 24px;
+    margin: 0;
+  }
+  body[data-page='reading'][data-reading-mode='full'] #reading-content > :not(.panel--celtic-cross):not(.panel--celtic-hero) {
+    grid-column: 2;
+    margin: 0 0 16px 0;
+  }
+  body[data-page='reading'][data-reading-mode='full'] .action-row {
+    max-width: 460px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

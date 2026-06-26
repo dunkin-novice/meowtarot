@@ -60,15 +60,18 @@
   .mtd-fan { position: relative; height: 430px; display: flex; align-items: center; justify-content: center; }
   .mtd-fan__halo { position: absolute; width: 340px; height: 340px; border-radius: 50%;
     background: radial-gradient(circle, rgba(232,196,120,.35) 0%, rgba(232,196,120,0) 68%); }
-  .mtd-card { position: absolute; width: 188px; height: 280px; border-radius: 16px;
+  /* aspect-ratio matches the real back art (1568x2720 = 0.576) so object-fit:cover
+   * doesn't crop the card's own border — boba-oracle (.mtd-card--r) is a different
+   * source ratio (848x1264) and overrides below. */
+  .mtd-card { position: absolute; width: 188px; aspect-ratio: 1568 / 2720; border-radius: 16px;
     border: 1px solid rgba(232,196,120,.5); box-shadow: 0 30px 60px -20px rgba(61,26,92,.65);
     overflow: hidden; animation: mtfloat 6s ease-in-out infinite; }
   .mtd-card__art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
   .mtd-card__m { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center;
     font-family: 'Cormorant Garamond', 'Noto Serif Thai', serif; font-style: italic; font-size: 46px; color: rgba(232,196,120,.85); }
   .mtd-card--l { --rest: rotate(-16deg) translateX(-118px); background: linear-gradient(155deg, #4a1a3e, #7a1f66 50%, #b9246a); }
-  .mtd-card--r { --rest: rotate(16deg) translateX(118px); animation-delay: .8s; background: linear-gradient(155deg, #2a1d4a, #6a3f8e 60%, #a487c4); }
-  .mtd-card--c { --rest: rotate(0deg); animation-delay: .4s; position: relative; width: 204px; height: 304px; border-radius: 18px;
+  .mtd-card--r { --rest: rotate(16deg) translateX(118px); animation-delay: .8s; aspect-ratio: 848 / 1264; background: linear-gradient(155deg, #2a1d4a, #6a3f8e 60%, #a487c4); }
+  .mtd-card--c { --rest: rotate(0deg); animation-delay: .4s; position: relative; width: 204px; aspect-ratio: 1568 / 2720; border-radius: 18px;
     border: 1.5px solid rgba(232,196,120,.7); box-shadow: 0 40px 70px -24px rgba(61,26,92,.7);
     background: linear-gradient(155deg, #3d1a5c, #7a1f66 45%, #d12878); }
   .mtd-card--c .mtd-card__m { top: 60%; font-size: 50px; }
