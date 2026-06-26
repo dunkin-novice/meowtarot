@@ -13,6 +13,7 @@ import { translations } from './common.js';
 const STYLE_FLAG = '__mt_login_reward_styles_injected';
 const POPUP_ID = 'mt-login-reward-popup';
 const SEEN_STORAGE_KEY = 'meowtarot_login_reward_seen';
+const WELCOME_DATE_KEY = 'meowtarot_welcomeback_date';
 const SHOW_DELAY_MS = 800;
 
 let pending = false;
@@ -225,6 +226,14 @@ function buildPopup(deckBackUrl, dict) {
 function showWelcomeToast(lang) {
   if (typeof document === 'undefined' || !document.body) return;
   if (document.getElementById('mt-welcome-toast')) return;
+  // Show at most once per calendar day (founder 2026-06-26). Supabase re-fires SIGNED_IN
+  // with no in-memory prevUser on each fresh page load, so without this the "Welcome back"
+  // toast popped on every homepage visit.
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem(WELCOME_DATE_KEY) === today) return;
+    localStorage.setItem(WELCOME_DATE_KEY, today);
+  } catch (_) { /* storage blocked → fall through and just show it */ }
   injectStylesOnce();
   const dict = getDict(lang);
   const toast = document.createElement('div');

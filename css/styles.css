@@ -9569,8 +9569,8 @@ html[lang='th'] .dd-focus__name { font-family: 'Sarabun', 'Playfair Display', se
    ========================================================================== */
 .mt-ref__title { font-family: var(--mt-font-display, 'Playfair Display', serif); font-size: 20px; font-weight: 600; color: var(--mt-plum, #3d1a5c); margin: 0 0 8px; }
 .mt-ref__desc { font-size: 13px; line-height: 1.5; color: var(--mt-plum-mid, #6b4a86); margin: 0 0 14px; }
-.mt-ref__codebox { display: flex; align-items: center; gap: 8px; background: rgba(232, 196, 120, 0.16); border: 1px dashed rgba(192, 131, 39, 0.5); border-radius: 12px; padding: 10px 10px 10px 14px; }
-.mt-ref__code { flex: 1; font-family: var(--mt-font-body, sans-serif); font-weight: 800; font-size: 17px; letter-spacing: 0.12em; color: var(--mt-plum, #3d1a5c); }
+.mt-ref__codebox { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; background: rgba(232, 196, 120, 0.16); border: 1px dashed rgba(192, 131, 39, 0.5); border-radius: 12px; padding: 10px 10px 10px 14px; }
+.mt-ref__code { flex: 1 1 90px; min-width: 90px; font-family: var(--mt-font-body, sans-serif); font-weight: 800; font-size: 17px; letter-spacing: 0.12em; color: var(--mt-plum, #3d1a5c); }
 .mt-ref__copy { flex: none; border: none; border-radius: 10px; padding: 9px 14px; font-family: var(--mt-font-body, sans-serif); font-weight: 700; font-size: 13px; color: #fff8e7; background: var(--mt-cta-grad, linear-gradient(135deg, #d4972c, #d12878)); cursor: pointer; box-shadow: 0 6px 16px -7px rgba(209, 40, 120, 0.55); }
 .mt-ref__ladder { margin-top: 14px; }
 .mt-ref__ladder-row { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: var(--mt-plum, #3d1a5c); margin-bottom: 6px; }

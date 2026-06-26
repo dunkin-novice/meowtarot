@@ -829,6 +829,8 @@ body[data-page='profile'] .profile-header__name {
   font-weight: 600; font-size: 25px; line-height: 1.05; color: var(--mt-plum, #3d1a5c);
 }
 body[data-page='profile'] .profile-header__sub { font-size: 12px; color: #7c5e96; margin-top: 2px; }
+/* Guest sign-in button in the identity header (founder 2026-06-26) */
+body[data-page='profile'] .profile-header__signin { align-self: flex-start; margin-top: 10px; padding: 9px 16px; font-size: 13px; }
 
 body[data-page='profile'] .profile-tabs {
   display: flex; gap: 4px; padding: 4px; margin: 18px 0 4px; border-radius: 999px;

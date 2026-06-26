@@ -11,6 +11,7 @@ import { computePhase } from './phase.js';
 import { getUserProgress, getNextStreakMilestone } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
+import { serializeReadingStateToUrl } from './reading-url.js';
 import { trackLocaleSwitched, trackProfileRevisit } from './analytics.js';
 import { renderAchievementsPanel } from './achievements-panel.js';
 import { renderReferralPanel } from './referral.js';
@@ -106,6 +107,16 @@ function renderIdentity(dict) {
     : (th ? 'ลงชื่อเข้าใช้เพื่อบันทึกเส้นทางของคุณ' : 'Sign in to save your journey');
   meta.appendChild(name);
   meta.appendChild(sub);
+  // Guest reader: surface a direct Sign-in button right here (founder 2026-06-26) —
+  // previously the only inline CTA lived in the Settings tab's Account card.
+  if (!state.user) {
+    const signIn = document.createElement('button');
+    signIn.type = 'button';
+    signIn.className = 'primary profile-header__signin';
+    signIn.textContent = dict.profileSignInCta || (th ? 'เข้าสู่ระบบด้วย Google' : 'Continue with Google');
+    signIn.addEventListener('click', async () => { try { await loginWithProvider('google'); } catch (_) {} });
+    meta.appendChild(signIn);
+  }
   header.appendChild(meta);
 
   els.identity.appendChild(header);
@@ -462,7 +473,23 @@ function renderHistory(dict) {
 
     const readAgain = document.createElement('a');
     readAgain.className = 'ghost profile-history-item__action';
-    readAgain.href = getModeHref(entry.mode);
+    // Deep-link straight to the rendered RESULT (was the entry/board page) — founder
+    // 2026-06-26. Rebuild the compact reading URL from the stored cards; fall back to the
+    // mode's board page only when an entry has no cards to hydrate from.
+    const readAgainCards = (entry.reading_cards || [])
+      .map((c) => {
+        const base = normalizeId(c.card_id || c.id || '').replace(/-(upright|reversed)$/, '');
+        if (!base) return '';
+        const orient = String(c.orientation || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright';
+        return `${base}-${orient}`;
+      })
+      .filter(Boolean);
+    readAgain.href = readAgainCards.length
+      ? serializeReadingStateToUrl(
+          { mode: entry.mode, spread: entry.spread, topic: entry.topic, lang: state.currentLang, cards: readAgainCards },
+          { path: createLocalizedHref('/reading.html') },
+        )
+      : getModeHref(entry.mode);
     readAgain.textContent = dict.profileReadAgain || (state.currentLang === 'th' ? 'อ่านอีกครั้ง' : 'Read Again');
     actions.appendChild(readAgain);
 

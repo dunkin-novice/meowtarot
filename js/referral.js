@@ -44,6 +44,39 @@ function refErrorMsg(err, th) {
   return map[err] || (th ? 'มีบางอย่างผิดพลาด ลองใหม่อีกครั้ง' : 'Something went wrong. Try again.');
 }
 
+// ---- redeem feedback toast (founder 2026-06-26) ------------------------------------------
+// Self-contained top-centre popup for redeem success/failure (REQ-10). Kept local to the
+// referral panel so it doesn't couple to the coin-popup module.
+let _refToastStyled = false;
+function ensureRefToastStyles() {
+  if (_refToastStyled || typeof document === 'undefined') return;
+  _refToastStyled = true;
+  const s = document.createElement('style');
+  s.textContent = `
+  .mt-ref-toast{position:fixed;left:50%;top:22px;transform:translateX(-50%) translateY(-12px);z-index:10000;
+    max-width:min(420px,calc(100vw - 32px));padding:13px 18px;border-radius:14px;text-align:center;
+    font:600 14px/1.4 var(--mt-font-body,'DM Sans',system-ui,sans-serif);
+    box-shadow:0 16px 40px -12px rgba(61,26,92,.45);opacity:0;transition:opacity .22s ease,transform .22s ease;}
+  .mt-ref-toast.in{opacity:1;transform:translateX(-50%) translateY(0);}
+  .mt-ref-toast.is-ok{background:linear-gradient(135deg,#2a8a5a,#3aa86a);color:#fff;}
+  .mt-ref-toast.is-err{background:linear-gradient(135deg,#b3243f,#d1485f);color:#fff;}`;
+  document.head.appendChild(s);
+}
+function showRefToast(message, ok) {
+  if (typeof document === 'undefined' || !document.body || !message) return;
+  ensureRefToastStyles();
+  const existing = document.getElementById('mt-ref-toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.id = 'mt-ref-toast';
+  t.className = 'mt-ref-toast ' + (ok ? 'is-ok' : 'is-err');
+  t.setAttribute('role', 'status');
+  t.textContent = message;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('in'));
+  setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 320); }, 2600);
+}
+
 // ---- invite-link capture + auto-redeem ---------------------------------------------------
 function captureRefFromUrl() {
   try {
@@ -96,7 +129,7 @@ export function renderReferralPanel(container, lang) {
   card.innerHTML = `
     <h2 class="mt-ref__title">${th ? 'ชวนเพื่อน' : 'Invite friends'}</h2>
     <p class="mt-ref__desc">${th ? 'แชร์โค้ดของคุณ — เพื่อนได้ +5, คุณได้ +5 (เพื่อนคนที่ 6 เป็นต้นไป +10) สูงสุด 9 คน' : "Share your code — your friend gets +5, you get +5 (then +10 from your 6th friend), up to 9 friends."}</p>
-    <div class="mt-ref__codebox"><span class="mt-ref__code" id="mt-ref-code">·····</span><button type="button" class="mt-ref__copy" id="mt-ref-copy">${th ? 'แชร์ลิงก์' : 'Share link'}</button></div>
+    <div class="mt-ref__codebox"><span class="mt-ref__code" id="mt-ref-code">·····</span><button type="button" class="mt-ref__copy" id="mt-ref-copy-code">${th ? 'คัดลอกโค้ด' : 'Copy code'}</button><button type="button" class="mt-ref__copy" id="mt-ref-copy">${th ? 'แชร์ลิงก์' : 'Share link'}</button></div>
     <div class="mt-ref__ladder">
       <div class="mt-ref__ladder-row"><span id="mt-ref-count">0 / 9 ${th ? 'เพื่อน' : 'friends'}</span><span class="mt-ref__coins" id="mt-ref-coins">0 ${th ? 'เหรียญ' : 'coins'}</span></div>
       <div class="mt-ref__track"><div class="mt-ref__fill" id="mt-ref-fill"></div></div>
@@ -112,6 +145,7 @@ export function renderReferralPanel(container, lang) {
 
   const codeEl = card.querySelector('#mt-ref-code');
   const copyBtn = card.querySelector('#mt-ref-copy');
+  const copyCodeBtn = card.querySelector('#mt-ref-copy-code');
   const input = card.querySelector('#mt-ref-input');
   const redeemBtn = card.querySelector('#mt-ref-redeem');
   const msg = card.querySelector('#mt-ref-msg');
@@ -126,6 +160,17 @@ export function renderReferralPanel(container, lang) {
     card.querySelector('#mt-ref-coins').textContent = `${coinsForUses(uses)} ${th ? 'เหรียญ' : 'coins'}`;
     card.querySelector('#mt-ref-fill').style.width = `${Math.round((Math.min(9, uses) / 9) * 100)}%`;
   }).catch(() => {});
+
+  // REQ-8: copy the raw code itself (the Share-link button beside it copies the invite URL).
+  copyCodeBtn.addEventListener('click', async () => {
+    if (!myCode) return;
+    try {
+      await navigator.clipboard.writeText(myCode);
+      const orig = copyCodeBtn.textContent;
+      copyCodeBtn.textContent = th ? 'คัดลอกแล้ว!' : 'Copied!';
+      setTimeout(() => { copyCodeBtn.textContent = orig; }, 1500);
+    } catch (_) { /* clipboard blocked */ }
+  });
 
   copyBtn.addEventListener('click', async () => {
     if (!myCode) return;
@@ -152,11 +197,13 @@ export function renderReferralPanel(container, lang) {
     if (res && res.ok) {
       msg.textContent = th ? `รับ +${res.referee_reward || 5} เหรียญแล้ว! 🎉` : `You got +${res.referee_reward || 5} coins! 🎉`;
       msg.className = 'mt-ref__msg is-ok';
+      showRefToast(msg.textContent, true); // REQ-10: success popup
       input.value = '';
       try { const m = await import('./meow-coin.js'); if (m.refreshServerWallet) await m.refreshServerWallet(); } catch (_) {}
     } else {
       msg.textContent = refErrorMsg(res && res.error, th);
       msg.className = 'mt-ref__msg is-err';
+      showRefToast(msg.textContent, false); // REQ-10: failure popup
     }
   });
 }
