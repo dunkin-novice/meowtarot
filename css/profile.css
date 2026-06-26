@@ -501,6 +501,13 @@ body[data-page='profile'] .profile-history-item__action {
   cursor: pointer;
   text-decoration: none;
 }
+/* Instagram poster CTA (BUG-4) — icon + label inline */
+body[data-page='profile'] .profile-history-item__share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+body[data-page='profile'] .profile-history-item__share svg { flex: 0 0 auto; }
 
 
 /* §9 — Empty-state copy (history when not signed in / no readings yet) */

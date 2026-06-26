@@ -40,6 +40,42 @@ function getModeHref(mode = 'daily') {
   return createLocalizedHref('/daily.html');
 }
 
+// base64url (matches reading.js base64UrlEncode + the share page's decoder).
+function base64UrlEncodeProfile(input) {
+  return btoa(unescape(encodeURIComponent(input))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+// BUG-4: from a saved reading, hand a minimal payload to the share page, which regenerates
+// the poster from the card ids and offers the Instagram-story share. normalizePayload only
+// needs {mode, lang, cards:[{id,orientation,position}], poster}.
+function openHistoryShare(entry = {}) {
+  try {
+    const cards = (entry.reading_cards || [])
+      .map((c) => ({
+        id: normalizeId(c.card_id || c.id || ''),
+        orientation: String(c.orientation || '').toLowerCase() === 'reversed' ? 'reversed' : 'upright',
+        position: c.position || '',
+      }))
+      .filter((c) => c.id);
+    if (!cards.length) return;
+    const posterMode = entry.mode === 'daily' ? 'daily' : entry.mode === 'question' ? 'question' : 'full';
+    const payloadJson = JSON.stringify({
+      version: 1,
+      lang: state.currentLang,
+      mode: entry.mode,
+      spread: entry.spread || '',
+      topic: entry.topic || '',
+      cards,
+      poster: { mode: posterMode, footer: 'meowtarot.com' },
+    });
+    try { sessionStorage.setItem('meowtarot_share_payload', payloadJson); } catch (_) {}
+    const url = new URL('/share/index.html', window.location.origin);
+    const encoded = base64UrlEncodeProfile(payloadJson);
+    if (encoded && encoded.length <= 8000) url.hash = `p=${encoded}`;
+    window.location.href = url.toString();
+  } catch (_) { /* noop */ }
+}
+
 function parseDate(value = '') {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
@@ -493,13 +529,14 @@ function renderHistory(dict) {
     readAgain.textContent = dict.profileReadAgain || (state.currentLang === 'th' ? 'อ่านอีกครั้ง' : 'Read Again');
     actions.appendChild(readAgain);
 
-    const firstCard = entry?.reading_cards?.[0];
-    const similar = document.createElement('a');
-    const similarCardId = normalizeId(firstCard?.card_id || firstCard?.id || '');
-    similar.className = 'ghost profile-history-item__action';
-    similar.href = `${createLocalizedHref('/meanings.html')}?card=${encodeURIComponent(similarCardId || '')}`;
-    similar.textContent = dict.profileSeeSimilar || (state.currentLang === 'th' ? 'ดูไพ่ใกล้เคียง' : 'See Similar Cards');
-    actions.appendChild(similar);
+    // BUG-4: Instagram-style poster CTA replaces "See Similar Cards" — regenerates this
+    // reading's shareable poster and offers the IG-story share via the share page.
+    const share = document.createElement('button');
+    share.type = 'button';
+    share.className = 'ghost profile-history-item__action profile-history-item__share';
+    share.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.4"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r="1.15" fill="currentColor" stroke="none"></circle></svg><span>${dict.profileSharePoster || (state.currentLang === 'th' ? 'แชร์' : 'Share')}</span>`;
+    share.addEventListener('click', () => openHistoryShare(entry));
+    actions.appendChild(share);
 
     item.appendChild(actions);
     list.appendChild(item);
