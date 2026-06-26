@@ -247,6 +247,96 @@ const saveBtn = document.getElementById('saveBtn');
 const resultsSection = document.querySelector('.section-block.results');
 const backLink = document.querySelector('.back-link');
 
+// ============================================================================
+// DESKTOP READING GATEWAY (≥1024px) — relocate the Save/Share action-row into
+// the sticky left rail so it reads as a "gateway" card under the poster, per the
+// claude.ai/design "Reading Desktop" doc. Mobile + iOS are untouched (guarded by
+// matchMedia; <1024px keeps the centred action bar). The action-row node is
+// MOVED, not cloned, so the Save/Share handlers (bound by id) travel intact. The
+// share poster is canvas-drawn (share/poster.js), NOT a DOM rasterize, so these
+// buttons never leak into the shared image (Hard rules 4 & 8 preserved).
+//
+// Deletion safety: renderReading() rebuilds the rail's container on every
+// re-render (language switch / auth re-render / daily re-animation), and those
+// paths innerHTML-wipe #reading-content. detachActionRowToHome() runs at the TOP
+// of renderReading so the live node is back at its stable home (last child of
+// #share-poster-root, a sibling of #reading-content) BEFORE any wipe — it can
+// never be destroyed. A MutationObserver on #reading-content re-injects it once
+// the rail is (re)built. For daily we only inject after the deal/reveal settles
+// (phase === REVEALED) so the animation can't wipe a just-injected node.
+// ============================================================================
+const actionRow = document.querySelector('.action-row');
+const DESKTOP_GATEWAY_MQ =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(min-width: 1024px)')
+    : null;
+let actionRowHome = null; // { parent, next } — captured before the first move.
+
+function railElementForMode() {
+  if (!readingContent) return null;
+  const mode = (document.body && document.body.dataset.readingMode) || state.mode || 'daily';
+  // Full = Celtic cross (which also carries .panel--spread, so match the
+  // narrower class first); daily + question surface the drawn card(s) as
+  // .panel--spread.
+  if (mode === 'full') return readingContent.querySelector('.panel--celtic-cross');
+  return readingContent.querySelector('.panel--spread');
+}
+
+function detachActionRowToHome() {
+  if (!actionRow || !actionRowHome) return;
+  if (actionRow.parentElement === actionRowHome.parent) return;
+  actionRow.classList.remove('action-row--rail');
+  if (actionRowHome.next && actionRowHome.next.parentElement === actionRowHome.parent) {
+    actionRowHome.parent.insertBefore(actionRow, actionRowHome.next);
+  } else {
+    actionRowHome.parent.appendChild(actionRow);
+  }
+}
+
+function applyDesktopGateway() {
+  if (!actionRow) return;
+  if (!actionRowHome) {
+    actionRowHome = { parent: actionRow.parentElement, next: actionRow.nextElementSibling };
+  }
+  const wantDesktop = !!(DESKTOP_GATEWAY_MQ && DESKTOP_GATEWAY_MQ.matches);
+  if (!wantDesktop) {
+    detachActionRowToHome();
+    return;
+  }
+  // Daily: hold until the deal/reveal animation settles, else a later animation
+  // step could wipe the rail (and the node inside it).
+  const mode = (document.body && document.body.dataset.readingMode) || state.mode || 'daily';
+  if (mode === 'daily' && dailyUiState.phase !== DAILY_VISUAL_STATES.REVEALED) return;
+  const rail = railElementForMode();
+  if (!rail) return;
+  if (actionRow.parentElement === rail) return;
+  rail.appendChild(actionRow);
+  actionRow.classList.add('action-row--rail');
+}
+
+let gatewayRaf = 0;
+function scheduleDesktopGateway() {
+  if (gatewayRaf) return;
+  gatewayRaf = requestAnimationFrame(() => {
+    gatewayRaf = 0;
+    applyDesktopGateway();
+  });
+}
+
+if (readingContent && typeof MutationObserver === 'function') {
+  new MutationObserver(scheduleDesktopGateway).observe(readingContent, {
+    childList: true,
+    subtree: true,
+  });
+}
+if (DESKTOP_GATEWAY_MQ) {
+  if (typeof DESKTOP_GATEWAY_MQ.addEventListener === 'function') {
+    DESKTOP_GATEWAY_MQ.addEventListener('change', scheduleDesktopGateway);
+  } else if (typeof DESKTOP_GATEWAY_MQ.addListener === 'function') {
+    DESKTOP_GATEWAY_MQ.addListener(scheduleDesktopGateway); // Safari < 14
+  }
+}
+
 const cardSheetState = {
   card: null,
   src: '',
@@ -2949,6 +3039,7 @@ async function startDailyReadingFlow(cards, dict, { gatherCurrent = false } = {}
   renderDailyDetails(cards, dict, stageRefs.stage);
   dailyUiState.isAnimating = false;
   configureActionButtons(activeDict);
+  scheduleDesktopGateway(); // rail (.panel--spread) now exists + phase is REVEALED
 
   if (dailyUiState.retention?.didCount) {
     const currentUser = await getCurrentUser();
@@ -3793,6 +3884,11 @@ function renderQuestion(cards, dict) {
 
 function renderReading(dict) {
   if (!readingContent) return;
+
+  // Park the desktop gateway's Save/Share node at its stable home before any
+  // branch wipes #reading-content, so it is never destroyed; the observer
+  // re-injects it into the freshly built rail. (No-op on mobile / if never moved.)
+  detachActionRowToHome();
 
   const cards = state.selectedIds.map((id) => findCard(id)).filter(Boolean);
 
