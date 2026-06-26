@@ -3,7 +3,7 @@
  * Plugin Name:       MeowTarot Tarot Widget
  * Plugin URI:        https://www.meowtarot.com/widgets/
  * Description:       Embed a free, cute cat-themed tarot card draw (single card or Past · Present · Future spread) anywhere via a shortcode, block, or sidebar widget. English & Thai.
- * Version:           1.2.0
+ * Version:           1.2.1
  * Requires at least: 5.8
  * Requires PHP:      7.2
  * Author:            MeowTarot
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // No direct access.
 }
 
-define( 'MEOWTAROT_WIDGET_VERSION', '1.2.0' );
+define( 'MEOWTAROT_WIDGET_VERSION', '1.2.1' );
 define( 'MEOWTAROT_WIDGET_BASE', 'https://www.meowtarot.com' );
 
 /**
@@ -190,12 +190,15 @@ class MeowTarot_Sidebar_Widget extends WP_Widget {
 	 * @param array $instance Saved settings.
 	 */
 	public function widget( $args, $instance ) {
-		echo $args['before_widget']; // phpcs:ignore WordPress.Security.EscapeOutput
+		// before_widget / after_widget are theme-provided sidebar wrappers (trusted markup).
+		echo $args['before_widget']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		if ( ! empty( $instance['title'] ) ) {
-			echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title']; // phpcs:ignore WordPress.Security.EscapeOutput
+			// Escape the title content; before/after_title are theme wrappers.
+			echo $args['before_title'] . esc_html( apply_filters( 'widget_title', $instance['title'] ) ) . $args['after_title']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 		$spread = ( isset( $instance['spread'] ) && 'three' === $instance['spread'] ) ? 'three' : 'one';
-		echo meowtarot_widget_render( array( 'spread' => $spread ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+		// meowtarot_widget_render() returns HTML already escaped with esc_url()/esc_attr()/esc_html().
+		echo meowtarot_widget_render( array( 'spread' => $spread ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $args['after_widget']; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 

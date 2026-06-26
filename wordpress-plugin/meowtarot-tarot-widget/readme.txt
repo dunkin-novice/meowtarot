@@ -4,7 +4,7 @@ Tags: tarot, fortune telling, divination, oracle, widget
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.2
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,9 @@ This plugin embeds the tarot widget by loading it in an iframe from MeowTarot (h
 * Privacy Policy: https://www.meowtarot.com/privacy.html
 
 == Changelog ==
+
+= 1.2.1 =
+* Security hardening: escape the sidebar widget title output with esc_html().
 
 = 1.2.0 =
 * The front-end attribution link is now **opt-in and off by default** (WordPress.org Guideline 10). Enable it site-wide under Settings → MeowTarot Tarot, per shortcode with `attribution="yes"`, or via the block toggle.
