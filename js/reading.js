@@ -620,7 +620,17 @@ function appendReadingInternalLinks(container, cards = []) {
   });
   panel.appendChild(tiles);
 
-  container.appendChild(panel);
+  // Place the Related-links panel BELOW the Share/Save action-row (founder 2026-06-26)
+  // so Share comes first. On mobile the action-row is a sibling after #reading-content,
+  // so insert Related right after it. On desktop (≥1024px) the action-row is lifted into
+  // the sticky left rail (where Share already sits above Related), so just append in flow.
+  const isDesktopReading = window.matchMedia('(min-width: 1024px)').matches;
+  const actionRowEl = document.querySelector('.action-row');
+  if (!isDesktopReading && actionRowEl && actionRowEl.parentElement) {
+    actionRowEl.parentElement.insertBefore(panel, actionRowEl.nextSibling);
+  } else {
+    container.appendChild(panel);
+  }
 }
 
 function setBodyScrollLocked(locked) {

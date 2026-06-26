@@ -55,7 +55,7 @@ function buildAchievements(progress, lang) {
     done, coins, cur: cur != null ? cur : (done ? 1 : 0), total: total != null ? total : 1, unit: unit || '',
   });
   earn('daily', 'daily_login', 'Daily sign-in', 'เข้าระบบรายวัน', 'Sign in today', 'เข้าระบบวันนี้', isDailyLoginClaimed(), 5);
-  earn('daily', 'daily_reading', 'Daily reading', 'เปิดไพ่รายวัน', "Do today's reading", 'เปิดไพ่วันนี้', isDailyReadingClaimed(), 5);
+  earn('daily', 'daily_reading', 'Daily reading', 'เปิดไพ่รายวัน', 'Daily Reading today', 'เปิดไพ่วันนี้', isDailyReadingClaimed(), 5);
   earn('weekly', 'weekly_question', 'Ask a Question', 'ถามไพ่', 'Ask a question this week', 'ถามไพ่สัปดาห์นี้', isWeeklyQuestionClaimed(), 10);
   earn('monthly', 'monthly_celtic', 'Celtic Cross', 'เซลติกครอส', 'Do a Celtic Cross this month', 'เปิดเซลติกครอสเดือนนี้', isMonthlyCelticClaimed(), 20);
   earn('repeatable', 'weekly_streak', '7-day streak', 'สตรีค 7 วัน', 'Keep a 7-day streak · weekly', 'รักษาสตรีค 7 วัน · รายสัปดาห์', isWeeklyStreakClaimed(), 5, Math.min(streak, 7), 7, th ? 'วัน' : 'days');

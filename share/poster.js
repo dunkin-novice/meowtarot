@@ -773,7 +773,11 @@ export function resolveCelticCrossPosterContent(payload = {}, cardEntries = []) 
   const advice = buildInsight('advice');
   const outcome = buildInsight('outcome');
   const heroTitle = normalizeStandaloneAffirmation(outcome.body, lang, strings.heroFallback);
-  const narration = buildCelticNarration([present, challenge, advice, outcome]);
+  // Narration = the Outcome only (founder 2026-06-26). Weaving Present+Obstacle+Advice+
+  // Outcome overflowed the box and got clipped mid-reading. Use the Outcome's FULL body
+  // (not the 130-char first-sentence cap, which itself added a "…") — with only one
+  // position the drawNarration shrink-to-fit renders it large, complete, and uncut.
+  const narration = outcome.body || buildCelticNarration([outcome]);
 
   return {
     lang,
@@ -1319,7 +1323,7 @@ function drawFallbackCardArt(ctx, x, y, width, height, { radius = 16, label = 'M
 function resolveCelticCrossPresetLayout(preset = 'story', width = 1080, height = 1920) {
   const layouts = {
     story: {
-      header: { top: 110, brandSize: 72, eyebrowSize: 20, heroSize: 44, subtitleSize: 22 },
+      header: { top: 120, brandSize: 92, eyebrowSize: 20, heroSize: 44, subtitleSize: 22 },
       // Hero + subtitle removed from the header → reclaim ~120px: pull the shell up
       // and make it taller so the (now larger) cards fill it instead of floating in
       // empty space. Shell ends ~1240, just above the narration box at 1272.
@@ -1329,14 +1333,14 @@ function resolveCelticCrossPresetLayout(preset = 'story', width = 1080, height =
       footerY: height - 92,
     },
     portrait: {
-      header: { top: 92, brandSize: 66, eyebrowSize: 18, heroSize: 38, subtitleSize: 20 },
+      header: { top: 96, brandSize: 84, eyebrowSize: 18, heroSize: 38, subtitleSize: 20 },
       spreadShell: { x: 72, y: 238, w: width - 144, h: 630, radius: 30 },
       spread: { cardW: 110, cardH: 176, gapX: 12, gapY: 16, labelGap: 8, nameGap: 6 },
       insights: { x: 72, y: 920, w: width - 144, gap: 14, rowH: 148, direction: 'portrait-grid', heroFirst: false },
       footerY: height - 86,
     },
     square: {
-      header: { top: 86, brandSize: 56, eyebrowSize: 16, heroSize: 32, subtitleSize: 18 },
+      header: { top: 88, brandSize: 72, eyebrowSize: 16, heroSize: 32, subtitleSize: 18 },
       spreadShell: { x: 56, y: 204, w: width - 112, h: 458, radius: 28 },
       spread: { cardW: 84, cardH: 134, gapX: 10, gapY: 14, labelGap: 7, nameGap: 5 },
       insights: { x: 56, y: 722, w: width - 112, gap: 10, rowH: 176, direction: 'row', heroFirst: false },
@@ -1362,19 +1366,19 @@ async function renderCelticCrossPoster(ctx, payload, preset, width, height) {
   const drawHeader = () => {
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.shadowColor = 'rgba(0,0,0,0.42)';
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = '#bf8a20';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = '#e8c478';
     // Brand title in the loaded Cormorant Garamond serif (Poppins isn't preloaded → it
     // fell back to a blocky sans). Matches the Daily poster's elegant serif style.
-    // Wordmark deepened from #c9933a → #bf8a20 (founder 2026-06-20) — old gold read muddy/
-    // washed-out on the pastel poster background.
+    // Wordmark: deepened #c9933a → #bf8a20 (2026-06-20) for contrast, then brightened to
+    // the brand gold #e8c478 + enlarged (founder 2026-06-26) — the stronger drop-shadow
+    // (0.5/18) keeps it legible on the pastel poster while reading brighter/bigger.
     ctx.font = `italic 700 ${header.brandSize}px "Cormorant Garamond", "Noto Serif Thai", serif`;
     ctx.fillText('MeowTarot', width / 2, header.top);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(201, 147, 58, 0.95)';
-    ctx.font = `600 ${header.eyebrowSize}px "Space Grotesk", "IBM Plex Sans Thai", sans-serif`;
-    drawTrackingText(ctx, content.strings.eyebrow, width / 2, header.top + 44, 1.2);
+    // "Celtic Cross Reading" eyebrow under the wordmark removed (founder 2026-06-26) — the
+    // spread + narration already say what this is; the wordmark now stands alone, larger.
     // Hero affirmation + "A 10-card spread…" subtitle were drawn here, but the hero
     // line duplicates the closing sentence of the bottom narration and the subtitle
     // is generic filler — both crowded the header and pushed the spread down. Dropped
