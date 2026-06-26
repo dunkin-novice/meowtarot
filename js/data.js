@@ -315,13 +315,60 @@ export function isGiftedDeck(id) {
 // planned hardening. (founder 2026-06-21 — wires the Shop into the real unlock truth.)
 const PURCHASED_DECKS_KEY = 'meowtarot_purchased_decks';
 
-export function getPurchasedDecks() {
+let serverPurchasedDecks = [];
+let isServerDecksLoaded = false;
+
+export async function refreshPurchasedDecks() {
   try {
+    const { getCurrentUserSync, getSupabaseClient } = await import('./auth.js');
+    const user = getCurrentUserSync();
+    if (!user) {
+      isServerDecksLoaded = false;
+      serverPurchasedDecks = [];
+      return;
+    }
+    const client = await getSupabaseClient();
+    if (!client) return;
+    const { data, error } = await client.rpc('shop_my_decks', {});
+    if (!error && Array.isArray(data)) {
+      serverPurchasedDecks = data.map(d => typeof d === 'string' ? d : d.deck_id);
+      isServerDecksLoaded = true;
+      // Legacy migration: merge local purchases up to the server
+      const local = getPurchasedDecksLocalOnly();
+      for (const id of local) {
+        if (!serverPurchasedDecks.includes(id)) {
+          // Free legacy grant
+          await client.from('purchased_decks').upsert({ user_id: user.id, deck_id: id }).catch(() => {});
+        }
+      }
+    }
+  } catch (_) {}
+}
+
+// Self-init: reload purchases when auth resolves
+if (typeof window !== 'undefined') {
+  import('./auth.js').then(({ subscribeAuthState }) => {
+    if (typeof subscribeAuthState === 'function') {
+      subscribeAuthState((user) => {
+        if (user) refreshPurchasedDecks();
+        else { isServerDecksLoaded = false; serverPurchasedDecks = []; }
+      });
+    }
+  }).catch(() => {});
+}
+
+function getPurchasedDecksLocalOnly() {
+  try {
+    if (typeof localStorage === 'undefined') return [];
     const v = JSON.parse(localStorage.getItem(PURCHASED_DECKS_KEY) || '[]');
     return Array.isArray(v) ? v : [];
   } catch (_) {
     return [];
   }
+}
+
+export function getPurchasedDecks() {
+  return [...new Set([...getPurchasedDecksLocalOnly(), ...serverPurchasedDecks])];
 }
 
 export function isPurchasedDeck(id) {
@@ -330,11 +377,14 @@ export function isPurchasedDeck(id) {
 
 export function purchaseDeck(id) {
   if (!DECKS[id]) return false;
-  const owned = getPurchasedDecks();
+  const owned = getPurchasedDecksLocalOnly();
   if (!owned.includes(id)) {
     owned.push(id);
-    try { localStorage.setItem(PURCHASED_DECKS_KEY, JSON.stringify(owned)); } catch (_) { /* ignore */ }
+    try { if (typeof localStorage !== 'undefined') localStorage.setItem(PURCHASED_DECKS_KEY, JSON.stringify(owned)); } catch (_) { /* ignore */ }
   }
+  // If signed in, the actual server purchase is handled atomically by `shop_purchase_deck` RPC,
+  // but we push it to the local cache array so it immediately appears unlocked without waiting for a refresh.
+  if (!serverPurchasedDecks.includes(id)) serverPurchasedDecks.push(id);
   return true;
 }
 

@@ -294,8 +294,6 @@ export function spendMeowCoins(amount, reason) {
   return { ok: true, balance: w.balance };
 }
 
-// Server-authoritative spend for REAL purchases (gacha). Awaited by the caller so a signed-in
-// user can never double-spend across devices (the DB checks balance + deducts atomically).
 export async function spendCoins(amount, reason) {
   const amt = Math.max(0, Math.floor(Number(amount) || 0));
   if (serverReady) {
@@ -304,6 +302,22 @@ export async function spendCoins(amount, reason) {
     serverBalance = bal; notify();
     trackCoin('spend', amt, reason || 'spend');
     return { ok: true, balance: bal };
+  }
+  return spendMeowCoins(amount, reason);
+}
+
+// Shop integration: atomically spend coins and unlock the deck server-side.
+export async function spendCoinsAndUnlock(amount, reason, deckId) {
+  const amt = Math.max(0, Math.floor(Number(amount) || 0));
+  if (serverReady) {
+    const ok = await walletRpc('shop_purchase_deck', { p_deck_id: deckId, p_cost: amt });
+    if (ok) {
+      // Re-sync balance locally since shop_purchase_deck spends it internally
+      refreshServerWallet();
+      trackCoin('spend', amt, reason || 'spend');
+      return { ok: true, balance: getMeowCoins() };
+    }
+    return { ok: false, balance: getMeowCoins() };
   }
   return spendMeowCoins(amount, reason);
 }

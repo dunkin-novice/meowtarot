@@ -4,7 +4,7 @@
 // from decks you don't own yet). Gallery: every deck, searchable, star-pinnable, auto-sorted
 // pinned → not-owned → owned. (Pull ×10 intentionally removed per founder.)
 import { applyLocaleMeta, applyTranslations, initShell, pathHasThaiPrefix } from './common.js';
-import { getMeowCoins, spendCoins, onMeowCoinsChange } from './meow-coin.js';
+import { getMeowCoins, spendCoins, spendCoinsAndUnlock, onMeowCoinsChange } from './meow-coin.js';
 import {
   getAllDecks, getActiveDeckId, setActiveDeck, canUnlockDeck, purchaseDeck,
 } from './data.js';
@@ -184,7 +184,7 @@ async function buyDeck(deck) {
   // Signed out → invite sign-in instead of the coin wall (same as the gacha pull).
   if (!isSignedIn()) { openSignIn(); return; }
   if (getMeowCoins() < WEEKLY_PRICE) { showNotEnough(WEEKLY_PRICE); return; }
-  const res = await spendCoins(WEEKLY_PRICE, 'weekly_shop_buy');
+  const res = await spendCoinsAndUnlock(WEEKLY_PRICE, 'weekly_shop_buy', deck.id);
   if (!res.ok) { showNotEnough(WEEKLY_PRICE); return; }
   purchaseDeck(deck.id);
   showBuyReveal(deck);
@@ -276,11 +276,11 @@ async function doPull() {
   if (getMeowCoins() < PULL) { showNotEnough(); return; }
   const pool = gachaDecks().filter((d) => !canUnlockDeck(d.id));
   if (!pool.length) { showToast(pick('You’ve collected every deck! 🎉', 'สะสมครบทุกสำรับแล้ว! 🎉')); return; }
-  state.phase = 'spin'; // lock immediately so a double-tap can't double-spend while we await
-  // Server-authoritative spend when signed in (atomic; can't double-spend across devices).
-  const res = await spendCoins(PULL, 'gacha_pull');
-  if (!res.ok) { state.phase = 'idle'; showNotEnough(); return; }
   const won = pool[Math.floor(Math.random() * pool.length)];
+  state.phase = 'spin'; // lock immediately so a double-tap can't double-spend while we await
+  // Server-authoritative atomic spend + unlock when signed in.
+  const res = await spendCoinsAndUnlock(PULL, 'gacha_pull', won.id);
+  if (!res.ok) { state.phase = 'idle'; showNotEnough(); return; }
   runRoulette(won);
   refreshHeroStats();
 }
