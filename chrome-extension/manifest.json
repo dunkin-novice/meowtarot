@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Daily Cat Tarot — MeowTarot",
+  "version": "1.0.0",
+  "description": "A cute cat-themed tarot card for every new tab. Your card of the day, plus a free pull whenever you want one. EN & TH.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  }
+}

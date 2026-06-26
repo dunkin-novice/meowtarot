@@ -7,6 +7,7 @@
 	var PanelBody = components.PanelBody;
 	var SelectControl = components.SelectControl;
 	var RangeControl = components.RangeControl;
+	var ToggleControl = components.ToggleControl;
 
 	blocks.registerBlockType( 'meowtarot/tarot-widget', {
 		title: __( 'MeowTarot Tarot Widget', 'meowtarot-tarot-widget' ),
@@ -17,7 +18,8 @@
 		attributes: {
 			spread: { type: 'string', default: 'one' },
 			lang: { type: 'string', default: 'auto' },
-			height: { type: 'number', default: 600 }
+			height: { type: 'number', default: 600 },
+			attribution: { type: 'boolean', default: false }
 		},
 		edit: function ( props ) {
 			var a = props.attributes;
@@ -55,6 +57,12 @@
 							min: 360,
 							max: 1000,
 							onChange: function ( v ) { props.setAttributes( { height: v } ); }
+						} ),
+						el( ToggleControl, {
+							label: __( 'Show attribution link', 'meowtarot-tarot-widget' ),
+							help: __( 'Off by default. Adds an optional "Free Tarot Reading — MeowTarot" link below the widget.', 'meowtarot-tarot-widget' ),
+							checked: !! a.attribution,
+							onChange: function ( v ) { props.setAttributes( { attribution: v } ); }
 						} )
 					)
 				),
