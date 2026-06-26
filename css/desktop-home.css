@@ -63,7 +63,7 @@
   .mtd-card { position: absolute; width: 188px; height: 280px; border-radius: 16px;
     border: 1px solid rgba(232,196,120,.5); box-shadow: 0 30px 60px -20px rgba(61,26,92,.65);
     overflow: hidden; animation: mtfloat 6s ease-in-out infinite; }
-  .mtd-card::before { content: ''; position: absolute; inset: 9px; border: 1px solid rgba(232,196,120,.45); border-radius: 10px; }
+  .mtd-card__art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
   .mtd-card__m { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center;
     font-family: 'Cormorant Garamond', 'Noto Serif Thai', serif; font-style: italic; font-size: 46px; color: rgba(232,196,120,.85); }
   .mtd-card--l { --rest: rotate(-16deg) translateX(-118px); background: linear-gradient(155deg, #4a1a3e, #7a1f66 50%, #b9246a); }
