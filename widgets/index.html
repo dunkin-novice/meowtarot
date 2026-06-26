@@ -9,76 +9,121 @@
   <link rel="canonical" href="https://www.meowtarot.com/widgets/" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Noto+Serif+Thai:wght@500;600&display=swap" />
   <style>
     :root {
-      --plum: #3d1a5c; --plum-mid: #6a3f8e; --ink: #2c2440; --ink-soft: #6b5b82;
-      --gold: #c9933a; --bg: #fbf6ef; --card: #fffaf2; --line: #ece1d6;
+      --plum-deep: #2a1142; --plum: #3d1a5c; --plum-mid: #6a3f8e; --ink-soft: #7c5e96; --muted: #9a86b2;
+      --gold: #c9933a; --gold-soft: #a9722a; --pink: #d12878;
     }
     * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
     body {
-      margin: 0; background: var(--bg); color: var(--ink);
-      font-family: "DM Sans", system-ui, -apple-system, sans-serif;
-      line-height: 1.7; font-size: 16px;
+      color: var(--plum); font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+      line-height: 1.6; font-size: 16px;
+      background:
+        radial-gradient(1100px 620px at 12% -6%, #f5e2fb 0%, rgba(245,226,251,0) 58%),
+        radial-gradient(1000px 720px at 102% -2%, #fcdcea 0%, rgba(252,220,234,0) 52%),
+        radial-gradient(900px 900px at 50% 120%, #fbe6d6 0%, rgba(251,230,214,0) 55%),
+        linear-gradient(180deg, #fbf5fb 0%, #f5ecfa 100%);
+      min-height: 100vh;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
-    .wrap { max-width: 800px; margin: 0 auto; padding: 40px 22px 80px; }
-    .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin: 0 0 8px; }
-    h1 {
-      font-family: "Cormorant Garamond", Georgia, serif; font-style: italic;
-      font-weight: 600; font-size: clamp(34px, 8vw, 48px); color: var(--plum);
-      margin: 0 0 6px; line-height: 1.1;
-    }
-    .lead { font-size: 18px; color: var(--ink-soft); margin-bottom: 32px; }
-    h2 {
-      font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600;
-      font-size: 26px; color: var(--plum); margin: 0 0 12px; line-height: 1.2;
-    }
-    h3 { font-size: 18px; color: var(--ink); margin: 24px 0 8px; }
-    p, li { color: var(--ink); }
-    a { color: var(--plum-mid); text-decoration: none; font-weight: 500; }
-    a:hover { text-decoration: underline; }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 40px 22px 64px; }
+    @media (min-width: 1024px) { .wrap { padding: 54px 32px 56px; } }
 
-    .options { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0 0 28px; }
-    .opt-group { display: flex; flex-direction: column; gap: 6px; }
-    .opt-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; }
-    .seg { display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 100px; padding: 3px; }
+    .back { display: inline-block; margin: 0 0 22px; color: var(--muted); font: 600 13px/1 "DM Sans"; }
+    .back:hover { color: #7a1f66; }
+
+    /* hero */
+    .hero { text-align: center; max-width: 680px; margin: 0 auto; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; font: 600 11.5px/1 "DM Sans";
+      letter-spacing: .16em; text-transform: uppercase; color: var(--gold-soft);
+      background: rgba(201,147,58,.12); border: 1px solid rgba(201,147,58,.28); padding: 8px 14px; border-radius: 99px;
+    }
+    h1 {
+      font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600;
+      font-size: clamp(38px, 7vw, 58px); line-height: 1.04; letter-spacing: -.015em;
+      color: var(--plum-deep); margin: 20px 0 0;
+    }
+    h1 em { font-style: italic; color: #7a1f66; }
+    .lead { font-size: 17px; line-height: 1.6; color: var(--ink-soft); margin: 16px 0 0; }
+
+    /* option toggles */
+    .options { display: flex; justify-content: center; gap: 30px; margin: 34px 0 36px; flex-wrap: wrap; }
+    .opt-group { text-align: center; }
+    .opt-label { display: block; font: 600 11px/1 "DM Sans"; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
+    .seg { display: inline-flex; background: #fff; border: 1px solid rgba(61,26,92,.12); border-radius: 99px; padding: 4px; }
     .seg button {
-      appearance: none; border: 0; background: none; cursor: pointer; font: inherit;
-      font-size: 13px; font-weight: 600; color: var(--ink-soft); padding: 7px 14px; border-radius: 100px; transition: all .15s ease;
+      appearance: none; border: 0; background: none; cursor: pointer; font: 600 13px/1 "DM Sans";
+      color: var(--muted); padding: 9px 16px; border-radius: 99px; transition: all .15s ease;
     }
     .seg button.is-active { background: var(--plum); color: #fff; }
 
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    /* grid */
+    .grid { display: grid; grid-template-columns: 1fr; gap: 22px; align-items: start; }
+    @media (min-width: 1024px) { .grid { grid-template-columns: 1fr 380px; gap: 36px; } }
 
+    .stack { display: flex; flex-direction: column; gap: 20px; }
     .card {
-      background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-      padding: 24px; margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      background: rgba(255,255,255,.78); border: 1px solid rgba(255,255,255,.9); border-radius: 20px;
+      padding: 26px; box-shadow: 0 12px 30px -16px rgba(61,26,92,.24);
     }
+    .card__head { display: flex; align-items: center; gap: 10px; }
+    .num { width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; color: #fff;
+      display: flex; align-items: center; justify-content: center; font: 700 14px/1 "DM Sans"; }
+    .num--1 { background: linear-gradient(135deg, #d12878, #e8a838); }
+    .num--2 { background: linear-gradient(135deg, #6a3f8e, #a487c4); }
+    .card h2 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600; font-size: 24px; color: var(--plum-deep); margin: 0; }
+    .card p { font-size: 14.5px; line-height: 1.55; color: var(--ink-soft); margin: 12px 0 14px; }
+
     .code-block {
-      background: #1a1a1a; color: #f8f8f2; padding: 16px; border-radius: 8px; white-space: pre-wrap; word-break: break-all;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12.5px; line-height: 1.5; overflow-x: auto; margin-bottom: 16px; border: 1px solid #333;
+      background: #241733; color: #f3e9ff; border: 1px solid rgba(232,196,120,.18); border-radius: 12px;
+      padding: 16px; white-space: pre-wrap; word-break: break-all; margin: 0;
+      font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; overflow: auto;
     }
-    code { background: #efe7db; padding: 2px 6px; border-radius: 5px; font-size: 13px; }
-    .btn {
-      display: inline-block; background: var(--plum); color: #fff;
-      padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px;
-      text-align: center; border: none; cursor: pointer; transition: background 0.2s;
+    .btn-primary {
+      appearance: none; border: 0; cursor: pointer; width: 100%; margin-top: 14px;
+      font: 600 14px/1 "DM Sans"; color: #fdf6ee;
+      background: linear-gradient(135deg, #6e1d4c, #d12878 60%, #e8a838); padding: 14px; border-radius: 11px;
+      box-shadow: 0 12px 24px -10px rgba(209,40,120,.5); transition: transform .15s;
     }
-    .btn:hover { background: var(--plum-mid); color: #fff; text-decoration: none; }
-    .widget-preview-box { background: #fff; padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); display: flex; justify-content: center; }
-    .previewframe { width: 100%; max-width: 340px; height: 600px; border: 0; border-radius: 18px; overflow: hidden; box-shadow: 0 12px 30px -12px rgba(61,26,92,.4); }
-    .back { display: inline-block; margin-top: 36px; color: var(--plum-mid); font-weight: 600; }
-    footer { margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 13px; text-align: center; }
+    .btn-primary:hover { transform: translateY(-1px); color: #fdf6ee; text-decoration: none; }
+    .shortcode-row {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: rgba(201,147,58,.1); border: 1px dashed rgba(201,147,58,.4);
+      border-radius: 10px; padding: 11px 14px; margin-bottom: 14px;
+    }
+    .shortcode-row code { font: 600 13px/1 ui-monospace, monospace; color: #7a1f66; background: none; padding: 0; }
+    .shortcode-row span { font-size: 12px; color: var(--muted); }
+    .btn-ghost {
+      display: block; width: 100%; text-align: center; border: 1px solid rgba(106,63,142,.3); cursor: pointer;
+      font: 600 14px/1 "DM Sans"; color: var(--plum-mid); background: rgba(255,255,255,.7); padding: 14px; border-radius: 11px; transition: transform .15s;
+    }
+    .btn-ghost:hover { transform: translateY(-1px); text-decoration: none; color: var(--plum-mid); }
+
+    /* live preview */
+    .preview-col { position: static; }
+    @media (min-width: 1024px) { .preview-col { position: sticky; top: 24px; } }
+    .preview-label { font: 600 11px/1 "DM Sans"; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: center; margin-bottom: 6px; }
+    .preview-sub { font-size: 13px; color: var(--muted); text-align: center; margin: 0 0 14px; }
+    .preview-box { background: rgba(255,255,255,.5); border: 1px dashed rgba(201,147,58,.5); border-radius: 22px; padding: 22px; display: flex; justify-content: center; }
+    .previewframe { width: 100%; max-width: 320px; height: 600px; border: 0; border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px -18px rgba(61,26,92,.45); }
+
+    footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid rgba(106,63,142,.14); color: var(--muted); font-size: 13px; text-align: center; }
+    a { color: var(--plum-mid); text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <p class="eyebrow">MeowTarot for Creators</p>
-    <h1>Free Tarot Widget</h1>
-    <p class="lead">Add a cute, interactive cat-tarot draw to your blog, Notion, Webflow, Wix, Squarespace, or WordPress site. Single card or a Past · Present · Future spread. 100% free, no account.</p>
+    <a class="back" href="/">← Back to MeowTarot</a>
+
+    <div class="hero">
+      <span class="eyebrow">MeowTarot for creators</span>
+      <h1>The free <em>tarot widget</em></h1>
+      <p class="lead">Add a cute, interactive cat-tarot draw to your blog or site in one line of HTML. Single card or Past · Present · Future. English &amp; Thai. 100% free, no account.</p>
+    </div>
 
     <div class="options">
       <div class="opt-group">
@@ -98,39 +143,43 @@
     </div>
 
     <div class="grid">
-      <!-- Left: instructions -->
-      <div>
-        <div class="card" style="margin-bottom: 24px;">
-          <h2>Option 1: Universal embed</h2>
-          <p>For Webflow, Wix, Squarespace, Ghost, or Notion — copy this snippet into an HTML / embed block.</p>
-          <div class="code-block" id="embedCode"></div>
-          <button class="btn" id="copyBtn" style="width: 100%;" type="button">Copy HTML snippet</button>
+      <!-- Left: embed options -->
+      <div class="stack">
+        <div class="card">
+          <div class="card__head">
+            <span class="num num--1">1</span>
+            <h2>Universal embed</h2>
+          </div>
+          <p>For Webflow, Wix, Squarespace, Ghost, or Notion — paste this into an HTML / embed block.</p>
+          <pre class="code-block" id="embedCode"></pre>
+          <button class="btn-primary" id="copyBtn" type="button">Copy HTML snippet</button>
         </div>
 
         <div class="card">
-          <h2>Option 2: WordPress plugin</h2>
-          <p>On WordPress? Install the free plugin, then add the widget by shortcode, block, or sidebar widget.</p>
-          <ol>
-            <li>Download the plugin <strong>.zip</strong>.</li>
-            <li>Upload it via <strong>Plugins → Add New → Upload Plugin</strong>, then activate.</li>
-            <li>Drop in the shortcode <code id="shortcode">[meowtarot_tarot]</code>, the <strong>MeowTarot Tarot Widget</strong> block, or the sidebar widget.</li>
-          </ol>
-          <a href="/wordpress-plugin/meowtarot-widget.zip" class="btn" style="width: 100%; margin-top: 8px;" download>Download for WordPress</a>
+          <div class="card__head">
+            <span class="num num--2">2</span>
+            <h2>WordPress plugin</h2>
+          </div>
+          <p>On WordPress? Install the free plugin, then add the widget by shortcode, block, or sidebar.</p>
+          <div class="shortcode-row">
+            <code id="shortcode">[meowtarot_tarot]</code>
+            <span>shortcode, block, or sidebar widget</span>
+          </div>
+          <a href="/wordpress-plugin/meowtarot-widget.zip" class="btn-ghost" download>⬇ Download for WordPress</a>
         </div>
       </div>
 
       <!-- Right: live preview -->
-      <div>
-        <h3 style="margin-top: 0;">Live preview</h3>
-        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 0;">Exactly how it will look on your site — go ahead, draw a card.</p>
-        <div class="widget-preview-box">
+      <div class="preview-col">
+        <div class="preview-label">Live preview</div>
+        <p class="preview-sub">Exactly how it looks on your site — go ahead, draw a card.</p>
+        <div class="preview-box">
           <iframe class="previewframe" id="preview" src="https://www.meowtarot.com/widget.html" title="Tarot widget live preview" loading="lazy"></iframe>
         </div>
       </div>
     </div>
 
-    <a class="back" href="/">← Back to MeowTarot</a>
-    <footer>© 2026 MeowTarot. A free cat tarot reading app.</footer>
+    <footer>© 2026 MeowTarot · A free cat tarot reading app</footer>
   </main>
 
   <script>

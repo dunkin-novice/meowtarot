@@ -108,6 +108,9 @@
   <link rel="stylesheet" href="css/phase-3-redesign.css?v=20260625b" />
   <link rel="stylesheet" href="css/home.css?v=20260625b" />
 
+  <!-- Desktop home layout (>=1024px only; mobile + iOS untouched) -->
+  <link rel="stylesheet" href="css/desktop-home.css?v=20260625b" />
+
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -169,9 +172,12 @@
   <!-- End Google Tag Manager (noscript) -->
   <header id="site-header"></header>
 
-  <main class="page-shell home-page">
-    <section class="home-hero" aria-labelledby="home-wordmark">
-      <h1 class="home-wordmark" id="home-wordmark">MeowTarot</h1>
+  <main id="main-content">
+    <h1 class="sr-only" style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0;">MeowTarot – Free Cat Tarot Readings</h1>
+    
+    <div class="page-shell home-page">
+      <section class="home-hero" aria-labelledby="home-wordmark">
+        <h2 class="home-wordmark" id="home-wordmark">MeowTarot</h2>
       <div class="home-divider" aria-hidden="true"></div>
       <p class="home-tagline">A card a day — a quiet ritual<br />for the questions you carry.</p>
       <a href="daily.html" class="home-cta-button">Draw today's card</a>
@@ -234,9 +240,179 @@
       </div>
       <span class="home-app-banner__btn">Coming Soon</span>
     </a>
+
+    <!-- ============================================================
+         DESKTOP HOME (>=1024px only). Mobile sections above are hidden
+         on desktop via css/desktop-home.css. See Patch 1 / design doc.
+         ============================================================ -->
+    <div class="mtd-home" aria-label="MeowTarot">
+      <!-- HERO -->
+      <section class="mtd-hero">
+        <div class="mtd-hero__inner">
+          <div>
+            <span class="mtd-eyebrow">Free · EN / ไทย · No account</span>
+            <h2 class="mtd-h1">A card a day,<br /><em>a little more clarity.</em></h2>
+            <p class="mtd-hero__th">เปิดไพ่แมวประจำวัน — พื้นที่เงียบ ๆ สำหรับคำถามในใจคุณ</p>
+            <p class="mtd-hero__lede">Cute cat tarot with grounded, emotionally safe guidance. Draw one card in thirty seconds, or sit with a full Celtic Cross when you need more.</p>
+            <div class="mtd-hero__cta">
+              <a class="mtd-btn" href="daily.html">Draw today's card</a>
+              <a class="mtd-btn mtd-btn--ghost" href="/widgets/">Get the free widget</a>
+            </div>
+            <div class="mtd-trust">
+              <span class="mtd-trust__dots"><span></span><span></span><span></span></span>
+              <span>Free forever · English &amp; ไทย · no account needed</span>
+            </div>
+          </div>
+          <div class="mtd-fan" aria-hidden="true">
+            <div class="mtd-fan__halo"></div>
+            <div class="mtd-card mtd-card--l"><div class="mtd-card__m">M</div></div>
+            <div class="mtd-card mtd-card--r"><div class="mtd-card__m">M</div></div>
+            <div class="mtd-card mtd-card--c">
+              <div class="mtd-card__sun"><span></span></div>
+              <div class="mtd-card__m">M</div>
+              <div class="mtd-card__wm">MEOWTAROT</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- READING MODES -->
+      <section class="mtd-sec">
+        <div class="mtd-sec__head">
+          <div>
+            <div class="mtd-kicker">Three ways to read</div>
+            <h2 class="mtd-h2">Pick your pace</h2>
+          </div>
+          <span class="mtd-head__th">เลือกรูปแบบการเปิดไพ่</span>
+        </div>
+        <nav class="mtd-modes" aria-label="Reading modes">
+          <a class="mtd-mode" href="daily.html">
+            <div class="mtd-mode__art"><div class="c1"></div></div>
+            <h3>Daily Card</h3>
+            <p class="mtd-mode__th">ไพ่ประจำวัน</p>
+            <p class="mtd-mode__desc">One card, one breath. A gentle nudge for the day ahead.</p>
+            <div class="mtd-mode__foot"><span class="mtd-tag">One card · 30 sec</span><span class="mtd-mode__go">›</span></div>
+          </a>
+          <a class="mtd-mode" href="question.html">
+            <div class="mtd-mode__art mtd-mode__art--three"><span></span><span></span><span></span></div>
+            <h3>Ask a Question</h3>
+            <p class="mtd-mode__th">ถามคำถาม</p>
+            <p class="mtd-mode__desc">Hold something in mind. Draw 1 or 3 cards for a focused answer.</p>
+            <div class="mtd-mode__foot"><span class="mtd-tag">1 or 3 cards</span><span class="mtd-mode__go">›</span></div>
+          </a>
+          <a class="mtd-mode" href="full.html">
+            <div class="mtd-mode__art mtd-mode__art--three"><span></span><span></span><span></span></div>
+            <h3>Full Reading</h3>
+            <p class="mtd-mode__th">ดูแบบเต็ม · เซลติกครอส</p>
+            <p class="mtd-mode__desc">The full Celtic Cross — ten cards for the bigger picture.</p>
+            <div class="mtd-mode__foot"><span class="mtd-tag">Celtic Cross · 10</span><span class="mtd-mode__go">›</span></div>
+          </a>
+        </nav>
+      </section>
+
+      <!-- DECK GALLERY -->
+      <section class="mtd-sec">
+        <div class="mtd-sec__head">
+          <div>
+            <div class="mtd-kicker">Collect them all</div>
+            <h2 class="mtd-h2">Cat tarot decks</h2>
+          </div>
+          <a class="mtd-seeall" href="decks.html">SEE ALL →</a>
+        </div>
+        <div class="mtd-decks mt-scroll">
+          <a class="mtd-deck" href="decks.html">
+            <div class="mtd-deck__card"><img class="mtd-deck__img" src="https://cdn.meowtarot.com/assets/moonmallow/00-back.webp" alt="Moonmallow deck" loading="lazy" /></div>
+            <div class="mtd-deck__name">Moonmallow</div>
+            <div class="mtd-deck__note">เหมียวฝันหวาน · Default</div>
+          </a>
+          <a class="mtd-deck" href="decks.html">
+            <div class="mtd-deck__card"><img class="mtd-deck__img" src="https://cdn.meowtarot.com/assets/veila-tarot/00-back.webp" alt="Veila Tarot deck" loading="lazy" /></div>
+            <div class="mtd-deck__name">Veila Tarot</div>
+            <div class="mtd-deck__note">แมวม่านพราย · Default</div>
+          </a>
+          <a class="mtd-deck" href="decks.html">
+            <div class="mtd-deck__card"><img class="mtd-deck__img" src="https://cdn.meowtarot.com/assets/boba-oracle/00-back.webp" alt="Boba Oracle deck" loading="lazy" /></div>
+            <div class="mtd-deck__name">Boba Oracle</div>
+            <div class="mtd-deck__note">แมวชานม · Day 7</div>
+          </a>
+          <a class="mtd-deck" href="decks.html">
+            <div class="mtd-deck__card"><img class="mtd-deck__img" src="https://cdn.meowtarot.com/assets/meow-nakorn/00-back.webp" alt="Meow Nakorn deck" loading="lazy" /></div>
+            <div class="mtd-deck__name">Meow Nakorn</div>
+            <div class="mtd-deck__note">นครหมียว · Day 14</div>
+          </a>
+          <a class="mtd-deck is-locked" href="decks.html">
+            <div class="mtd-deck__card"><img class="mtd-deck__img" src="https://cdn.meowtarot.com/assets/moonveil/00-back.webp" alt="Moonveil deck" loading="lazy" /><div class="mtd-deck__lock">DAY 21</div></div>
+            <div class="mtd-deck__name">Moonveil</div>
+            <div class="mtd-deck__note">จันทราขนฟู · Day 21</div>
+          </a>
+          <a class="mtd-deck is-locked" href="decks.html">
+            <div class="mtd-deck__card"><img class="mtd-deck__img" src="https://cdn.meowtarot.com/assets/overtime-oracle/00-back.webp" alt="Overtime Oracle deck" loading="lazy" /><div class="mtd-deck__lock">DAY 28</div></div>
+            <div class="mtd-deck__name">Overtime Oracle</div>
+            <div class="mtd-deck__note">แมวโอที · Day 28</div>
+          </a>
+        </div>
+      </section>
+
+      <!-- WIDGET SHOWCASE BAND -->
+      <section class="mtd-widband" aria-label="Free embeddable widget">
+        <div class="mtd-widband__box">
+          <div class="mtd-widband__grid">
+            <div>
+              <span class="mtd-widband__eyebrow">MeowTarot for creators</span>
+              <h2 class="mtd-widband__h2">Put a daily cat tarot<br /><em>on your own site.</em></h2>
+              <p class="mtd-widband__lede">A free, embeddable daily-draw widget for bloggers and site owners. Single card or a Past · Present · Future spread — in English or Thai. Drop in one line of HTML. No account, no fees.</p>
+              <div class="mtd-chips"><span>WordPress</span><span>Webflow</span><span>Wix</span><span>Squarespace</span><span>Notion</span></div>
+              <div class="mtd-widband__cta">
+                <a class="mtd-btn mtd-btn--gold" href="/widgets/">Get the widget →</a>
+                <a class="mtd-link-light" href="/widgets/">See live preview</a>
+              </div>
+              <div class="mtd-widstats">
+                <div><b>1 line</b><small>of HTML to embed</small></div>
+                <div><b>EN · ไทย</b><small>English &amp; Thai</small></div>
+                <div><b>Free</b><small>forever, no account</small></div>
+              </div>
+            </div>
+            <div>
+              <div class="mtd-browser" aria-hidden="true">
+                <div class="mtd-browser__bar"><i></i><i></i><i></i><span class="mtd-browser__url">cozyhomeblog.com/daily-ritual</span></div>
+                <div class="mtd-browser__body">
+                  <div class="mtd-fakeart">
+                    <h4>Morning rituals for a calmer week</h4>
+                    <div class="byline">by Plern · 6 min read</div>
+                    <div class="ln"></div><div class="ln" style="width:92%"></div><div class="ln" style="width:80%"></div>
+                    <div class="ln"></div><div class="ln" style="width:70%"></div><div class="ln" style="width:88%;margin-bottom:18px"></div>
+                    <div class="ln" style="width:95%"></div><div class="ln" style="width:60%"></div>
+                  </div>
+                  <div class="mtd-embed">
+                    <div class="eb">Daily cat tarot</div>
+                    <div class="tt">Your card today</div>
+                    <div class="mtd-embed__card"></div>
+                    <div class="rv">Reveal my card</div>
+                    <div class="via">via <b>MeowTarot</b></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="mtd-foot">
+        <div class="mtd-foot__brand"><span></span>MeowTarot</div>
+        <div class="mtd-foot__links">
+          <a href="daily.html">Daily readings</a>
+          <a href="/tarot-card-meanings/">Card meanings</a>
+          <a href="decks.html">Decks</a>
+          <a href="/widgets/">Free widget</a>
+          <a href="privacy.html">Privacy</a>
+        </div>
+        <div class="mtd-foot__copy">© 2026 MeowTarot · A free cat tarot reading app</div>
+      </footer>
+    </div>
   </main>
 
-  <footer id="site-footer" style="padding: 12px 24px;"></footer>
+  <footer class="site-footer" style="padding: 12px 24px;"></footer>
   <script type="module" src="js/main.js?v=20260625b"></script>
 </body>
 </html>
