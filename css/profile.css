@@ -845,3 +845,28 @@ body[data-page='profile'] .profile-tab-btn.is-active {
 }
 body[data-page='profile'] .profile-account-email { font-size: 12px; color: #7c5e96; margin: 4px 0 0; }
 body[data-page='profile'] .profile-account-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+
+/* ============================================================
+   DESKTOP PROFILE (>=1024px only). Additive — mobile + iOS untouched.
+   Turn the single ~440px column into a dashboard: identity + streak as a
+   left rail, tabs + active panel + CTA on the right. Tab show/hide JS
+   (the [hidden] attribute) is untouched — hidden panels stay display:none.
+   ============================================================ */
+@media (min-width: 1024px) {
+  body[data-page='profile'] .page-shell {
+    max-width: 940px;
+    padding-top: calc(var(--nav-height) + 34px);
+  }
+  body[data-page='profile'] .section-block.profile-redesign {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    column-gap: 30px;
+    row-gap: 20px;
+    align-items: start;
+  }
+  body[data-page='profile'] #profile-identity { grid-column: 1; grid-row: 1; }
+  body[data-page='profile'] #profile-streak   { grid-column: 1; grid-row: 2; }
+  body[data-page='profile'] #profile-tabs     { grid-column: 2; grid-row: 1; }
+  body[data-page='profile'] .profile-tab      { grid-column: 2; grid-row: 2; }
+  body[data-page='profile'] #profile-cta      { grid-column: 2; grid-row: 3; }
+}

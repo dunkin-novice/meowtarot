@@ -343,3 +343,32 @@ body[data-page='decks'] .decks-toast.is-visible {
   opacity: 1;
   transform: translate(-50%, -50%) translateY(0);
 }
+
+/* ============================================================
+   DESKTOP DECKS (>=1024px only). Additive — mobile + iOS untouched.
+   Widen the shell and fan the deck grid into 4 columns instead of
+   the centred ~400px mobile column. Matches the .mtd-* desktop system.
+   ============================================================ */
+@media (min-width: 1024px) {
+  body[data-page='decks'] .page-shell.decks-shell {
+    max-width: 1080px;
+    padding-top: calc(var(--nav-height) + 34px);
+  }
+  body[data-page='decks'] .decks-heading__en { font-size: 38px; }
+  body[data-page='decks'] .decks-heading__th { font-size: 17px; }
+  body[data-page='decks'] .decks-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+    margin-top: 26px;
+  }
+  body[data-page='decks'] .decks-cell { padding: 16px; border-radius: 20px; }
+  body[data-page='decks'] .decks-cell:hover { transform: translateY(-4px); }
+  /* keep the shop nudge a tidy centred band, not a stretched 1080px strip */
+  body[data-page='decks'] .decks-shop-nudge {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    padding: 20px 24px;
+  }
+}
