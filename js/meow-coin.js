@@ -413,7 +413,8 @@ export function renderMeowCoinChip() {
   if (!CHIP_PAGES.has(page)) return;
   const isThai = (document.documentElement.lang === 'th') || (window.location.pathname || '').startsWith('/th/');
   const cluster = ensureTopChips();
-  renderAuthAvatar(cluster, isThai); // sits LEFT of the coin chip; shown only when signed in
+  // Profile/avatar chip removed (founder 2026-06-26, BUG-1): it duplicated the navbar's
+  // Profile tab. The top-right cluster now holds only the coin chip.
   if (document.getElementById('mt-coin-chip')) return;
   const chip = document.createElement('a');
   chip.id = 'mt-coin-chip';
@@ -431,39 +432,6 @@ export function renderMeowCoinChip() {
   onMeowCoinsChange((bal) => { numEl.textContent = String(bal); });
 }
 
-// Avatar chip — the "you're signed in" indicator (founder 2026-06-23). Shows the Google avatar
-// (or a fallback profile glyph) when signed in, hidden when signed out; taps through to Profile.
-// Reactive via subscribeAuthState so it appears the moment the session resolves after OAuth.
-function renderAuthAvatar(cluster, isThai) {
-  if (document.getElementById('mt-avatar-chip')) return;
-  const a = document.createElement('a');
-  a.id = 'mt-avatar-chip';
-  a.className = 'mt-avatar-chip';
-  // Inline layout (cache-proof — see ensureTopChips note). Visibility is driven by inline
-  // display (NOT the [hidden] attr, which the inline display:flex would override). CSS adds polish.
-  a.style.cssText = 'width:34px;height:34px;border-radius:50%;overflow:hidden;display:none;'
-    + 'align-items:center;justify-content:center;background:rgba(255,255,255,.85);'
-    + 'border:1px solid var(--mt-gold-pale,#e8c478);box-shadow:0 4px 12px -4px rgba(61,26,92,.32);'
-    + 'color:var(--mt-plum,#3d1a5c);text-decoration:none;flex:none;';
-  a.href = isThai ? '/th/profile.html' : '/profile.html';
-  a.setAttribute('aria-label', isThai ? 'โปรไฟล์ของคุณ — เข้าสู่ระบบแล้ว' : 'Your profile — signed in');
-  a.innerHTML = '<img class="mt-avatar-chip__img" alt="" />'
-    + '<span class="mt-avatar-chip__glyph" aria-hidden="true">'
-    + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>'
-    + '</span>';
-  cluster.insertBefore(a, cluster.firstChild); // left of the coin chip
-  const img = a.querySelector('.mt-avatar-chip__img');
-  const glyph = a.querySelector('.mt-avatar-chip__glyph');
-  const showGlyph = () => { img.style.display = 'none'; glyph.style.display = 'flex'; };
-  const showImg = (url) => { img.onerror = showGlyph; img.src = url; img.style.display = 'block'; glyph.style.display = 'none'; };
-  import('./auth.js').then(({ subscribeAuthState }) => {
-    if (typeof subscribeAuthState !== 'function') return;
-    subscribeAuthState((user) => {
-      if (!user) { a.style.display = 'none'; return; }
-      a.style.display = 'flex';
-      const meta = user.user_metadata || {};
-      const url = meta.avatar_url || meta.picture || '';
-      if (url) showImg(url); else showGlyph();
-    });
-  }).catch(() => {});
-}
+// (Removed 2026-06-26, BUG-1) The top-right avatar/profile chip duplicated the navbar's
+// Profile tab, so renderAuthAvatar() and its #mt-avatar-chip were removed. The bottom-nav
+// Profile tab is the single profile entry point; the coin chip remains the only top-right chip.

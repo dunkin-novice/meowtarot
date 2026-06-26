@@ -384,6 +384,20 @@ function renderAll() {
     + '</span>'
     + `<span class="decks-shop-nudge__cta">${pickLocalized('Go to Shop', 'ไปที่ร้านค้า')} →</span>`;
   els.content.appendChild(nudge);
+
+  // Invite-friends CTA (founder 2026-06-26, REQ-9) — surfaces referral where decks are
+  // browsed; lands on the profile Rewards tab, which now holds the referral panel.
+  const invite = document.createElement('a');
+  invite.className = 'decks-shop-nudge decks-invite-nudge';
+  invite.href = localizePath('/profile.html', state.currentLang);
+  invite.innerHTML =
+    '<span class="decks-shop-nudge__icon"><img src="/assets/meow-coin-200.webp" alt="" aria-hidden="true" /></span>'
+    + '<span class="decks-shop-nudge__body">'
+    + `<span class="decks-shop-nudge__title">${pickLocalized('Invite friends, earn coins', 'ชวนเพื่อน รับเหรียญ')}</span>`
+    + `<span class="decks-shop-nudge__sub">${pickLocalized('You and your friend both get Meow Coins — up to 9 friends.', 'คุณและเพื่อนได้รับเหรียญเหมียวทั้งคู่ — สูงสุด 9 คน')}</span>`
+    + '</span>'
+    + `<span class="decks-shop-nudge__cta">${pickLocalized('Invite', 'ชวนเพื่อน')} →</span>`;
+  els.content.appendChild(invite);
 }
 
 function onTranslations() {
