@@ -50,6 +50,7 @@ function createDefaultProgress() {
     created_at: now,
     journey_started_at: now,
     last_daily_read_date: null,
+    last_streak_date: null,
     streak_current: 0,
     streak_best: 0,
     total_daily_reads: 0,
@@ -111,6 +112,11 @@ function sanitizeProgress(raw) {
     created_at: Number(raw.created_at) || fallback.created_at,
     journey_started_at: Math.max(1, Number(raw.journey_started_at) || Number(raw.created_at) || fallback.journey_started_at),
     last_daily_read_date: typeof raw.last_daily_read_date === 'string' ? raw.last_daily_read_date : null,
+    // Streak is now driven by daily LOGIN/visit, not by completing a reading. Migrate existing
+    // users by seeding the streak date from their last reading date so streaks don't reset.
+    last_streak_date: typeof raw.last_streak_date === 'string'
+      ? raw.last_streak_date
+      : (typeof raw.last_daily_read_date === 'string' ? raw.last_daily_read_date : null),
     streak_current: Math.max(0, Number(raw.streak_current) || 0),
     streak_best: Math.max(0, Number(raw.streak_best) || 0),
     total_daily_reads: Math.max(0, Number(raw.total_daily_reads) || 0),
@@ -233,6 +239,37 @@ function getAchievementLabelKey(key = '') {
   return `achievement_${key}`;
 }
 
+// Advance the "current streak" at most once per calendar day, keyed on last_streak_date.
+// Driven by daily LOGIN/visit (and also by completing a reading) — see trackDailyVisit.
+// Returns true if it advanced today, false if today was already counted.
+function advanceStreak(progress) {
+  const today = todayLocalIsoDate();
+  if (progress.last_streak_date === today) return false;
+  if (progress.last_streak_date) {
+    const dayDiff = daysBetweenIsoDates(progress.last_streak_date, today);
+    progress.streak_current = dayDiff === 1 ? (Number(progress.streak_current) || 0) + 1 : 1;
+  } else {
+    // First streak day under this model (new user, or migrated with no prior date): continue
+    // any carried-over streak value, otherwise start at 1.
+    progress.streak_current = Math.max(1, Number(progress.streak_current) || 0);
+  }
+  progress.streak_best = Math.max(Number(progress.streak_best) || 0, progress.streak_current);
+  progress.last_streak_date = today;
+  return true;
+}
+
+// Called on every app open (from common.js initShell). The profile "current streak" advances
+// just by opening the app once a day — no reading required (founder 2026-06-27). Idempotent
+// per day. Returns { progress, didCount, newlyUnlocked }. Cloud push is triggered by the caller.
+export function trackDailyVisit() {
+  const progress = getUserProgress();
+  const advanced = advanceStreak(progress);
+  if (!advanced) return { progress, didCount: false, newlyUnlocked: [] };
+  const newlyUnlocked = evaluateAchievements(progress);
+  persistProgress(progress);
+  return { progress, didCount: true, newlyUnlocked };
+}
+
 export function trackCompletedDailyReading(card = null) {
   const progress = getUserProgress();
   const today = todayLocalIsoDate();
@@ -253,14 +290,10 @@ export function trackCompletedDailyReading(card = null) {
     };
   }
 
-  const dayDiff = daysBetweenIsoDates(progress.last_daily_read_date, today);
-  if (dayDiff === 1) {
-    progress.streak_current += 1;
-  } else {
-    progress.streak_current = 1;
-  }
-
-  progress.streak_best = Math.max(progress.streak_best, progress.streak_current);
+  // Streak is keyed on last_streak_date (login OR reading, once/day) — idempotent, so if the
+  // app-open visit already advanced it today this is a no-op; if a reading is the day's first
+  // activity it still counts.
+  advanceStreak(progress);
   progress.total_daily_reads += 1;
   progress.last_daily_read_date = today;
 

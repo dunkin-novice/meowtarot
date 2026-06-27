@@ -8,7 +8,7 @@ import {
 } from './common.js';
 import { getAllDecks, loadTarotManifest, normalizeId, getReversedMode, setReversedMode, getActiveDeckId } from './data.js';
 import { computePhase } from './phase.js';
-import { getUserProgress, getNextStreakMilestone } from './progress.js';
+import { getUserProgress, getNextStreakMilestone, trackDailyVisit } from './progress.js';
 import { getCurrentUser, isAuthConfigured, loginWithProvider, logout, deleteAccount, subscribeAuthState } from './auth.js';
 import { loadReadings } from './reading-history.js';
 import { serializeReadingStateToUrl } from './reading-url.js';
@@ -900,6 +900,9 @@ function openDeleteModal(dict, th) {
 async function renderAll(dict = translations[state.currentLang] || translations.en) {
   await refreshCardNameMap();
   await refreshHistory();
+  // Advance the daily-visit streak synchronously before it renders, so opening the profile
+  // shows today's bump immediately (the global initShell call is async). Idempotent per day.
+  try { trackDailyVisit(); } catch (_) {}
   renderIdentity(dict);
   renderStreak(dict);
   const progress = getUserProgress();

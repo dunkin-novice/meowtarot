@@ -47,6 +47,11 @@ export function mergeProgress(localProgress = {}, remoteProgress = {}) {
   const remoteDate = String(remoteProgress?.last_daily_read_date || '');
   merged.last_daily_read_date = localDate > remoteDate ? localDate : remoteDate;
 
+  // Login/visit streak date — keep the later of the two so the streak survives device hops.
+  const localStreakDate = String(localProgress?.last_streak_date || '');
+  const remoteStreakDate = String(remoteProgress?.last_streak_date || '');
+  merged.last_streak_date = localStreakDate > remoteStreakDate ? localStreakDate : remoteStreakDate;
+
   return merged;
 }
 

@@ -750,6 +750,18 @@ export function initShell(state, afterApply, activePage, options = {}) {
   // the daily reading, then get a sign-in CTA). Dynamic import dodges an auth<->common cycle;
   // grantDailyLogin is idempotent per day, and we re-check when auth resolves.
   try { renderMeowCoinChip(); } catch (_) { /* coins non-critical */ }
+  // Daily-visit streak (founder 2026-06-27): the profile "current streak" now advances once
+  // per day just by OPENING the app — no reading required. Idempotent per day; a signed-in
+  // bump is pushed to the cloud. Dynamic import dodges a common<->progress import cycle.
+  import('./progress.js').then(({ trackDailyVisit }) => {
+    let advanced = false;
+    try { advanced = Boolean(trackDailyVisit && trackDailyVisit().didCount); } catch (_) {}
+    if (advanced) {
+      import('./sync.js')
+        .then((m) => { try { m.syncLocalProgressIfLoggedIn && m.syncLocalProgressIfLoggedIn(); } catch (_) {} })
+        .catch(() => {});
+    }
+  }).catch(() => {});
   // OAuth RETURN: after Google sign-in, Supabase hands the session back as ?code=… (PKCE) or
   // #access_token=… The session is only exchanged when the Supabase client is CREATED, and the
   // client is lazy — most pages create it on load, but not all. If we land back here with those
